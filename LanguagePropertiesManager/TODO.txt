@@ -1,2 +1,2 @@
-sprache löschen & adden
+sprache lÃ¶schen & adden
 Change AppLanguage Button
