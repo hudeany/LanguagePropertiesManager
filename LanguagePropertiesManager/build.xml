@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project default="build_jar" name="Create all Jars for Project LanguagePropertiesManager">
+	<property name="buildPath" value="build" />
+	<property name="projectsPath" value="${env.SodererGitProjects}/Soderer" />
+	<property name="mavenRepository" value="C:/Users/Andreas/.m2/repository" />
+
+	<target name="build_jar" depends="clean, copy_other_files, create_webstart_jar, sign_webstart_dependency_jars, create_Linux_x64_jar, create_Linux_x32_jar, create_Windows_x64_jar, create_Windows_x32_jar" />
+
+	<target name="clean">
+		<delete dir="${buildPath}"/>
+		<mkdir dir="${buildPath}"/>
+	</target>
+
+	<target name="create_webstart_jar">
+		<jar destfile="${buildPath}/WebStart/LanguagePropertiesManager.jar">
+			<manifest>
+				<attribute name="Main-Class" value="de.soderer.languagepropertiesmanager.dlg.LanguagePropertiesManagerDialog" />
+			</manifest>
+			<fileset dir="bin" />
+		</jar>
+
+		<signjar destDir="${buildPath}/WebStart" alias="soderer-de-java" keystore="WebStart/keystore" storepass="vSV%nr!G" preservelastmodified="true">
+			<path>
+				<fileset dir="${buildPath}/WebStart" includes="LanguagePropertiesManager.jar" />
+			</path>
+		</signjar>
+	</target>
+
+	<target name="sign_webstart_dependency_jars">
+		<signjar destDir="${buildPath}/WebStart" alias="soderer-de-java" keystore="WebStart/keystore" storepass="vSV%nr!G" preservelastmodified="true">
+			<path>
+				<fileset dir="../JavaUtilities/target" includes="utilities-*.jar" />
+
+				<fileset dir="${mavenRepository}\commons-codec\commons-codec\1.6" includes="commons-codec-1.6.jar" />
+				<fileset dir="${mavenRepository}\commons-io\commons-io\2.4" includes="commons-io-2.4.jar" />
+				<fileset dir="${mavenRepository}\org\apache\commons\commons-lang3\3.1" includes="commons-lang3-3.1.jar" />
+				<fileset dir="${mavenRepository}\com\jcraft\jsch\0.1.46" includes="jsch-0.1.46.jar" />
+				<fileset dir="${mavenRepository}\org\hamcrest\hamcrest-core\1.1" includes="hamcrest-core-1.1.jar" />
+				<fileset dir="${mavenRepository}\log4j\log4j\1.2.14" includes="log4j-1.2.14.jar" />
+				<fileset dir="${mavenRepository}\javax\mail\mail\1.4.5" includes="mail-1.4.5.jar" />
+				<fileset dir="${mavenRepository}\org\slf4j\slf4j-api\1.6.4" includes="slf4j-api-1.6.4.jar" />
+
+				<fileset dir="lib" includes="**/*.jar" />
+
+				<fileset dir="${mavenRepository}\javax\activation\activation\1.1" includes="activation-1.1.jar" />
+				<fileset dir="${mavenRepository}\commons-pool\commons-pool\1.5.1" includes="commons-pool-1.5.1.jar" />
+				<fileset dir="${mavenRepository}\net\sourceforge\jexcelapi\jxl\2.6.12" includes="jxl-2.6.12.jar" />
+				<fileset dir="${mavenRepository}\org\slf4j\log4j-over-slf4j\1.6.4" includes="log4j-over-slf4j-1.6.4.jar" />
+				<fileset dir="${mavenRepository}\org\slf4j\log4j-over-slf4j\1.6.4" includes="log4j-over-slf4j-1.6.4.jar" />
+			</path>
+		</signjar>
+	</target>
+
+	<target name="copy_other_files" depends="">
+		<copy todir="${buildPath}/WebStart/jnlp" file="WebStart/LanguagePropertiesManager.gif" />
+		<copy todir="${buildPath}/WebStart/jnlp" file="WebStart/LanguagePropertiesManager.jnlp" />
+	</target>
+
+	<target name="create_Linux_x64_jar">
+		<jar destfile="${buildPath}/LanguagePropertiesManager_Offline_Linux_x64.jar">
+			<manifest>
+				<attribute name="Main-Class" value="org.eclipse.jdt.internal.jarinjarloader.JarRsrcLoader" />
+				<attribute name="Rsrc-Main-Class" value="de.soderer.languagepropertiesmanager.dlg.LanguagePropertiesManagerDialog" />
+				<attribute name="Class-Path" value="." />
+				<attribute name="Rsrc-Class-Path" value="./ activation-1.1.jar commons-beanutils-1.8.0.jar commons-codec-1.6.jar commons-io-2.4.jar commons-lang-2.5.jar commons-lang3-3.1.jar commons-logging-1.1.1.jar commons-pool-1.5.1.jar ezmorph-1.0.6.jar hamcrest-core-1.1.jar jsch-0.1.46.jar json-lib-2.4-jdk15.jar jxl-2.6.12.jar log4j-1.2.14.jar log4j-over-slf4j-1.6.4.jar mail-1.4.5.jar slf4j-api-1.6.4.jar swt-4.2.1-gtk-linux-x86_64.jar" />
+			</manifest>
+			<fileset dir="bin" />
+
+			<fileset dir="${projectsPath}/JavaUtilities/target/classes" />
+
+			<zipfileset dir="lib" includes="swt-4.2.1-gtk-linux-x86_64.jar" />
+
+			<zipfileset dir="${mavenRepository}\javax\activation\activation\1.1" includes="activation-1.1.jar" />
+			<zipfileset dir="${mavenRepository}\commons-codec\commons-codec\1.6" includes="commons-codec-1.6.jar" />
+			<zipfileset dir="${mavenRepository}\commons-io\commons-io\2.4" includes="commons-io-2.4.jar" />
+			<zipfileset dir="${mavenRepository}\org\apache\commons\commons-lang3\3.1" includes="commons-lang3-3.1.jar" />
+			<zipfileset dir="${mavenRepository}\commons-pool\commons-pool\1.5.1" includes="commons-pool-1.5.1.jar" />
+			<zipfileset dir="${mavenRepository}\org\hamcrest\hamcrest-core\1.1" includes="hamcrest-core-1.1.jar" />
+			<zipfileset dir="${mavenRepository}\com\jcraft\jsch\0.1.46" includes="jsch-0.1.46.jar" />
+			<zipfileset dir="${mavenRepository}\net\sourceforge\jexcelapi\jxl\2.6.12" includes="jxl-2.6.12.jar" />
+			<zipfileset dir="${mavenRepository}\log4j\log4j\1.2.14" includes="log4j-1.2.14.jar" />
+			<zipfileset dir="${mavenRepository}\org\slf4j\log4j-over-slf4j\1.6.4" includes="log4j-over-slf4j-1.6.4.jar" />
+			<zipfileset dir="${mavenRepository}\javax\mail\mail\1.4.5" includes="mail-1.4.5.jar" />
+			<zipfileset dir="${mavenRepository}\org\slf4j\slf4j-api\1.6.4" includes="slf4j-api-1.6.4.jar" />
+			<zipfileset dir="${mavenRepository}\org\slf4j\slf4j-jdk14\1.7.2" includes="slf4j-jdk14-1.7.2.jar" />
+		</jar>
+
+		<signjar destDir="${buildPath}" alias="soderer-de-java" keystore="WebStart/keystore" storepass="vSV%nr!G" preservelastmodified="true">
+			<path>
+				<fileset dir="${buildPath}" includes="LanguagePropertiesManager_Offline_Linux_x64.jar" />
+			</path>
+		</signjar>
+	</target>
+
+	<target name="create_Linux_x32_jar">
+		<jar destfile="${buildPath}/LanguagePropertiesManager_Offline_Linux_x32.jar">
+			<manifest>
+				<attribute name="Main-Class" value="org.eclipse.jdt.internal.jarinjarloader.JarRsrcLoader" />
+				<attribute name="Rsrc-Main-Class" value="de.soderer.languagepropertiesmanager.dlg.LanguagePropertiesManagerDialog" />
+				<attribute name="Class-Path" value="." />
+				<attribute name="Rsrc-Class-Path" value="./ activation-1.1.jar commons-beanutils-1.8.0.jar commons-codec-1.6.jar commons-io-2.4.jar commons-lang-2.5.jar commons-lang3-3.1.jar commons-logging-1.1.1.jar commons-pool-1.5.1.jar ezmorph-1.0.6.jar hamcrest-core-1.1.jar jsch-0.1.46.jar json-lib-2.4-jdk15.jar jxl-2.6.12.jar log4j-1.2.14.jar log4j-over-slf4j-1.6.4.jar mail-1.4.5.jar slf4j-api-1.6.4.jar swt-4.2.1-gtk-linux-x86.jar" />
+			</manifest>
+			<fileset dir="bin" />
+
+			<fileset dir="${projectsPath}/JavaUtilities/target/classes" />
+
+			<zipfileset dir="lib" includes="swt-4.2.1-gtk-linux-x86.jar" />
+
+			<zipfileset dir="${mavenRepository}\javax\activation\activation\1.1" includes="activation-1.1.jar" />
+			<zipfileset dir="${mavenRepository}\commons-codec\commons-codec\1.6" includes="commons-codec-1.6.jar" />
+			<zipfileset dir="${mavenRepository}\commons-io\commons-io\2.4" includes="commons-io-2.4.jar" />
+			<zipfileset dir="${mavenRepository}\org\apache\commons\commons-lang3\3.1" includes="commons-lang3-3.1.jar" />
+			<zipfileset dir="${mavenRepository}\commons-pool\commons-pool\1.5.1" includes="commons-pool-1.5.1.jar" />
+			<zipfileset dir="${mavenRepository}\org\hamcrest\hamcrest-core\1.1" includes="hamcrest-core-1.1.jar" />
+			<zipfileset dir="${mavenRepository}\com\jcraft\jsch\0.1.46" includes="jsch-0.1.46.jar" />
+			<zipfileset dir="${mavenRepository}\net\sourceforge\jexcelapi\jxl\2.6.12" includes="jxl-2.6.12.jar" />
+			<zipfileset dir="${mavenRepository}\log4j\log4j\1.2.14" includes="log4j-1.2.14.jar" />
+			<zipfileset dir="${mavenRepository}\org\slf4j\log4j-over-slf4j\1.6.4" includes="log4j-over-slf4j-1.6.4.jar" />
+			<zipfileset dir="${mavenRepository}\javax\mail\mail\1.4.5" includes="mail-1.4.5.jar" />
+			<zipfileset dir="${mavenRepository}\org\slf4j\slf4j-api\1.6.4" includes="slf4j-api-1.6.4.jar" />
+			<zipfileset dir="${mavenRepository}\org\slf4j\slf4j-jdk14\1.7.2" includes="slf4j-jdk14-1.7.2.jar" />
+		</jar>
+
+		<signjar destDir="${buildPath}" alias="soderer-de-java" keystore="WebStart/keystore" storepass="vSV%nr!G" preservelastmodified="true">
+			<path>
+				<fileset dir="${buildPath}" includes="LanguagePropertiesManager_Offline_Linux_x32.jar" />
+			</path>
+		</signjar>
+	</target>
+
+	<target name="create_Windows_x64_jar">
+		<jar destfile="${buildPath}/LanguagePropertiesManager_Offline_Windows_x64.jar">
+			<manifest>
+				<attribute name="Main-Class" value="org.eclipse.jdt.internal.jarinjarloader.JarRsrcLoader" />
+				<attribute name="Rsrc-Main-Class" value="de.soderer.languagepropertiesmanager.dlg.LanguagePropertiesManagerDialog" />
+				<attribute name="Class-Path" value="." />
+				<attribute name="Rsrc-Class-Path" value="./ activation-1.1.jar commons-beanutils-1.8.0.jar commons-codec-1.6.jar commons-io-2.4.jar commons-lang-2.5.jar commons-lang3-3.1.jar commons-logging-1.1.1.jar commons-pool-1.5.1.jar ezmorph-1.0.6.jar hamcrest-core-1.1.jar jsch-0.1.46.jar json-lib-2.4-jdk15.jar jxl-2.6.12.jar log4j-1.2.14.jar log4j-over-slf4j-1.6.4.jar mail-1.4.5.jar slf4j-api-1.6.4.jar swt-4.2.1-win32-win32-x86_64.jar" />
+			</manifest>
+			<fileset dir="bin" />
+
+			<fileset dir="${projectsPath}/JavaUtilities/target/classes" />
+
+			<zipfileset dir="lib" includes="swt-4.2.1-win32-win32-x86_64.jar" />
+
+			<zipfileset dir="${mavenRepository}\javax\activation\activation\1.1" includes="activation-1.1.jar" />
+			<zipfileset dir="${mavenRepository}\commons-codec\commons-codec\1.6" includes="commons-codec-1.6.jar" />
+			<zipfileset dir="${mavenRepository}\commons-io\commons-io\2.4" includes="commons-io-2.4.jar" />
+			<zipfileset dir="${mavenRepository}\org\apache\commons\commons-lang3\3.1" includes="commons-lang3-3.1.jar" />
+			<zipfileset dir="${mavenRepository}\commons-pool\commons-pool\1.5.1" includes="commons-pool-1.5.1.jar" />
+			<zipfileset dir="${mavenRepository}\org\hamcrest\hamcrest-core\1.1" includes="hamcrest-core-1.1.jar" />
+			<zipfileset dir="${mavenRepository}\com\jcraft\jsch\0.1.46" includes="jsch-0.1.46.jar" />
+			<zipfileset dir="${mavenRepository}\net\sourceforge\jexcelapi\jxl\2.6.12" includes="jxl-2.6.12.jar" />
+			<zipfileset dir="${mavenRepository}\log4j\log4j\1.2.14" includes="log4j-1.2.14.jar" />
+			<zipfileset dir="${mavenRepository}\org\slf4j\log4j-over-slf4j\1.6.4" includes="log4j-over-slf4j-1.6.4.jar" />
+			<zipfileset dir="${mavenRepository}\javax\mail\mail\1.4.5" includes="mail-1.4.5.jar" />
+			<zipfileset dir="${mavenRepository}\org\slf4j\slf4j-api\1.6.4" includes="slf4j-api-1.6.4.jar" />
+			<zipfileset dir="${mavenRepository}\org\slf4j\slf4j-jdk14\1.7.2" includes="slf4j-jdk14-1.7.2.jar" />
+		</jar>
+
+		<signjar destDir="${buildPath}" alias="soderer-de-java" keystore="WebStart/keystore" storepass="vSV%nr!G" preservelastmodified="true">
+			<path>
+				<fileset dir="${buildPath}" includes="LanguagePropertiesManager_Offline_Windows_x64.jar" />
+			</path>
+		</signjar>
+	</target>
+
+	<target name="create_Windows_x32_jar">
+		<jar destfile="${buildPath}/LanguagePropertiesManager_Offline_Windows_x32.jar">
+			<manifest>
+				<attribute name="Main-Class" value="org.eclipse.jdt.internal.jarinjarloader.JarRsrcLoader" />
+				<attribute name="Rsrc-Main-Class" value="de.soderer.languagepropertiesmanager.dlg.LanguagePropertiesManagerDialog" />
+				<attribute name="Class-Path" value="." />
+				<attribute name="Rsrc-Class-Path" value="./ activation-1.1.jar commons-beanutils-1.8.0.jar commons-codec-1.6.jar commons-io-2.4.jar commons-lang-2.5.jar commons-lang3-3.1.jar commons-logging-1.1.1.jar commons-pool-1.5.1.jar ezmorph-1.0.6.jar hamcrest-core-1.1.jar jsch-0.1.46.jar json-lib-2.4-jdk15.jar jxl-2.6.12.jar log4j-1.2.14.jar log4j-over-slf4j-1.6.4.jar mail-1.4.5.jar slf4j-api-1.6.4.jar swt-4.2.1-win32-win32-x86.jar" />
+			</manifest>
+			<fileset dir="bin" />
+
+			<fileset dir="${projectsPath}/JavaUtilities/target/classes" />
+
+			<zipfileset dir="lib" includes="swt-4.2.1-win32-win32-x86.jar" />
+
+			<zipfileset dir="${mavenRepository}\javax\activation\activation\1.1" includes="activation-1.1.jar" />
+			<zipfileset dir="${mavenRepository}\commons-codec\commons-codec\1.6" includes="commons-codec-1.6.jar" />
+			<zipfileset dir="${mavenRepository}\commons-io\commons-io\2.4" includes="commons-io-2.4.jar" />
+			<zipfileset dir="${mavenRepository}\org\apache\commons\commons-lang3\3.1" includes="commons-lang3-3.1.jar" />
+			<zipfileset dir="${mavenRepository}\commons-pool\commons-pool\1.5.1" includes="commons-pool-1.5.1.jar" />
+			<zipfileset dir="${mavenRepository}\org\hamcrest\hamcrest-core\1.1" includes="hamcrest-core-1.1.jar" />
+			<zipfileset dir="${mavenRepository}\com\jcraft\jsch\0.1.46" includes="jsch-0.1.46.jar" />
+			<zipfileset dir="${mavenRepository}\net\sourceforge\jexcelapi\jxl\2.6.12" includes="jxl-2.6.12.jar" />
+			<zipfileset dir="${mavenRepository}\log4j\log4j\1.2.14" includes="log4j-1.2.14.jar" />
+			<zipfileset dir="${mavenRepository}\org\slf4j\log4j-over-slf4j\1.6.4" includes="log4j-over-slf4j-1.6.4.jar" />
+			<zipfileset dir="${mavenRepository}\javax\mail\mail\1.4.5" includes="mail-1.4.5.jar" />
+			<zipfileset dir="${mavenRepository}\org\slf4j\slf4j-api\1.6.4" includes="slf4j-api-1.6.4.jar" />
+			<zipfileset dir="${mavenRepository}\org\slf4j\slf4j-jdk14\1.7.2" includes="slf4j-jdk14-1.7.2.jar" />
+		</jar>
+
+		<signjar destDir="${buildPath}" alias="soderer-de-java" keystore="WebStart/keystore" storepass="vSV%nr!G" preservelastmodified="true">
+			<path>
+				<fileset dir="${buildPath}" includes="LanguagePropertiesManager_Offline_Windows_x32.jar" />
+			</path>
+		</signjar>
+	</target>
+</project>
