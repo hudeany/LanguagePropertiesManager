@@ -13,85 +13,83 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.filefilter.WildcardFileFilter;
-import org.apache.commons.lang3.StringEscapeUtils;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.eclipse.swt.widgets.Text;
 
+import de.soderer.utilities.Utilities;
+import de.soderer.utilities.WildcardFilenameFilter;
 import de.soderer.utilities.collection.IndexedLinkedHashMap;
-import de.soderer.utilities.collection.MapUtils;
+import de.soderer.utilities.collection.MapUtilities;
 import de.soderer.utilities.collection.UniqueFifoQueuedList;
 
 public class PropertiesStorage {
 	public static final String LANGUAGE_SIGN_DEFAULT = "default";
-	
+
 	public static final String SORT_SIGN_DEFAULT = "default";
 	public static final String SORT_SIGN_ORIGINAL_INDEX = "index";
 	public static final String SORT_SIGN_KEY = "key";
-	
+
 	public static final String PROPERTIES_FILEEXTENSION = "properties";
 	public static final String PROPERTIES_FILEPATTERN = "*." + PROPERTIES_FILEEXTENSION;
-	
-	private static final Pattern LANGUAGEANDCOUNTRYPATTERN = Pattern.compile("^.*[a-zA-Z0-9äöüÄÖÜ_]+(_[a-zA-Z]{2}){2}$");
-	private static final Pattern LANGUAGEPATTERN = Pattern.compile("^.*[a-zA-Z0-9äöüÄÖÜ_]+_[a-zA-Z]{2}$");
-	
+
+	private static final Pattern LANGUAGEANDCOUNTRYPATTERN = Pattern.compile("^.*[a-zA-Z0-9ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½_]+(_[a-zA-Z]{2}){2}$");
+	private static final Pattern LANGUAGEPATTERN = Pattern.compile("^.*[a-zA-Z0-9ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½_]+_[a-zA-Z]{2}$");
+
 	public static final String DEFAULT_STORAGE_SEPARATOR = " = ";
-	
-	private File directory;
+
+	private final File propertiesDirectory;
 	private FileFilter fileFilter;
-	private boolean readKeysCaseInsensitive;
+	private final boolean readKeysCaseInsensitive;
 	private Map<String, PropertiesLanguageFileReader> languageFiles;
 	private IndexedLinkedHashMap<String, Property> properties;
 	private int nextOrderIndex = 0;
-	
-	public PropertiesStorage(String directory, String popertySetName, boolean readKeysCaseInsensitive) throws Exception {
-		this.directory = new File(directory);
+
+	public PropertiesStorage(final String directory, final String popertySetName, final boolean readKeysCaseInsensitive) throws Exception {
+		propertiesDirectory = new File(directory);
 		try {
-			this.fileFilter = new WildcardFileFilter(popertySetName + PROPERTIES_FILEPATTERN);
-		} catch (Exception e) {
-			throw new Exception("Given filePattern is invalid");
+			fileFilter = new WildcardFilenameFilter(popertySetName + PROPERTIES_FILEPATTERN);
+		} catch (final Exception e) {
+			throw new Exception("Given filePattern is invalid", e);
 		}
 		this.readKeysCaseInsensitive = readKeysCaseInsensitive;
-		
-		if (!this.directory.isDirectory())
+
+		if (!propertiesDirectory.isDirectory())
 			throw new Exception("Given path is not a directory");
-		else if (!this.directory.exists())
+		else if (!propertiesDirectory.exists())
 			throw new Exception("Given directory does not exist");
 	}
-	
+
 	public void load() throws Exception {
-		languageFiles = new HashMap<String, PropertiesLanguageFileReader>();
-		
-		for (File propertyFile : directory.listFiles(fileFilter)) {
+		languageFiles = new HashMap<>();
+
+		for (final File propertyFile : propertiesDirectory.listFiles(fileFilter)) {
 			FileInputStream fileInputStream = null;
 			PropertiesLanguageFileReader propertiesLanguageFile;
 			try {
 				fileInputStream = new FileInputStream(propertyFile);
 				propertiesLanguageFile = new PropertiesLanguageFileReader();
 				propertiesLanguageFile.load(fileInputStream, readKeysCaseInsensitive);
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				throw new Exception("Error when reading file: " + propertyFile.getAbsolutePath(), e);
-			}
-			finally {
-				IOUtils.closeQuietly(fileInputStream);
+			} finally {
+				Utilities.closeQuietly(fileInputStream);
 			}
 			languageFiles.put(propertyFile.getAbsolutePath(), propertiesLanguageFile);
 		}
-		
-		languageFiles = MapUtils.sort(languageFiles, new Comparator<String>(){
+
+		languageFiles = MapUtilities.sort(languageFiles, new Comparator<String>(){
 			@Override
-			public int compare(String arg0, String arg1) {
+			public int compare(final String arg0, final String arg1) {
 				if (arg0.length() != arg1.length())
-					return new Integer(arg0.length()).compareTo(arg1.length());
+					return Integer.valueOf(arg0.length()).compareTo(arg1.length());
 				else return arg0.compareTo(arg1);
 			}
 		});
 
-		IndexedLinkedHashMap<String, Property> returnValues = new IndexedLinkedHashMap<String, Property>();
-		for (Entry<String, PropertiesLanguageFileReader> propertiesLanguageFileEntry : languageFiles.entrySet()) {
-			String languageSign = PropertiesLanguageFileReader.getLanguageSignOfFilename(propertiesLanguageFileEntry.getKey());
-			for (Entry<String, String> entry : propertiesLanguageFileEntry.getValue().getEntries().entrySet()) {
+		final IndexedLinkedHashMap<String, Property> returnValues = new IndexedLinkedHashMap<>();
+		for (final Entry<String, PropertiesLanguageFileReader> propertiesLanguageFileEntry : languageFiles.entrySet()) {
+			final String languageSign = PropertiesLanguageFileReader.getLanguageSignOfFilename(propertiesLanguageFileEntry.getKey());
+			for (final Entry<String, String> entry : propertiesLanguageFileEntry.getValue().getEntries().entrySet()) {
 				Property property = returnValues.get(entry.getKey());
 				if (property == null) {
 					property = new Property(entry.getKey());
@@ -101,53 +99,48 @@ public class PropertiesStorage {
 				property.setLanguageValue(languageSign, entry.getValue());
 			}
 		}
-		
-		properties = MapUtils.sort(returnValues, new Property.KeyComparator(true));
+
+		properties = MapUtilities.sort(returnValues, new Property.KeyComparator(true));
 	}
-	
-	public void remove(String key) throws Exception {
+
+	public void remove(final String key) throws Exception {
 		properties.remove(key);
 	}
-	
-	public void add(Property property) throws Exception {
+
+	public void add(final Property property) throws Exception {
 		properties.put(property.getKey(), property);
-		properties = MapUtils.sort(properties, new Property.KeyComparator(true));
+		properties = MapUtilities.sort(properties, new Property.KeyComparator(true));
 	}
-	
-	public void save(String directory, String separator, boolean sortByOrgIndex) throws Exception {
+
+	public void save(final String directory, String separator, final boolean sortByOrgIndex) throws Exception {
 		Map<String, Property> propertiesToSave;
 		if (sortByOrgIndex)
-			propertiesToSave = MapUtils.sortEntries(properties, new Property.OriginalIndexComparator(true));
+			propertiesToSave = MapUtilities.sortEntries(properties, new Property.OriginalIndexComparator(true));
 		else propertiesToSave = properties;
-		
-		if (StringUtils.isEmpty(separator))
+
+		if (Utilities.isEmpty(separator))
 			separator = DEFAULT_STORAGE_SEPARATOR;
-		
-		for (String propertiesLanguageFileName : languageFiles.keySet()) {
-			String languageSign = PropertiesLanguageFileReader.getLanguageSignOfFilename(propertiesLanguageFileName);
-			String fileName = new File(propertiesLanguageFileName).getName();
-			File propertyFile = new File(directory + File.separator + fileName);
-			FileOutputStream fileOutputStream = null;
+
+		for (final String propertiesLanguageFileName : languageFiles.keySet()) {
+			final String languageSign = PropertiesLanguageFileReader.getLanguageSignOfFilename(propertiesLanguageFileName);
+			final String fileName = new File(propertiesLanguageFileName).getName();
+			final File propertyFile = new File(directory + File.separator + fileName);
 			try {
 				if (propertyFile.exists()) propertyFile.delete();
-				fileOutputStream = new FileOutputStream(propertyFile);
-				for (Entry<String, Property> entry : propertiesToSave.entrySet()) {
-					if (entry.getValue().getLanguageValue(languageSign) != null) {
-						StringBuilder line = new StringBuilder();
-						line.append(entry.getValue().getKey());
-						line.append(separator);
-						line.append(entry.getValue().getLanguageValue(languageSign));
-						line.append("\n");
-						fileOutputStream.write(line.toString().getBytes("UTF-8"));
+				try (FileOutputStream fileOutputStream = new FileOutputStream(propertyFile)) {
+					for (final Entry<String, Property> entry : propertiesToSave.entrySet()) {
+						if (entry.getValue().getLanguageValue(languageSign) != null) {
+							final StringBuilder line = new StringBuilder();
+							line.append(entry.getValue().getKey());
+							line.append(separator);
+							line.append(entry.getValue().getLanguageValue(languageSign));
+							line.append("\n");
+							fileOutputStream.write(line.toString().getBytes("UTF-8"));
+						}
 					}
 				}
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				throw new Exception("Error when writing file: " + propertyFile.getAbsolutePath(), e);
-			} finally {
-				if (fileOutputStream != null) {
-					fileOutputStream.flush();
-					fileOutputStream.close();
-				}
 			}
 		}
 	}
@@ -155,18 +148,18 @@ public class PropertiesStorage {
 	public Map<String, PropertiesLanguageFileReader> getLanguageFiles() {
 		return languageFiles;
 	}
-	
+
 	public List<String> getLanguageSigns() {
-		List<String> returnValues = new ArrayList<String>();
-		
-		if (directory != null) {
-			for (String fileName : languageFiles.keySet()) {
+		final List<String> returnValues = new ArrayList<>();
+
+		if (propertiesDirectory != null) {
+			for (final String fileName : languageFiles.keySet()) {
 				returnValues.add(PropertiesLanguageFileReader.getLanguageSignOfFilename(fileName));
 			}
-			
+
 			Collections.sort(returnValues, new Comparator<String>() {
 				@Override
-				public int compare(String value1, String value2) {
+				public int compare(final String value1, final String value2) {
 					if (LANGUAGE_SIGN_DEFAULT.equalsIgnoreCase(value1))
 						return -1;
 					else if (LANGUAGE_SIGN_DEFAULT.equalsIgnoreCase(value2))
@@ -176,45 +169,47 @@ public class PropertiesStorage {
 				}
 			});
 		}
-			
+
 		return returnValues;
 	}
-	
-	public IndexedLinkedHashMap<String, Property> getProperties() {		
+
+	public IndexedLinkedHashMap<String, Property> getProperties() {
 		return properties;
 	}
-	
-	public void removeLanguage(String languageSign) throws Exception {
-		for (Property property : properties.values()) {
+
+	public void removeLanguage(final String languageSign) throws Exception {
+		for (final Property property : properties.values()) {
 			property.removeLanguageValue(languageSign);
 		}
 		languageFiles.remove(languageSign);
 	}
-	
-	public void addLanguage(String languageSign) throws Exception {
+
+	public void addLanguage(final String languageSign) throws Exception {
 		String defaultFileName = null;
-		for (String fileName : languageFiles.keySet()) {
+		for (final String fileName : languageFiles.keySet()) {
 			if (LANGUAGE_SIGN_DEFAULT.equalsIgnoreCase(PropertiesLanguageFileReader.getLanguageSignOfFilename(fileName))) {
 				defaultFileName = fileName;
 			}
 		}
-		new File(defaultFileName.substring(0, defaultFileName.length() - 11) + languageSign + ".properties").createNewFile();
+		if (defaultFileName != null) {
+			new File(defaultFileName.substring(0, defaultFileName.length() - 11) + languageSign + ".properties").createNewFile();
+		}
 		load();
 	}
-	
-	public boolean cleanUp(boolean repairpunctuation) throws Exception {
+
+	public boolean cleanUp(final boolean repairpunctuation) throws Exception {
 		boolean dataWasChanged = false;
-		
-		for (Property property : properties.values()) {
+
+		for (final Property property : properties.values()) {
 			// Store original values for later change check
-			HashMap<String, String> originalData = new HashMap<String, String>();
-			for (String sign : getLanguageSigns()) {
+			final HashMap<String, String> originalData = new HashMap<>();
+			for (final String sign : getLanguageSigns()) {
 				originalData.put(sign, property.getLanguageValue(sign));
 			}
-			
-			for (String sign : getLanguageSigns()) {
+
+			for (final String sign : getLanguageSigns()) {
 				String value = property.getLanguageValue(sign);
-					if (value != null) {
+				if (value != null) {
 					// clear blank before and after "<br>"
 					value = value.replace(" <br>", "<br>").replace("<br> ", "<br>");
 					// remove "<br>" at end
@@ -227,21 +222,21 @@ public class PropertiesStorage {
 					}
 					property.setLanguageValue(sign, value);
 				}
-				
+
 				// Clear empty values
-				if (StringUtils.isEmpty(property.getLanguageValue(sign))) {
+				if (Utilities.isEmpty(property.getLanguageValue(sign))) {
 					property.removeLanguageValue(sign);
 				}
 			}
-			
+
 			if (repairpunctuation) {
 				// Check exclamationmark, questionmark and fullstop unification
 				boolean hasExclamationEnd = false;
 				boolean hasQuestionEnd = false;
 				boolean hasFullstopEnd = false;
 				boolean hasColonEnd = false;
-				for (String sign : getLanguageSigns()) {
-					String value = property.getLanguageValue(sign);
+				for (final String sign : getLanguageSigns()) {
+					final String value = property.getLanguageValue(sign);
 					if (value != null) {
 						if (!sign.equalsIgnoreCase("zh")) {
 							if (value.endsWith("!"))
@@ -264,7 +259,7 @@ public class PropertiesStorage {
 						}
 					}
 				}
-				for (String sign : getLanguageSigns()) {
+				for (final String sign : getLanguageSigns()) {
 					String value = property.getLanguageValue(sign);
 					if (value != null) {
 						if (!sign.equalsIgnoreCase("zh")) {
@@ -300,31 +295,31 @@ public class PropertiesStorage {
 								if (!value.endsWith("\\u3002")) value += "\\u3002";
 							}
 						}
-						
+
 						property.setLanguageValue(sign, value);
 					}
 				}
 			}
 
-			List<String> signs = getLanguageSigns();
+			final List<String> signs = getLanguageSigns();
 			signs.remove(LANGUAGE_SIGN_DEFAULT);
-			for (String sign : signs) {
+			for (final String sign : signs) {
 				if (property.getLanguageValue(LANGUAGE_SIGN_DEFAULT) != null
-						&& StringUtils.isNotEmpty(property.getLanguageValue(sign))
+						&& Utilities.isNotEmpty(property.getLanguageValue(sign))
 						&& property.getLanguageValue(LANGUAGE_SIGN_DEFAULT).equals(property.getLanguageValue(sign))) {
 					property.removeLanguageValue(sign);
 				} else if (sign.contains("_")) {
-					String firstSignPart = sign.substring(0, sign.indexOf("_"));
+					final String firstSignPart = sign.substring(0, sign.indexOf("_"));
 					if (property.getLanguageValue(firstSignPart) != null
-							&& StringUtils.isNotEmpty(property.getLanguageValue(sign))
+							&& Utilities.isNotEmpty(property.getLanguageValue(sign))
 							&& property.getLanguageValue(firstSignPart).equals(property.getLanguageValue(sign))) {
 						property.removeLanguageValue(sign);
 					}
 				}
 			}
-			
+
 			// Languagespecific changes
-			for (String sign : getLanguageSigns()) {
+			for (final String sign : getLanguageSigns()) {
 				if (sign.equalsIgnoreCase("es") && property.getLanguageValue(sign) != null) {
 					String value = property.getLanguageValue(sign);
 					if (value.endsWith("!") && !value.startsWith("\\u00A1")) {
@@ -334,7 +329,7 @@ public class PropertiesStorage {
 					}
 					property.setLanguageValue(sign, value);
 				}
-				
+
 				if (sign.equals("fr") && property.getLanguageValue(sign) != null) {
 					String value = property.getLanguageValue(sign);
 					value = value.replace("!", " !").replace("  !", " !").replace("?", " ?").replace("  ?", " ?").replace(":", " :").replace("  :", " :");
@@ -345,74 +340,74 @@ public class PropertiesStorage {
 					property.setLanguageValue(sign, value);
 				}
 			}
-			
+
 			// Change check
-			for (String sign : getLanguageSigns()) {
+			for (final String sign : getLanguageSigns()) {
 				if (originalData.get(sign) == null && property.getLanguageValue(sign) != null)
 					dataWasChanged = true;
 				else if (originalData.get(sign) != null && !originalData.get(sign).equals(property.getLanguageValue(sign)))
 					dataWasChanged = true;
 			}
 		}
-		
+
 		return dataWasChanged;
 	}
-	
-	public void sort(String column, boolean ascending) {
+
+	public void sort(final String column, final boolean ascending) {
 		if (column.equalsIgnoreCase(SORT_SIGN_KEY)) {
-			properties = MapUtils.sort(properties, new Property.KeyComparator(ascending));
+			properties = MapUtilities.sort(properties, new Property.KeyComparator(ascending));
 		} else if (column.equalsIgnoreCase(SORT_SIGN_ORIGINAL_INDEX)) {
-			properties = MapUtils.sortEntries(properties, new Property.OriginalIndexComparator(ascending));
+			properties = MapUtilities.sortEntries(properties, new Property.OriginalIndexComparator(ascending));
 		} else if (column.equalsIgnoreCase(SORT_SIGN_DEFAULT)) {
-			properties = MapUtils.sortEntries(properties, new Property.EntryValueExistsComparator(LANGUAGE_SIGN_DEFAULT, ascending));
+			properties = MapUtilities.sortEntries(properties, new Property.EntryValueExistsComparator(LANGUAGE_SIGN_DEFAULT, ascending));
 		} else {
-			properties = MapUtils.sortEntries(properties, new Property.EntryValueExistsComparator(column, ascending));
+			properties = MapUtilities.sortEntries(properties, new Property.EntryValueExistsComparator(column, ascending));
 		}
 	}
-	
-	public int getIndexOfKey(String key) {
+
+	public int getIndexOfKey(final String key) {
 		return properties.getKeyList().indexOf(key);
 	}
-	
-	public void add(boolean isStorageText, Text keyTextfield, Map<String, Text> languageTextFields) throws Exception {
+
+	public void add(final boolean isStorageText, final Text keyTextfield, final Map<String, Text> languageTextFields) throws Exception {
 		// Check duplicate key
 		if (properties.containsKey(keyTextfield.getText()))
 			throw new Exception("New key " + keyTextfield.getText() + " already exists");
-		
-		Property property = new Property(isStorageText ? keyTextfield.getText() : StringEscapeUtils.escapeJava(keyTextfield.getText()));
+
+		final Property property = new Property(isStorageText ? keyTextfield.getText() : StringEscapeUtils.escapeJava(keyTextfield.getText()));
 
 		property.setOriginalIndex(nextOrderIndex++);
-		
+
 		// Set values
-		for (String languageKey : languageTextFields.keySet()) {
+		for (final String languageKey : languageTextFields.keySet()) {
 			property.setLanguageValue(languageKey, isStorageText ? languageTextFields.get(languageKey).getText() : StringEscapeUtils.escapeJava(languageTextFields.get(languageKey).getText()));
 		}
-		
+
 		add(property);
 	}
-	
-	public void change(boolean isStorageText, String oldKey, Text keyTextfield, Map<String, Text> languageTextFields) throws Exception {
-		Property property = properties.get(oldKey);
+
+	public void change(final boolean isStorageText, final String oldKey, final Text keyTextfield, final Map<String, Text> languageTextFields) throws Exception {
+		final Property property = properties.get(oldKey);
 
 		if (!oldKey.equals(keyTextfield.getText())) {
 			// Check duplicate key
 			if (properties.containsKey(keyTextfield.getText()))
 				throw new Exception("New key already exists");
-		
+
 			property.setKey(keyTextfield.getText());
 		}
 
 		// Set values
 		property.setKey(isStorageText ? keyTextfield.getText() : StringEscapeUtils.escapeJava(keyTextfield.getText()));
-		for (String languageKey : languageTextFields.keySet()) {
+		for (final String languageKey : languageTextFields.keySet()) {
 			property.setLanguageValue(languageKey, isStorageText ? languageTextFields.get(languageKey).getText() : StringEscapeUtils.escapeJava(languageTextFields.get(languageKey).getText()));
 		}
 	}
-	
-	public static List<String> readAvailablePropertySets(String directoryPath) {
-		List<String> returnList = new UniqueFifoQueuedList<String>(10);
-		for (File propertyFile : new File(directoryPath).listFiles((FileFilter) new WildcardFileFilter(PROPERTIES_FILEPATTERN))) {
-			String fileName = propertyFile.getName().substring(0, propertyFile.getName().lastIndexOf('.'));
+
+	public static List<String> readAvailablePropertySets(final String directoryPath) {
+		final List<String> returnList = new UniqueFifoQueuedList<>(10);
+		for (final File propertyFile : new File(directoryPath).listFiles((FileFilter) new WildcardFilenameFilter(PROPERTIES_FILEPATTERN))) {
+			final String fileName = propertyFile.getName().substring(0, propertyFile.getName().lastIndexOf('.'));
 			if (LANGUAGEANDCOUNTRYPATTERN.matcher(fileName).matches()) {
 				returnList.add(fileName.substring(0, fileName.length() - 6));
 			} else if (LANGUAGEPATTERN.matcher(fileName).matches()) {
