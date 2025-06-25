@@ -21,10 +21,12 @@ import de.soderer.utilities.swt.ShowDataDialog;
 import de.soderer.utilities.swt.SwtUtilities;
 
 public class HelpDialog extends ModalDialog<Boolean> {
+	private final LanguagePropertiesManagerDialog applicationDialog;
 	private final ConfigurationProperties applicationConfiguration;
 
-	public HelpDialog(final Shell parentShell, final String title, final ConfigurationProperties applicationConfiguration) {
-		super(parentShell, title);
+	public HelpDialog(final LanguagePropertiesManagerDialog applicationDialog, final String title, final ConfigurationProperties applicationConfiguration) {
+		super(applicationDialog, title);
+		this.applicationDialog = applicationDialog;
 		this.applicationConfiguration = applicationConfiguration;
 	}
 
@@ -60,7 +62,7 @@ public class HelpDialog extends ModalDialog<Boolean> {
 					final String proxyUrl = applicationConfiguration.get(ApplicationConfigurationDialog.CONFIG_PROXY_URL);
 					final ProxyConfiguration proxyConfiguration = new ProxyConfiguration(proxyConfigurationType, proxyUrl);
 
-					ApplicationUpdateUtilities.executeUpdate((LanguagePropertiesManagerDialog) getParent(), LanguagePropertiesManagerDialog.VERSIONINFO_DOWNLOAD_URL, proxyConfiguration, LanguagePropertiesManagerDialog.APPLICATION_NAME, LanguagePropertiesManagerDialog.VERSION, LanguagePropertiesManagerDialog.TRUSTED_UPDATE_CA_CERTIFICATES, null, null, null, true);
+					ApplicationUpdateUtilities.executeUpdate(applicationDialog, LanguagePropertiesManagerDialog.VERSIONINFO_DOWNLOAD_URL, proxyConfiguration, LanguagePropertiesManagerDialog.APPLICATION_NAME, LanguagePropertiesManagerDialog.VERSION, LanguagePropertiesManagerDialog.TRUSTED_UPDATE_CA_CERTIFICATES, null, null, null, true);
 				} catch (final Exception e1) {
 					showErrorMessage(LangResources.get("updateCheck"), LangResources.get("error.cannotCheckForUpdate", e1.getMessage()));
 				}

@@ -686,14 +686,15 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	}
 
 	private class HelpButtonSelectionListener extends SelectionAdapter {
-		private final Shell shell;
-		public HelpButtonSelectionListener(final Shell shell) {
-			this.shell = shell;
+		private final LanguagePropertiesManagerDialog applicationDialog;
+
+		public HelpButtonSelectionListener(final LanguagePropertiesManagerDialog applicationDialog) {
+			this.applicationDialog = applicationDialog;
 		}
 
 		@Override
 		public void widgetSelected(final SelectionEvent e) {
-			new HelpDialog(shell, APPLICATION_NAME + " (" + VERSION + ") " + LangResources.get("help"), applicationConfiguration).open();
+			new HelpDialog(applicationDialog, APPLICATION_NAME + " (" + VERSION + ") " + LangResources.get("help"), applicationConfiguration).open();
 		}
 	}
 

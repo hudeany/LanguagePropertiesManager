@@ -2,13 +2,15 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="lib" path="debuglibs/swt-4.2.1-win32-win32-x86_64-debug.jar"/>
-	<classpathentry kind="lib" path="lib_soderer/soderer-utilities-25.1.6.jar"/>
+	<classpathentry kind="lib" path="lib_soderer/soderer-utilities-25.1.6.jar" sourcepath="lib_soderer/soderer-utilities-25.1.6-sources.jar"/>
 	<classpathentry kind="lib" path="lib/network-25.1.0.jar"/>
 	<classpathentry kind="lib" path="lib/swt-4.22-win32-win32-x86_64.jar"/>
 	<classpathentry kind="lib" path="lib/csv-24.1.0.jar"/>
 	<classpathentry kind="lib" path="lib/commons-text-1.9.jar"/>
 	<classpathentry kind="lib" path="lib/proxyautoconfig-25.1.2.jar"/>
 	<classpathentry kind="lib" path="lib/commons-lang3-3.11.jar"/>
+	<classpathentry kind="lib" path="lib/mailapi-2.0.1.jar"/>
+	<classpathentry kind="lib" path="lib/json-25.1.2.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">
 		<attributes>
 			<attribute name="module" value="true"/>
