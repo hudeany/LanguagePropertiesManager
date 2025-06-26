@@ -187,10 +187,11 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 			final ConfigurationProperties applicationConfiguration = new ConfigurationProperties(APPLICATION_NAME, true);
 			LanguagePropertiesManagerDialog.setupDefaultConfig(applicationConfiguration);
-			if ("de".equalsIgnoreCase(applicationConfiguration.get(LanguagePropertiesManagerDialog.CONFIG_LANGUAGE)))
+			if ("de".equalsIgnoreCase(applicationConfiguration.get(LanguagePropertiesManagerDialog.CONFIG_LANGUAGE))) {
 				Locale.setDefault(Locale.GERMAN);
-			else
+			} else {
 				Locale.setDefault(Locale.ENGLISH);
+			}
 
 			final LanguagePropertiesManagerDialog mainDialog = new LanguagePropertiesManagerDialog(display, applicationConfiguration);
 			mainDialog.run();
@@ -217,9 +218,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		loadConfiguration();
 
 		final Monitor[] monitorArray = display.getMonitors();
-		if (monitorArray != null)
-			getShell().setLocation((monitorArray[0].getClientArea().width - getSize().x) / 2,
-					(monitorArray[0].getClientArea().height - getSize().y) / 2);
+		if (monitorArray != null) {
+			getShell().setLocation((monitorArray[0].getClientArea().width - getSize().x) / 2, (monitorArray[0].getClientArea().height - getSize().y) / 2);
+		}
 
 		@SuppressWarnings("unused")
 		final
@@ -330,14 +331,16 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		searchTextField.addFocusListener(new FocusListener() {
 			@Override
 			public void focusGained(final FocusEvent e) {
-				if (((Text) e.widget).getText().equals(LangResources.get("search")))
+				if (((Text) e.widget).getText().equals(LangResources.get("search"))) {
 					((Text) e.widget).setText("");
+				}
 			}
 
 			@Override
 			public void focusLost(final FocusEvent e) {
-				if (Utilities.isEmpty(((Text) e.widget).getText()))
+				if (Utilities.isEmpty(((Text) e.widget).getText())) {
 					((Text) e.widget).setText(LangResources.get("search"));
+				}
 			}
 		});
 		searchTextField.addModifyListener(new ModifyListener() {
@@ -345,8 +348,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			public void modifyText(final ModifyEvent e) {
 				final Text textItem = ((Text) e.widget);
 				if (Utilities.isNotEmpty(textItem.getText()) && !textItem.getText().equals(LangResources.get("search")) && storage != null) {
-					if (propertiesTable.getSelectionCount() == 0)
+					if (propertiesTable.getSelectionCount() == 0) {
 						propertiesTable.setSelection(0);
+					}
 					searchText = textItem.getText();
 					selectSearch(searchText, propertiesTable.getSelectionIndex(), true, searchCaseInsensitivePreference);
 				}
@@ -360,14 +364,16 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		searchDownButton.addSelectionListener(new SelectionListener() {
 			@Override
 			public void widgetSelected(final SelectionEvent e) {
-				if (Utilities.isNotEmpty(searchText))
+				if (Utilities.isNotEmpty(searchText)) {
 					selectSearch(searchText, propertiesTable.getSelectionIndex() + 1, true, searchCaseInsensitivePreference);
+				}
 			}
 
 			@Override
 			public void widgetDefaultSelected(final SelectionEvent e) {
-				if (Utilities.isNotEmpty(searchText))
+				if (Utilities.isNotEmpty(searchText)) {
 					selectSearch(searchText, propertiesTable.getSelectionIndex() + 1, true, searchCaseInsensitivePreference);
+				}
 			}
 		});
 
@@ -391,8 +397,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			public void widgetSelected(final SelectionEvent e) {
 				searchCaseInsensitivePreference = !((Button)e.widget).getSelection();
 				if (Utilities.isNotEmpty(searchText) && !searchText.equals(LangResources.get("search")) && storage != null) {
-					if (propertiesTable.getSelectionCount() == 0)
+					if (propertiesTable.getSelectionCount() == 0) {
 						propertiesTable.setSelection(0);
+					}
 					selectSearch(searchText, propertiesTable.getSelectionIndex(), true, searchCaseInsensitivePreference);
 				}
 			}
@@ -441,8 +448,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			if (!column.getText().equals(LangResources.get("columnheader_dummy"))
 					&& !column.getText().equals(LangResources.get("columnheader_nr"))
 					&& !column.getText().equals(LangResources.get("columnheader_original_index"))
-					&& !column.getText().equals(LangResources.get("columnheader_key")))
+					&& !column.getText().equals(LangResources.get("columnheader_key"))) {
 				column.dispose();
+			}
 		}
 
 		if (storage != null) {
@@ -450,8 +458,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				final TableColumn column = new TableColumn(propertiesTable, SWT.CENTER);
 				column.setMoveable(true);
 				column.setWidth(sign.length() > 3 ? 50 : 25);
-				if (sign.equals(PropertiesStorage.LANGUAGE_SIGN_DEFAULT))
+				if (sign.equals(PropertiesStorage.LANGUAGE_SIGN_DEFAULT)) {
 					column.setText(LangResources.get("columnheader_default"));
+				}
 				else column.setText(sign);
 				column.addListener(SWT.Selection, columnSortListener);
 			}
@@ -469,8 +478,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 			for (final String sign : storage.getLanguageSigns()) {
 				final Label languageLabel = new Label(detailFieldsPart, SWT.NONE);
-				if (PropertiesStorage.LANGUAGE_SIGN_DEFAULT.equals(sign))
+				if (PropertiesStorage.LANGUAGE_SIGN_DEFAULT.equals(sign)) {
 					languageLabel.setText(LangResources.get("columnheader_default") + ":");
+				}
 				else languageLabel.setText(sign + ":");
 				final Text languageTextfield = new Text(detailFieldsPart, SWT.BORDER);
 				languageTextfield.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false, 1, 1));
@@ -725,8 +735,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 						}
 					}
 				}
-			}
-			catch (final Exception ex) {
+			} catch (final Exception ex) {
 				new ErrorDialog(getShell(), APPLICATION_NAME, VERSION.toString(), APPLICATION_ERROR_EMAIL_ADRESS, ex).open();
 			}
 		}
@@ -747,8 +756,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					checkUsage(storage, directory, filePattern, usagePattern);
 					checkButtonStatus();
 				}
-			}
-			catch (final Exception ex) {
+			} catch (final Exception ex) {
 				new ErrorDialog(getShell(), APPLICATION_NAME, VERSION.toString(), APPLICATION_ERROR_EMAIL_ADRESS, ex).open();
 			}
 		}
@@ -774,19 +782,19 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					for (final String sign : storage.getLanguageSigns()) {
 						final Text languageTextfield = languageTextFields.get(sign);
 						final String value = propertyByKey.getLanguageValue(sign);
-						if (value == null)
+						if (value == null) {
 							languageTextfield.setText("");
-						else if (showStorageTexts)
+						} else if (showStorageTexts) {
 							languageTextfield.setText(value);
-						else
+						} else {
 							languageTextfield.setText(StringEscapeUtils.unescapeJava(value));
+						}
 					}
 				}
 
 				okButton.setText(LangResources.get("button_text_change"));
 				removeButton.setEnabled(true);
-			}
-			else {
+			} else {
 				keyTextfield.setText("");
 				for (final String sign : storage.getLanguageSigns()) {
 					final Text languageTextfield = languageTextFields.get(sign);
@@ -799,26 +807,43 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 			dataWasModified = false;
 			checkButtonStatus();
-		}
-		catch (final Exception ex) {
+		} catch (final Exception ex) {
 			new ErrorDialog(getShell(), APPLICATION_NAME, VERSION.toString(), APPLICATION_ERROR_EMAIL_ADRESS, ex).open();
 		}
 	}
 
 	public void checkButtonStatus() {
-		if (okButton != null) okButton.setEnabled(dataWasModified);
-		if (cancelButton != null) cancelButton.setEnabled(dataWasModified);
-		if (saveButton != null) saveButton.setEnabled(hasUnsavedChanges);
-		if (addButton != null) addButton.setEnabled(propertiesTable.getItemCount() > 0);
-		if (cleanupButton != null) cleanupButton.setEnabled(propertiesTable.getItemCount() > 0);
-		if (loadRecentButton != null) loadRecentButton.setEnabled(recentlyOpenedDirectories != null && recentlyOpenedDirectories.size() > 0);
-		if (propertiesTable != null) propertiesTable.setEnabled(propertiesTable.getItemCount() > 0);
-		if (searchBox != null) searchBox.setEnabled(propertiesTable.getItemCount() > 0);
+		if (okButton != null) {
+			okButton.setEnabled(dataWasModified);
+		}
+		if (cancelButton != null) {
+			cancelButton.setEnabled(dataWasModified);
+		}
+		if (saveButton != null) {
+			saveButton.setEnabled(hasUnsavedChanges);
+		}
+		if (addButton != null) {
+			addButton.setEnabled(propertiesTable.getItemCount() > 0);
+		}
+		if (cleanupButton != null) {
+			cleanupButton.setEnabled(propertiesTable.getItemCount() > 0);
+		}
+		if (loadRecentButton != null) {
+			loadRecentButton.setEnabled(recentlyOpenedDirectories != null && recentlyOpenedDirectories.size() > 0);
+		}
+		if (propertiesTable != null) {
+			propertiesTable.setEnabled(propertiesTable.getItemCount() > 0);
+		}
+		if (searchBox != null) {
+			searchBox.setEnabled(propertiesTable.getItemCount() > 0);
+		}
 
-		if (checkUsageButton != null)
+		if (checkUsageButton != null) {
 			checkUsageButton.setEnabled(storage != null && storage.getProperties().size() > 0);
-		if (checkUsageButtonPrevious != null)
+		}
+		if (checkUsageButtonPrevious != null) {
 			checkUsageButtonPrevious.setEnabled(checkUsageButton.isEnabled() && recentlyCheckUsages != null && recentlyCheckUsages.size() > 0);
+		}
 	}
 
 	private boolean askForDropProperties() {
@@ -981,14 +1006,15 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			}
 			table.setSortColumn(columnToSort);
 
-			if (columnToSort.getText().equals(LangResources.get("columnheader_key")))
+			if (columnToSort.getText().equals(LangResources.get("columnheader_key"))) {
 				storage.sort(PropertiesStorage.SORT_SIGN_KEY, table.getSortDirection() == SWT.UP);
-			else if (columnToSort.getText().equals(LangResources.get("columnheader_original_index")))
+			} else if (columnToSort.getText().equals(LangResources.get("columnheader_original_index"))) {
 				storage.sort(PropertiesStorage.SORT_SIGN_ORIGINAL_INDEX, table.getSortDirection() == SWT.UP);
-			else if (columnToSort.getText().equals(LangResources.get("columnheader_default")))
+			} else if (columnToSort.getText().equals(LangResources.get("columnheader_default"))) {
 				storage.sort(PropertiesStorage.SORT_SIGN_DEFAULT, table.getSortDirection() == SWT.UP);
-			else
+			} else {
 				storage.sort(columnToSort.getText(), table.getSortDirection() == SWT.UP);
+			}
 
 			refreshTable();
 		}
@@ -1061,8 +1087,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 			int currentIndex = -1;
 			while (currentIndex != startIndex) {
-				if (currentIndex == -1)
+				if (currentIndex == -1) {
 					currentIndex = startIndex;
+				}
 
 				if (!searchCaseInsensitive && storage.getProperties().getKey(currentIndex).contains(text)) {
 					propertiesTable.setSelection(currentIndex);
@@ -1074,22 +1101,34 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					break;
 				}
 
-				if (searchUp) currentIndex++;
-				else currentIndex--;
+				if (searchUp) {
+					currentIndex++;
+				} else {
+					currentIndex--;
+				}
 
-				if (currentIndex < 0)
+				if (currentIndex < 0) {
 					currentIndex = storage.getProperties().size() - 1;
-				else if (currentIndex >= storage.getProperties().size())
+				} else if (currentIndex >= storage.getProperties().size()) {
 					currentIndex = 0;
+				}
 			}
 		}
 	}
 
 	public static void setupDefaultConfig(final ConfigurationProperties applicationConfiguration) {
-		if (!applicationConfiguration.containsKey(CONFIG_CLEANUP_REPAIRPUNCTUATION)) applicationConfiguration.set(CONFIG_CLEANUP_REPAIRPUNCTUATION, true);
-		if (!applicationConfiguration.containsKey(CONFIG_OUTPUT_SEPARATOR)) applicationConfiguration.set(CONFIG_OUTPUT_SEPARATOR, " = ");
-		if (!applicationConfiguration.containsKey(CONFIG_SORT_ORG_INDEX)) applicationConfiguration.set(CONFIG_SORT_ORG_INDEX, true);
-		if (!applicationConfiguration.containsKey(CONFIG_LANGUAGE)) applicationConfiguration.set(CONFIG_LANGUAGE, Locale.getDefault().getLanguage());
+		if (!applicationConfiguration.containsKey(CONFIG_CLEANUP_REPAIRPUNCTUATION)) {
+			applicationConfiguration.set(CONFIG_CLEANUP_REPAIRPUNCTUATION, true);
+		}
+		if (!applicationConfiguration.containsKey(CONFIG_OUTPUT_SEPARATOR)) {
+			applicationConfiguration.set(CONFIG_OUTPUT_SEPARATOR, " = ");
+		}
+		if (!applicationConfiguration.containsKey(CONFIG_SORT_ORG_INDEX)) {
+			applicationConfiguration.set(CONFIG_SORT_ORG_INDEX, true);
+		}
+		if (!applicationConfiguration.containsKey(CONFIG_LANGUAGE)) {
+			applicationConfiguration.set(CONFIG_LANGUAGE, Locale.getDefault().getLanguage());
+		}
 	}
 
 	public void checkUsage(final PropertiesStorage storageToCheck, final String directory, final String filePattern, final String usagePatternString) throws Exception {

@@ -32,8 +32,8 @@ public class PropertiesStorage {
 	public static final String PROPERTIES_FILEEXTENSION = "properties";
 	public static final String PROPERTIES_FILEPATTERN = "*." + PROPERTIES_FILEEXTENSION;
 
-	private static final Pattern LANGUAGEANDCOUNTRYPATTERN = Pattern.compile("^.*[a-zA-Z0-9������_]+(_[a-zA-Z]{2}){2}$");
-	private static final Pattern LANGUAGEPATTERN = Pattern.compile("^.*[a-zA-Z0-9������_]+_[a-zA-Z]{2}$");
+	private static final Pattern LANGUAGEANDCOUNTRYPATTERN = Pattern.compile("^.*[a-zA-Z0-9_]+(_[a-zA-Z]{2}){2}$");
+	private static final Pattern LANGUAGEPATTERN = Pattern.compile("^.*[a-zA-Z0-9_]+_[a-zA-Z]{2}$");
 
 	public static final String DEFAULT_STORAGE_SEPARATOR = " = ";
 
@@ -53,10 +53,11 @@ public class PropertiesStorage {
 		}
 		this.readKeysCaseInsensitive = readKeysCaseInsensitive;
 
-		if (!propertiesDirectory.isDirectory())
+		if (!propertiesDirectory.isDirectory()) {
 			throw new Exception("Given path is not a directory");
-		else if (!propertiesDirectory.exists())
+		} else if (!propertiesDirectory.exists()) {
 			throw new Exception("Given directory does not exist");
+		}
 	}
 
 	public void load() throws Exception {
@@ -77,18 +78,21 @@ public class PropertiesStorage {
 			languageFiles.put(propertyFile.getAbsolutePath(), propertiesLanguageFile);
 		}
 
-		languageFiles = MapUtilities.sort(languageFiles, new Comparator<String>(){
+		languageFiles = MapUtilities.sort(languageFiles, new Comparator<String>() {
 			@Override
 			public int compare(final String arg0, final String arg1) {
-				if (arg0.length() != arg1.length())
+				if (arg0.length() != arg1.length()) {
 					return Integer.valueOf(arg0.length()).compareTo(arg1.length());
-				else return arg0.compareTo(arg1);
+				} else {
+					return arg0.compareTo(arg1);
+				}
 			}
 		});
 
 		final IndexedLinkedHashMap<String, Property> returnValues = new IndexedLinkedHashMap<>();
 		for (final Entry<String, PropertiesLanguageFileReader> propertiesLanguageFileEntry : languageFiles.entrySet()) {
-			final String languageSign = PropertiesLanguageFileReader.getLanguageSignOfFilename(propertiesLanguageFileEntry.getKey());
+			final String languageSign = PropertiesLanguageFileReader
+					.getLanguageSignOfFilename(propertiesLanguageFileEntry.getKey());
 			for (final Entry<String, String> entry : propertiesLanguageFileEntry.getValue().getEntries().entrySet()) {
 				Property property = returnValues.get(entry.getKey());
 				if (property == null) {
@@ -114,19 +118,25 @@ public class PropertiesStorage {
 
 	public void save(final String directory, String separator, final boolean sortByOrgIndex) throws Exception {
 		Map<String, Property> propertiesToSave;
-		if (sortByOrgIndex)
+		if (sortByOrgIndex) {
 			propertiesToSave = MapUtilities.sortEntries(properties, new Property.OriginalIndexComparator(true));
-		else propertiesToSave = properties;
+		} else {
+			propertiesToSave = properties;
+		}
 
-		if (Utilities.isEmpty(separator))
+		if (Utilities.isEmpty(separator)) {
 			separator = DEFAULT_STORAGE_SEPARATOR;
+		}
 
 		for (final String propertiesLanguageFileName : languageFiles.keySet()) {
-			final String languageSign = PropertiesLanguageFileReader.getLanguageSignOfFilename(propertiesLanguageFileName);
+			final String languageSign = PropertiesLanguageFileReader
+					.getLanguageSignOfFilename(propertiesLanguageFileName);
 			final String fileName = new File(propertiesLanguageFileName).getName();
 			final File propertyFile = new File(directory + File.separator + fileName);
 			try {
-				if (propertyFile.exists()) propertyFile.delete();
+				if (propertyFile.exists()) {
+					propertyFile.delete();
+				}
 				try (FileOutputStream fileOutputStream = new FileOutputStream(propertyFile)) {
 					for (final Entry<String, Property> entry : propertiesToSave.entrySet()) {
 						if (entry.getValue().getLanguageValue(languageSign) != null) {
@@ -160,12 +170,13 @@ public class PropertiesStorage {
 			Collections.sort(returnValues, new Comparator<String>() {
 				@Override
 				public int compare(final String value1, final String value2) {
-					if (LANGUAGE_SIGN_DEFAULT.equalsIgnoreCase(value1))
+					if (LANGUAGE_SIGN_DEFAULT.equalsIgnoreCase(value1)) {
 						return -1;
-					else if (LANGUAGE_SIGN_DEFAULT.equalsIgnoreCase(value2))
+					} else if (LANGUAGE_SIGN_DEFAULT.equalsIgnoreCase(value2)) {
 						return 1;
-					else
+					} else {
 						return value1.compareTo(value2);
+					}
 				}
 			});
 		}
@@ -239,23 +250,25 @@ public class PropertiesStorage {
 					final String value = property.getLanguageValue(sign);
 					if (value != null) {
 						if (!sign.equalsIgnoreCase("zh")) {
-							if (value.endsWith("!"))
+							if (value.endsWith("!")) {
 								hasExclamationEnd = true;
-							else if (value.endsWith("?"))
+							} else if (value.endsWith("?")) {
 								hasQuestionEnd = true;
-							else if (value.endsWith(":"))
+							} else if (value.endsWith(":")) {
 								hasColonEnd = true;
-							else if (value.endsWith("."))
+							} else if (value.endsWith(".")) {
 								hasFullstopEnd = true;
+							}
 						} else {
-							if (value.endsWith("\\uFF01")) // "!"
+							if (value.endsWith("\\uFF01")) { // "!"
 								hasExclamationEnd = true;
-							else if (value.endsWith("\\uFF1F")) // "?"
+							} else if (value.endsWith("\\uFF1F")) { // "?"
 								hasQuestionEnd = true;
-							else if (value.endsWith("\\uFF1A")) // ":"
+							} else if (value.endsWith("\\uFF1A")) { // ":"
 								hasColonEnd = true;
-							else if (value.endsWith("\\u3002")) // "."
+							} else if (value.endsWith("\\u3002")) { // "."
 								hasFullstopEnd = true;
+							}
 						}
 					}
 				}
@@ -264,35 +277,57 @@ public class PropertiesStorage {
 					if (value != null) {
 						if (!sign.equalsIgnoreCase("zh")) {
 							if (hasExclamationEnd) {
-								if (value.endsWith("?") || value.endsWith(":") || value.endsWith(".")) value = value.substring(0, value.length() - 1);
-								if (!value.endsWith("!")) value += "!";
-							}
-							else if (hasQuestionEnd) {
-								if (value.endsWith(":") || value.endsWith(".")) value = value.substring(0, value.length() - 1);
-								if (!value.endsWith("?")) value += "?";
-							}
-							else if (hasColonEnd) {
-								if (value.endsWith(".")) value = value.substring(0, value.length() - 1);
-								if (!value.endsWith(":")) value += ":";
-							}
-							else if (hasFullstopEnd) {
-								if (!value.endsWith(".")) value += ".";
+								if (value.endsWith("?") || value.endsWith(":") || value.endsWith(".")) {
+									value = value.substring(0, value.length() - 1);
+								}
+								if (!value.endsWith("!")) {
+									value += "!";
+								}
+							} else if (hasQuestionEnd) {
+								if (value.endsWith(":") || value.endsWith(".")) {
+									value = value.substring(0, value.length() - 1);
+								}
+								if (!value.endsWith("?")) {
+									value += "?";
+								}
+							} else if (hasColonEnd) {
+								if (value.endsWith(".")) {
+									value = value.substring(0, value.length() - 1);
+								}
+								if (!value.endsWith(":")) {
+									value += ":";
+								}
+							} else if (hasFullstopEnd) {
+								if (!value.endsWith(".")) {
+									value += ".";
+								}
 							}
 						} else {
 							if (hasExclamationEnd) {
-								if (value.endsWith("\\uFF1F") || value.endsWith("\\uFF1A") || value.endsWith("\\u3002")) value = value.substring(0, value.length() - 6);
-								if (!value.endsWith("\\uFF01")) value += "\\uFF01";
-							}
-							else if (hasQuestionEnd) {
-								if (value.endsWith("\\uFF1A") || value.endsWith("\\u3002")) value = value.substring(0, value.length() - 6);
-								if (!value.endsWith("\\uFF1F")) value += "\\uFF1F";
-							}
-							else if (hasQuestionEnd) {
-								if (value.endsWith("\\u3002")) value = value.substring(0, value.length() - 6);
-								if (!value.endsWith("\\uFF1A")) value += "\\uFF1A";
-							}
-							else if (hasFullstopEnd) {
-								if (!value.endsWith("\\u3002")) value += "\\u3002";
+								if (value.endsWith("\\uFF1F") || value.endsWith("\\uFF1A") || value.endsWith("\\u3002")) {
+									value = value.substring(0, value.length() - 6);
+								}
+								if (!value.endsWith("\\uFF01")) {
+									value += "\\uFF01";
+								}
+							} else if (hasQuestionEnd) {
+								if (value.endsWith("\\uFF1A") || value.endsWith("\\u3002")) {
+									value = value.substring(0, value.length() - 6);
+								}
+								if (!value.endsWith("\\uFF1F")) {
+									value += "\\uFF1F";
+								}
+							} else if (hasQuestionEnd) {
+								if (value.endsWith("\\u3002")) {
+									value = value.substring(0, value.length() - 6);
+								}
+								if (!value.endsWith("\\uFF1A")) {
+									value += "\\uFF1A";
+								}
+							} else if (hasFullstopEnd) {
+								if (!value.endsWith("\\u3002")) {
+									value += "\\u3002";
+								}
 							}
 						}
 
@@ -343,10 +378,11 @@ public class PropertiesStorage {
 
 			// Change check
 			for (final String sign : getLanguageSigns()) {
-				if (originalData.get(sign) == null && property.getLanguageValue(sign) != null)
+				if (originalData.get(sign) == null && property.getLanguageValue(sign) != null) {
 					dataWasChanged = true;
-				else if (originalData.get(sign) != null && !originalData.get(sign).equals(property.getLanguageValue(sign)))
+				} else if (originalData.get(sign) != null && !originalData.get(sign).equals(property.getLanguageValue(sign))) {
 					dataWasChanged = true;
+				}
 			}
 		}
 
@@ -371,10 +407,11 @@ public class PropertiesStorage {
 
 	public void add(final boolean isStorageText, final Text keyTextfield, final Map<String, Text> languageTextFields) throws Exception {
 		// Check duplicate key
-		if (properties.containsKey(keyTextfield.getText()))
+		if (properties.containsKey(keyTextfield.getText())) {
 			throw new Exception("New key " + keyTextfield.getText() + " already exists");
-
-		final Property property = new Property(isStorageText ? keyTextfield.getText() : StringEscapeUtils.escapeJava(keyTextfield.getText()));
+		}
+		final Property property = new Property(
+				isStorageText ? keyTextfield.getText() : StringEscapeUtils.escapeJava(keyTextfield.getText()));
 
 		property.setOriginalIndex(nextOrderIndex++);
 
@@ -391,8 +428,9 @@ public class PropertiesStorage {
 
 		if (!oldKey.equals(keyTextfield.getText())) {
 			// Check duplicate key
-			if (properties.containsKey(keyTextfield.getText()))
+			if (properties.containsKey(keyTextfield.getText())) {
 				throw new Exception("New key already exists");
+			}
 
 			property.setKey(keyTextfield.getText());
 		}

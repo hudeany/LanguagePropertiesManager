@@ -20,9 +20,11 @@ public class PropertiesLanguageFileReader {
 	private final Set<String> multipleKeys = new HashSet<>();
 
 	public void load(final InputStream inputStream, final boolean readKeysCaseInsensitive) throws Exception {
-		if (readKeysCaseInsensitive)
+		if (readKeysCaseInsensitive) {
 			entries = new CaseInsensitiveOrderedMap<>();
-		else entries = new LinkedHashMap<>();
+		} else {
+			entries = new LinkedHashMap<>();
+		}
 
 		final BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
 		String line = null;
@@ -47,23 +49,26 @@ public class PropertiesLanguageFileReader {
 						break;
 					}
 				}
-				if (posSeparator < 0)
+				if (posSeparator < 0) {
 					throw new Exception("Invalid content at line " + lineCount);
+				}
 
 				// get key and value
 				String key = line.substring(0, posSeparator).trim();
 				String value = line.substring(posSeparator + 1).trim();
-				if (Utilities.isEmpty(value))
+				if (Utilities.isEmpty(value)) {
 					value = " ";
+				}
 
 				// Repair non escaped characters for later correct storage
 				key = StringEscapeUtils.escapeJava(StringEscapeUtils.unescapeJava(key));
 				value = StringEscapeUtils.escapeJava(StringEscapeUtils.unescapeJava(value));
 
-				if (key.length() <= 0)
+				if (key.length() <= 0) {
 					throw new Exception("Invalid key at line " + lineCount);
-				else if (key.length() <= 0)
+				} else if (key.length() <= 0) {
 					throw new Exception("Invalid value at line " + lineCount);
+				}
 
 				// add value
 				if (entries.containsKey(key)) {
@@ -92,8 +97,9 @@ public class PropertiesLanguageFileReader {
 	public static String getSectionOfKey(final String key) {
 		String section = "";
 		final int sectionEnd = key.lastIndexOf(".");
-		if (sectionEnd >= 0)
+		if (sectionEnd >= 0) {
 			section = key.substring(0, sectionEnd);
+		}
 		return section;
 	}
 
@@ -113,11 +119,13 @@ public class PropertiesLanguageFileReader {
 		if (lastPoint >= 0) {
 			fileNamePart = fileNamePart.substring(0, lastPoint);
 		}
-		final String [] fileNameParts = fileNamePart.split("_");
-		if (fileNameParts.length == 2)
+		final String[] fileNameParts = fileNamePart.split("_");
+		if (fileNameParts.length == 2) {
 			return fileNameParts[1];
-		else if (fileNameParts.length >= 3)
+		} else if (fileNameParts.length >= 3) {
 			return fileNameParts[fileNameParts.length - 2] + "_" + fileNameParts[fileNameParts.length - 1];
-		else return PropertiesStorage.LANGUAGE_SIGN_DEFAULT;
+		} else {
+			return PropertiesStorage.LANGUAGE_SIGN_DEFAULT;
+		}
 	}
 }

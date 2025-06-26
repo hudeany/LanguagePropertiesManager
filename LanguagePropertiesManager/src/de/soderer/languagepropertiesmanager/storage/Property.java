@@ -44,10 +44,11 @@ public class Property {
 	}
 
 	public void setLanguageValue(final String languageSign, final String value) {
-		if (Utilities.isEmpty(value))
+		if (Utilities.isEmpty(value)) {
 			languageValues.put(languageSign, null);
-		else
+		} else {
 			languageValues.put(languageSign, value);
+		}
 	}
 
 	public static class KeyComparator implements Comparator<String> {
