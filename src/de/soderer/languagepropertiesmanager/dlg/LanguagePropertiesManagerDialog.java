@@ -286,7 +286,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		propertiesLabel.setFont(new Font(getDisplay(), "Arial", 12, SWT.BOLD));
 
 		final Composite buttonSection = new Composite(leftPart, SWT.NONE);
-		buttonSection.setLayout(SwtUtilities.createSmallMarginGridLayout(12, false));
+		buttonSection.setLayout(SwtUtilities.createSmallMarginGridLayout(13, false));
 		buttonSection.setLayoutData(new GridData(SWT.FILL, SWT.BOTTOM, true, false, 1, 1));
 
 		loadRecentButton = new Button(buttonSection, SWT.PUSH);
@@ -342,6 +342,11 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		checkUsageButtonPrevious.setToolTipText(LangResources.get("checkusageprevious"));
 		checkUsageButtonPrevious.setEnabled(false);
 		checkUsageButtonPrevious.addSelectionListener(new CheckUsageButtonPreviousSelectionListener());
+
+		final Button addLanguageButton = new Button(buttonSection, SWT.PUSH);
+		addLanguageButton.setText(LangResources.get("AddLanguage"));
+		addLanguageButton.setToolTipText(LangResources.get("configuration"));
+		addLanguageButton.addSelectionListener(new AddLanguageButtonSelectionListener(this));
 
 		final Button configButton = new Button(buttonSection, SWT.PUSH);
 		configButton.setImage(ImageManager.getImage("wrench.png"));
@@ -768,6 +773,23 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 						messageBox.open();
 					}
 				}
+			} catch (final Exception ex) {
+				new ErrorDialog(getShell(), APPLICATION_NAME, VERSION.toString(), APPLICATION_ERROR_EMAIL_ADRESS, ex).open();
+			}
+		}
+	}
+
+	private class AddLanguageButtonSelectionListener extends SelectionAdapter {
+		private final Shell shell;
+		public AddLanguageButtonSelectionListener(final Shell shell) {
+			this.shell = shell;
+		}
+
+		@Override
+		public void widgetSelected(final SelectionEvent e) {
+			try {
+				availableLanguageSigns.add(new SimpleInputDialog(shell, getText(), LangResources.get("enterLanguageSign")).open());
+				setupTable();
 			} catch (final Exception ex) {
 				new ErrorDialog(getShell(), APPLICATION_NAME, VERSION.toString(), APPLICATION_ERROR_EMAIL_ADRESS, ex).open();
 			}
