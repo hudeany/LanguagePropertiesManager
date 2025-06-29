@@ -71,7 +71,7 @@ import de.soderer.utilities.swt.UpdateableGuiApplication;
 
 /**
  * TODO:
- * Add / Delete Language (even for new properties, with define prop set name)
+ * Delete Language
  * Display of multiline value and comments (escape linebreaks in textfield)
  * cleanup errors
  * find usage
