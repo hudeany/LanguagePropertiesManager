@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project default="build_jar" name="Create all Jars for Project LanguagePropertiesManager">
+	<echo>Java/JVM HOME: ${java.home}</echo>
+	<echo>Java/JVM version: ${ant.java.version}</echo>
+	<echo>Java/JVM detailed version: ${java.version}</echo>
+	
+	<loadfile property="build.version" srcFile="build.version" failonerror="false" />
+	<property name="build.version" value="25.1.2" />
+	<echo message="build.version: ${build.version}" />
+	
+	<property file="${user.home}/git/codeSigning.properties" />
+	
+	<tstamp>
+		<format property="buildTime" pattern="yyyy-MM-dd HH:mm:ss" locale="en" />
+	</tstamp>
+	<echo message="buildTime: ${buildTime}" />
+	
+	<property file="${user.home}/git/codeSigning.properties" />
+	
+	<taskdef resource="net/sf/antcontrib/antcontrib.properties">
+		<classpath>
+			<pathelement location="lib_ant/ant-contrib-0.6.jar" />
+		</classpath>
+	</taskdef>
+
+	<property environment="env"/>
+
+	<if>
+		<and>
+			<isset property="user.home" />
+			<available file="${user.home}" type="dir" />
+		</and>
+		<then>
+			<property name="HOME" value="${user.home}" />
+		</then>
+		<else>
+			<if>
+				<and>
+					<isset property="env.HOME" />
+					<available file="${env.HOME}" type="dir" />
+				</and>
+				<then>
+					<property name="HOME" value="${env.HOME}" />
+				</then>
+				<else>
+					<fail message="Property &quot;env.HOME&quot; or &quot;user.home&quot; was not set properly" />
+				</else>
+			</if>
+		</else>
+	</if>
+
+	<if>
+		<and>
+			<isset property="env.SodererGitProjects" />
+			<available file="${env.SodererGitProjects}" type="dir" />
+		</and>
+		<then>
+			<property name="projectsPath" value="${env.SodererGitProjects}" />
+		</then>
+		<else>
+			<property name="projectsPath" value="${HOME}/git" />
+		</else>
+	</if>
+	<echo message="projectsPath: ${projectsPath}" />
+
+	<property environment="env" />
+	<property name="buildPath" value="build" />
+	<echo message="buildPath: ${buildPath}" />
+
+	<target name="build_jar" depends="cleanup_before, create_jar, cleanup_after" />
+
+	<target name="cleanup_before">
+		<delete dir="${buildPath}" />
+		<mkdir dir="${buildPath}" />
+		<mkdir dir="${buildPath}/bin" />
+	</target>
+
+	<target name="compile">
+		<path id="build.classpath">
+			<fileset dir="lib_soderer">
+				<include name="*.jar" />
+			</fileset>
+			
+			<fileset dir="lib">
+				<include name="*.jar" />
+			</fileset>
+		</path>
+
+		<javac debug="true" nowarn="true" deprecation="false" destdir="${buildPath}/bin" fork="yes" source="1.8" target="1.8" srcdir="src" includeantruntime="false" encoding="UTF-8" classpath="lib/*">
+			<classpath refid="build.classpath" />
+		</javac>
+
+		<copy todir="${buildPath}/bin">
+			<fileset dir="src">
+				<include name="**/LanguageProperties*.properties" />
+				<include name="**/*.txt" />
+				<include name="**/*.pem" />
+				<include name="**/*.png" />
+				<include name="**/*.ico" />
+			</fileset>
+		</copy>
+		
+		<replace file="${buildPath}/bin/VersionInfo.txt" token="$${build.version}" value="${build.version}"/>
+	</target>
+
+	<target name="create_versionfile">
+		<basename property="CaPublicKeyFileName" file="${CaPublicKey}"/>
+		<basename property="CaPublicKeyFileNameOld" file="${CaPublicKeyOld}"/>
+
+		<delete file="${buildPath}/bin/application_version.txt" />
+		<echo file="${buildPath}/bin/application_version.txt" append="false">${build.version}${line.separator}${buildTime}${line.separator}${VersionsUrl}${line.separator}${CaPublicKeyFileName}, ${CaPublicKeyFileNameOld}${line.separator}</echo>
+		<delete file="src/application_version.txt" />
+		<echo file="src/application_version.txt" append="false">${build.version}${line.separator}${buildTime}${line.separator}${VersionsUrl}${line.separator}${CaPublicKeyFileName}, ${CaPublicKeyFileNameOld}${line.separator}</echo>
+	</target>
+
+	<target name="create_jar" depends="create_versionfile, compile">
+		<jar destfile="${buildPath}/LanguagePropertiesManager.jar">
+			<manifest>
+				<attribute name="Main-Class" value="de.soderer.languagepropertiesmanager.utilities.jarinjarloader.JarInJarLoader" />
+				<attribute name="Rsrc-Main-Class" value="de.soderer.languagepropertiesmanager.dlg.LanguagePropertiesManagerDialog" />
+				<attribute name="Class-Path" value="." />
+			</manifest>
+
+			<fileset dir="${buildPath}/bin" />
+
+			<zipfileset file="${CaPublicKey}" />
+			<zipfileset file="${CaPublicKeyOld}" />
+			<zipfileset dir="lib" includes="*.jar" />
+			
+			<zipfileset dir="lib_soderer" includes="soderer-utilities-*.jar" />
+		</jar>
+
+		<signjar destDir="${buildPath}" alias="${CodeSigningKeyAlias}" keystore="${CodeSigningKeyStore}" storepass="${CodeSigningKeyStorePassword}" keypass="${CodeSigningKeyPassword}" preservelastmodified="true" tsaurl="${TsaUrl}">
+			<path>
+				<fileset dir="${buildPath}" includes="LanguagePropertiesManager.jar" />
+			</path>
+		</signjar>
+		
+		<copy file="${buildPath}/LanguagePropertiesManager.jar" tofile="${buildPath}/LanguagePropertiesManager-${build.version}.jar" />
+	</target>
+
+	<macrodef name="unsignjar">
+		<attribute name="jar" />
+		<sequential>
+			<!-- Remove any existing signatures from a JAR file. -->
+			<tempfile prefix="unsignjar-" destdir="${java.io.tmpdir}" property="temp.file" />
+			<echo message="Removing signatures from JAR: @{jar}" />
+			<mkdir dir="${temp.file}" />
+			<unjar src="@{jar}" dest="${temp.file}">
+				<patternset>
+					<include name="**" />
+					<exclude name="META-INF/*.SF" />
+					<exclude name="META-INF/*.DSA" />
+					<exclude name="META-INF/*.RSA" />
+				</patternset>
+			</unjar>
+			<delete file="@{jar}" failonerror="true" />
+			<!-- Touch META-INF/MANIFEST.MF in case the jar file didn't have a manifest. Otherwise the JAR task below will fail if the manifest file doesn't exist. -->
+			<mkdir dir="${temp.file}/META-INF" />
+			<touch file="${temp.file}/META-INF/MANIFEST.MF" />
+			<jar destfile="@{jar}" basedir="${temp.file}" includes="**" manifest="${temp.file}/META-INF/MANIFEST.MF" />
+			<delete dir="${temp.file}" failonerror="true" />
+		</sequential>
+	</macrodef>
+
+	<target name="cleanup_after">
+		<delete dir="${buildPath}/bin" />
+	</target>
+</project>
