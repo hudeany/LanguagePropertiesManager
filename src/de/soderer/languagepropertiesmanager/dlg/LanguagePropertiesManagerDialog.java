@@ -71,10 +71,10 @@ import de.soderer.utilities.swt.UpdateableGuiApplication;
 
 /**
  * TODO:
- * Add / Delete Language
- * Change AppLanguage Button
- * Display of multiline value (escape linebreaks)
- * keep comments in output and mybe display
+ * Add / Delete Language (even for new properties, with define prop set name)
+ * Display of multiline value and comments (escape linebreaks in textfield)
+ * cleanup errors
+ * find usage
  */
 
 /**
@@ -95,6 +95,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	public static final String CONFIG_OUTPUT_SEPARATOR = "Output.Separator";
 	public static final String CONFIG_SORT_ORG_INDEX = "Output.SortByOrgIndex";
 	public static final String CONFIG_LANGUAGE = "Application.Language";
+	public static final String CONFIG_USE_JAVA_ENCODING = "Application.UseJavaEncoding";
 	public static final String CONFIG_PREVIOUS_CHECK_USAGE = "CheckUsage.Previous";
 	public static final String CONFIG_RECENT_PROPERTIES = "Recent";
 
@@ -123,6 +124,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private Button importFromExcelButton;
 	private Button addButton;
 	private Text keyTextfield;
+	private Text commentTextfield;
 	private Composite detailFieldsPart;
 	private Map<String, Text> languageTextFields;
 	private Table propertiesTable;
@@ -135,6 +137,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private String languagePropertySetName;
 	private String searchText;
 	private boolean searchCaseInsensitivePreference = true;
+	private boolean searchValuePreference = false;
 	private Button checkUsageButton;
 	private Button checkUsageButtonPrevious;
 
@@ -270,7 +273,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 	private void createLeftPart(final SashForm parent) throws Exception {
 		final Composite leftPart = new Composite(parent, SWT.BORDER);
-		leftPart.setLayout(SwtUtilities.createNoMarginGridLayout(1, false));
+		leftPart.setLayout(SwtUtilities.createSmallMarginGridLayout(1, false));
 		leftPart.setLayoutData(new GridData(SWT.FILL, SWT.UP, true, true));
 
 		final Label propertiesLabel = new Label(leftPart, SWT.NONE);
@@ -279,7 +282,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		propertiesLabel.setFont(new Font(getDisplay(), "Arial", 12, SWT.BOLD));
 
 		final Composite buttonSection = new Composite(leftPart, SWT.NONE);
-		buttonSection.setLayout(SwtUtilities.createNoMarginGridLayout(12, false));
+		buttonSection.setLayout(SwtUtilities.createSmallMarginGridLayout(12, false));
 		buttonSection.setLayoutData(new GridData(SWT.FILL, SWT.BOTTOM, true, false, 1, 1));
 
 		loadRecentButton = new Button(buttonSection, SWT.PUSH);
@@ -290,7 +293,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		final Button loadButton = new Button(buttonSection, SWT.PUSH);
 		loadButton.setImage(ImageManager.getImage("load.png"));
 		loadButton.setToolTipText(LangResources.get("tooltip_load_files"));
-		loadButton.addSelectionListener(new OpenDirectorySelectionListener());
+		loadButton.addSelectionListener(new OpenFilesSelectionListener());
 
 		importFromExcelButton = new Button(buttonSection, SWT.PUSH);
 		importFromExcelButton.setImage(ImageManager.getImage("importFromEx.png"));
@@ -345,7 +348,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 		// Searching
 		searchBox = new Composite(leftPart, SWT.BORDER);
-		searchBox.setLayout(SwtUtilities.createNoMarginGridLayout(4, false));
+		searchBox.setLayout(SwtUtilities.createSmallMarginGridLayout(5, false));
 		searchBox.setLayoutData(new GridData(SWT.FILL, SWT.BOTTOM, true, false, 1, 1));
 
 		final Text searchTextField = new Text(searchBox, SWT.NONE);
@@ -375,7 +378,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 						propertiesTable.setSelection(0);
 					}
 					searchText = textItem.getText();
-					selectSearch(searchText, propertiesTable.getSelectionIndex(), true, searchCaseInsensitivePreference);
+					selectSearch(searchText, propertiesTable.getSelectionIndex(), true, searchCaseInsensitivePreference, searchValuePreference);
 				}
 			}
 		});
@@ -388,14 +391,14 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			@Override
 			public void widgetSelected(final SelectionEvent e) {
 				if (Utilities.isNotEmpty(searchText)) {
-					selectSearch(searchText, propertiesTable.getSelectionIndex() + 1, true, searchCaseInsensitivePreference);
+					selectSearch(searchText, propertiesTable.getSelectionIndex() + 1, true, searchCaseInsensitivePreference, searchValuePreference);
 				}
 			}
 
 			@Override
 			public void widgetDefaultSelected(final SelectionEvent e) {
 				if (Utilities.isNotEmpty(searchText)) {
-					selectSearch(searchText, propertiesTable.getSelectionIndex() + 1, true, searchCaseInsensitivePreference);
+					selectSearch(searchText, propertiesTable.getSelectionIndex() + 1, true, searchCaseInsensitivePreference, searchValuePreference);
 				}
 			}
 		});
@@ -407,7 +410,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		searchUpButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(final SelectionEvent e) {
-				selectSearch(searchText, propertiesTable.getSelectionIndex() - 1, false, searchCaseInsensitivePreference);
+				selectSearch(searchText, propertiesTable.getSelectionIndex() - 1, false, searchCaseInsensitivePreference, searchValuePreference);
 			}
 		});
 
@@ -423,7 +426,24 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					if (propertiesTable.getSelectionCount() == 0) {
 						propertiesTable.setSelection(0);
 					}
-					selectSearch(searchText, propertiesTable.getSelectionIndex(), true, searchCaseInsensitivePreference);
+					selectSearch(searchText, propertiesTable.getSelectionIndex(), true, searchCaseInsensitivePreference, searchValuePreference);
+				}
+			}
+		});
+
+		final Button valueButton = new Button(searchBox, SWT.CHECK);
+		valueButton.setText(LangResources.get("value"));
+		valueButton.setToolTipText(LangResources.get("value"));
+		valueButton.setLayoutData(new GridData(40, 20));
+		valueButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(final SelectionEvent e) {
+				searchValuePreference = ((Button)e.widget).getSelection();
+				if (Utilities.isNotEmpty(searchText) && !searchText.equals(LangResources.get("search")) && languagePropertiesByKey != null) {
+					if (propertiesTable.getSelectionCount() == 0) {
+						propertiesTable.setSelection(0);
+					}
+					selectSearch(searchText, propertiesTable.getSelectionIndex(), true, searchCaseInsensitivePreference, searchValuePreference);
 				}
 			}
 		});
@@ -522,11 +542,11 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private void createRightPart(final Composite parent) throws Exception {
 		rightPart = new Composite(parent, SWT.NONE);
 		rightPart.setLayoutData(new GridData(SWT.FILL, SWT.UP, true, true));
-		rightPart.setLayout(SwtUtilities.createNoMarginGridLayout(1, false));
+		rightPart.setLayout(SwtUtilities.createSmallMarginGridLayout(1, false));
 
 		final Composite keyBereich = new Composite(rightPart, SWT.NONE);
 		keyBereich.setLayoutData(new GridData(SWT.FILL, SWT.BOTTOM, true, false, 1, 1));
-		keyBereich.setLayout(SwtUtilities.createNoMarginGridLayout(2, false));
+		keyBereich.setLayout(SwtUtilities.createSmallMarginGridLayout(2, false));
 
 		final Label keyLabel = new Label(keyBereich, SWT.NONE);
 		keyLabel.setText(LangResources.get("columnheader_key") + ":");
@@ -534,27 +554,33 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		keyTextfield.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false, 1, 1));
 		keyTextfield.addModifyListener(new DetailModifyListener());
 
+		final Label commentLabel = new Label(keyBereich, SWT.NONE);
+		commentLabel.setText(LangResources.get("comment") + ":");
+		commentTextfield = new Text(keyBereich, SWT.BORDER);
+		commentTextfield.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false, 1, 1));
+		commentTextfield.addModifyListener(new DetailModifyListener());
+
 		final Label keySeparatorLabel = new Label(keyBereich, SWT.SEPARATOR | SWT.HORIZONTAL);
 		keySeparatorLabel.setLayoutData(new GridData(SWT.FILL, SWT.UP, true, false, 2, 1));
 
 		final ScrolledComposite scrolledPart = new ScrolledComposite(rightPart, SWT.H_SCROLL | SWT.V_SCROLL);
 		scrolledPart.setLayoutData(new GridData(SWT.FILL, SWT.UP, true, true));
-		scrolledPart.setLayout(SwtUtilities.createNoMarginGridLayout(1, false));
+		scrolledPart.setLayout(SwtUtilities.createSmallMarginGridLayout(1, false));
 
 		detailFieldsPart = new Composite(scrolledPart, SWT.NONE);
 		detailFieldsPart.setLayoutData(new GridData(SWT.FILL, SWT.UP, true, false, 1, 1));
-		detailFieldsPart.setLayout(SwtUtilities.createNoMarginGridLayout(2, false));
+		detailFieldsPart.setLayout(SwtUtilities.createSmallMarginGridLayout(2, false));
 
 		languageTextFields = new HashMap<>();
 
 		scrolledPart.setContent(detailFieldsPart);
-		scrolledPart.setMinSize(200, 280);
+		scrolledPart.setMinSize(200, 250);
 		scrolledPart.setExpandHorizontal(true);
 		scrolledPart.setExpandVertical(true);
 
 		final Composite buttonBereich = new Composite(rightPart, SWT.NONE);
 		buttonBereich.setLayoutData(new GridData(SWT.FILL, SWT.BOTTOM, true, false, 1, 1));
-		buttonBereich.setLayout(SwtUtilities.createNoMarginGridLayout(2, true));
+		buttonBereich.setLayout(SwtUtilities.createSmallMarginGridLayout(2, true));
 
 		final Label buttonSeparatorLabel = new Label(buttonBereich, SWT.SEPARATOR | SWT.HORIZONTAL);
 		buttonSeparatorLabel.setLayoutData(new GridData(SWT.FILL, SWT.BOTTOM, true, true, 2, 1));
@@ -583,6 +609,12 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					final LanguageProperty newValues = new LanguageProperty(keyTextfield.getText());
 					for (final String languageKey : languageTextFields.keySet()) {
 						newValues.setLanguageValue(languageKey, languageTextFields.get(languageKey).getText());
+					}
+
+					if (Utilities.isNotEmpty(commentTextfield.getText())) {
+						newValues.setComment(commentTextfield.getText());
+					} else {
+						newValues.setComment(null);
 					}
 
 					if (okButton.getText().equals(LangResources.get("button_text_change"))) {
@@ -825,6 +857,11 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					throw new Exception("No property for key: " + propertiesTable.getSelection()[0].getText(columnKeyIndex));
 				} else {
 					keyTextfield.setText(key);
+					if (Utilities.isNotEmpty(propertyByKey.getComment())) {
+						commentTextfield.setText(propertyByKey.getComment());
+					} else {
+						commentTextfield.setText("");
+					}
 					for (final String sign : availableLanguageSigns) {
 						final Text languageTextfield = languageTextFields.get(sign);
 						final String value = propertyByKey.getLanguageValue(sign);
@@ -842,6 +879,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				removeButton.setEnabled(true);
 			} else {
 				keyTextfield.setText("");
+				commentTextfield.setText("");
 				for (final String sign : availableLanguageSigns) {
 					final Text languageTextfield = languageTextFields.get(sign);
 					languageTextfield.setText("");
@@ -893,6 +931,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		if (checkUsageButtonPrevious != null) {
 			checkUsageButtonPrevious.setEnabled(checkUsageButton.isEnabled() && recentlyCheckUsages != null && recentlyCheckUsages.size() > 0);
 		}
+		if (textConversionButton != null) {
+			textConversionButton.setEnabled(applicationConfiguration.getBoolean(CONFIG_USE_JAVA_ENCODING));
+		}
 	}
 
 	private boolean askForDropProperties() {
@@ -935,7 +976,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 	private void changeDisplayMode(final boolean changeToShowStorageTexts) {
 		technicalDataChange = true;
-		if (changeToShowStorageTexts) {
+		if (changeToShowStorageTexts && applicationConfiguration.getBoolean(CONFIG_USE_JAVA_ENCODING)) {
 			keyTextfield.setText(StringEscapeUtils.escapeJava(keyTextfield.getText()));
 			for (final Text field : languageTextFields.values()) {
 				field.setText(StringEscapeUtils.escapeJava(field.getText()));
@@ -949,35 +990,52 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		technicalDataChange = false;
 	}
 
-	private class OpenDirectorySelectionListener extends SelectionAdapter {
+	private class OpenFilesSelectionListener extends SelectionAdapter {
 		@Override
 		public void widgetSelected(final SelectionEvent event) {
 			try {
-				final DirectoryDialog dialog = new DirectoryDialog(getShell());
-				dialog.setText(getText() + " " + LangResources.get("directory_dialog_title"));
-				dialog.setMessage(LangResources.get("open_directory_dialog_text"));
-				final String directory = dialog.open();
-				if (directory != null && new File(directory).exists() && new File(directory).isDirectory()) {
-					recentlyOpenedDirectories.add(directory); //put selected as latest used
+				final FileDialog fileDialog = new FileDialog(getShell());
+				fileDialog.setText(getText() + " " + LangResources.get("directory_dialog_title"));
+				fileDialog.setText(LangResources.get("open_directory_dialog_text"));
+				final String filePath = fileDialog.open();
+				if (filePath != null && new File(filePath).exists()) {
+					recentlyOpenedDirectories.add(filePath); //put selected as latest used
 					applicationConfiguration.set(CONFIG_RECENT_PROPERTIES, recentlyOpenedDirectories);
-					final List<String> propertySets = PropertiesHelper.readAvailablePropertySets(directory);
-					if (propertySets.size() == 1) {
-						languagePropertiesByKey = LanguagePropertiesFileSetReader.read(new File(directory), propertySets.get(0), false, true);
-						availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languagePropertiesByKey), "default");
-						languagePropertySetName = propertySets.get(0);
-					} else if (propertySets.size() > 1) {
-						final ComboSelectionDialog dialog2 = new ComboSelectionDialog(getShell(), getText() + " " + LangResources.get("propertysets_dialog_title"), LangResources.get("propertysets_dialog_text"), propertySets);
-						final String propertySetName = dialog2.open();
-						if (Utilities.isNotEmpty(propertySetName)) {
-							languagePropertiesByKey = LanguagePropertiesFileSetReader.read(new File(directory), propertySets.get(0), false, true);
+
+					if (new File(filePath).isDirectory()) {
+						final List<String> propertySets = PropertiesHelper.readAvailablePropertySets(filePath);
+						if (propertySets.size() == 1) {
+							languagePropertiesByKey = LanguagePropertiesFileSetReader.read(new File(filePath), propertySets.get(0), false, true);
 							availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languagePropertiesByKey), "default");
 							languagePropertySetName = propertySets.get(0);
+						} else if (propertySets.size() > 1) {
+							final ComboSelectionDialog dialog2 = new ComboSelectionDialog(getShell(), getText() + " " + LangResources.get("propertysets_dialog_title"), LangResources.get("propertysets_dialog_text"), propertySets);
+							final String propertySetName = dialog2.open();
+							if (Utilities.isNotEmpty(propertySetName)) {
+								languagePropertiesByKey = LanguagePropertiesFileSetReader.read(new File(filePath), propertySets.get(0), false, true);
+								availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languagePropertiesByKey), "default");
+								languagePropertySetName = propertySets.get(0);
+							}
 						}
+					} else {
+						final String filename = new File(filePath).getName();
+						if (filename.contains(".properties")) {
+							if (filename.contains("_")) {
+								languagePropertySetName = filename.substring(0, filename.indexOf("_"));
+							} else {
+								languagePropertySetName = filename.substring(0, filename.indexOf(".properties"));
+							}
+						} else {
+							throw new Exception("Missing mandatory file extension '.properties'");
+						}
+						languagePropertiesByKey = LanguagePropertiesFileSetReader.read(new File(filePath).getParentFile(), languagePropertySetName, false, true);
+						availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languagePropertiesByKey), "default");
 					}
 				}
 			} catch (final Exception e) {
 				languagePropertiesByKey = null;
 				availableLanguageSigns = null;
+				languagePropertySetName = null;
 				new ErrorDialog(getShell(), APPLICATION_NAME, VERSION.toString(), APPLICATION_ERROR_EMAIL_ADRESS, e).open();
 			}
 			hasUnsavedChanges = false;
@@ -991,28 +1049,44 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		public void widgetSelected(final SelectionEvent event) {
 			try {
 				final ComboSelectionDialog dialog = new ComboSelectionDialog(getShell(), getText() + " " + LangResources.get("recent_directories_dialog_title"), LangResources.get("recent_directories_dialog_text"), recentlyOpenedDirectories);
-				final String directory = dialog.open();
-				if (directory != null && new File(directory).exists() && new File(directory).isDirectory()) {
-					recentlyOpenedDirectories.add(directory); //put selected as latest used
-					applicationConfiguration.set(CONFIG_RECENT_PROPERTIES, recentlyOpenedDirectories);
-					final List<String> propertySets = PropertiesHelper.readAvailablePropertySets(directory);
-					if (propertySets.size() == 1) {
-						languagePropertiesByKey = LanguagePropertiesFileSetReader.read(new File(directory), propertySets.get(0), false, true);
-						availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languagePropertiesByKey), "default");
-						languagePropertySetName = propertySets.get(0);
-					} else if (propertySets.size() > 1) {
-						final ComboSelectionDialog dialog2 = new ComboSelectionDialog(getShell(), getText() + " " + LangResources.get("propertysets_dialog_title"), LangResources.get("propertysets_dialog_text"), propertySets);
-						final String propertySetName = dialog2.open();
-						if (Utilities.isNotEmpty(propertySetName)) {
-							languagePropertiesByKey = LanguagePropertiesFileSetReader.read(new File(directory), propertySets.get(0), false, true);
+				final String filePath = dialog.open();
+				if (filePath != null && new File(filePath).exists()) {
+					if (new File(filePath).isDirectory()) {
+						recentlyOpenedDirectories.add(filePath); //put selected as latest used
+						applicationConfiguration.set(CONFIG_RECENT_PROPERTIES, recentlyOpenedDirectories);
+						final List<String> propertySets = PropertiesHelper.readAvailablePropertySets(filePath);
+						if (propertySets.size() == 1) {
+							languagePropertiesByKey = LanguagePropertiesFileSetReader.read(new File(filePath), propertySets.get(0), false, true);
 							availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languagePropertiesByKey), "default");
 							languagePropertySetName = propertySets.get(0);
+						} else if (propertySets.size() > 1) {
+							final ComboSelectionDialog dialog2 = new ComboSelectionDialog(getShell(), getText() + " " + LangResources.get("propertysets_dialog_title"), LangResources.get("propertysets_dialog_text"), propertySets);
+							final String propertySetName = dialog2.open();
+							if (Utilities.isNotEmpty(propertySetName)) {
+								languagePropertiesByKey = LanguagePropertiesFileSetReader.read(new File(filePath), propertySets.get(0), false, true);
+								availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languagePropertiesByKey), "default");
+								languagePropertySetName = propertySets.get(0);
+							}
 						}
+					} else {
+						final String filename = new File(filePath).getName();
+						if (filename.contains(".properties")) {
+							if (filename.contains("_")) {
+								languagePropertySetName = filename.substring(0, filename.indexOf("_"));
+							} else {
+								languagePropertySetName = filename.substring(0, filename.indexOf(".properties"));
+							}
+						} else {
+							throw new Exception("Missing mandatory file extension '.properties'");
+						}
+						languagePropertiesByKey = LanguagePropertiesFileSetReader.read(new File(filePath).getParentFile(), languagePropertySetName, false, true);
+						availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languagePropertiesByKey), "default");
 					}
 				}
 			} catch (final Exception e) {
 				languagePropertiesByKey = null;
 				availableLanguageSigns = null;
+				languagePropertySetName = null;
 				new ErrorDialog(getShell(), APPLICATION_NAME, VERSION.toString(), APPLICATION_ERROR_EMAIL_ADRESS, e).open();
 			}
 			hasUnsavedChanges = false;
@@ -1037,7 +1111,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			final String directory = dlg.open();
 			if (Utilities.isNotEmpty(directory)) {
 				try {
-					LanguagePropertiesFileSetWriter.write(languagePropertiesByKey, new File(directory), languagePropertySetName, false);
+					LanguagePropertiesFileSetWriter.write(languagePropertiesByKey, new File(directory), languagePropertySetName, applicationConfiguration.getBoolean(CONFIG_USE_JAVA_ENCODING));
 				} catch (final Exception e) {
 					new ErrorDialog(getShell(), APPLICATION_NAME, VERSION.toString(), APPLICATION_ERROR_EMAIL_ADRESS, e).open();
 				}
@@ -1199,46 +1273,69 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		return returnValue;
 	}
 
-	private void selectSearch(final String text, final int startIndex, final boolean searchUp, final boolean searchCaseInsensitive) {
-		// TODO
-		//		propertiesTable.deselectAll();
-		//
-		//		if (Utilities.isNotEmpty(text) && storage != null) {
-		//			if (startIndex < 0) {
-		//				startIndex = storage.getProperties().size() - 1;
-		//			} else if (startIndex >= storage.getProperties().size()) {
-		//				startIndex = 0;
-		//			}
-		//
-		//			int currentIndex = -1;
-		//			while (currentIndex != startIndex) {
-		//				if (currentIndex == -1) {
-		//					currentIndex = startIndex;
-		//				}
-		//
-		//				if (!searchCaseInsensitive && storage.getProperties().getKey(currentIndex).contains(text)) {
-		//					propertiesTable.setSelection(currentIndex);
-		//					refreshDetailView();
-		//					break;
-		//				} else if (searchCaseInsensitive && storage.getProperties().getKey(currentIndex).toLowerCase().contains(text.toLowerCase())) {
-		//					propertiesTable.setSelection(currentIndex);
-		//					refreshDetailView();
-		//					break;
-		//				}
-		//
-		//				if (searchUp) {
-		//					currentIndex++;
-		//				} else {
-		//					currentIndex--;
-		//				}
-		//
-		//				if (currentIndex < 0) {
-		//					currentIndex = storage.getProperties().size() - 1;
-		//				} else if (currentIndex >= storage.getProperties().size()) {
-		//					currentIndex = 0;
-		//				}
-		//			}
-		//		}
+	private void selectSearch(final String text, int startIndex, final boolean searchUp, final boolean searchCaseInsensitive, final boolean searchValue) {
+		propertiesTable.deselectAll();
+
+		if (Utilities.isNotEmpty(text) && languagePropertiesByKey != null) {
+			if (startIndex < 0) {
+				startIndex = languagePropertiesByKey.size() - 1;
+			} else if (startIndex >= languagePropertiesByKey.size()) {
+				startIndex = 0;
+			}
+
+			int currentIndex = -1;
+			while (currentIndex != startIndex) {
+				if (currentIndex == -1) {
+					currentIndex = startIndex;
+				}
+
+				final String key = languagePropertiesByKey.getKey(currentIndex);
+				if (!searchValue) {
+					if (!searchCaseInsensitive && key.contains(text)) {
+						propertiesTable.setSelection(currentIndex);
+						refreshDetailView();
+						break;
+					} else if (searchCaseInsensitive && key.toLowerCase().contains(text.toLowerCase())) {
+						propertiesTable.setSelection(currentIndex);
+						refreshDetailView();
+						break;
+					}
+				} else {
+					if (!searchCaseInsensitive && (key.contains(text) || containsLanguageValuePart(languagePropertiesByKey.get(key), text, false))) {
+						propertiesTable.setSelection(currentIndex);
+						refreshDetailView();
+						break;
+					} else if (searchCaseInsensitive && (key.toLowerCase().contains(text.toLowerCase()) || containsLanguageValuePart(languagePropertiesByKey.get(key), text, true))) {
+						propertiesTable.setSelection(currentIndex);
+						refreshDetailView();
+						break;
+					}
+				}
+
+				if (searchUp) {
+					currentIndex++;
+				} else {
+					currentIndex--;
+				}
+
+				if (currentIndex < 0) {
+					currentIndex = languagePropertiesByKey.size() - 1;
+				} else if (currentIndex >= languagePropertiesByKey.size()) {
+					currentIndex = 0;
+				}
+			}
+		}
+	}
+
+	private static boolean containsLanguageValuePart(final LanguageProperty languageProperty, final String searchText, final boolean searchCaseInsensitive) {
+		for (final String languageSign : languageProperty.getAvailableLanguageSigns()) {
+			if (!searchCaseInsensitive && languageProperty.getLanguageValue(languageSign) != null && languageProperty.getLanguageValue(languageSign).contains(searchText)) {
+				return true;
+			} else if (searchCaseInsensitive && languageProperty.getLanguageValue(languageSign) != null && languageProperty.getLanguageValue(languageSign).toLowerCase().contains(searchText.toLowerCase())) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public static void setupDefaultConfig(final ConfigurationProperties applicationConfiguration) {
@@ -1253,6 +1350,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		}
 		if (!applicationConfiguration.containsKey(CONFIG_LANGUAGE)) {
 			applicationConfiguration.set(CONFIG_LANGUAGE, Locale.getDefault().getLanguage());
+		}
+		if (!applicationConfiguration.containsKey(CONFIG_USE_JAVA_ENCODING)) {
+			applicationConfiguration.set(CONFIG_USE_JAVA_ENCODING, false);
 		}
 	}
 

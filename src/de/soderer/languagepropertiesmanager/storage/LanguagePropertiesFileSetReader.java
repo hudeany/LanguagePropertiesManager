@@ -9,6 +9,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.soderer.utilities.PropertiesReader;
+import de.soderer.utilities.Utilities;
 import de.soderer.utilities.WildcardFilenameFilter;
 import de.soderer.utilities.collection.IndexedLinkedHashMap;
 
@@ -42,6 +43,9 @@ public class LanguagePropertiesFileSetReader {
 					final Map<String, String> languageEntries = propertiesReader.read();
 					for (final Entry<String, String> entry : languageEntries.entrySet()) {
 						final LanguageProperty languagePropertyForKey = languagePropertiesByKey.computeIfAbsent(entry.getKey(), k -> new LanguageProperty(k).setOriginalIndex(languagePropertiesByKey.size() + 1));
+						if (Utilities.isNotEmpty(propertiesReader.getComments().get(entry.getKey())) && Utilities.isEmpty(languagePropertyForKey.getComment())) {
+							languagePropertyForKey.setComment(propertiesReader.getComments().get(entry.getKey()));
+						}
 						languagePropertyForKey.setLanguageValue(languageSign, entry.getValue());
 					}
 				} catch (final Exception e) {

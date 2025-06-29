@@ -36,9 +36,14 @@ public class LanguagePropertiesFileSetWriter {
 				propertiesWriter.setEncodeJavaEncoding(encodeJavaEncoding);
 				final IndexedLinkedHashMap<String, LanguageProperty> sortedLanguagePropertiesByKey = MapUtilities.sortEntries(languagePropertiesByKey, new LanguageProperty.OriginalIndexComparator(true));
 				for (final Entry<String, LanguageProperty> entry : sortedLanguagePropertiesByKey.entrySet()) {
-					final String languageValue = entry.getValue().getLanguageValue(languageSign);
-					if (languageValue != null) {
-						propertiesWriter.writeProperty(entry.getValue().getKey(), languageValue);
+					if (entry.getKey().equals("value_not_found_sign")) { // TODO
+						System.out.println();
+					}
+					if (entry.getValue().containsLanguage(languageSign)) {
+						if (Utilities.isNotEmpty(entry.getValue().getComment())) {
+							propertiesWriter.writeComment(entry.getValue().getComment());
+						}
+						propertiesWriter.writeProperty(entry.getValue().getKey(), entry.getValue().getLanguageValue(languageSign));
 					}
 				}
 			}

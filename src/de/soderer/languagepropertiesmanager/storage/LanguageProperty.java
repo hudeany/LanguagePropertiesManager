@@ -8,12 +8,30 @@ import java.util.Set;
 import de.soderer.utilities.Utilities;
 
 public class LanguageProperty {
-	private int originalIndex;
 	private String key;
+	private String comment;
+	private int originalIndex;
 	private final Map<String, String> languageValues = new HashMap<>();
 
 	public LanguageProperty(final String key) {
 		this.key = key;
+	}
+
+	public LanguageProperty setKey(final String key) {
+		this.key = key;
+		return this;
+	}
+
+	public String getKey() {
+		return key;
+	}
+
+	public String getComment() {
+		return comment;
+	}
+
+	public void setComment(final String comment) {
+		this.comment = comment;
 	}
 
 	public int getOriginalIndex() {
@@ -29,15 +47,6 @@ public class LanguageProperty {
 		return Utilities.isEmpty(key) || languageValues.size() == 0;
 	}
 
-	public LanguageProperty setKey(final String key) {
-		this.key = key;
-		return this;
-	}
-
-	public String getKey() {
-		return key;
-	}
-
 	public LanguageProperty removeLanguageValue(final String languageSign) {
 		languageValues.remove(languageSign);
 		return this;
@@ -49,6 +58,10 @@ public class LanguageProperty {
 
 	public String getLanguageValue(final String languageSign) {
 		return languageValues.get(languageSign);
+	}
+
+	public boolean containsLanguage(final String languageSign) {
+		return languageValues.containsKey(languageSign);
 	}
 
 	public LanguageProperty setLanguageValue(final String languageSign, final String value) {
