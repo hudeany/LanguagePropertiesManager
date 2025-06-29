@@ -81,6 +81,8 @@ import de.soderer.utilities.swt.UpdateableGuiApplication;
  * Main Class
  */
 public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
+	public static boolean temporaryDisabled = true;
+
 	public static final String APPLICATION_NAME = "LanguagePropertiesManager";
 	public static final String APPLICATION_STARTUPCLASS_NAME = "de-soderer-LanguagePropertiesManager";
 	public static final String APPLICATION_ERROR_EMAIL_ADRESS = "LanguagePropertiesManager.Error@soderer.de";
@@ -324,16 +326,19 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		cleanupButton = new Button(buttonSection, SWT.PUSH);
 		cleanupButton.setImage(ImageManager.getImage("clean.png"));
 		cleanupButton.setToolTipText(LangResources.get("tooltip_cleanup_values"));
+		cleanupButton.setEnabled(false);
 		cleanupButton.addSelectionListener(new CleanupButtonSelectionListener(this));
 
 		checkUsageButton = new Button(buttonSection, SWT.PUSH);
 		checkUsageButton.setImage(ImageManager.getImage("puzzle.png"));
 		checkUsageButton.setToolTipText(LangResources.get("checkusage"));
+		checkUsageButton.setEnabled(false);
 		checkUsageButton.addSelectionListener(new CheckUsageButtonSelectionListener(this));
 
 		checkUsageButtonPrevious = new Button(buttonSection, SWT.PUSH);
 		checkUsageButtonPrevious.setImage(ImageManager.getImage("puzzleClock.png"));
 		checkUsageButtonPrevious.setToolTipText(LangResources.get("checkusageprevious"));
+		checkUsageButtonPrevious.setEnabled(false);
 		checkUsageButtonPrevious.addSelectionListener(new CheckUsageButtonPreviousSelectionListener());
 
 		final Button configButton = new Button(buttonSection, SWT.PUSH);
@@ -912,7 +917,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		if (addButton != null) {
 			addButton.setEnabled(propertiesTable.getItemCount() > 0);
 		}
-		if (cleanupButton != null) {
+		if (cleanupButton != null && !temporaryDisabled) {
 			cleanupButton.setEnabled(propertiesTable.getItemCount() > 0);
 		}
 		if (loadRecentButton != null) {
@@ -925,7 +930,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			searchBox.setEnabled(propertiesTable.getItemCount() > 0);
 		}
 
-		if (checkUsageButton != null) {
+		if (checkUsageButton != null && !temporaryDisabled) {
 			checkUsageButton.setEnabled(languagePropertiesByKey != null && languagePropertiesByKey.size() > 0);
 		}
 		if (checkUsageButtonPrevious != null) {

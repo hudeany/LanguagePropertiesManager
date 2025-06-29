@@ -5,7 +5,7 @@
 	<echo>Java/JVM detailed version: ${java.version}</echo>
 	
 	<loadfile property="build.version" srcFile="build.version" failonerror="false" />
-	<property name="build.version" value="25.1.2" />
+	<property name="build.version" value="25.0.0" />
 	<echo message="build.version: ${build.version}" />
 	
 	<property file="${user.home}/git/codeSigning.properties" />
