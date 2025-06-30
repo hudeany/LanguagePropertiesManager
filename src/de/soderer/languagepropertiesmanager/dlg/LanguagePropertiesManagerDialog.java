@@ -1254,6 +1254,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					try {
 						PropertiesHelper.exportToExcel(languagePropertiesByKey, new File(exportFile), languagePropertySetName, availableLanguageSigns);
 						hasUnsavedChanges = false;
+						showMessage(APPLICATION_NAME, LangResources.get("exportSuccess"));
 					} catch (final Exception e) {
 						new ErrorDialog(getShell(), APPLICATION_NAME, VERSION.toString(), APPLICATION_ERROR_EMAIL_ADRESS, e).open();
 					}
