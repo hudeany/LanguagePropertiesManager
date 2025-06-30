@@ -23,7 +23,7 @@ public class LanguagePropertiesFileSetReader {
 	 * @return
 	 * @throws Exception
 	 */
-	public static IndexedLinkedHashMap<String, LanguageProperty> read(final File propertiesDirectory, final String propertySetName, final boolean readKeysCaseInsensitive, final boolean decodeJavaEncoding) throws Exception {
+	public static IndexedLinkedHashMap<String, LanguageProperty> read(final File propertiesDirectory, final String propertySetName, final boolean readKeysCaseInsensitive) throws Exception {
 		if (!propertiesDirectory.exists()) {
 			throw new Exception("Properties directory '" + propertiesDirectory + "' does not exist");
 		} else if (!propertiesDirectory.isDirectory()) {
@@ -39,7 +39,6 @@ public class LanguagePropertiesFileSetReader {
 			if (languageSign != null) {
 				try (PropertiesReader propertiesReader = new PropertiesReader(new FileInputStream(propertyFile))) {
 					propertiesReader.setReadKeysCaseInsensitive(readKeysCaseInsensitive);
-					propertiesReader.setDecodeJavaEncoding(decodeJavaEncoding);
 					final Map<String, String> languageEntries = propertiesReader.read();
 					for (final Entry<String, String> entry : languageEntries.entrySet()) {
 						final LanguageProperty languagePropertyForKey = languagePropertiesByKey.computeIfAbsent(entry.getKey(), k -> new LanguageProperty(k).setOriginalIndex(languagePropertiesByKey.size() + 1));

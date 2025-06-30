@@ -17,7 +17,7 @@ public class LanguagePropertiesFileSetWriter {
 	public static final String LANGUAGE_SIGN_DEFAULT = "default";
 	public static final String POPERTIES_FILE_EXTENSION = "properties";
 
-	public static void write(final IndexedLinkedHashMap<String, LanguageProperty> languagePropertiesByKey, final File propertiesDirectory, final String propertySetName, final boolean encodeJavaEncoding) throws Exception {
+	public static void write(final IndexedLinkedHashMap<String, LanguageProperty> languagePropertiesByKey, final File propertiesDirectory, final String propertySetName) throws Exception {
 		if (!propertiesDirectory.exists()) {
 			throw new Exception("Properties directory '" + propertiesDirectory + "' does not exist");
 		} else if (!propertiesDirectory.isDirectory()) {
@@ -33,7 +33,6 @@ public class LanguagePropertiesFileSetWriter {
 				filename = propertySetName + "_" + languageSign + ".properties";
 			}
 			try (PropertiesWriter propertiesWriter = new PropertiesWriter(new FileOutputStream(new File(propertiesDirectory, filename)))) {
-				propertiesWriter.setEncodeJavaEncoding(encodeJavaEncoding);
 				final IndexedLinkedHashMap<String, LanguageProperty> sortedLanguagePropertiesByKey = MapUtilities.sortEntries(languagePropertiesByKey, new LanguageProperty.OriginalIndexComparator(true));
 				for (final Entry<String, LanguageProperty> entry : sortedLanguagePropertiesByKey.entrySet()) {
 					if (entry.getKey().equals("value_not_found_sign")) { // TODO
