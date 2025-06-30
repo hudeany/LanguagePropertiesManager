@@ -1216,7 +1216,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			final String importFile = fileDialog.open();
 			if (Utilities.isNotEmpty(importFile)) {
 				try {
-					setLayoutPropertySetName(PropertiesHelper.getExcelSheetNames(new File(importFile)).get(0));;
+					setLayoutPropertySetName(PropertiesHelper.getExcelSheetNames(new File(importFile)).get(0));
 					languagePropertiesByKey = PropertiesHelper.importFromExcel(new File(importFile), languagePropertySetName);
 					availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languagePropertiesByKey), "default");
 					hasUnsavedChanges = true;
@@ -1551,7 +1551,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				&& NetworkUtilities.checkForNetworkConnection();
 	}
 
-	private void showData(final String title, final String text) {
+	public void showData(final String title, final String text) {
 		new ShowDataDialog(getShell(), title, text, true).open();
 	}
 
