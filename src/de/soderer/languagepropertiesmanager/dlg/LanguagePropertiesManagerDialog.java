@@ -79,8 +79,7 @@ import de.soderer.utilities.swt.UpdateableGuiApplication;
  * Delete Language
  * Display of multiline value and comments (escape linebreaks in textfield)
  * cleanup errors
- * find usage
- * Excel export import with comment
+ * check usage
  */
 
 /**

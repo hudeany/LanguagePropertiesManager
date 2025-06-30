@@ -25,12 +25,6 @@ import de.soderer.utilities.collection.MapUtilities;
 import de.soderer.utilities.collection.UniqueFifoQueuedList;
 
 public class PropertiesHelper {
-	//	public static final String LANGUAGE_SIGN_DEFAULT = "default";
-	//
-	//	public static final String SORT_SIGN_DEFAULT = "default";
-	//	public static final String SORT_SIGN_ORIGINAL_INDEX = "index";
-	//	public static final String SORT_SIGN_KEY = "key";
-
 	public static final String PROPERTIES_FILEEXTENSION = "properties";
 	public static final String PROPERTIES_FILEPATTERN = "*." + PROPERTIES_FILEEXTENSION;
 
@@ -39,180 +33,7 @@ public class PropertiesHelper {
 
 	private static final Pattern LANGUAGEANDCOUNTRYPATTERN = Pattern.compile("^(_[a-zA-Z]{2}){2}$");
 	private static final Pattern LANGUAGEPATTERN = Pattern.compile("^[a-zA-Z]{2}$");
-	//
-	//	public static final String DEFAULT_STORAGE_SEPARATOR = " = ";
-	//
-	//	private final File propertiesDirectory;
-	//	private FileFilter fileFilter;
-	//	private final boolean readKeysCaseInsensitive;
-	//	private Map<String, PropertiesLanguageFileReader> languageFiles;
-	//	private IndexedLinkedHashMap<String, LanguageProperty> properties;
-	//	private int nextOrderIndex = 0;
-	//
-	//	public PropertiesHelper(final String directory, final String popertySetName, final boolean readKeysCaseInsensitive) throws Exception {
-	//		propertiesDirectory = new File(directory);
-	//		try {
-	//			fileFilter = new WildcardFilenameFilter(popertySetName + PROPERTIES_FILEPATTERN);
-	//		} catch (final Exception e) {
-	//			throw new Exception("Given filePattern is invalid", e);
-	//		}
-	//		this.readKeysCaseInsensitive = readKeysCaseInsensitive;
-	//
-	//		if (!propertiesDirectory.isDirectory()) {
-	//			throw new Exception("Given path is not a directory");
-	//		} else if (!propertiesDirectory.exists()) {
-	//			throw new Exception("Given directory does not exist");
-	//		}
-	//	}
-	//
-	//	public void load() throws Exception {
-	//		languageFiles = new HashMap<>();
-	//
-	//		for (final File propertyFile : propertiesDirectory.listFiles(fileFilter)) {
-	//			FileInputStream fileInputStream = null;
-	//			PropertiesLanguageFileReader propertiesLanguageFileReader;
-	//			try {
-	//				fileInputStream = new FileInputStream(propertyFile);
-	//				propertiesLanguageFileReader = new PropertiesLanguageFileReader();
-	//				propertiesLanguageFileReader.load(fileInputStream, readKeysCaseInsensitive);
-	//			} catch (final Exception e) {
-	//				throw new Exception("Error when reading file: " + propertyFile.getAbsolutePath(), e);
-	//			} finally {
-	//				Utilities.closeQuietly(fileInputStream);
-	//			}
-	//			languageFiles.put(propertyFile.getAbsolutePath(), propertiesLanguageFileReader);
-	//		}
-	//
-	//		languageFiles = MapUtilities.sort(languageFiles, new Comparator<String>() {
-	//			@Override
-	//			public int compare(final String arg0, final String arg1) {
-	//				if (arg0.length() != arg1.length()) {
-	//					return Integer.valueOf(arg0.length()).compareTo(arg1.length());
-	//				} else {
-	//					return arg0.compareTo(arg1);
-	//				}
-	//			}
-	//		});
-	//
-	//		final IndexedLinkedHashMap<String, LanguageProperty> returnValues = new IndexedLinkedHashMap<>();
-	//		for (final Entry<String, PropertiesLanguageFileReader> propertiesLanguageFileEntry : languageFiles.entrySet()) {
-	//			final String languageSign = PropertiesLanguageFileReader.getLanguageSignOfFilename(propertiesLanguageFileEntry.getKey());
-	//			for (final Entry<String, String> entry : propertiesLanguageFileEntry.getValue().getEntries().entrySet()) {
-	//				LanguageProperty property = returnValues.get(entry.getKey());
-	//				if (property == null) {
-	//					property = new LanguageProperty(entry.getKey());
-	//					property.setBasePropertiesFilePath(propertiesLanguageFileEntry.getKey());
-	//					property.setOriginalIndex(nextOrderIndex++);
-	//					returnValues.put(entry.getKey(), property);
-	//				}
-	//				property.setLanguageValue(languageSign, entry.getValue());
-	//			}
-	//		}
-	//
-	//		properties = MapUtilities.sort(returnValues, new LanguageProperty.KeyComparator(true));
-	//	}
-	//
-	//	public void remove(final String key) throws Exception {
-	//		properties.remove(key);
-	//	}
-	//
-	//	public void add(final LanguageProperty property) throws Exception {
-	//		properties.put(property.getKey(), property);
-	//		properties = MapUtilities.sort(properties, new LanguageProperty.KeyComparator(true));
-	//	}
-	//
-	//	public void save(final String directory, String separator, final boolean sortByOrgIndex) throws Exception {
-	//		Map<String, LanguageProperty> propertiesToSave;
-	//		if (sortByOrgIndex) {
-	//			propertiesToSave = MapUtilities.sortEntries(properties, new LanguageProperty.OriginalIndexComparator(true));
-	//		} else {
-	//			propertiesToSave = properties;
-	//		}
-	//
-	//		if (Utilities.isEmpty(separator)) {
-	//			separator = DEFAULT_STORAGE_SEPARATOR;
-	//		}
-	//
-	//		for (final String propertiesLanguageFileName : languageFiles.keySet()) {
-	//			final String languageSign = PropertiesLanguageFileReader
-	//					.getLanguageSignOfFilename(propertiesLanguageFileName);
-	//			final String fileName = new File(propertiesLanguageFileName).getName();
-	//			final File propertyFile = new File(directory + File.separator + fileName);
-	//			try {
-	//				if (propertyFile.exists()) {
-	//					propertyFile.delete();
-	//				}
-	//				try (FileOutputStream fileOutputStream = new FileOutputStream(propertyFile)) {
-	//					for (final Entry<String, LanguageProperty> entry : propertiesToSave.entrySet()) {
-	//						if (entry.getValue().getLanguageValue(languageSign) != null) {
-	//							final StringBuilder line = new StringBuilder();
-	//							line.append(entry.getValue().getKey());
-	//							line.append(separator);
-	//							line.append(entry.getValue().getLanguageValue(languageSign));
-	//							line.append("\n");
-	//							fileOutputStream.write(line.toString().getBytes("UTF-8"));
-	//						}
-	//					}
-	//				}
-	//			} catch (final Exception e) {
-	//				throw new Exception("Error when writing file: " + propertyFile.getAbsolutePath(), e);
-	//			}
-	//		}
-	//	}
-	//
-	//	public Map<String, PropertiesLanguageFileReader> getLanguageFiles() {
-	//		return languageFiles;
-	//	}
-	//
-	//	public List<String> getLanguageSigns() {
-	//		final List<String> returnValues = new ArrayList<>();
-	//
-	//		if (propertiesDirectory != null) {
-	//			for (final String fileName : languageFiles.keySet()) {
-	//				returnValues.add(PropertiesLanguageFileReader.getLanguageSignOfFilename(fileName));
-	//			}
-	//
-	//			Collections.sort(returnValues, new Comparator<String>() {
-	//				@Override
-	//				public int compare(final String value1, final String value2) {
-	//					if (LANGUAGE_SIGN_DEFAULT.equalsIgnoreCase(value1)) {
-	//						return -1;
-	//					} else if (LANGUAGE_SIGN_DEFAULT.equalsIgnoreCase(value2)) {
-	//						return 1;
-	//					} else {
-	//						return value1.compareTo(value2);
-	//					}
-	//				}
-	//			});
-	//		}
-	//
-	//		return returnValues;
-	//	}
-	//
-	//	public IndexedLinkedHashMap<String, LanguageProperty> getProperties() {
-	//		return properties;
-	//	}
-	//
-	//	public void removeLanguage(final String languageSign) throws Exception {
-	//		for (final LanguageProperty property : properties.values()) {
-	//			property.removeLanguageValue(languageSign);
-	//		}
-	//		languageFiles.remove(languageSign);
-	//	}
-	//
-	//	public void addLanguage(final String languageSign) throws Exception {
-	//		String defaultFileName = null;
-	//		for (final String fileName : languageFiles.keySet()) {
-	//			if (LANGUAGE_SIGN_DEFAULT.equalsIgnoreCase(PropertiesLanguageFileReader.getLanguageSignOfFilename(fileName))) {
-	//				defaultFileName = fileName;
-	//			}
-	//		}
-	//		if (defaultFileName != null) {
-	//			new File(defaultFileName.substring(0, defaultFileName.length() - 11) + languageSign + ".properties").createNewFile();
-	//		}
-	//		load();
-	//	}
-	//
+
 	//	public boolean cleanUp(final boolean repairpunctuation) throws Exception {
 	//		boolean dataWasChanged = false;
 	//
@@ -393,59 +214,6 @@ public class PropertiesHelper {
 	//
 	//		return dataWasChanged;
 	//	}
-	//
-	//	public void sort(final String column, final boolean ascending) {
-	//		if (column.equalsIgnoreCase(SORT_SIGN_KEY)) {
-	//			properties = MapUtilities.sort(properties, new LanguageProperty.KeyComparator(ascending));
-	//		} else if (column.equalsIgnoreCase(SORT_SIGN_ORIGINAL_INDEX)) {
-	//			properties = MapUtilities.sortEntries(properties, new LanguageProperty.OriginalIndexComparator(ascending));
-	//		} else if (column.equalsIgnoreCase(SORT_SIGN_DEFAULT)) {
-	//			properties = MapUtilities.sortEntries(properties, new LanguageProperty.EntryValueExistsComparator(LANGUAGE_SIGN_DEFAULT, ascending));
-	//		} else {
-	//			properties = MapUtilities.sortEntries(properties, new LanguageProperty.EntryValueExistsComparator(column, ascending));
-	//		}
-	//	}
-	//
-	//	public int getIndexOfKey(final String key) {
-	//		return properties.getKeyList().indexOf(key);
-	//	}
-	//
-	//	public void add(final boolean isStorageText, final Text keyTextfield, final Map<String, Text> languageTextFields) throws Exception {
-	//		// Check duplicate key
-	//		if (properties.containsKey(keyTextfield.getText())) {
-	//			throw new Exception("New key " + keyTextfield.getText() + " already exists");
-	//		}
-	//		final LanguageProperty property = new LanguageProperty(
-	//				isStorageText ? keyTextfield.getText() : StringEscapeUtils.escapeJava(keyTextfield.getText()));
-	//
-	//		property.setOriginalIndex(nextOrderIndex++);
-	//
-	//		// Set values
-	//		for (final String languageKey : languageTextFields.keySet()) {
-	//			property.setLanguageValue(languageKey, isStorageText ? languageTextFields.get(languageKey).getText() : StringEscapeUtils.escapeJava(languageTextFields.get(languageKey).getText()));
-	//		}
-	//
-	//		add(property);
-	//	}
-	//
-	//	public void change(final boolean isStorageText, final String oldKey, final Text keyTextfield, final Map<String, Text> languageTextFields) throws Exception {
-	//		final LanguageProperty property = properties.get(oldKey);
-	//
-	//		if (!oldKey.equals(keyTextfield.getText())) {
-	//			// Check duplicate key
-	//			if (properties.containsKey(keyTextfield.getText())) {
-	//				throw new Exception("New key already exists");
-	//			}
-	//
-	//			property.setKey(keyTextfield.getText());
-	//		}
-	//
-	//		// Set values
-	//		property.setKey(isStorageText ? keyTextfield.getText() : StringEscapeUtils.escapeJava(keyTextfield.getText()));
-	//		for (final String languageKey : languageTextFields.keySet()) {
-	//			property.setLanguageValue(languageKey, isStorageText ? languageTextFields.get(languageKey).getText() : StringEscapeUtils.escapeJava(languageTextFields.get(languageKey).getText()));
-	//		}
-	//	}
 
 	public static List<String> readAvailablePropertySets(final String directoryPath) {
 		final List<String> returnList = new UniqueFifoQueuedList<>(10);
@@ -465,6 +233,14 @@ public class PropertiesHelper {
 	public static void exportToExcel(final IndexedLinkedHashMap<String, LanguageProperty> languagePropertiesByKey, final File exportExcelFile, final String languagePropertySetName, List<String> languageSigns) throws Exception {
 		final IndexedLinkedHashMap<String, LanguageProperty> sortedLanguagePropertiesByKey = MapUtilities.sortEntries(languagePropertiesByKey, new LanguageProperty.OriginalIndexComparator(true));
 
+		boolean commentsFound = false;
+		for (final Entry<String, LanguageProperty> entry : languagePropertiesByKey.entrySet()) {
+			if (Utilities.isNotEmpty(entry.getValue().getComment())) {
+				commentsFound = true;
+				break;
+			}
+		}
+
 		try (final XSSFWorkbook workbook = new XSSFWorkbook()) {
 			try (final FileOutputStream outputStream = new FileOutputStream(exportExcelFile)) {
 				final XSSFSheet sheet = workbook.createSheet(languagePropertySetName);
@@ -481,6 +257,11 @@ public class PropertiesHelper {
 
 				headerCell = headerRow.createCell(headerColumnIndex++);
 				headerCell.setCellValue("Key");
+
+				if (commentsFound) {
+					headerCell = headerRow.createCell(headerColumnIndex++);
+					headerCell.setCellValue("Comment");
+				}
 
 				if (languageSigns == null) {
 					languageSigns = new ArrayList<>(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languagePropertiesByKey));
@@ -503,6 +284,11 @@ public class PropertiesHelper {
 
 					dataCell = dataRow.createCell(dataColumnIndex++);
 					dataCell.setCellValue(languageproperty.getValue().getKey());
+
+					if (commentsFound) {
+						dataCell = dataRow.createCell(dataColumnIndex++);
+						dataCell.setCellValue(languageproperty.getValue().getComment() == null ? "" : languageproperty.getValue().getComment());
+					}
 
 					for (final String languageSign : languageSignsInOutputOrder) {
 						dataCell = dataRow.createCell(dataColumnIndex++);
@@ -560,6 +346,7 @@ public class PropertiesHelper {
 			// Read headers
 			int columnIndex_Keys = -1;
 			int columnIndex_Index = -1;
+			int columnIndex_Comment = -1;
 			final Map<Integer, String> languageColumnHeaders = new HashMap<>();
 			final Row headerRow = sheet.getRow(0);
 			int headerColumnIndex = -1;
@@ -577,6 +364,9 @@ public class PropertiesHelper {
 							|| "idx".equalsIgnoreCase(cellValue.trim())
 							|| "org.idx".equalsIgnoreCase(cellValue.trim())) {
 						columnIndex_Index = headerColumnIndex;
+					} else if ("comment".equalsIgnoreCase(cellValue.trim())
+							|| "kommentar".equalsIgnoreCase(cellValue.trim())) {
+						columnIndex_Comment = headerColumnIndex;
 					} else if ("default".equalsIgnoreCase(cellValue)) {
 						languageColumnHeaders.put(headerColumnIndex, cellValue.toLowerCase());
 					} else if (LANGUAGEANDCOUNTRYPATTERN.matcher(cellValue).matches()
@@ -621,6 +411,23 @@ public class PropertiesHelper {
 						}
 					} else {
 						languageProperty.setOriginalIndex(rowIndex);
+					}
+
+					if (columnIndex_Comment >= 0) {
+						final Cell commentCell = row.getCell(columnIndex_Comment);
+						try {
+							if (commentCell.getCellType() == CellType.NUMERIC) {
+								languageProperty.setComment(Double.valueOf(commentCell.getNumericCellValue()).toString());
+							} else if (commentCell.getCellType() == CellType.STRING) {
+								languageProperty.setComment(commentCell.getStringCellValue());
+							} else {
+								throw new Exception("Excel file contains invalid comment data type in sheet '" + sheet.getSheetName() + "' at row index " + rowIndex + " and column index " + columnIndex_Index);
+							}
+						} catch (final Exception e) {
+							throw new Exception("Excel file contains invalid comment value in sheet '" + sheet.getSheetName() + "' at row index " + rowIndex + " and column index " + columnIndex_Index, e);
+						}
+					} else {
+						languageProperty.setComment(null);
 					}
 
 					for (final Entry<Integer, String> entry : languageColumnHeaders.entrySet()) {
