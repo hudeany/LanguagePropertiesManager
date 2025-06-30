@@ -49,11 +49,15 @@ import de.soderer.languagepropertiesmanager.storage.LanguagePropertiesFileSetRea
 import de.soderer.languagepropertiesmanager.storage.LanguagePropertiesFileSetWriter;
 import de.soderer.languagepropertiesmanager.storage.LanguageProperty;
 import de.soderer.languagepropertiesmanager.storage.PropertiesHelper;
+import de.soderer.network.NetworkUtilities;
+import de.soderer.pac.utilities.ProxyConfiguration;
+import de.soderer.pac.utilities.ProxyConfiguration.ProxyConfigurationType;
 import de.soderer.utilities.ConfigurationProperties;
 import de.soderer.utilities.DateUtilities;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.Version;
+import de.soderer.utilities.appupdate.ApplicationUpdateUtilities;
 import de.soderer.utilities.collection.IndexedLinkedHashMap;
 import de.soderer.utilities.collection.MapUtilities;
 import de.soderer.utilities.collection.UniqueFifoQueuedList;
@@ -64,6 +68,7 @@ import de.soderer.utilities.swt.ApplicationConfigurationDialog;
 import de.soderer.utilities.swt.ComboSelectionDialog;
 import de.soderer.utilities.swt.ErrorDialog;
 import de.soderer.utilities.swt.QuestionDialog;
+import de.soderer.utilities.swt.ShowDataDialog;
 import de.soderer.utilities.swt.SimpleInputDialog;
 import de.soderer.utilities.swt.SwtColor;
 import de.soderer.utilities.swt.SwtUtilities;
@@ -75,6 +80,7 @@ import de.soderer.utilities.swt.UpdateableGuiApplication;
  * Display of multiline value and comments (escape linebreaks in textfield)
  * cleanup errors
  * find usage
+ * Excel export import with comment
  */
 
 /**
@@ -101,6 +107,10 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	public static final String CONFIG_USE_JAVA_ENCODING = "Application.UseJavaEncoding";
 	public static final String CONFIG_PREVIOUS_CHECK_USAGE = "CheckUsage.Previous";
 	public static final String CONFIG_RECENT_PROPERTIES = "Recent";
+	public static final String CONFIG_DAILY_UPDATE_CHECK = "DailyUpdateCheck";
+	public static final String CONFIG_NEXT_DAILY_UPDATE_CHECK = "NextDailyUpdateCheck";
+	public static final String CONFIG_PROXY_CONFIGURATION_TYPE = ApplicationConfigurationDialog.CONFIG_PROXY_CONFIGURATION_TYPE;
+	public static final String CONFIG_PROXY_URL = ApplicationConfigurationDialog.CONFIG_PROXY_URL;
 
 	/** The version is filled in at application start from the version.txt file. */
 	public static Version VERSION = null;
@@ -240,6 +250,21 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		final Monitor[] monitorArray = display.getMonitors();
 		if (monitorArray != null) {
 			getShell().setLocation((monitorArray[0].getClientArea().width - getSize().x) / 2, (monitorArray[0].getClientArea().height - getSize().y) / 2);
+		}
+
+		final ProxyConfigurationType proxyConfigurationType = ProxyConfigurationType.getFromString(applicationConfiguration.get(ApplicationConfigurationDialog.CONFIG_PROXY_CONFIGURATION_TYPE));
+		final String proxyUrl = applicationConfiguration.get(ApplicationConfigurationDialog.CONFIG_PROXY_URL);
+		final ProxyConfiguration proxyConfiguration = new ProxyConfiguration(proxyConfigurationType, proxyUrl);
+
+		if (dailyUpdateCheckIsPending()) {
+			setDailyUpdateCheckStatus(true);
+			try {
+				if (ApplicationUpdateUtilities.checkForNewVersionAvailable(this, VERSIONINFO_DOWNLOAD_URL, proxyConfiguration, APPLICATION_NAME, VERSION) != null) {
+					ApplicationUpdateUtilities.executeUpdate(this, VERSIONINFO_DOWNLOAD_URL, proxyConfiguration, APPLICATION_NAME, VERSION, TRUSTED_UPDATE_CA_CERTIFICATES, null, null, null, true);
+				}
+			} catch (final Exception e) {
+				showErrorMessage(LangResources.get("updateCheck"), LangResources.get("error.cannotCheckForUpdate", e.getMessage()));
+			}
 		}
 
 		@SuppressWarnings("unused")
@@ -429,7 +454,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		final Button caseButton = new Button(searchBox, SWT.CHECK);
 		caseButton.setText("Aa");
 		caseButton.setToolTipText(LangResources.get("case_sensitive"));
-		caseButton.setLayoutData(new GridData(40, 20));
+		caseButton.setLayoutData(new GridData(35, 20));
 		caseButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(final SelectionEvent e) {
@@ -446,7 +471,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		final Button valueButton = new Button(searchBox, SWT.CHECK);
 		valueButton.setText(LangResources.get("value"));
 		valueButton.setToolTipText(LangResources.get("value"));
-		valueButton.setLayoutData(new GridData(40, 20));
+		valueButton.setLayoutData(new GridData(45, 20));
 		valueButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(final SelectionEvent e) {
@@ -480,7 +505,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 		final TableColumn columnOrigialIndex = new TableColumn(propertiesTable, SWT.RIGHT);
 		columnOrigialIndex.setMoveable(false);
-		columnOrigialIndex.setWidth(50);
+		columnOrigialIndex.setWidth(60);
 		columnOrigialIndex.setText(LangResources.get("columnheader_original_index"));
 		columnOrigialIndex.addListener(SWT.Selection, columnSortListener);
 
@@ -1409,6 +1434,20 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		if (!applicationConfiguration.containsKey(CONFIG_USE_JAVA_ENCODING)) {
 			applicationConfiguration.set(CONFIG_USE_JAVA_ENCODING, false);
 		}
+
+		applicationConfiguration.set(ApplicationConfigurationDialog.CONFIG_PROXY_CONFIGURATION_TYPE + ConfigurationProperties.ENUM_EXTENSION, "None,System,Proxy-URL,WPAD,PAC-URL");
+		if (!applicationConfiguration.containsKey(CONFIG_DAILY_UPDATE_CHECK)) {
+			applicationConfiguration.set(CONFIG_DAILY_UPDATE_CHECK, false);
+		}
+		if (!applicationConfiguration.containsKey(CONFIG_NEXT_DAILY_UPDATE_CHECK)) {
+			applicationConfiguration.set(CONFIG_NEXT_DAILY_UPDATE_CHECK, "");
+		}
+		if (!applicationConfiguration.containsKey(CONFIG_PROXY_CONFIGURATION_TYPE)) {
+			applicationConfiguration.set(CONFIG_PROXY_CONFIGURATION_TYPE, ProxyConfiguration.ProxyConfigurationType.None.name());
+		}
+		if (!applicationConfiguration.containsKey(CONFIG_PROXY_URL)) {
+			applicationConfiguration.set(CONFIG_PROXY_URL, "");
+		}
 	}
 
 	public void checkUsage(final IndexedLinkedHashMap<String, LanguageProperty> storageToCheck, final String directory, final String filePattern, final String usagePatternString) throws Exception {
@@ -1496,5 +1535,35 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		final QuestionDialog dialog = new QuestionDialog(this, getText(), LangResources.get("question.overwritefile", filePath), LangResources.get("overwrite"), LangResources.get("cancel")).setBackgroundColor(SwtColor.LightRed);
 		final int returncode = dialog.open();
 		return returncode == 0;
+	}
+
+	@Override
+	protected void setDailyUpdateCheckStatus(final boolean checkboxStatus) {
+		applicationConfiguration.set(CONFIG_DAILY_UPDATE_CHECK, checkboxStatus);
+		applicationConfiguration.set(CONFIG_NEXT_DAILY_UPDATE_CHECK, LocalDateTime.now().plusDays(1));
+		applicationConfiguration.save();
+	}
+
+	@Override
+	protected Boolean isDailyUpdateCheckActivated() {
+		return applicationConfiguration.getBoolean(CONFIG_DAILY_UPDATE_CHECK);
+	}
+
+	protected boolean dailyUpdateCheckIsPending() {
+		return applicationConfiguration.getBoolean(CONFIG_DAILY_UPDATE_CHECK)
+				&& (applicationConfiguration.getDate(CONFIG_NEXT_DAILY_UPDATE_CHECK) == null || applicationConfiguration.getDate(CONFIG_NEXT_DAILY_UPDATE_CHECK).isBefore(LocalDateTime.now()))
+				&& NetworkUtilities.checkForNetworkConnection();
+	}
+
+	private void showData(final String title, final String text) {
+		new ShowDataDialog(getShell(), title, text, true).open();
+	}
+
+	public void showMessage(final String title, final String text) {
+		new QuestionDialog(getShell(), title, text, LangResources.get("ok")).open();
+	}
+
+	public void showErrorMessage(final String title, final String text) {
+		new QuestionDialog(getShell(), title, text, LangResources.get("ok")).setBackgroundColor(SwtColor.LightRed).open();
 	}
 }
