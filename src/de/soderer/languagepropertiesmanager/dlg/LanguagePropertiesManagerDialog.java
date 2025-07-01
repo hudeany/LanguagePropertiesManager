@@ -152,6 +152,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private boolean searchValuePreference = false;
 	private Button checkUsageButton;
 	private Button checkUsageButtonPrevious;
+	private Button addLanguageButton;
 
 	private Button okButton;
 	private Button cancelButton;
@@ -366,7 +367,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		checkUsageButtonPrevious.setEnabled(false);
 		checkUsageButtonPrevious.addSelectionListener(new CheckUsageButtonPreviousSelectionListener());
 
-		final Button addLanguageButton = new Button(buttonSection, SWT.PUSH);
+		addLanguageButton = new Button(buttonSection, SWT.PUSH);
 		addLanguageButton.setText(LangResources.get("AddLanguage"));
 		addLanguageButton.setToolTipText(LangResources.get("configuration"));
 		addLanguageButton.addSelectionListener(new AddLanguageButtonSelectionListener(this));
@@ -1001,6 +1002,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		}
 		if (textConversionButton != null) {
 			textConversionButton.setEnabled(true);
+		}
+		if (addLanguageButton != null) {
+			addLanguageButton.setEnabled(languagePropertiesByKey != null && languagePropertiesByKey.size() > 0);
 		}
 	}
 
