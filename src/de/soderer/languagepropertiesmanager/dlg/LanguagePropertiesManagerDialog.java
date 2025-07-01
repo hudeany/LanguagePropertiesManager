@@ -369,7 +369,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 		addLanguageButton = new Button(buttonSection, SWT.PUSH);
 		addLanguageButton.setText(LangResources.get("AddLanguage"));
-		addLanguageButton.setToolTipText(LangResources.get("configuration"));
+		addLanguageButton.setToolTipText(LangResources.get("tooltip_AddLanguage"));
 		addLanguageButton.addSelectionListener(new AddLanguageButtonSelectionListener(this));
 
 		final Button configButton = new Button(buttonSection, SWT.PUSH);
