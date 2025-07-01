@@ -96,6 +96,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	/** The Constant VERSION_RESOURCE_FILE, which contains version number and versioninfo download url. */
 	public static final String VERSION_RESOURCE_FILE = "/application_version.txt";
 
+	public static final File KEYSTORE_FILE = new File(System.getProperty("user.home") + File.separator + "." + APPLICATION_NAME + File.separator + "." + APPLICATION_NAME + ".keystore");
 	public static final String HOME_URL = "https://soderer.de/index.php?menu=tools";
 
 	public static final String CONFIG_VERSION = "Application.Version";
@@ -241,7 +242,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	}
 
 	public LanguagePropertiesManagerDialog(final Display display, final ConfigurationProperties applicationConfiguration) throws Exception {
-		super(display, APPLICATION_NAME, VERSION, null);
+		super(display, APPLICATION_NAME, VERSION, KEYSTORE_FILE);
 
 		this.applicationConfiguration = applicationConfiguration;
 		loadConfiguration();
@@ -812,8 +813,11 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		@Override
 		public void widgetSelected(final SelectionEvent e) {
 			try {
-				availableLanguageSigns.add(new SimpleInputDialog(shell, getText(), LangResources.get("enterLanguageSign")).open());
-				setupTable();
+				final String newLanguageSign = new SimpleInputDialog(shell, getText(), LangResources.get("enterLanguageSign")).open();
+				if (Utilities.isNotBlank(newLanguageSign)) {
+					availableLanguageSigns.add(newLanguageSign);
+					setupTable();
+				}
 			} catch (final Exception ex) {
 				new ErrorDialog(getShell(), APPLICATION_NAME, VERSION.toString(), APPLICATION_ERROR_EMAIL_ADRESS, ex).open();
 			}
