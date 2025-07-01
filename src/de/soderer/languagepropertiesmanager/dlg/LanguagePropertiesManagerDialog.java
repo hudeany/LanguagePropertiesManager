@@ -101,7 +101,6 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 	public static final String CONFIG_VERSION = "Application.Version";
 	public static final String CONFIG_CLEANUP_REPAIRPUNCTUATION = "Cleanup.RepairPunctuation";
-	public static final String CONFIG_OUTPUT_SEPARATOR = "Output.Separator";
 	public static final String CONFIG_SORT_ORG_INDEX = "Output.SortByOrgIndex";
 	public static final String CONFIG_LANGUAGE = "Application.Language";
 	public static final String CONFIG_PREVIOUS_CHECK_USAGE = "CheckUsage.Previous";
@@ -1428,9 +1427,6 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	public static void setupDefaultConfig(final ConfigurationProperties applicationConfiguration) {
 		if (!applicationConfiguration.containsKey(CONFIG_CLEANUP_REPAIRPUNCTUATION)) {
 			applicationConfiguration.set(CONFIG_CLEANUP_REPAIRPUNCTUATION, true);
-		}
-		if (!applicationConfiguration.containsKey(CONFIG_OUTPUT_SEPARATOR)) {
-			applicationConfiguration.set(CONFIG_OUTPUT_SEPARATOR, " = ");
 		}
 		if (!applicationConfiguration.containsKey(CONFIG_SORT_ORG_INDEX)) {
 			applicationConfiguration.set(CONFIG_SORT_ORG_INDEX, true);
