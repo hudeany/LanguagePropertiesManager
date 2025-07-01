@@ -54,6 +54,7 @@ import de.soderer.pac.utilities.ProxyConfiguration;
 import de.soderer.pac.utilities.ProxyConfiguration.ProxyConfigurationType;
 import de.soderer.utilities.ConfigurationProperties;
 import de.soderer.utilities.DateUtilities;
+import de.soderer.utilities.IoUtilities;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.Version;
@@ -153,6 +154,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private Button checkUsageButton;
 	private Button checkUsageButtonPrevious;
 	private Button addLanguageButton;
+	private Button deleteLanguageButton;
 
 	private Button okButton;
 	private Button cancelButton;
@@ -310,7 +312,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		propertiesLabel.setFont(new Font(getDisplay(), "Arial", 12, SWT.BOLD));
 
 		final Composite buttonSection = new Composite(leftPart, SWT.NONE);
-		buttonSection.setLayout(SwtUtilities.createSmallMarginGridLayout(13, false));
+		buttonSection.setLayout(SwtUtilities.createSmallMarginGridLayout(14, false));
 		buttonSection.setLayoutData(new GridData(SWT.FILL, SWT.BOTTOM, true, false, 1, 1));
 
 		loadRecentButton = new Button(buttonSection, SWT.PUSH);
@@ -339,7 +341,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		exportToExcelButton.addSelectionListener(new ExportSelectionListener(this));
 
 		addButton = new Button(buttonSection, SWT.PUSH);
-		addButton.setImage(ImageManager.getImage("plus.png"));
+		addButton.setImage(ImageManager.getImage("newProperty.png"));
 		addButton.setToolTipText(LangResources.get("tooltip_create_new_property"));
 		addButton.addSelectionListener(new AddButtonSelectionListener());
 
@@ -368,14 +370,19 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		checkUsageButtonPrevious.addSelectionListener(new CheckUsageButtonPreviousSelectionListener());
 
 		addLanguageButton = new Button(buttonSection, SWT.PUSH);
-		addLanguageButton.setText(LangResources.get("AddLanguage"));
+		addLanguageButton.setImage(ImageManager.getImage("plus.png"));
 		addLanguageButton.setToolTipText(LangResources.get("tooltip_AddLanguage"));
-		addLanguageButton.addSelectionListener(new AddLanguageButtonSelectionListener(this));
+		addLanguageButton.addSelectionListener(new AddLanguageButtonSelectionListener());
+
+		deleteLanguageButton = new Button(buttonSection, SWT.PUSH);
+		deleteLanguageButton.setImage(ImageManager.getImage("minus.png"));
+		deleteLanguageButton.setToolTipText(LangResources.get("tooltip_DeleteLanguage"));
+		deleteLanguageButton.addSelectionListener(new DeleteLanguageButtonSelectionListener());
 
 		final Button configButton = new Button(buttonSection, SWT.PUSH);
 		configButton.setImage(ImageManager.getImage("wrench.png"));
 		configButton.setToolTipText(LangResources.get("configuration"));
-		configButton.addSelectionListener(new ConfigButtonSelectionListener(this));
+		configButton.addSelectionListener(new ConfigButtonSelectionListener());
 
 		final Button helpButton = new Button(buttonSection, SWT.PUSH);
 		helpButton.setImage(ImageManager.getImage("question.png"));
@@ -804,15 +811,10 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	}
 
 	private class AddLanguageButtonSelectionListener extends SelectionAdapter {
-		private final Shell shell;
-		public AddLanguageButtonSelectionListener(final Shell shell) {
-			this.shell = shell;
-		}
-
 		@Override
 		public void widgetSelected(final SelectionEvent e) {
 			try {
-				final String newLanguageSign = new SimpleInputDialog(shell, getText(), LangResources.get("enterLanguageSign")).open();
+				final String newLanguageSign = new SimpleInputDialog(getShell(), getText(), LangResources.get("enterLanguageSign")).open();
 				if (Utilities.isNotBlank(newLanguageSign)) {
 					availableLanguageSigns.add(newLanguageSign);
 					setupTable();
@@ -820,19 +822,41 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			} catch (final Exception ex) {
 				new ErrorDialog(getShell(), APPLICATION_NAME, VERSION.toString(), APPLICATION_ERROR_EMAIL_ADRESS, ex).open();
 			}
+			checkButtonStatus();
+		}
+	}
+
+	private class DeleteLanguageButtonSelectionListener extends SelectionAdapter {
+		@Override
+		public void widgetSelected(final SelectionEvent e) {
+			try {
+				final List<String> availableLanguageSignsToDelete = new ArrayList<>(availableLanguageSigns);
+				availableLanguageSignsToDelete.remove("default");
+				final String languageSignToDelete = new ComboSelectionDialog(getShell(), getText(), LangResources.get("selectLanguageSignToDelete"), availableLanguageSignsToDelete).open();
+				if (Utilities.isNotBlank(languageSignToDelete)) {
+					for (final Entry<String, LanguageProperty> languageProperty : languagePropertiesByKey.entrySet()) {
+						languageProperty.getValue().removeLanguageValue(languageSignToDelete);
+					}
+					availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languagePropertiesByKey), "default");
+					setupTable();
+				}
+			} catch (final Exception ex) {
+				new ErrorDialog(getShell(), APPLICATION_NAME, VERSION.toString(), APPLICATION_ERROR_EMAIL_ADRESS, ex).open();
+			}
+			checkButtonStatus();
 		}
 	}
 
 	private class ConfigButtonSelectionListener extends SelectionAdapter {
-		private final Shell shell;
-		public ConfigButtonSelectionListener(final Shell shell) {
-			this.shell = shell;
-		}
-
 		@Override
 		public void widgetSelected(final SelectionEvent e) {
 			try {
-				final ApplicationConfigurationDialog dialog = new ApplicationConfigurationDialog(shell, applicationConfiguration, LangResources.get("window_title"));
+				byte[] iconData;
+				try (InputStream inputStream = ImageManager.class.getResourceAsStream("LanguagePropertiesManager.ico")) {
+					iconData = IoUtilities.toByteArray(inputStream);
+				}
+
+				final ApplicationConfigurationDialog dialog = new ApplicationConfigurationDialog(getShell(), applicationConfiguration, APPLICATION_STARTUPCLASS_NAME, iconData, ImageManager.getImage("LanguagePropertiesManager.png"));
 				if (dialog.open()) {
 					applicationConfiguration.save();
 
@@ -1008,6 +1032,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		}
 		if (addLanguageButton != null) {
 			addLanguageButton.setEnabled(languagePropertiesByKey != null && languagePropertiesByKey.size() > 0);
+		}
+		if (deleteLanguageButton != null) {
+			deleteLanguageButton.setEnabled(languagePropertiesByKey != null && languagePropertiesByKey.size() > 0 && availableLanguageSigns != null && availableLanguageSigns.size() > 1);
 		}
 	}
 
