@@ -8,12 +8,14 @@ import java.util.Set;
 import de.soderer.utilities.Utilities;
 
 public class LanguageProperty {
+	private String path;
 	private String key;
 	private String comment;
 	private int originalIndex;
 	private final Map<String, String> languageValues = new HashMap<>();
 
-	public LanguageProperty(final String key) {
+	public LanguageProperty(final String path, final String key) {
+		this.path = Utilities.replaceUsersHomeByTilde(path);
 		this.key = key;
 	}
 
@@ -26,12 +28,22 @@ public class LanguageProperty {
 		return key;
 	}
 
+	public String getPath() {
+		return path;
+	}
+
+	public LanguageProperty setPath(final String path) {
+		this.path = path;
+		return this;
+	}
+
 	public String getComment() {
 		return comment;
 	}
 
-	public void setComment(final String comment) {
+	public LanguageProperty setComment(final String comment) {
 		this.comment = comment;
+		return this;
 	}
 
 	public int getOriginalIndex() {
@@ -73,19 +85,6 @@ public class LanguageProperty {
 		return this;
 	}
 
-	public static class KeyComparator implements Comparator<String> {
-		private final boolean ascending;
-
-		public KeyComparator(final boolean ascending) {
-			this.ascending = ascending;
-		}
-
-		@Override
-		public int compare(final String arg0, final String arg1) {
-			return arg0.toLowerCase().compareTo(arg1.toLowerCase()) * (ascending ? 1 : -1);
-		}
-	}
-
 	public static class EntryValueExistsComparator implements Comparator<Map.Entry<String, LanguageProperty>> {
 		private final String languageSign;
 		private final boolean ascending;
@@ -109,20 +108,6 @@ public class LanguageProperty {
 				result = +1;
 			}
 
-			return result * (ascending ? 1 : -1);
-		}
-	}
-
-	public static class OriginalIndexComparator implements Comparator<Map.Entry<String, LanguageProperty>> {
-		private final boolean ascending;
-
-		public OriginalIndexComparator(final boolean ascending) {
-			this.ascending = ascending;
-		}
-
-		@Override
-		public int compare(final Map.Entry<String, LanguageProperty> entry1, final Map.Entry<String, LanguageProperty> entry2) {
-			final int result = Integer.valueOf(entry1.getValue().getOriginalIndex()).compareTo(entry2.getValue().getOriginalIndex());
 			return result * (ascending ? 1 : -1);
 		}
 	}

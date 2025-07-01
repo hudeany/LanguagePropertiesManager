@@ -5,11 +5,13 @@ import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
@@ -20,8 +22,6 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.WildcardFilenameFilter;
-import de.soderer.utilities.collection.IndexedLinkedHashMap;
-import de.soderer.utilities.collection.MapUtilities;
 import de.soderer.utilities.collection.UniqueFifoQueuedList;
 
 public class PropertiesHelper {
@@ -215,7 +215,7 @@ public class PropertiesHelper {
 	//		return dataWasChanged;
 	//	}
 
-	public static List<String> readAvailablePropertySets(final String directoryPath) {
+	public static List<String> readAvailablePropertiesSets(final String directoryPath) {
 		final List<String> returnList = new UniqueFifoQueuedList<>(10);
 		for (final File propertyFile : new File(directoryPath).listFiles((FileFilter) new WildcardFilenameFilter(PROPERTIES_FILEPATTERN))) {
 			final String fileName = propertyFile.getName().substring(0, propertyFile.getName().lastIndexOf('.'));
@@ -230,12 +230,13 @@ public class PropertiesHelper {
 		return returnList;
 	}
 
-	public static void exportToExcel(final IndexedLinkedHashMap<String, LanguageProperty> languagePropertiesByKey, final File exportExcelFile, final String languagePropertySetName, List<String> languageSigns) throws Exception {
-		final IndexedLinkedHashMap<String, LanguageProperty> sortedLanguagePropertiesByKey = MapUtilities.sortEntries(languagePropertiesByKey, new LanguageProperty.OriginalIndexComparator(true));
+	public static void exportToExcel(final List<LanguageProperty> languageProperties, final File exportExcelFile, final String languagePropertySetName, List<String> languageSigns) throws Exception {
+		final Comparator<LanguageProperty> compareByPathAndIndex = Comparator.comparing(LanguageProperty::getPath).thenComparing(LanguageProperty::getOriginalIndex);
+		final List<LanguageProperty> sortedLanguageProperties = languageProperties.stream().sorted(compareByPathAndIndex).collect(Collectors.toList());
 
 		boolean commentsFound = false;
-		for (final Entry<String, LanguageProperty> entry : languagePropertiesByKey.entrySet()) {
-			if (Utilities.isNotEmpty(entry.getValue().getComment())) {
+		for (final LanguageProperty languageProperty : sortedLanguageProperties) {
+			if (Utilities.isNotEmpty(languageProperty.getComment())) {
 				commentsFound = true;
 				break;
 			}
@@ -253,6 +254,9 @@ public class PropertiesHelper {
 				int headerColumnIndex = 0;
 
 				Cell headerCell = headerRow.createCell(headerColumnIndex++);
+				headerCell.setCellValue("Path");
+
+				headerCell = headerRow.createCell(headerColumnIndex++);
 				headerCell.setCellValue("Index");
 
 				headerCell = headerRow.createCell(headerColumnIndex++);
@@ -264,7 +268,7 @@ public class PropertiesHelper {
 				}
 
 				if (languageSigns == null) {
-					languageSigns = new ArrayList<>(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languagePropertiesByKey));
+					languageSigns = new ArrayList<>(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(sortedLanguageProperties));
 				}
 				final List<String> languageSignsInOutputOrder = Utilities.sortButPutItemsFirst(languageSigns, "default");
 
@@ -275,25 +279,28 @@ public class PropertiesHelper {
 
 				// Write data rows
 				int dataRowIndex = 1;
-				for (final Entry<String, LanguageProperty> languageproperty : sortedLanguagePropertiesByKey.entrySet()) {
+				for (final LanguageProperty languageproperty : sortedLanguageProperties) {
 					int dataColumnIndex = 0;
 					final Row dataRow = sheet.createRow(dataRowIndex++);
 
 					Cell dataCell = dataRow.createCell(dataColumnIndex++);
-					dataCell.setCellValue(languageproperty.getValue().getOriginalIndex());
+					dataCell.setCellValue(languageproperty.getPath());
 
 					dataCell = dataRow.createCell(dataColumnIndex++);
-					dataCell.setCellValue(languageproperty.getValue().getKey());
+					dataCell.setCellValue(languageproperty.getOriginalIndex());
+
+					dataCell = dataRow.createCell(dataColumnIndex++);
+					dataCell.setCellValue(languageproperty.getKey());
 
 					if (commentsFound) {
 						dataCell = dataRow.createCell(dataColumnIndex++);
-						dataCell.setCellValue(languageproperty.getValue().getComment() == null ? "" : languageproperty.getValue().getComment());
+						dataCell.setCellValue(languageproperty.getComment() == null ? "" : languageproperty.getComment());
 					}
 
 					for (final String languageSign : languageSignsInOutputOrder) {
 						dataCell = dataRow.createCell(dataColumnIndex++);
 						dataCell.setCellStyle(cellStyle);
-						final String languageValue = languageproperty.getValue().getLanguageValue(languageSign);
+						final String languageValue = languageproperty.getLanguageValue(languageSign);
 						if (languageValue != null) {
 							dataCell.setCellValue(languageValue);
 						} else {
@@ -303,7 +310,7 @@ public class PropertiesHelper {
 				}
 
 				// Resize columns for optimal width
-				for (int i = 0; i < languageSignsInOutputOrder.size() + 2; i++) {
+				for (int i = 0; i < languageSignsInOutputOrder.size() + 3; i++) {
 					sheet.autoSizeColumn(i);
 				}
 
@@ -323,7 +330,7 @@ public class PropertiesHelper {
 		}
 	}
 
-	public static IndexedLinkedHashMap<String, LanguageProperty> importFromExcel(final File importExcelFile, final String languagePropertySetName) throws Exception {
+	public static List<LanguageProperty> importFromExcel(final File importExcelFile, final String languagePropertySetName) throws Exception {
 		try (FileInputStream inputStream = new FileInputStream(importExcelFile);
 				final XSSFWorkbook workbook = new XSSFWorkbook(inputStream)) {
 			XSSFSheet sheet = null;
@@ -344,6 +351,7 @@ public class PropertiesHelper {
 			}
 
 			// Read headers
+			int columnIndex_Path = -1;
 			int columnIndex_Keys = -1;
 			int columnIndex_Index = -1;
 			int columnIndex_Comment = -1;
@@ -354,7 +362,12 @@ public class PropertiesHelper {
 				headerColumnIndex++;
 				if (headerCell.getCellType() == CellType.STRING) {
 					final String cellValue = headerCell.getStringCellValue().trim();
-					if ("key".equalsIgnoreCase(cellValue.trim())
+					if ("path".equalsIgnoreCase(cellValue.trim())
+							|| "pfad".equalsIgnoreCase(cellValue.trim())
+							|| "datei".equalsIgnoreCase(cellValue.trim())
+							|| "file".equalsIgnoreCase(cellValue.trim())) {
+						columnIndex_Path = headerColumnIndex;
+					} else if ("key".equalsIgnoreCase(cellValue.trim())
 							|| "keys".equalsIgnoreCase(cellValue.trim())
 							|| "bezeichner".equalsIgnoreCase(cellValue.trim())
 							|| "schlüssel".equalsIgnoreCase(cellValue.trim())
@@ -381,11 +394,23 @@ public class PropertiesHelper {
 			}
 
 			// Read data
-			final IndexedLinkedHashMap<String, LanguageProperty> languagePropertiesByKey = new IndexedLinkedHashMap<>();
+			final List<LanguageProperty> languagePropertiesByKey = new ArrayList<>();
 			int rowIndex = -1;
 			for (final Row row : sheet) {
 				rowIndex++;
 				if (rowIndex > 0) {
+					String path = null;
+					if (columnIndex_Path >= 0) {
+						final Cell pathCell = row.getCell(columnIndex_Path);
+						if (pathCell.getCellType() == CellType.STRING) {
+							path = pathCell.getStringCellValue().trim();
+						} else if (pathCell.getCellType() == CellType.BLANK) {
+							path = "";
+						} else {
+							throw new Exception("Excel file contains invalid path value in sheet '" + sheet.getSheetName() + "' at row index " + rowIndex + " and column index " + columnIndex_Keys);
+						}
+					}
+
 					String key;
 					final Cell keyCell = row.getCell(columnIndex_Keys);
 					if (keyCell.getCellType() == CellType.STRING) {
@@ -394,7 +419,7 @@ public class PropertiesHelper {
 						throw new Exception("Excel file contains invalid key value in sheet '" + sheet.getSheetName() + "' at row index " + rowIndex + " and column index " + columnIndex_Keys);
 					}
 
-					final LanguageProperty languageProperty = new LanguageProperty(key);
+					final LanguageProperty languageProperty = new LanguageProperty(path, key);
 
 					if (columnIndex_Index >= 0) {
 						final Cell indexCell = row.getCell(columnIndex_Index);
@@ -403,6 +428,8 @@ public class PropertiesHelper {
 								languageProperty.setOriginalIndex(Double.valueOf(indexCell.getNumericCellValue()).intValue());
 							} else if (indexCell.getCellType() == CellType.STRING) {
 								languageProperty.setOriginalIndex(Integer.parseInt(indexCell.getStringCellValue().trim()));
+							} else if (indexCell.getCellType() == CellType.BLANK) {
+								languageProperty.setOriginalIndex(0);
 							} else {
 								throw new Exception("Excel file contains invalid index data type in sheet '" + sheet.getSheetName() + "' at row index " + rowIndex + " and column index " + columnIndex_Index);
 							}
@@ -420,6 +447,8 @@ public class PropertiesHelper {
 								languageProperty.setComment(Double.valueOf(commentCell.getNumericCellValue()).toString());
 							} else if (commentCell.getCellType() == CellType.STRING) {
 								languageProperty.setComment(commentCell.getStringCellValue());
+							} else if (commentCell.getCellType() == CellType.BLANK) {
+								languageProperty.setComment(null);
 							} else {
 								throw new Exception("Excel file contains invalid comment data type in sheet '" + sheet.getSheetName() + "' at row index " + rowIndex + " and column index " + columnIndex_Index);
 							}
@@ -434,12 +463,14 @@ public class PropertiesHelper {
 						final Cell valueCell = row.getCell(entry.getKey());
 						if (valueCell.getCellType() == CellType.STRING) {
 							languageProperty.setLanguageValue(entry.getValue(), valueCell.getStringCellValue());
+						} else if (valueCell.getCellType() == CellType.BLANK) {
+							languageProperty.setLanguageValue(entry.getValue(), null);
 						} else {
 							throw new Exception("Excel file contains invalid data type in sheet '" + sheet.getSheetName() + "' at row index " + rowIndex + " and column index " + entry.getKey());
 						}
 					}
 
-					languagePropertiesByKey.put(key, languageProperty);
+					languagePropertiesByKey.add(languageProperty);
 				}
 			}
 

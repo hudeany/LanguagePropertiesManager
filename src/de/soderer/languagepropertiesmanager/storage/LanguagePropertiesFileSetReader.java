@@ -3,15 +3,16 @@ package de.soderer.languagepropertiesmanager.storage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FilenameFilter;
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.soderer.utilities.PropertiesReader;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.WildcardFilenameFilter;
-import de.soderer.utilities.collection.IndexedLinkedHashMap;
 
 public class LanguagePropertiesFileSetReader {
 	public static final String LANGUAGE_SIGN_DEFAULT = "default";
@@ -23,14 +24,14 @@ public class LanguagePropertiesFileSetReader {
 	 * @return
 	 * @throws Exception
 	 */
-	public static IndexedLinkedHashMap<String, LanguageProperty> read(final File propertiesDirectory, final String propertySetName, final boolean readKeysCaseInsensitive) throws Exception {
+	public static List<LanguageProperty> read(final File propertiesDirectory, final String propertySetName, final boolean readKeysCaseInsensitive) throws Exception {
 		if (!propertiesDirectory.exists()) {
 			throw new Exception("Properties directory '" + propertiesDirectory + "' does not exist");
 		} else if (!propertiesDirectory.isDirectory()) {
 			throw new Exception("Properties directory '" + propertiesDirectory + "' is not a directory");
 		}
 
-		final IndexedLinkedHashMap<String, LanguageProperty> languagePropertiesByKey = new IndexedLinkedHashMap<>();
+		final List<LanguageProperty> languageProperties = new ArrayList<>();
 
 		final FilenameFilter fileFilter = new WildcardFilenameFilter(propertySetName + "*." + POPERTIES_FILE_EXTENSION);
 
@@ -40,12 +41,24 @@ public class LanguagePropertiesFileSetReader {
 				try (PropertiesReader propertiesReader = new PropertiesReader(new FileInputStream(propertyFile))) {
 					propertiesReader.setReadKeysCaseInsensitive(readKeysCaseInsensitive);
 					final Map<String, String> languageEntries = propertiesReader.read();
+					final String path = Utilities.replaceUsersHomeByTilde(propertyFile.getAbsolutePath().replace("_" + languageSign, "").replace(".properties", ""));
 					for (final Entry<String, String> entry : languageEntries.entrySet()) {
-						final LanguageProperty languagePropertyForKey = languagePropertiesByKey.computeIfAbsent(entry.getKey(), k -> new LanguageProperty(k).setOriginalIndex(languagePropertiesByKey.size() + 1));
-						if (Utilities.isNotEmpty(propertiesReader.getComments().get(entry.getKey())) && Utilities.isEmpty(languagePropertyForKey.getComment())) {
-							languagePropertyForKey.setComment(propertiesReader.getComments().get(entry.getKey()));
+						LanguageProperty property = null;
+						for (final LanguageProperty languageProperty : languageProperties) {
+							if (languageProperty.getPath().equals(path) && languageProperty.getKey().equals(entry.getKey())) {
+								property = languageProperty;
+								break;
+							}
 						}
-						languagePropertyForKey.setLanguageValue(languageSign, entry.getValue());
+						if (property == null) {
+							property = new LanguageProperty(Utilities.replaceUsersHomeByTilde(new File(propertiesDirectory, propertySetName).getAbsolutePath()), entry.getKey());
+							property.setOriginalIndex(languageProperties.size() + 1);
+							languageProperties.add(property);
+						}
+						if (Utilities.isNotEmpty(propertiesReader.getComments().get(entry.getKey())) && Utilities.isEmpty(property.getComment())) {
+							property.setComment(propertiesReader.getComments().get(entry.getKey()));
+						}
+						property.setLanguageValue(languageSign, entry.getValue());
 					}
 				} catch (final Exception e) {
 					throw new Exception("Error when reading file: " + propertyFile.getAbsolutePath(), e);
@@ -53,7 +66,7 @@ public class LanguagePropertiesFileSetReader {
 			}
 		}
 
-		return languagePropertiesByKey;
+		return languageProperties;
 	}
 
 	/**
@@ -79,11 +92,7 @@ public class LanguagePropertiesFileSetReader {
 		}
 	}
 
-	public static Set<String> getAvailableLanguageSignsOfProperties(final Map<String, LanguageProperty> languagePropertiesByKey) {
-		final Set<String> availableLanguageSigns = new HashSet<>();
-		for (final Entry<String, LanguageProperty> itemKeyEntry : languagePropertiesByKey.entrySet()) {
-			availableLanguageSigns.addAll(itemKeyEntry.getValue().getAvailableLanguageSigns());
-		}
-		return availableLanguageSigns;
+	public static Set<String> getAvailableLanguageSignsOfProperties(final List<LanguageProperty> languageProperties) {
+		return languageProperties.stream().map(o -> o.getAvailableLanguageSigns()).flatMap(Set::stream).collect(Collectors.toSet());
 	}
 }

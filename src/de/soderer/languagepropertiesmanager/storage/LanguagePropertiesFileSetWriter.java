@@ -2,47 +2,60 @@ package de.soderer.languagepropertiesmanager.storage;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.soderer.utilities.PropertiesWriter;
 import de.soderer.utilities.Utilities;
-import de.soderer.utilities.collection.IndexedLinkedHashMap;
-import de.soderer.utilities.collection.MapUtilities;
 
 public class LanguagePropertiesFileSetWriter {
 	public static final String LANGUAGE_SIGN_DEFAULT = "default";
 	public static final String POPERTIES_FILE_EXTENSION = "properties";
 
-	public static void write(final IndexedLinkedHashMap<String, LanguageProperty> languagePropertiesByKey, final File propertiesDirectory, final String propertySetName) throws Exception {
-		if (!propertiesDirectory.exists()) {
-			throw new Exception("Properties directory '" + propertiesDirectory + "' does not exist");
-		} else if (!propertiesDirectory.isDirectory()) {
-			throw new Exception("Properties directory '" + propertiesDirectory + "' is not a directory");
-		}
+	public static void write(final List<LanguageProperty> languageProperties, final File directory, final String languagePropertySetName) throws Exception {
+		final Set<String> languagePropertiesPaths = languageProperties.stream().map(o -> o.getPath()).collect(Collectors.toSet());
+		final Comparator<LanguageProperty> compareByPathAndIndex = Comparator.comparing(LanguageProperty::getPath).thenComparing(LanguageProperty::getOriginalIndex);
+		final List<LanguageProperty> sortedLanguageProperties = languageProperties.stream().sorted(compareByPathAndIndex).collect(Collectors.toList());
+		for (final String nextLanguagePropertiesPath : languagePropertiesPaths) {
 
-		final List<String> availableLanguageSigns = Utilities.sortButPutItemsFirst(getAvailableLanguageSignsOfProperties(languagePropertiesByKey), "default");
-		for (final String languageSign : availableLanguageSigns) {
-			String filename;
-			if ("default".equals(languageSign)) {
-				filename = propertySetName + ".properties";
+			final List<LanguageProperty> filteredLanguageProperties = sortedLanguageProperties.stream().filter(o -> o.getPath().equals(nextLanguagePropertiesPath)).collect(Collectors.toList());
+
+			File propertiesDirectory;
+			String propertySetName;
+			final String languagePropertiesPath = Utilities.replaceUsersHome(nextLanguagePropertiesPath);
+			if (Utilities.isNotBlank(languagePropertiesPath)) {
+				propertiesDirectory = new File(languagePropertiesPath).getParentFile();
+				propertySetName = new File(languagePropertiesPath).getName();
 			} else {
-				filename = propertySetName + "_" + languageSign + ".properties";
+				propertiesDirectory = directory;
+				propertySetName = languagePropertySetName;
 			}
-			try (PropertiesWriter propertiesWriter = new PropertiesWriter(new FileOutputStream(new File(propertiesDirectory, filename)))) {
-				final IndexedLinkedHashMap<String, LanguageProperty> sortedLanguagePropertiesByKey = MapUtilities.sortEntries(languagePropertiesByKey, new LanguageProperty.OriginalIndexComparator(true));
-				for (final Entry<String, LanguageProperty> entry : sortedLanguagePropertiesByKey.entrySet()) {
-					if (entry.getKey().equals("value_not_found_sign")) { // TODO
-						System.out.println();
-					}
-					if (entry.getValue().containsLanguage(languageSign)) {
-						if (Utilities.isNotEmpty(entry.getValue().getComment())) {
-							propertiesWriter.writeComment(entry.getValue().getComment());
+
+			if (!propertiesDirectory.exists()) {
+				throw new Exception("Properties directory '" + propertiesDirectory + "' does not exist");
+			} else if (!propertiesDirectory.isDirectory()) {
+				throw new Exception("Properties directory '" + propertiesDirectory + "' is not a directory");
+			}
+
+			final List<String> availableLanguageSigns = Utilities.sortButPutItemsFirst(getAvailableLanguageSignsOfProperties(filteredLanguageProperties), "default");
+			for (final String languageSign : availableLanguageSigns) {
+				String filename;
+				if ("default".equals(languageSign)) {
+					filename = propertySetName + ".properties";
+				} else {
+					filename = propertySetName + "_" + languageSign + ".properties";
+				}
+				try (PropertiesWriter propertiesWriter = new PropertiesWriter(new FileOutputStream(new File(propertiesDirectory, filename)))) {
+					for (final LanguageProperty languageProperty : filteredLanguageProperties) {
+						if (languageProperty.containsLanguage(languageSign)) {
+							if (Utilities.isNotEmpty(languageProperty.getComment())) {
+								propertiesWriter.writeComment(languageProperty.getComment());
+							}
+							propertiesWriter.writeProperty(languageProperty.getKey(), languageProperty.getLanguageValue(languageSign));
 						}
-						propertiesWriter.writeProperty(entry.getValue().getKey(), entry.getValue().getLanguageValue(languageSign));
 					}
 				}
 			}
@@ -72,10 +85,10 @@ public class LanguagePropertiesFileSetWriter {
 		}
 	}
 
-	public static Set<String> getAvailableLanguageSignsOfProperties(final Map<String, LanguageProperty> languagePropertiesByKey) {
+	public static Set<String> getAvailableLanguageSignsOfProperties(final List<LanguageProperty> languageProperties) {
 		final Set<String> availableLanguageSigns = new HashSet<>();
-		for (final Entry<String, LanguageProperty> itemKeyEntry : languagePropertiesByKey.entrySet()) {
-			availableLanguageSigns.addAll(itemKeyEntry.getValue().getAvailableLanguageSigns());
+		for (final LanguageProperty languageProperty : languageProperties) {
+			availableLanguageSigns.addAll(languageProperty.getAvailableLanguageSigns());
 		}
 		return availableLanguageSigns;
 	}
