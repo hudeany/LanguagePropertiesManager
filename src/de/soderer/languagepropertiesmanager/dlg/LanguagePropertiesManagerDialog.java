@@ -1196,7 +1196,6 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		public void widgetSelected(final SelectionEvent event) {
 			try {
 				final DirectoryDialog directoryDialog = new DirectoryDialog(getShell());
-				directoryDialog.setText(getText() + " " + LangResources.get("directory_dialog_title"));
 				directoryDialog.setText(LangResources.get("open_directory_dialog_text"));
 				final String basicDirectoryPath = directoryDialog.open();
 				if (basicDirectoryPath != null && new File(basicDirectoryPath).exists()) {
@@ -1206,13 +1205,17 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					final List<String> propertiesPaths = getAllPropertiesPaths(basicDirectoryPath);
 
 					languageProperties = new ArrayList<>();
-					final Set<String> overallLanguageSigns = new HashSet<>();
 					for (final String propertiesPath : propertiesPaths) {
 						final List<LanguageProperty> nextLanguageProperties = LanguagePropertiesFileSetReader.read(new File(propertiesPath).getParentFile(), new File(propertiesPath).getName(), false);
 						languageProperties.addAll(nextLanguageProperties);
 					}
 					availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), "default");
 					setLayoutPropertySetName("Multiple");
+
+					final int propertiesSetsAmount = propertiesPaths.size();
+					final int keyAmount = languageProperties.size();
+
+					showMessage(LangResources.get("directory_dialog_title"), LangResources.get("openDirectoryResult", basicDirectoryPath, propertiesSetsAmount, keyAmount, availableLanguageSigns.toString()));
 				}
 			} catch (final Exception e) {
 				languageProperties = null;
