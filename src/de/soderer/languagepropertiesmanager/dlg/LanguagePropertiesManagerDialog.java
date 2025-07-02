@@ -83,7 +83,6 @@ import de.soderer.utilities.swt.UpdateableGuiApplication;
 
 /**
  * TODO:
- * Delete Language
  * Display of multiline value and comments (escape linebreaks in textfield)
  * cleanup errors
  * check usage
@@ -1231,7 +1230,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		final Collection<File> propertiesFiles = FileUtils.listFiles(new File(basicDirectoryPath), new RegexFileFilter("^.*_en.properties$||^.*_de.properties$"), DirectoryFileFilter.DIRECTORY);
 		final Set<String> propertiesSetsPaths = new HashSet<>();
 		for (final File propertiesFile : propertiesFiles) {
-			if (!propertiesFile.getName().contains("__")) { // Exclude files with placeholders
+			if (!propertiesFile.getName().contains("__") // Exclude files with placeholders
+					&& !propertiesFile.getAbsolutePath().contains("/src/test/") // Exclude test files with maybe invalid properties data
+					&& !propertiesFile.getAbsolutePath().contains("\\src\\test\\")) { // Exclude test files with maybe invalid properties data
 				final String propertySetName = propertiesFile.getName().substring(0, propertiesFile.getName().indexOf("_"));
 				final String propertiesSetsPath = propertiesFile.getParentFile().getAbsolutePath() + File.separator + propertySetName;
 				propertiesSetsPaths.add(propertiesSetsPath);
