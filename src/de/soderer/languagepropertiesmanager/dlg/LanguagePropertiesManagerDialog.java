@@ -115,6 +115,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	public static final String CONFIG_NEXT_DAILY_UPDATE_CHECK = "NextDailyUpdateCheck";
 	public static final String CONFIG_PROXY_CONFIGURATION_TYPE = ApplicationConfigurationDialog.CONFIG_PROXY_CONFIGURATION_TYPE;
 	public static final String CONFIG_PROXY_URL = ApplicationConfigurationDialog.CONFIG_PROXY_URL;
+	public static final String CONFIG_OPEN_DIR_EXCLUDES = "OpenDirExcludes";
 
 	/** The version is filled in at application start from the version.txt file. */
 	public static Version VERSION = null;
@@ -1229,13 +1230,19 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		}
 	}
 
-	private static List<String> getAllPropertiesPaths(final String basicDirectoryPath) {
+	private List<String> getAllPropertiesPaths(final String basicDirectoryPath) {
 		final Collection<File> propertiesFiles = FileUtils.listFiles(new File(basicDirectoryPath), new RegexFileFilter("^.*_en.properties$||^.*_de.properties$"), DirectoryFileFilter.DIRECTORY);
 		final Set<String> propertiesSetsPaths = new HashSet<>();
+		final String[] excludeParts = applicationConfiguration.get(LanguagePropertiesManagerDialog.CONFIG_OPEN_DIR_EXCLUDES).split(";");
 		for (final File propertiesFile : propertiesFiles) {
-			if (!propertiesFile.getName().contains("__") // Exclude files with placeholders
-					&& !propertiesFile.getAbsolutePath().contains("/src/test/") // Exclude test files with maybe invalid properties data
-					&& !propertiesFile.getAbsolutePath().contains("\\src\\test\\")) { // Exclude test files with maybe invalid properties data
+			boolean excluded = false;
+			for (final String excludePart : excludeParts) {
+				if (propertiesFile.getAbsolutePath().contains(excludePart)) {
+					excluded = true;
+					break;
+				}
+			}
+			if (!excluded) {
 				final String propertySetName = propertiesFile.getName().substring(0, propertiesFile.getName().indexOf("_"));
 				final String propertiesSetsPath = propertiesFile.getParentFile().getAbsolutePath() + File.separator + propertySetName;
 				propertiesSetsPaths.add(propertiesSetsPath);
@@ -1619,6 +1626,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		}
 		if (!applicationConfiguration.containsKey(CONFIG_PROXY_URL)) {
 			applicationConfiguration.set(CONFIG_PROXY_URL, "");
+		}
+		if (!applicationConfiguration.containsKey(CONFIG_OPEN_DIR_EXCLUDES)) {
+			applicationConfiguration.set(CONFIG_OPEN_DIR_EXCLUDES, "__;/src/test/;\\src\\test\\;/bin/;\\bin\\");
 		}
 	}
 
