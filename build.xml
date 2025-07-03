@@ -75,9 +75,39 @@
 		<mkdir dir="${buildPath}/bin" />
 	</target>
 
-	<target name="compile">
+	<available file="lib" property="libsAvailable" />
+	<target name="download_dependencies" unless="libsAvailable">
+		<mkdir dir="lib/" />
+		
+		<get src="https://repo1.maven.org/maven2/org/apache/commons/commons-collections4/4.4/commons-collections4-4.4.jar" dest="lib/" />
+		<get src="https://repo1.maven.org/maven2/org/apache/commons/commons-compress/1.24.0/commons-compress-1.24.0.jar" dest="lib/" />
+		<get src="https://repo1.maven.org/maven2/commons-io/commons-io/2.14.0/commons-io-2.14.0.jar" dest="lib/" />
+		<get src="https://github.com/hudeany/csv/releases/download/24.1.0/csv-24.1.0.jar" dest="lib/" />
+		<get src="https://github.com/hudeany/json/releases/download/25.1.2/json-25.1.2.jar" dest="lib/" />
+		<get src="https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-1.2-api/2.20.0/log4j-1.2-api-2.20.0.jar" dest="lib/" />
+		<get src="https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-api/2.20.0/log4j-api-2.20.0.jar" dest="lib/" />
+		<get src="https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-core/2.20.0/log4j-core-2.20.0.jar" dest="lib/" />
+		<get src="https://repo1.maven.org/maven2/org/apache/poi/poi/5.2.4/poi-5.2.4.jar" dest="lib/" />
+		<get src="https://repo1.maven.org/maven2/org/apache/poi/poi-ooxml/5.2.4/poi-ooxml-5.2.4.jar" dest="lib/" />
+		<get src="https://repo1.maven.org/maven2/org/apache/poi/poi-ooxml-full/5.2.4/poi-ooxml-full-5.2.4.jar" dest="lib/" />
+		<get src="https://github.com/hudeany/ProxyAutoConfig/releases/download/25.1.2/proxyautoconfig-25.1.2.jar" dest="lib/" />
+		<get src="https://github.com/hudeany/network/releases/download/25.1.0/network-25.1.0.jar" dest="lib/" />
+		<get src="https://repo1.maven.org/maven2/org/apache/xmlbeans/xmlbeans/5.1.1/xmlbeans-5.1.1.jar" dest="lib/" />
+		<get src="https://repo1.maven.org/maven2/org/apache/commons/commons-lang3/3.11/commons-lang3-3.11.jar" dest="lib/" />
+		<get src="https://repo1.maven.org/maven2/org/apache/commons/commons-text/1.9/commons-text-1.9.jar" dest="lib/" />
+		<get src="https://repo1.maven.org/maven2/com/sun/mail/mailapi/2.0.1/mailapi-2.0.1.jar" dest="lib/" />		
+		
+		<!-- swt-4.22-gtk-linux-x86_64.jar -->
+		<!-- swt-4.22-win32-win32-x86_64.jar -->
+	</target>
+
+	<target name="compile" depends="download_dependencies">
 		<path id="build.classpath">
 			<fileset dir="lib_soderer">
+				<include name="*.jar" />
+			</fileset>
+			
+			<fileset dir="lib_swt">
 				<include name="*.jar" />
 			</fileset>
 			
