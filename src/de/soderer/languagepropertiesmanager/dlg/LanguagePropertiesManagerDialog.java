@@ -88,6 +88,7 @@ import de.soderer.utilities.swt.UpdateableGuiApplication;
  * check usage
  * Excel file Diff
  * Command line interface
+ * Improve storage of multile sets in other directory by set name
  */
 
 /**
@@ -141,6 +142,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private Button removeButton;
 	private Button cleanupButton;
 	private Button saveButton;
+	private Button loadSaveButton;
 	private Button exportToExcelButton;
 	private Button importFromExcelButton;
 	private Button addButton;
@@ -341,12 +343,12 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		loadFilesButton.addSelectionListener(new OpenFilesSelectionListener());
 
 		final Button loadFolderButton = new Button(buttonSection1, SWT.PUSH);
-		loadFolderButton.setImage(ImageManager.getImage("folder.png"));
+		loadFolderButton.setImage(ImageManager.getImage("folderLoad.png"));
 		loadFolderButton.setToolTipText(LangResources.get("tooltip_load_folder"));
 		loadFolderButton.addSelectionListener(new OpenFolderSelectionListener());
 
 		importFromExcelButton = new Button(buttonSection1, SWT.PUSH);
-		importFromExcelButton.setImage(ImageManager.getImage("importFromEx.png"));
+		importFromExcelButton.setImage(ImageManager.getImage("excelLoad.png"));
 		importFromExcelButton.setToolTipText(LangResources.get("tooltip_import"));
 		importFromExcelButton.addSelectionListener(new ImportSelectionListener(this));
 
@@ -355,8 +357,13 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		saveButton.setToolTipText(LangResources.get("tooltip_save_files"));
 		saveButton.addSelectionListener(new SaveFilesSelectionListener(this));
 
+		loadSaveButton = new Button(buttonSection1, SWT.PUSH);
+		loadSaveButton.setImage(ImageManager.getImage("folderSave.png"));
+		loadSaveButton.setToolTipText(LangResources.get("tooltip_save_folder"));
+		loadSaveButton.addSelectionListener(new SaveFolderSelectionListener());
+
 		exportToExcelButton = new Button(buttonSection1, SWT.PUSH);
-		exportToExcelButton.setImage(ImageManager.getImage("exportToEx.png"));
+		exportToExcelButton.setImage(ImageManager.getImage("excelSave.png"));
 		exportToExcelButton.setToolTipText(LangResources.get("tooltip_export"));
 		exportToExcelButton.addSelectionListener(new ExportSelectionListener(this));
 
@@ -1089,6 +1096,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		if (deleteLanguageButton != null) {
 			deleteLanguageButton.setEnabled(languageProperties != null && languageProperties.size() > 0 && availableLanguageSigns != null && availableLanguageSigns.size() > 1);
 		}
+		if (loadSaveButton != null) {
+			loadSaveButton.setEnabled(languageProperties != null && languageProperties.size() > 0);
+		}
 	}
 
 	private boolean askForDropProperties() {
@@ -1208,7 +1218,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					final int propertiesSetsAmount = propertiesPaths.size();
 					final int keyAmount = languageProperties.size();
 
-					showMessage(LangResources.get("directory_dialog_title"), LangResources.get("openDirectoryResult", basicDirectoryPath, propertiesSetsAmount, keyAmount, availableLanguageSigns.toString()));
+					showMessage(LangResources.get("directory_dialog_title"), LangResources.get("openDirectoryResult", basicDirectoryPath, propertiesSetsAmount, keyAmount, Utilities.join(availableLanguageSigns, ", ")));
 				}
 			} catch (final Exception e) {
 				languageProperties = null;
@@ -1279,7 +1289,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 						final int propertiesSetsAmount = propertySets.size();
 						final int keyAmount = languageProperties.size();
 
-						showMessage(LangResources.get("directory_dialog_title"), LangResources.get("openDirectoryResult", filePath, propertiesSetsAmount, keyAmount, availableLanguageSigns.toString()));
+						showMessage(LangResources.get("directory_dialog_title"), LangResources.get("openDirectoryResult", filePath, propertiesSetsAmount, keyAmount, Utilities.join(availableLanguageSigns, ", ")));
 					} else {
 						final String filename = new File(filePath).getName();
 						if (filename.contains(".properties")) {
@@ -1342,6 +1352,73 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				}
 				hasUnsavedChanges = false;
 				checkButtonStatus();
+			}
+		}
+	}
+
+	private class SaveFolderSelectionListener extends SelectionAdapter {
+		@Override
+		public void widgetSelected(final SelectionEvent event) {
+			try {
+				final DirectoryDialog directoryDialog = new DirectoryDialog(getShell());
+				directoryDialog.setText(LangResources.get("open_directory_dialog_text"));
+				final String directoryPath = directoryDialog.open();
+				if (directoryPath != null && new File(directoryPath).exists() && new File(directoryPath).isDirectory()) {
+					final List<String> existingPropertiesPaths = getAllPropertiesPaths(directoryPath);
+					final Set<String> languagePropertiesPaths = new HashSet<>();
+					for (final LanguageProperty languageProperty : languageProperties) {
+						languagePropertiesPaths.add(languageProperty.getPath());
+					}
+
+					final Comparator<LanguageProperty> compareByIndex = Comparator.comparing(LanguageProperty::getPath).thenComparing(LanguageProperty::getOriginalIndex);
+
+					final List<String> listOfStoredProperties = new ArrayList<>();
+					for (final String languagePropertiesPath : languagePropertiesPaths) {
+						int foundAmount = 0;
+						String foundPath = null;
+						final String propertySetName = new File(languagePropertiesPath).getName();
+						for (final String existingPropertiesPath : existingPropertiesPaths) {
+							final String existingPropertieSetName = new File(existingPropertiesPath).getName();
+							if (existingPropertieSetName.equals(propertySetName)) {
+								foundPath = existingPropertiesPath;
+								foundAmount++;
+							}
+						}
+						if (foundAmount > 1) {
+							showErrorMessage(APPLICATION_NAME, LangResources.get("foundMultiple", propertySetName));
+						} else {
+							final List<LanguageProperty> languagePropertiesForStorage = languageProperties.stream().filter(o -> o.getPath().equals(languagePropertiesPath)).sorted(compareByIndex).collect(Collectors.toList());
+
+							if (foundAmount == 1) {
+								// Update existing properties set files
+								for (final LanguageProperty languageProperty : languagePropertiesForStorage) {
+									languageProperty.setPath(Utilities.replaceUsersHomeByTilde(new File(foundPath).getAbsolutePath()));
+								}
+								LanguagePropertiesFileSetWriter.write(languagePropertiesForStorage, new File(foundPath).getParentFile(), new File(foundPath).getName());
+								listOfStoredProperties.add(foundPath);
+								hasUnsavedChanges = false;
+								checkButtonStatus();
+							} else {
+								// Create new properties set files
+								for (final LanguageProperty languageProperty : languagePropertiesForStorage) {
+									languageProperty.setPath(Utilities.replaceUsersHomeByTilde(new File(directoryPath, propertySetName).getAbsolutePath()));
+								}
+								LanguagePropertiesFileSetWriter.write(languagePropertiesForStorage, new File(directoryPath), propertySetName);
+								listOfStoredProperties.add(new File(directoryPath, propertySetName).getAbsolutePath());
+								hasUnsavedChanges = false;
+								checkButtonStatus();
+							}
+						}
+					}
+
+					showData(APPLICATION_NAME, LangResources.get("saveDirectoryResult", Utilities.join(listOfStoredProperties, "\n")));
+
+					hasUnsavedChanges = false;
+					setupTable();
+					checkButtonStatus();
+				}
+			} catch (final Exception e) {
+				new ErrorDialog(getShell(), APPLICATION_NAME, VERSION.toString(), APPLICATION_ERROR_EMAIL_ADRESS, e).open();
 			}
 		}
 	}
@@ -1438,11 +1515,11 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					languageProperties = languageProperties.stream().sorted(compareByName.reversed()).collect(Collectors.toList());
 				}
 			} else if (columnToSort.getText().equals(LangResources.get("columnheader_original_index")) || columnToSort.getText().equals(LangResources.get("columnheader_path"))) {
-				final Comparator<LanguageProperty> compareByName = Comparator.comparing(LanguageProperty::getPath).thenComparing(LanguageProperty::getOriginalIndex);
+				final Comparator<LanguageProperty> compareByIndex = Comparator.comparing(LanguageProperty::getPath).thenComparing(LanguageProperty::getOriginalIndex);
 				if (table.getSortDirection() == SWT.UP) {
-					languageProperties = languageProperties.stream().sorted(compareByName).collect(Collectors.toList());
+					languageProperties = languageProperties.stream().sorted(compareByIndex).collect(Collectors.toList());
 				} else {
-					languageProperties = languageProperties.stream().sorted(compareByName.reversed()).collect(Collectors.toList());
+					languageProperties = languageProperties.stream().sorted(compareByIndex.reversed()).collect(Collectors.toList());
 				}
 			} else if (columnToSort.getText().equals(LangResources.get("columnheader_default"))) {
 				if (table.getSortDirection() == SWT.UP) {
@@ -1501,7 +1578,6 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		if (currentSelectedKeys != null && currentSelectedKeys.size() > 0) {
 			final int[] indices = new int[currentSelectedKeys.size()];
 			for (int i = 0; i < currentSelectedKeys.size(); i++) {
-				final LanguageProperty property = null;
 				for (int searchIndex = 0; i < languageProperties.size(); searchIndex++) {
 					final LanguageProperty languageProperty = languageProperties.get(searchIndex);
 					if (languageProperty.getPath().equals(currentSelectedKeys.get(i).getFirst()) && languageProperty.getKey().equals(currentSelectedKeys.get(i).getSecond())) {
