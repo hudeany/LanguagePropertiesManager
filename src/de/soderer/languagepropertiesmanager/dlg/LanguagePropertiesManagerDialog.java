@@ -86,6 +86,7 @@ import de.soderer.utilities.swt.UpdateableGuiApplication;
  * Display of multiline value and comments (escape linebreaks in textfield)
  * cleanup errors
  * check usage
+ * Excel file Diff
  */
 
 /**
