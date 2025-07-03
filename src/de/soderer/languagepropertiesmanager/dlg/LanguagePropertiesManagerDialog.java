@@ -88,6 +88,7 @@ import de.soderer.utilities.swt.UpdateableGuiApplication;
  * check usage
  * Excel file Diff
  * Command line interface
+ * Improve storage of multile sets in other directory by set name
  */
 
 /**
