@@ -87,6 +87,7 @@ import de.soderer.utilities.swt.UpdateableGuiApplication;
  * cleanup errors
  * check usage
  * Excel file Diff
+ * Command line interface
  */
 
 /**
