@@ -859,7 +859,12 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			try {
 				final String newLanguageSign = new SimpleInputDialog(getShell(), getText(), LangResources.get("enterLanguageSign")).open();
 				if (Utilities.isNotBlank(newLanguageSign)) {
-					availableLanguageSigns.add(newLanguageSign);
+					for (final LanguageProperty languageProperty : languageProperties) {
+						if (!languageProperty.getAvailableLanguageSigns().contains(newLanguageSign)) {
+							languageProperty.setLanguageValue(newLanguageSign, null);
+						}
+					}
+					availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), "default");
 					setupTable();
 				}
 			} catch (final Exception ex) {
