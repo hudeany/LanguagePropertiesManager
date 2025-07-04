@@ -50,7 +50,7 @@ public class LanguagePropertiesFileSetWriter {
 				}
 				try (PropertiesWriter propertiesWriter = new PropertiesWriter(new FileOutputStream(new File(propertiesDirectory, filename)))) {
 					for (final LanguageProperty languageProperty : filteredLanguageProperties) {
-						if (languageProperty.containsLanguage(languageSign)) {
+						if (languageProperty.containsLanguage(languageSign) && languageProperty.getLanguageValue(languageSign) != null) {
 							if (Utilities.isNotEmpty(languageProperty.getComment())) {
 								propertiesWriter.writeComment(languageProperty.getComment());
 							}
