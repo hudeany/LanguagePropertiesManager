@@ -88,10 +88,6 @@ import de.soderer.utilities.swt.UpdateableGuiApplication;
  * check usage
  * Excel file Diff
  * Command line interface
-<<<<<<< Upstream, based on branch 'master' of ssh://andreas@homebase/media/data/gitRepository/LanguagePropertiesManager
- * Improve storage of multile sets in other directory by set name
-=======
->>>>>>> 4cc01ce Added TODO comment
  */
 
 /**
