@@ -87,10 +87,7 @@ import de.soderer.utilities.swt.UpdateableGuiApplication;
  * cleanup errors
  * check usage
  * Excel file Diff
-<<<<<<< Upstream, based on branch 'master' of ssh://andreas@homebase/media/data/gitRepository/LanguagePropertiesManager
  * Command line interface
-=======
->>>>>>> ce20f62 Added comment
  */
 
 /**
