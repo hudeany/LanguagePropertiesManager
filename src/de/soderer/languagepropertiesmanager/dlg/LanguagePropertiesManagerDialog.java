@@ -1288,11 +1288,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 						final int propertiesSetsAmount = propertySets.size();
 						final int keyAmount = languageProperties.size();
 
-<<<<<<< Upstream, based on branch 'master' of ssh://andreas@homebase/media/data/gitRepository/LanguagePropertiesManager
 						showMessage(LangResources.get("directory_dialog_title"), LangResources.get("openDirectoryResult", filePath, propertiesSetsAmount, keyAmount, Utilities.join(availableLanguageSigns, ", ")));
-=======
-						showMessage(LangResources.get("directory_dialog_title"), LangResources.get("openDirectoryResult", filePath, propertiesSetsAmount, keyAmount, availableLanguageSigns.toString()));
->>>>>>> 3ae4258 Improved loading of single and multiple language properties sets
 					} else {
 						final String filename = new File(filePath).getName();
 						if (filename.contains(".properties")) {
