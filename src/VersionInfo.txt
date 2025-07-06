@@ -1,7 +1,10 @@
 Version ${build.version}
 
 <<<<<<< Upstream, based on branch 'master' of ssh://andreas@homebase/media/data/gitRepository/LanguagePropertiesManager
+<<<<<<< Upstream, based on branch 'master' of ssh://andreas@homebase/media/data/gitRepository/LanguagePropertiesManager
 Improve storage of multiple sets in other directory but referenced by set name as far as possible
+=======
+>>>>>>> 3ae4258 Improved loading of single and multiple language properties sets
 =======
 >>>>>>> 3ae4258 Improved loading of single and multiple language properties sets
 Improved loading of single and multiple language properties sets
