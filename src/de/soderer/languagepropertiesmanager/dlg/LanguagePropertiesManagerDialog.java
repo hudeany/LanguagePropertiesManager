@@ -284,7 +284,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		final
 		ImageManager imageManager = new ImageManager(getShell());
 		final SashForm sashForm = new SashForm(this, SWT.SMOOTH | SWT.HORIZONTAL);
-		setImage(ImageManager.getImage("plus.png"));
+		setImage(ImageManager.getImage("LanguagePropertiesManager.png"));
 		setText(LangResources.get("window_title"));
 		setLayout(new FillLayout());
 		createLeftPart(sashForm);
