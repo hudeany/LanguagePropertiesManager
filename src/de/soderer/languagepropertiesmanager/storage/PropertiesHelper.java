@@ -1,7 +1,6 @@
 package de.soderer.languagepropertiesmanager.storage;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
@@ -21,8 +20,6 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import de.soderer.utilities.Utilities;
-import de.soderer.utilities.WildcardFilenameFilter;
-import de.soderer.utilities.collection.UniqueFifoQueuedList;
 
 public class PropertiesHelper {
 	public static final String PROPERTIES_FILEEXTENSION = "properties";
@@ -214,21 +211,6 @@ public class PropertiesHelper {
 	//
 	//		return dataWasChanged;
 	//	}
-
-	public static List<String> readAvailablePropertiesSets(final String directoryPath) {
-		final List<String> returnList = new UniqueFifoQueuedList<>(10);
-		for (final File propertyFile : new File(directoryPath).listFiles((FileFilter) new WildcardFilenameFilter(PROPERTIES_FILEPATTERN))) {
-			final String fileName = propertyFile.getName().substring(0, propertyFile.getName().lastIndexOf('.'));
-			if (LANGUAGEANDCOUNTRY_FILENAMEPATTERN.matcher(fileName).matches()) {
-				returnList.add(fileName.substring(0, fileName.length() - 6));
-			} else if (LANGUAGE_FILENAMEPATTERN.matcher(fileName).matches()) {
-				returnList.add(fileName.substring(0, fileName.length() - 3));
-			} else {
-				returnList.add(fileName);
-			}
-		}
-		return returnList;
-	}
 
 	public static void exportToExcel(final List<LanguageProperty> languageProperties, final File exportExcelFile, final String languagePropertySetName, List<String> languageSigns) throws Exception {
 		final Comparator<LanguageProperty> compareByPathAndIndex = Comparator.comparing(LanguageProperty::getPath).thenComparing(LanguageProperty::getOriginalIndex);

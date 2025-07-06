@@ -1153,39 +1153,24 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				fileDialog.setText(getText() + " " + LangResources.get("directory_dialog_title"));
 				fileDialog.setText(LangResources.get("open_directory_dialog_text"));
 				final String filePath = fileDialog.open();
-				if (filePath != null && new File(filePath).exists()) {
+				if (filePath != null && new File(filePath).exists() && new File(filePath).isFile()) {
 					recentlyOpenedDirectories.add(filePath); //put selected as latest used
 					applicationConfiguration.set(CONFIG_RECENT_PROPERTIES, recentlyOpenedDirectories);
 
-					if (new File(filePath).isDirectory()) {
-						final List<String> propertySets = PropertiesHelper.readAvailablePropertiesSets(filePath);
-						if (propertySets.size() == 1) {
-							languageProperties = LanguagePropertiesFileSetReader.read(new File(filePath), propertySets.get(0), false);
-							availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), "default");
-							setLayoutPropertySetName(propertySets.get(0));
-						} else if (propertySets.size() > 1) {
-							final ComboSelectionDialog dialog2 = new ComboSelectionDialog(getShell(), getText() + " " + LangResources.get("propertysets_dialog_title"), LangResources.get("propertysets_dialog_text"), propertySets);
-							final String propertySetName = dialog2.open();
-							if (Utilities.isNotEmpty(propertySetName)) {
-								languageProperties = LanguagePropertiesFileSetReader.read(new File(filePath), propertySets.get(0), false);
-								availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), "default");
-								setLayoutPropertySetName(propertySets.get(0));
-							}
+					final String filename = new File(filePath).getName();
+					if (filename.contains(".properties")) {
+						if (filename.contains("_")) {
+							setLayoutPropertySetName(filename.substring(0, filename.indexOf("_")));
+						} else {
+							setLayoutPropertySetName(filename.substring(0, filename.indexOf(".properties")));
 						}
 					} else {
-						final String filename = new File(filePath).getName();
-						if (filename.contains(".properties")) {
-							if (filename.contains("_")) {
-								setLayoutPropertySetName(filename.substring(0, filename.indexOf("_")));
-							} else {
-								setLayoutPropertySetName(filename.substring(0, filename.indexOf(".properties")));
-							}
-						} else {
-							throw new Exception("Missing mandatory file extension '.properties'");
-						}
-						languageProperties = LanguagePropertiesFileSetReader.read(new File(filePath).getParentFile(), languagePropertySetName, false);
-						availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), "default");
+						throw new Exception("Missing mandatory file extension '.properties'");
 					}
+					languageProperties = LanguagePropertiesFileSetReader.read(new File(filePath).getParentFile(), languagePropertySetName, false);
+					availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), "default");
+				} else {
+					throw new Exception("Selected language properties set path is not an existing file");
 				}
 			} catch (final Exception e) {
 				languageProperties = null;
@@ -1280,20 +1265,21 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					if (new File(filePath).isDirectory()) {
 						recentlyOpenedDirectories.add(filePath); //put selected as latest used
 						applicationConfiguration.set(CONFIG_RECENT_PROPERTIES, recentlyOpenedDirectories);
-						final List<String> propertySets = PropertiesHelper.readAvailablePropertiesSets(filePath);
-						if (propertySets.size() == 1) {
-							languageProperties = LanguagePropertiesFileSetReader.read(new File(filePath), propertySets.get(0), false);
-							availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), "default");
-							setLayoutPropertySetName(propertySets.get(0));
-						} else if (propertySets.size() > 1) {
-							final ComboSelectionDialog dialog2 = new ComboSelectionDialog(getShell(), getText() + " " + LangResources.get("propertysets_dialog_title"), LangResources.get("propertysets_dialog_text"), propertySets);
-							final String propertySetName = dialog2.open();
-							if (Utilities.isNotEmpty(propertySetName)) {
-								languageProperties = LanguagePropertiesFileSetReader.read(new File(filePath), propertySets.get(0), false);
-								availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), "default");
-								setLayoutPropertySetName(propertySets.get(0));
-							}
+
+						final List<String> propertySets = getAllPropertiesPaths(filePath);
+
+						languageProperties = new ArrayList<>();
+						for (final String propertiesPath : propertySets) {
+							final List<LanguageProperty> nextLanguageProperties = LanguagePropertiesFileSetReader.read(new File(propertiesPath).getParentFile(), new File(propertiesPath).getName(), false);
+							languageProperties.addAll(nextLanguageProperties);
 						}
+						availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), "default");
+						setLayoutPropertySetName("Multiple");
+
+						final int propertiesSetsAmount = propertySets.size();
+						final int keyAmount = languageProperties.size();
+
+						showMessage(LangResources.get("directory_dialog_title"), LangResources.get("openDirectoryResult", filePath, propertiesSetsAmount, keyAmount, availableLanguageSigns.toString()));
 					} else {
 						final String filename = new File(filePath).getName();
 						if (filename.contains(".properties")) {
