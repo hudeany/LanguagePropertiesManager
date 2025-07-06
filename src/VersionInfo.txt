@@ -1,3 +1,4 @@
 Version ${build.version}
 
+Improve storage of multiple sets in other directory but referenced by set name as far as possible
 Improved loading of single and multiple language properties sets
