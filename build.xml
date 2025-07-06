@@ -156,6 +156,7 @@
 			<zipfileset file="${CaPublicKey}" />
 			<zipfileset file="${CaPublicKeyOld}" />
 			<zipfileset dir="lib" includes="*.jar" />
+			<zipfileset dir="lib_swt" includes="*.jar" />
 			
 			<zipfileset dir="lib_soderer" includes="soderer-utilities-*.jar" />
 		</jar>
