@@ -88,6 +88,7 @@ import de.soderer.utilities.swt.UpdateableGuiApplication;
  * check usage
  * Excel file Diff
  * Command line interface
+ * Add configuration button to change app display language
  */
 
 /**
@@ -109,7 +110,6 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 	public static final String CONFIG_VERSION = "Application.Version";
 	public static final String CONFIG_CLEANUP_REPAIRPUNCTUATION = "Cleanup.RepairPunctuation";
-	public static final String CONFIG_SORT_ORG_INDEX = "Output.SortByOrgIndex";
 	public static final String CONFIG_LANGUAGE = "Application.Language";
 	public static final String CONFIG_PREVIOUS_CHECK_USAGE = "CheckUsage.Previous";
 	public static final String CONFIG_RECENT_PROPERTIES = "Recent";
@@ -349,12 +349,12 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		importFromExcelButton = new Button(buttonSection1, SWT.PUSH);
 		importFromExcelButton.setImage(ImageManager.getImage("excelLoad.png"));
 		importFromExcelButton.setToolTipText(LangResources.get("tooltip_import"));
-		importFromExcelButton.addSelectionListener(new ImportSelectionListener(this));
+		importFromExcelButton.addSelectionListener(new ImportSelectionListener());
 
 		saveButton = new Button(buttonSection1, SWT.PUSH);
 		saveButton.setImage(ImageManager.getImage("save.png"));
 		saveButton.setToolTipText(LangResources.get("tooltip_save_files"));
-		saveButton.addSelectionListener(new SaveFilesSelectionListener(this));
+		saveButton.addSelectionListener(new SaveFilesSelectionListener());
 
 		loadSaveButton = new Button(buttonSection1, SWT.PUSH);
 		loadSaveButton.setImage(ImageManager.getImage("folderSave.png"));
@@ -364,7 +364,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		exportToExcelButton = new Button(buttonSection1, SWT.PUSH);
 		exportToExcelButton.setImage(ImageManager.getImage("excelSave.png"));
 		exportToExcelButton.setToolTipText(LangResources.get("tooltip_export"));
-		exportToExcelButton.addSelectionListener(new ExportSelectionListener(this));
+		exportToExcelButton.addSelectionListener(new ExportSelectionListener());
 
 		final Button configButton = new Button(buttonSection1, SWT.PUSH);
 		configButton.setImage(ImageManager.getImage("wrench.png"));
@@ -1317,18 +1317,12 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	}
 
 	private class SaveFilesSelectionListener extends SelectionAdapter {
-		private final LanguagePropertiesManagerDialog dialog;
-
-		public SaveFilesSelectionListener(final LanguagePropertiesManagerDialog dialog) {
-			this.dialog = dialog;
-		}
-
 		@Override
 		public void widgetSelected(final SelectionEvent event) {
 			final Set<String> languagePropertiesPaths = languageProperties.stream().map(o -> o.getPath()).collect(Collectors.toSet());
 			if (languagePropertiesPaths.contains("")) {
-				final DirectoryDialog dlg = new DirectoryDialog(dialog);
-				dlg.setText(dialog.getText() + " " + LangResources.get("directory_dialog_title"));
+				final DirectoryDialog dlg = new DirectoryDialog(getShell());
+				dlg.setText(getShell().getText() + " " + LangResources.get("directory_dialog_title"));
 				dlg.setMessage(LangResources.get("save_directory_dialog_text"));
 				dlg.setFilterPath(recentlyOpenedDirectories.getLatestAdded());
 				final String directory = dlg.open();
@@ -1423,16 +1417,10 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	}
 
 	private class ImportSelectionListener extends SelectionAdapter {
-		private final LanguagePropertiesManagerDialog dialog;
-
-		public ImportSelectionListener(final LanguagePropertiesManagerDialog dialog) {
-			this.dialog = dialog;
-		}
-
 		@Override
 		public void widgetSelected(final SelectionEvent event) {
-			final FileDialog fileDialog = new FileDialog(dialog, SWT.OPEN);
-			fileDialog.setText(dialog.getText() + " " + LangResources.get("import_file"));
+			final FileDialog fileDialog = new FileDialog(getShell(), SWT.OPEN);
+			fileDialog.setText(getShell().getText() + " " + LangResources.get("import_file"));
 			fileDialog.setFilterPath(Utilities.replaceUsersHome("~" + File.separator + "Downloads" + File.separator + ""));
 			fileDialog.setFilterExtensions(new String[] { "*.xlsx", "*" });
 			final String importFile = fileDialog.open();
@@ -1456,17 +1444,11 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	}
 
 	private class ExportSelectionListener extends SelectionAdapter {
-		private final LanguagePropertiesManagerDialog dialog;
-
-		public ExportSelectionListener(final LanguagePropertiesManagerDialog dialog) {
-			this.dialog = dialog;
-		}
-
 		@Override
 		public void widgetSelected(final SelectionEvent event) {
 			try {
-				final FileDialog fileDialog = new FileDialog(dialog, SWT.SAVE);
-				fileDialog.setText(dialog.getText() + " " + LangResources.get("export_file"));
+				final FileDialog fileDialog = new FileDialog(getShell(), SWT.SAVE);
+				fileDialog.setText(getShell().getText() + " " + LangResources.get("export_file"));
 				fileDialog.setFilterPath(Utilities.replaceUsersHome("~" + File.separator + "Downloads"));
 				fileDialog.setFileName(languagePropertySetName + "_Export_" + DateUtilities.formatDate("yyyy-MM-dd_HH-mm", LocalDateTime.now()) + ".xlsx");
 				final String exportFile = fileDialog.open();
@@ -1674,9 +1656,6 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	public static void setupDefaultConfig(final ConfigurationProperties applicationConfiguration) {
 		if (!applicationConfiguration.containsKey(CONFIG_CLEANUP_REPAIRPUNCTUATION)) {
 			applicationConfiguration.set(CONFIG_CLEANUP_REPAIRPUNCTUATION, true);
-		}
-		if (!applicationConfiguration.containsKey(CONFIG_SORT_ORG_INDEX)) {
-			applicationConfiguration.set(CONFIG_SORT_ORG_INDEX, true);
 		}
 		if (!applicationConfiguration.containsKey(CONFIG_LANGUAGE)) {
 			applicationConfiguration.set(CONFIG_LANGUAGE, Locale.getDefault().getLanguage());
