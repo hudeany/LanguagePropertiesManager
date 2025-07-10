@@ -144,10 +144,12 @@ public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 		final Set<String> propertiesSetsPaths = new HashSet<>();
 		for (final File propertiesFile : propertiesFiles) {
 			boolean excluded = false;
-			for (final String excludePart : excludeParts) {
-				if (propertiesFile.getAbsolutePath().contains(excludePart)) {
-					excluded = true;
-					break;
+			if (excludeParts != null) {
+				for (final String excludePart : excludeParts) {
+					if (propertiesFile.getAbsolutePath().contains(excludePart)) {
+						excluded = true;
+						break;
+					}
 				}
 			}
 			if (!excluded) {
