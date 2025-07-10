@@ -1351,32 +1351,39 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		@Override
 		public void widgetSelected(final SelectionEvent event) {
 			try {
+				String defaultLanguagePropertisPath = null;
 				final Set<String> languagePropertiesPaths = languageProperties.stream().map(o -> o.getPath()).collect(Collectors.toSet());
 				if (languagePropertiesPaths.contains("")) {
-					final DirectoryDialog dlg = new DirectoryDialog(getShell());
-					dlg.setText(getShell().getText() + " " + LangResources.get("directory_dialog_title"));
-					dlg.setMessage(LangResources.get("save_directory_dialog_text"));
-					dlg.setFilterPath(recentlyOpenedDirectories.getLatestAdded());
-					final String directory = dlg.open();
-					if (directory == null) {
-						showErrorMessage(LangResources.get("open_directory_dialog_text"), LangResources.get("canceledByUser"));
-					} else if (Utilities.isNotEmpty(directory) && new File(directory).exists() && new File(directory).isDirectory()) {
-						final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(null, languageProperties, languagePropertySetName, new File(directory), null);
-						final ProgressDialog<WriteLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("save_files"), writeLanguagePropertiesWorker);
-						final Result dialogResult = progressDialog.open();
-						if (dialogResult == Result.CANCELED) {
-							showErrorMessage(LangResources.get("open_directory_dialog_text"), LangResources.get("canceledByUser"));
-						} else {
-							// check for errors
-							writeLanguagePropertiesWorker.get();
-
-							showMessage(LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("saveSuccess"));
+					if (languagePropertiesPaths.size() == 2) {
+						languagePropertiesPaths.remove("");
+						defaultLanguagePropertisPath = Utilities.replaceUsersHome(new ArrayList<>(languagePropertiesPaths).get(0));
+					} else {
+						final FileDialog dlg = new FileDialog(getShell());
+						dlg.setText(getShell().getText() + " " + LangResources.get("save_file_dialog_text"));
+						dlg.setFilterPath(Utilities.replaceUsersHome("~") + File.separator + "MyLanguageProperties.properties");
+						dlg.setFilterPath(recentlyOpenedDirectories.getLatestAdded());
+						final String filePath = dlg.open();
+						if (filePath == null) {
+							showErrorMessage(LangResources.get("save_file_dialog_text"), LangResources.get("canceledByUser"));
 						}
-
-						hasUnsavedChanges = false;
-						checkButtonStatus();
 					}
 				}
+
+				final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(null, languageProperties, languagePropertySetName, new File(defaultLanguagePropertisPath), null);
+				final ProgressDialog<WriteLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("save_files"), writeLanguagePropertiesWorker);
+				final Result dialogResult = progressDialog.open();
+				if (dialogResult == Result.CANCELED) {
+					showErrorMessage(LangResources.get("open_directory_dialog_text"), LangResources.get("canceledByUser"));
+				} else {
+					// check for errors
+					writeLanguagePropertiesWorker.get();
+
+					showMessage(LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("saveSuccess"));
+				}
+
+				hasUnsavedChanges = false;
+				setupTable();
+				checkButtonStatus();
 			} catch (final Exception e) {
 				new ErrorDialog(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION.toString(), LanguagePropertiesManager.APPLICATION_ERROR_EMAIL_ADRESS, e).open();
 			}

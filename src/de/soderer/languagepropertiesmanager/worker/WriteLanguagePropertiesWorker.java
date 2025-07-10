@@ -118,15 +118,25 @@ public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 
 			listOfStoredProperties = new ArrayList<>();
 			for (final String languagePropertiesPath : languagePropertiesPaths) {
-				final String propertySetName = new File(languagePropertiesPath).getName();
-				final List<LanguageProperty> languagePropertiesForStorage = languageProperties.stream().filter(o -> o.getPath().equals(languagePropertiesPath)).sorted(compareByIndex).collect(Collectors.toList());
+				String languagePropertiesPathToStore;
+				if (Utilities.isBlank(languagePropertiesPath)) {
+					languagePropertiesPathToStore = outputDirectory.getAbsolutePath();
+				} else {
+					languagePropertiesPathToStore = languagePropertiesPath;
+				}
 
 				// Update existing properties set files
-				for (final LanguageProperty languageProperty : languagePropertiesForStorage) {
-					languageProperty.setPath(Utilities.replaceUsersHomeByTilde(new File(languagePropertiesPath).getAbsolutePath()));
+				for (final LanguageProperty languageProperty : languageProperties) {
+					if (Utilities.isBlank(languageProperty.getPath())) {
+						languageProperty.setPath(Utilities.replaceUsersHomeByTilde(languagePropertiesPathToStore));
+					}
 				}
-				LanguagePropertiesFileSetWriter.write(languagePropertiesForStorage, new File(languagePropertiesPath).getParentFile(), propertySetName);
-				listOfStoredProperties.add(languagePropertiesPath);
+
+				final String propertySetName = new File(languagePropertiesPathToStore).getName();
+				final List<LanguageProperty> languagePropertiesForStorage = languageProperties.stream().filter(o -> Utilities.replaceUsersHome(o.getPath()).equals(Utilities.replaceUsersHome(languagePropertiesPathToStore))).sorted(compareByIndex).collect(Collectors.toList());
+
+				LanguagePropertiesFileSetWriter.write(languagePropertiesForStorage, new File(languagePropertiesPathToStore).getParentFile(), propertySetName);
+				listOfStoredProperties.add(languagePropertiesPathToStore);
 
 				itemsDone++;
 				signalProgress(false);
