@@ -5,19 +5,14 @@ import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.DirectoryFileFilter;
-import org.apache.commons.io.filefilter.RegexFileFilter;
 import org.apache.commons.text.StringEscapeUtils;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
@@ -55,6 +50,7 @@ import de.soderer.languagepropertiesmanager.storage.LanguagePropertiesFileSetRea
 import de.soderer.languagepropertiesmanager.storage.LanguageProperty;
 import de.soderer.languagepropertiesmanager.worker.ExportToExcelWorker;
 import de.soderer.languagepropertiesmanager.worker.ImportFromExcelWorker;
+import de.soderer.languagepropertiesmanager.worker.LoadLanguagePropertiesWorker;
 import de.soderer.languagepropertiesmanager.worker.WriteLanguagePropertiesWorker;
 import de.soderer.network.NetworkUtilities;
 import de.soderer.pac.utilities.ProxyConfiguration;
@@ -1230,18 +1226,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					recentlyOpenedDirectories.add(filePath); //put selected as latest used
 					applicationConfiguration.set(LanguagePropertiesManager.CONFIG_RECENT_PROPERTIES, recentlyOpenedDirectories);
 
-					final String filename = new File(filePath).getName();
-					if (filename.contains(".properties")) {
-						if (filename.contains("_")) {
-							setLanguagePropertiesSetName(filename.substring(0, filename.indexOf("_")));
-						} else {
-							setLanguagePropertiesSetName(filename.substring(0, filename.indexOf(".properties")));
-						}
-					} else {
-						throw new Exception("Missing mandatory file extension '.properties'");
-					}
-					languageProperties = LanguagePropertiesFileSetReader.read(new File(filePath).getParentFile(), languagePropertySetName, false);
-					availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), "default");
+					loadSingleLanguagePropertiesSet(filePath);
 				} else {
 					throw new Exception("Selected language properties set path is not an existing file");
 				}
@@ -1257,6 +1242,24 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		}
 	}
 
+	private void loadSingleLanguagePropertiesSet(final String filePath) throws ExecutionException {
+		final LoadLanguagePropertiesWorker openFilesLanguagePropertiesWorker = new LoadLanguagePropertiesWorker(null, new File(filePath), null);
+		final ProgressDialog<LoadLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("export_file"), openFilesLanguagePropertiesWorker);
+		final Result dialogResult = progressDialog.open();
+		if (dialogResult == Result.CANCELED) {
+			showErrorMessage(LangResources.get("open_directory_dialog_text"), LangResources.get("canceledByUser"));
+		} else {
+			// check for errors
+			openFilesLanguagePropertiesWorker.get();
+
+			languageProperties = openFilesLanguagePropertiesWorker.getLanguageProperties();
+			availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), "default");
+			setLanguagePropertiesSetName("Multiple");
+
+			showMessage(LangResources.get("directory_dialog_title"), LangResources.get("openFilesResult", filePath, languageProperties.size(), Utilities.join(availableLanguageSigns, ", ")));
+		}
+	}
+
 	private class OpenFolderSelectionListener extends SelectionAdapter {
 		@Override
 		public void widgetSelected(final SelectionEvent event) {
@@ -1268,20 +1271,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					recentlyOpenedDirectories.add(basicDirectoryPath); //put selected as latest used
 					applicationConfiguration.set(LanguagePropertiesManager.CONFIG_RECENT_PROPERTIES, recentlyOpenedDirectories);
 
-					final List<String> propertiesPaths = getAllPropertiesPaths(basicDirectoryPath);
-
-					languageProperties = new ArrayList<>();
-					for (final String propertiesPath : propertiesPaths) {
-						final List<LanguageProperty> nextLanguageProperties = LanguagePropertiesFileSetReader.read(new File(propertiesPath).getParentFile(), new File(propertiesPath).getName(), false);
-						languageProperties.addAll(nextLanguageProperties);
-					}
-					availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), "default");
-					setLanguagePropertiesSetName("Multiple");
-
-					final int propertiesSetsAmount = propertiesPaths.size();
-					final int keyAmount = languageProperties.size();
-
-					showMessage(LangResources.get("directory_dialog_title"), LangResources.get("openDirectoryResult", basicDirectoryPath, propertiesSetsAmount, keyAmount, Utilities.join(availableLanguageSigns, ", ")));
+					openAllLanguagePropertiesSets(basicDirectoryPath);
 				}
 			} catch (final Exception e) {
 				languageProperties = null;
@@ -1295,27 +1285,23 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		}
 	}
 
-	private List<String> getAllPropertiesPaths(final String basicDirectoryPath) {
-		final Collection<File> propertiesFiles = FileUtils.listFiles(new File(basicDirectoryPath), new RegexFileFilter("^.*_en.properties$||^.*_de.properties$"), DirectoryFileFilter.DIRECTORY);
-		final Set<String> propertiesSetsPaths = new HashSet<>();
+	private void openAllLanguagePropertiesSets(final String basicDirectoryPath) throws ExecutionException {
 		final String[] excludeParts = applicationConfiguration.get(LanguagePropertiesManager.CONFIG_OPEN_DIR_EXCLUDES).split(";");
-		for (final File propertiesFile : propertiesFiles) {
-			boolean excluded = false;
-			for (final String excludePart : excludeParts) {
-				if (propertiesFile.getAbsolutePath().contains(excludePart)) {
-					excluded = true;
-					break;
-				}
-			}
-			if (!excluded) {
-				final String propertySetName = propertiesFile.getName().substring(0, propertiesFile.getName().indexOf("_"));
-				final String propertiesSetsPath = propertiesFile.getParentFile().getAbsolutePath() + File.separator + propertySetName;
-				propertiesSetsPaths.add(propertiesSetsPath);
-			}
+		final LoadLanguagePropertiesWorker openFolderLanguagePropertiesWorker = new LoadLanguagePropertiesWorker(null, new File(basicDirectoryPath), excludeParts);
+		final ProgressDialog<LoadLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("export_file"), openFolderLanguagePropertiesWorker);
+		final Result dialogResult = progressDialog.open();
+		if (dialogResult == Result.CANCELED) {
+			showErrorMessage(LangResources.get("open_directory_dialog_text"), LangResources.get("canceledByUser"));
+		} else {
+			// check for errors
+			openFolderLanguagePropertiesWorker.get();
+
+			languageProperties = openFolderLanguagePropertiesWorker.getLanguageProperties();
+			availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), "default");
+			setLanguagePropertiesSetName("Multiple");
+
+			showMessage(LangResources.get("directory_dialog_title"), LangResources.get("openDirectoryResult", basicDirectoryPath, openFolderLanguagePropertiesWorker.getLanguagePropertiesSetNames().size(), languageProperties.size(), Utilities.join(availableLanguageSigns, ", ")));
 		}
-		final List<String> returnList = new ArrayList<>(propertiesSetsPaths);
-		Collections.sort(returnList);
-		return returnList;
 	}
 
 	private void setLanguagePropertiesSetName(final String newLanguagePropertySetName) {
@@ -1336,36 +1322,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				final String filePath = dialog.open();
 				if (filePath != null && new File(filePath).exists()) {
 					if (new File(filePath).isDirectory()) {
-						recentlyOpenedDirectories.add(filePath); //put selected as latest used
-						applicationConfiguration.set(LanguagePropertiesManager.CONFIG_RECENT_PROPERTIES, recentlyOpenedDirectories);
-
-						final List<String> propertySets = getAllPropertiesPaths(filePath);
-
-						languageProperties = new ArrayList<>();
-						for (final String propertiesPath : propertySets) {
-							final List<LanguageProperty> nextLanguageProperties = LanguagePropertiesFileSetReader.read(new File(propertiesPath).getParentFile(), new File(propertiesPath).getName(), false);
-							languageProperties.addAll(nextLanguageProperties);
-						}
-						availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), "default");
-						setLanguagePropertiesSetName("Multiple");
-
-						final int propertiesSetsAmount = propertySets.size();
-						final int keyAmount = languageProperties.size();
-
-						showMessage(LangResources.get("directory_dialog_title"), LangResources.get("openDirectoryResult", filePath, propertiesSetsAmount, keyAmount, Utilities.join(availableLanguageSigns, ", ")));
+						openAllLanguagePropertiesSets(filePath);
 					} else {
-						final String filename = new File(filePath).getName();
-						if (filename.contains(".properties")) {
-							if (filename.contains("_")) {
-								setLanguagePropertiesSetName(filename.substring(0, filename.indexOf("_")));
-							} else {
-								setLanguagePropertiesSetName(filename.substring(0, filename.indexOf(".properties")));
-							}
-						} else {
-							throw new Exception("Missing mandatory file extension '.properties'");
-						}
-						languageProperties = LanguagePropertiesFileSetReader.read(new File(filePath).getParentFile(), languagePropertySetName, false);
-						availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), "default");
+						loadSingleLanguagePropertiesSet(filePath);
 					}
 				}
 			} catch (final Exception e) {
