@@ -1004,10 +1004,14 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				dialog.setText(getText() + " " + LangResources.get("directory_dialog_title"));
 				dialog.setMessage(LangResources.get("open_directory_dialog_text"));
 				final String directory = dialog.open();
-				if (directory != null && new File(directory).exists() && new File(directory).isDirectory()) {
+				if (directory == null) {
+					showErrorMessage(LangResources.get("open_directory_dialog_text"), LangResources.get("canceledByUser"));
+				} else if (new File(directory).exists() && new File(directory).isDirectory()) {
 					final SimpleInputDialog dialog2 = new SimpleInputDialog(getShell(), getText(), LangResources.get("enterfilepattern"));
 					final String filePattern = dialog2.open();
-					if (filePattern != null) {
+					if (filePattern == null) {
+						showErrorMessage(LangResources.get("open_directory_dialog_text"), LangResources.get("canceledByUser"));
+					} else {
 						final SimpleInputDialog dialog3 = new SimpleInputDialog(getShell(), getText(), LangResources.get("enterusagepattern"));
 						final String usagePattern = dialog3.open();
 						if (usagePattern != null) {
@@ -1222,7 +1226,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				fileDialog.setText(getText() + " " + LangResources.get("directory_dialog_title"));
 				fileDialog.setText(LangResources.get("open_directory_dialog_text"));
 				final String filePath = fileDialog.open();
-				if (filePath != null && new File(filePath).exists() && new File(filePath).isFile()) {
+				if (filePath == null) {
+					showErrorMessage(LangResources.get("directory_dialog_title"), LangResources.get("canceledByUser"));
+				} else if (new File(filePath).exists() && new File(filePath).isFile()) {
 					recentlyOpenedDirectories.add(filePath); //put selected as latest used
 					applicationConfiguration.set(LanguagePropertiesManager.CONFIG_RECENT_PROPERTIES, recentlyOpenedDirectories);
 
@@ -1267,7 +1273,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				final DirectoryDialog directoryDialog = new DirectoryDialog(getShell());
 				directoryDialog.setText(LangResources.get("open_directory_dialog_text"));
 				final String basicDirectoryPath = directoryDialog.open();
-				if (basicDirectoryPath != null && new File(basicDirectoryPath).exists()) {
+				if (basicDirectoryPath == null) {
+					showErrorMessage(LangResources.get("open_directory_dialog_text"), LangResources.get("canceledByUser"));
+				} else if (new File(basicDirectoryPath).exists()) {
 					recentlyOpenedDirectories.add(basicDirectoryPath); //put selected as latest used
 					applicationConfiguration.set(LanguagePropertiesManager.CONFIG_RECENT_PROPERTIES, recentlyOpenedDirectories);
 
@@ -1350,7 +1358,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					dlg.setMessage(LangResources.get("save_directory_dialog_text"));
 					dlg.setFilterPath(recentlyOpenedDirectories.getLatestAdded());
 					final String directory = dlg.open();
-					if (Utilities.isNotEmpty(directory) && new File(directory).exists() && new File(directory).isDirectory()) {
+					if (directory == null) {
+						showErrorMessage(LangResources.get("open_directory_dialog_text"), LangResources.get("canceledByUser"));
+					} else if (Utilities.isNotEmpty(directory) && new File(directory).exists() && new File(directory).isDirectory()) {
 						final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(null, languageProperties, languagePropertySetName, new File(directory), null);
 						final ProgressDialog<WriteLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("save_files"), writeLanguagePropertiesWorker);
 						final Result dialogResult = progressDialog.open();
@@ -1382,7 +1392,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				final DirectoryDialog directoryDialog = new DirectoryDialog(getShell());
 				directoryDialog.setText(LangResources.get("open_directory_dialog_text"));
 				final String directoryPath = directoryDialog.open();
-				if (directoryPath != null && new File(directoryPath).exists() && new File(directoryPath).isDirectory()) {
+				if (directoryPath == null) {
+					showErrorMessage(LangResources.get("open_directory_dialog_text"), LangResources.get("canceledByUser"));
+				} else if (new File(directoryPath).exists() && new File(directoryPath).isDirectory()) {
 					final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(null, languageProperties, "Multiple", new File(directoryPath), excludeParts);
 					final ProgressDialog<WriteLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("save_files"), writeLanguagePropertiesWorker);
 					final Result dialogResult = progressDialog.open();
@@ -1413,7 +1425,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			fileDialog.setFilterPath(Utilities.replaceUsersHome("~" + File.separator + "Downloads" + File.separator + ""));
 			fileDialog.setFilterExtensions(new String[] { "*.xlsx", "*" });
 			final String importFile = fileDialog.open();
-			if (Utilities.isNotEmpty(importFile)) {
+			if (importFile == null) {
+				showErrorMessage(LangResources.get("import_file"), LangResources.get("canceledByUser"));
+			} else {
 				try {
 					String languagePropertiesSetName;
 					final List<String> languagePropertiesSetNames = ExcelHelper.getExcelSheetNames(new File(importFile));
@@ -1461,7 +1475,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				fileDialog.setFilterPath(Utilities.replaceUsersHome("~" + File.separator + "Downloads"));
 				fileDialog.setFileName(languagePropertySetName + "_Export_" + DateUtilities.formatDate("yyyy-MM-dd_HH-mm", LocalDateTime.now()) + ".xlsx");
 				final String exportFile = fileDialog.open();
-				if (Utilities.isNotEmpty(exportFile)) {
+				if (exportFile == null) {
+					showErrorMessage(LangResources.get("export_file"), LangResources.get("canceledByUser"));
+				} else {
 					if (new File(exportFile).exists()) {
 						if (!askForOverwriteFile(exportFile)) {
 							throw new Exception(LangResources.get("error.destinationFileAlreadyExists", exportFile));
