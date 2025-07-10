@@ -1244,7 +1244,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 	private void loadSingleLanguagePropertiesSet(final String filePath) throws ExecutionException {
 		final LoadLanguagePropertiesWorker openFilesLanguagePropertiesWorker = new LoadLanguagePropertiesWorker(null, new File(filePath), null);
-		final ProgressDialog<LoadLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("export_file"), openFilesLanguagePropertiesWorker);
+		final ProgressDialog<LoadLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("openFilesResult"), openFilesLanguagePropertiesWorker);
 		final Result dialogResult = progressDialog.open();
 		if (dialogResult == Result.CANCELED) {
 			showErrorMessage(LangResources.get("open_directory_dialog_text"), LangResources.get("canceledByUser"));
@@ -1288,7 +1288,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private void openAllLanguagePropertiesSets(final String basicDirectoryPath) throws ExecutionException {
 		final String[] excludeParts = applicationConfiguration.get(LanguagePropertiesManager.CONFIG_OPEN_DIR_EXCLUDES).split(";");
 		final LoadLanguagePropertiesWorker openFolderLanguagePropertiesWorker = new LoadLanguagePropertiesWorker(null, new File(basicDirectoryPath), excludeParts);
-		final ProgressDialog<LoadLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("export_file"), openFolderLanguagePropertiesWorker);
+		final ProgressDialog<LoadLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("load_folder"), openFolderLanguagePropertiesWorker);
 		final Result dialogResult = progressDialog.open();
 		if (dialogResult == Result.CANCELED) {
 			showErrorMessage(LangResources.get("open_directory_dialog_text"), LangResources.get("canceledByUser"));
@@ -1352,7 +1352,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					final String directory = dlg.open();
 					if (Utilities.isNotEmpty(directory) && new File(directory).exists() && new File(directory).isDirectory()) {
 						final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(null, languageProperties, languagePropertySetName, new File(directory), null);
-						final ProgressDialog<WriteLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("export_file"), writeLanguagePropertiesWorker);
+						final ProgressDialog<WriteLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("save_files"), writeLanguagePropertiesWorker);
 						final Result dialogResult = progressDialog.open();
 						if (dialogResult == Result.CANCELED) {
 							showErrorMessage(LangResources.get("open_directory_dialog_text"), LangResources.get("canceledByUser"));
@@ -1384,7 +1384,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				final String directoryPath = directoryDialog.open();
 				if (directoryPath != null && new File(directoryPath).exists() && new File(directoryPath).isDirectory()) {
 					final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(null, languageProperties, "Multiple", new File(directoryPath), excludeParts);
-					final ProgressDialog<WriteLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("export_file"), writeLanguagePropertiesWorker);
+					final ProgressDialog<WriteLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("save_files"), writeLanguagePropertiesWorker);
 					final Result dialogResult = progressDialog.open();
 					if (dialogResult == Result.CANCELED) {
 						showErrorMessage(LangResources.get("open_directory_dialog_text"), LangResources.get("canceledByUser"));
