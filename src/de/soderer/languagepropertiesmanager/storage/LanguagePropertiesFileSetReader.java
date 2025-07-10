@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -94,5 +95,20 @@ public class LanguagePropertiesFileSetReader {
 
 	public static Set<String> getAvailableLanguageSignsOfProperties(final List<LanguageProperty> languageProperties) {
 		return languageProperties.stream().map(o -> o.getAvailableLanguageSigns()).flatMap(Set::stream).collect(Collectors.toSet());
+	}
+
+	public static List<String> getLanguagePropertiesSetNames(final List<LanguageProperty> languageProperties) {
+		final Set<String> languagePropertiesSetPaths = new HashSet<>();
+		for (final LanguageProperty languageProperty : languageProperties) {
+			languagePropertiesSetPaths.add(languageProperty.getPath());
+		}
+
+		final List<String> languagePropertiesSetNames = new ArrayList<>();
+		for (final String languagePropertiesSetPath : languagePropertiesSetPaths) {
+			final String filename = new File(languagePropertiesSetPath).getName();
+			languagePropertiesSetNames.add(filename);
+		}
+
+		return languagePropertiesSetNames;
 	}
 }

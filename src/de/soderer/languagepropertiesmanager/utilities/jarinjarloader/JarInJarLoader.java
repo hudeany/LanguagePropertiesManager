@@ -29,10 +29,6 @@ public class JarInJarLoader {
 		String[] classPath;
 	}
 
-	public static void main(final String[] args) throws Exception {
-		jarInJarLoaderStart(args);
-	}
-
 	protected static void jarInJarLoaderStart(final String[] args) throws IOException, MalformedURLException, InvocationTargetException, IllegalAccessException, ClassNotFoundException, NoSuchMethodException {
 		// Fill an environment variable with the path of the executed jar file
 		try {

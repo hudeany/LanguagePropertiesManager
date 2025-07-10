@@ -2,7 +2,6 @@ package de.soderer.languagepropertiesmanager.dlg;
 
 import java.io.File;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,7 +11,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -31,7 +29,6 @@ import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
-import org.eclipse.swt.graphics.DeviceData;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
@@ -51,11 +48,14 @@ import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
 
+import de.soderer.languagepropertiesmanager.LanguagePropertiesManager;
 import de.soderer.languagepropertiesmanager.image.ImageManager;
+import de.soderer.languagepropertiesmanager.storage.ExcelHelper;
 import de.soderer.languagepropertiesmanager.storage.LanguagePropertiesFileSetReader;
-import de.soderer.languagepropertiesmanager.storage.LanguagePropertiesFileSetWriter;
 import de.soderer.languagepropertiesmanager.storage.LanguageProperty;
-import de.soderer.languagepropertiesmanager.storage.PropertiesHelper;
+import de.soderer.languagepropertiesmanager.worker.ExportToExcelWorker;
+import de.soderer.languagepropertiesmanager.worker.ImportFromExcelWorker;
+import de.soderer.languagepropertiesmanager.worker.WriteLanguagePropertiesWorker;
 import de.soderer.network.NetworkUtilities;
 import de.soderer.pac.utilities.ProxyConfiguration;
 import de.soderer.pac.utilities.ProxyConfiguration.ProxyConfigurationType;
@@ -63,9 +63,9 @@ import de.soderer.utilities.ConfigurationProperties;
 import de.soderer.utilities.DateUtilities;
 import de.soderer.utilities.IoUtilities;
 import de.soderer.utilities.LangResources;
+import de.soderer.utilities.Result;
 import de.soderer.utilities.Tuple;
 import de.soderer.utilities.Utilities;
-import de.soderer.utilities.Version;
 import de.soderer.utilities.appupdate.ApplicationUpdateUtilities;
 import de.soderer.utilities.collection.UniqueFifoQueuedList;
 import de.soderer.utilities.csv.CsvFormat;
@@ -74,6 +74,7 @@ import de.soderer.utilities.csv.CsvWriter;
 import de.soderer.utilities.swt.ApplicationConfigurationDialog;
 import de.soderer.utilities.swt.ComboSelectionDialog;
 import de.soderer.utilities.swt.ErrorDialog;
+import de.soderer.utilities.swt.ProgressDialog;
 import de.soderer.utilities.swt.QuestionDialog;
 import de.soderer.utilities.swt.ShowDataDialog;
 import de.soderer.utilities.swt.SimpleInputDialog;
@@ -82,54 +83,11 @@ import de.soderer.utilities.swt.SwtUtilities;
 import de.soderer.utilities.swt.UpdateableGuiApplication;
 
 /**
- * TODO:
- * Display of multiline value and comments (escape linebreaks in textfield)
- * cleanup errors
- * check usage
- * Excel file Diff
- * Command line interface
- * Add configuration button to change app display language
- */
-
-/**
  * Main Class
  */
 public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	// TODO
 	public static boolean temporaryDisabled = true;
-
-	public static final String APPLICATION_NAME = "LanguagePropertiesManager";
-	public static final String APPLICATION_STARTUPCLASS_NAME = "de-soderer-LanguagePropertiesManager";
-	public static final String APPLICATION_ERROR_EMAIL_ADRESS = "LanguagePropertiesManager.Error@soderer.de";
-
-	/** The Constant VERSION_RESOURCE_FILE, which contains version number and versioninfo download url. */
-	public static final String VERSION_RESOURCE_FILE = "/application_version.txt";
-
-	public static final File KEYSTORE_FILE = new File(System.getProperty("user.home") + File.separator + "." + APPLICATION_NAME + File.separator + "." + APPLICATION_NAME + ".keystore");
-	public static final String HOME_URL = "https://soderer.de/index.php?menu=tools";
-
-	public static final String CONFIG_VERSION = "Application.Version";
-	public static final String CONFIG_CLEANUP_REPAIRPUNCTUATION = "Cleanup.RepairPunctuation";
-	public static final String CONFIG_LANGUAGE = "Application.Language";
-	public static final String CONFIG_PREVIOUS_CHECK_USAGE = "CheckUsage.Previous";
-	public static final String CONFIG_RECENT_PROPERTIES = "Recent";
-	public static final String CONFIG_DAILY_UPDATE_CHECK = "DailyUpdateCheck";
-	public static final String CONFIG_NEXT_DAILY_UPDATE_CHECK = "NextDailyUpdateCheck";
-	public static final String CONFIG_PROXY_CONFIGURATION_TYPE = ApplicationConfigurationDialog.CONFIG_PROXY_CONFIGURATION_TYPE;
-	public static final String CONFIG_PROXY_URL = ApplicationConfigurationDialog.CONFIG_PROXY_URL;
-	public static final String CONFIG_OPEN_DIR_EXCLUDES = "OpenDirExcludes";
-
-	/** The version is filled in at application start from the version.txt file. */
-	public static Version VERSION = null;
-
-	/** The version build time is filled in at application start from the version.txt file */
-	public static LocalDateTime VERSION_BUILDTIME = null;
-
-	/** The versioninfo download url is filled in at application start from the version.txt file. */
-	public static String VERSIONINFO_DOWNLOAD_URL = null;
-
-	/** Trusted CA certificate for updates **/
-	public static String TRUSTED_UPDATE_CA_CERTIFICATES = null;
 
 	private boolean showStorageTexts = false;
 	private boolean dataWasModified = false;
@@ -141,7 +99,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private Button removeButton;
 	private Button cleanupButton;
 	private Button saveButton;
-	private Button loadSaveButton;
+	private Button folderSaveButton;
 	private Button exportToExcelButton;
 	private Button importFromExcelButton;
 	private Button addButton;
@@ -178,84 +136,8 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private UniqueFifoQueuedList<String> recentlyCheckUsages;
 	private final ConfigurationProperties applicationConfiguration;
 
-	/**
-	 * The main method.
-	 *
-	 * @param arguments the arguments
-	 */
-	public static void main(final String[] arguments) {
-		final int returnCode = _main();
-		if (returnCode >= 0) {
-			System.exit(returnCode);
-		}
-	}
-
-	/**
-	 * Method used for main but with no System.exit call to make it junit testable
-	 *
-	 * @param arguments
-	 * @return
-	 */
-	protected static int _main() {
-		Display display = null;
-
-		try (InputStream resourceStream = LanguagePropertiesManagerDialog.class.getResourceAsStream(VERSION_RESOURCE_FILE)) {
-			// Try to fill the version and versioninfo download url
-			final List<String> versionInfoLines = Utilities.readLines(resourceStream, StandardCharsets.UTF_8);
-			VERSION = new Version(versionInfoLines.get(0));
-			if (versionInfoLines.size() >= 2) {
-				VERSION_BUILDTIME = DateUtilities.parseLocalDateTime(DateUtilities.YYYY_MM_DD_HHMMSS, versionInfoLines.get(1));
-			}
-			if (versionInfoLines.size() >= 3) {
-				VERSIONINFO_DOWNLOAD_URL = versionInfoLines.get(2);
-			}
-			if (versionInfoLines.size() >= 4) {
-				TRUSTED_UPDATE_CA_CERTIFICATES = versionInfoLines.get(3);
-			}
-		} catch (@SuppressWarnings("unused") final Exception e) {
-			// Without the version.txt file we may not go on
-			System.err.println("Invalid " + VERSION_RESOURCE_FILE);
-			return 1;
-		}
-
-		try {
-			final boolean trackSwtObjects = false;
-			if (trackSwtObjects) {
-				final DeviceData swtDeviceData = new DeviceData();
-				swtDeviceData.tracking = true;
-				display = new Display(swtDeviceData);
-			} else {
-				display = new Display();
-			}
-
-			final ConfigurationProperties applicationConfiguration = new ConfigurationProperties(APPLICATION_NAME, true);
-			LanguagePropertiesManagerDialog.setupDefaultConfig(applicationConfiguration);
-			if ("de".equalsIgnoreCase(applicationConfiguration.get(LanguagePropertiesManagerDialog.CONFIG_LANGUAGE))) {
-				Locale.setDefault(Locale.GERMAN);
-			} else {
-				Locale.setDefault(Locale.ENGLISH);
-			}
-
-			final LanguagePropertiesManagerDialog mainDialog = new LanguagePropertiesManagerDialog(display, applicationConfiguration);
-			mainDialog.run();
-			return 0;
-		} catch (final Throwable ex) {
-			if (display != null) {
-				new ErrorDialog(display.getActiveShell(), APPLICATION_NAME, VERSION.toString(), APPLICATION_ERROR_EMAIL_ADRESS, ex).open();
-			} else {
-				System.out.println(ex.toString());
-				ex.printStackTrace();
-			}
-			return 1;
-		} finally {
-			if (display != null) {
-				display.dispose();
-			}
-		}
-	}
-
 	public LanguagePropertiesManagerDialog(final Display display, final ConfigurationProperties applicationConfiguration) throws Exception {
-		super(display, APPLICATION_NAME, VERSION, KEYSTORE_FILE);
+		super(display, LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION, LanguagePropertiesManager.KEYSTORE_FILE);
 
 		this.applicationConfiguration = applicationConfiguration;
 		loadConfiguration();
@@ -272,8 +154,8 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		if (dailyUpdateCheckIsPending()) {
 			setDailyUpdateCheckStatus(true);
 			try {
-				if (ApplicationUpdateUtilities.checkForNewVersionAvailable(this, VERSIONINFO_DOWNLOAD_URL, proxyConfiguration, APPLICATION_NAME, VERSION) != null) {
-					ApplicationUpdateUtilities.executeUpdate(this, VERSIONINFO_DOWNLOAD_URL, proxyConfiguration, APPLICATION_NAME, VERSION, TRUSTED_UPDATE_CA_CERTIFICATES, null, null, null, true);
+				if (ApplicationUpdateUtilities.checkForNewVersionAvailable(this, LanguagePropertiesManager.VERSIONINFO_DOWNLOAD_URL, proxyConfiguration, LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION) != null) {
+					ApplicationUpdateUtilities.executeUpdate(this, LanguagePropertiesManager.VERSIONINFO_DOWNLOAD_URL, proxyConfiguration, LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION, LanguagePropertiesManager.TRUSTED_UPDATE_CA_CERTIFICATES, null, null, null, true);
 				}
 			} catch (final Exception e) {
 				showErrorMessage(LangResources.get("updateCheck"), LangResources.get("error.cannotCheckForUpdate", e.getMessage()));
@@ -305,10 +187,10 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 	private void loadConfiguration() {
 		recentlyOpenedDirectories = new UniqueFifoQueuedList<>(5);
-		recentlyOpenedDirectories.addAll(applicationConfiguration.getList(CONFIG_RECENT_PROPERTIES));
+		recentlyOpenedDirectories.addAll(applicationConfiguration.getList(LanguagePropertiesManager.CONFIG_RECENT_PROPERTIES));
 
 		recentlyCheckUsages = new UniqueFifoQueuedList<>(5);
-		recentlyCheckUsages.addAll(applicationConfiguration.getList(CONFIG_PREVIOUS_CHECK_USAGE));
+		recentlyCheckUsages.addAll(applicationConfiguration.getList(LanguagePropertiesManager.CONFIG_PREVIOUS_CHECK_USAGE));
 
 		checkButtonStatus();
 	}
@@ -356,10 +238,10 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		saveButton.setToolTipText(LangResources.get("tooltip_save_files"));
 		saveButton.addSelectionListener(new SaveFilesSelectionListener());
 
-		loadSaveButton = new Button(buttonSection1, SWT.PUSH);
-		loadSaveButton.setImage(ImageManager.getImage("folderSave.png"));
-		loadSaveButton.setToolTipText(LangResources.get("tooltip_save_folder"));
-		loadSaveButton.addSelectionListener(new SaveFolderSelectionListener());
+		folderSaveButton = new Button(buttonSection1, SWT.PUSH);
+		folderSaveButton.setImage(ImageManager.getImage("folderSave.png"));
+		folderSaveButton.setToolTipText(LangResources.get("tooltip_save_folder"));
+		folderSaveButton.addSelectionListener(new SaveFolderSelectionListener());
 
 		exportToExcelButton = new Button(buttonSection1, SWT.PUSH);
 		exportToExcelButton.setImage(ImageManager.getImage("excelSave.png"));
@@ -730,7 +612,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 						if (languageProperties == null) {
 							languageProperties = new ArrayList<>();
-							setLayoutPropertySetName(new SimpleInputDialog(mainDialog, getText(), LangResources.get("enterNewLanguagePropertiesName")).open());
+							setLanguagePropertiesSetName(new SimpleInputDialog(mainDialog, getText(), LangResources.get("enterNewLanguagePropertiesName")).open());
 							propertiesLabel.setText(LangResources.get("table_title") + " \"" + languagePropertySetName + "\"");
 							propertiesLabel.requestLayout();
 							availableLanguageSigns = new ArrayList<>();
@@ -753,7 +635,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 						checkButtonStatus();
 					}
 				} catch (final Exception ex) {
-					new ErrorDialog(getShell(), APPLICATION_NAME, VERSION.toString(), APPLICATION_ERROR_EMAIL_ADRESS, ex).open();
+					new ErrorDialog(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION.toString(), LanguagePropertiesManager.APPLICATION_ERROR_EMAIL_ADRESS, ex).open();
 				}
 			}
 		});
@@ -807,7 +689,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					refreshDetailView();
 				}
 			} catch (final Exception ex) {
-				new ErrorDialog(getShell(), APPLICATION_NAME, VERSION.toString(), APPLICATION_ERROR_EMAIL_ADRESS, ex).open();
+				new ErrorDialog(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION.toString(), LanguagePropertiesManager.APPLICATION_ERROR_EMAIL_ADRESS, ex).open();
 			}
 		}
 	}
@@ -833,7 +715,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					refreshDetailView();
 				}
 			} catch (final Exception ex) {
-				new ErrorDialog(getShell(), APPLICATION_NAME, VERSION.toString(), APPLICATION_ERROR_EMAIL_ADRESS, ex).open();
+				new ErrorDialog(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION.toString(), LanguagePropertiesManager.APPLICATION_ERROR_EMAIL_ADRESS, ex).open();
 			}
 		}
 	}
@@ -843,7 +725,189 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		public void widgetSelected(final SelectionEvent e) {
 			try {
 				if (askForDropDuplicateProperties()) {
-					final boolean cleanupChangedData = false; // TODO: storage.cleanUp(applicationConfiguration.getBoolean(CONFIG_CLEANUP_REPAIRPUNCTUATION)) ;
+					final boolean cleanupChangedData = false;
+
+					//					public boolean cleanUp(final boolean repairpunctuation) throws Exception {
+					//		boolean dataWasChanged = false;
+					//
+					//		for (final LanguageProperty property : properties.values()) {
+					//			// Store original values for later change check
+					//			final HashMap<String, String> originalData = new HashMap<>();
+					//			for (final String sign : getLanguageSigns()) {
+					//				originalData.put(sign, property.getLanguageValue(sign));
+					//			}
+					//
+					//			for (final String sign : getLanguageSigns()) {
+					//				String value = property.getLanguageValue(sign);
+					//				if (value != null) {
+					//					// clear blank before and after "<br>"
+					//					value = value.replace(" <br>", "<br>").replace("<br> ", "<br>");
+					//					// remove "<br>" at end
+					//					if (value.endsWith("<br>")) {
+					//						value = value.substring(0, value.length() - 4).trim();
+					//					}
+					//					// remove "<br />" at end
+					//					if (value.endsWith("<br />")) {
+					//						value = value.substring(0, value.length() - 6).trim();
+					//					}
+					//					property.setLanguageValue(sign, value);
+					//				}
+					//
+					//				// Clear empty values
+					//				if (Utilities.isEmpty(property.getLanguageValue(sign))) {
+					//					property.removeLanguageValue(sign);
+					//				}
+					//			}
+					//
+					//			if (repairpunctuation) {
+					//				// Check exclamationmark, questionmark and fullstop unification
+					//				boolean hasExclamationEnd = false;
+					//				boolean hasQuestionEnd = false;
+					//				boolean hasFullstopEnd = false;
+					//				boolean hasColonEnd = false;
+					//				for (final String sign : getLanguageSigns()) {
+					//					final String value = property.getLanguageValue(sign);
+					//					if (value != null) {
+					//						if (!sign.equalsIgnoreCase("zh")) {
+					//							if (value.endsWith("!")) {
+					//								hasExclamationEnd = true;
+					//							} else if (value.endsWith("?")) {
+					//								hasQuestionEnd = true;
+					//							} else if (value.endsWith(":")) {
+					//								hasColonEnd = true;
+					//							} else if (value.endsWith(".")) {
+					//								hasFullstopEnd = true;
+					//							}
+					//						} else {
+					//							if (value.endsWith("\\uFF01")) { // "!"
+					//								hasExclamationEnd = true;
+					//							} else if (value.endsWith("\\uFF1F")) { // "?"
+					//								hasQuestionEnd = true;
+					//							} else if (value.endsWith("\\uFF1A")) { // ":"
+					//								hasColonEnd = true;
+					//							} else if (value.endsWith("\\u3002")) { // "."
+					//								hasFullstopEnd = true;
+					//							}
+					//						}
+					//					}
+					//				}
+					//				for (final String sign : getLanguageSigns()) {
+					//					String value = property.getLanguageValue(sign);
+					//					if (value != null) {
+					//						if (!sign.equalsIgnoreCase("zh")) {
+					//							if (hasExclamationEnd) {
+					//								if (value.endsWith("?") || value.endsWith(":") || value.endsWith(".")) {
+					//									value = value.substring(0, value.length() - 1);
+					//								}
+					//								if (!value.endsWith("!")) {
+					//									value += "!";
+					//								}
+					//							} else if (hasQuestionEnd) {
+					//								if (value.endsWith(":") || value.endsWith(".")) {
+					//									value = value.substring(0, value.length() - 1);
+					//								}
+					//								if (!value.endsWith("?")) {
+					//									value += "?";
+					//								}
+					//							} else if (hasColonEnd) {
+					//								if (value.endsWith(".")) {
+					//									value = value.substring(0, value.length() - 1);
+					//								}
+					//								if (!value.endsWith(":")) {
+					//									value += ":";
+					//								}
+					//							} else if (hasFullstopEnd) {
+					//								if (!value.endsWith(".")) {
+					//									value += ".";
+					//								}
+					//							}
+					//						} else {
+					//							if (hasExclamationEnd) {
+					//								if (value.endsWith("\\uFF1F") || value.endsWith("\\uFF1A") || value.endsWith("\\u3002")) {
+					//									value = value.substring(0, value.length() - 6);
+					//								}
+					//								if (!value.endsWith("\\uFF01")) {
+					//									value += "\\uFF01";
+					//								}
+					//							} else if (hasQuestionEnd) {
+					//								if (value.endsWith("\\uFF1A") || value.endsWith("\\u3002")) {
+					//									value = value.substring(0, value.length() - 6);
+					//								}
+					//								if (!value.endsWith("\\uFF1F")) {
+					//									value += "\\uFF1F";
+					//								}
+					//							} else if (hasQuestionEnd) {
+					//								if (value.endsWith("\\u3002")) {
+					//									value = value.substring(0, value.length() - 6);
+					//								}
+					//								if (!value.endsWith("\\uFF1A")) {
+					//									value += "\\uFF1A";
+					//								}
+					//							} else if (hasFullstopEnd) {
+					//								if (!value.endsWith("\\u3002")) {
+					//									value += "\\u3002";
+					//								}
+					//							}
+					//						}
+					//
+					//						property.setLanguageValue(sign, value);
+					//					}
+					//				}
+					//			}
+					//
+					//			final List<String> signs = getLanguageSigns();
+					//			signs.remove(LANGUAGE_SIGN_DEFAULT);
+					//			for (final String sign : signs) {
+					//				if (property.getLanguageValue(LANGUAGE_SIGN_DEFAULT) != null
+					//						&& Utilities.isNotEmpty(property.getLanguageValue(sign))
+					//						&& property.getLanguageValue(LANGUAGE_SIGN_DEFAULT).equals(property.getLanguageValue(sign))) {
+					//					property.removeLanguageValue(sign);
+					//				} else if (sign.contains("_")) {
+					//					final String firstSignPart = sign.substring(0, sign.indexOf("_"));
+					//					if (property.getLanguageValue(firstSignPart) != null
+					//							&& Utilities.isNotEmpty(property.getLanguageValue(sign))
+					//							&& property.getLanguageValue(firstSignPart).equals(property.getLanguageValue(sign))) {
+					//						property.removeLanguageValue(sign);
+					//					}
+					//				}
+					//			}
+					//
+					//			// Languagespecific changes
+					//			for (final String sign : getLanguageSigns()) {
+					//				if (sign.equalsIgnoreCase("es") && property.getLanguageValue(sign) != null) {
+					//					String value = property.getLanguageValue(sign);
+					//					if (value.endsWith("!") && !value.startsWith("\\u00A1")) {
+					//						value = "\\u00A1" + value;
+					//					} else if (value.endsWith("?") && !value.startsWith("\\u00BF")) {
+					//						value = "\\u00BF" + value;
+					//					}
+					//					property.setLanguageValue(sign, value);
+					//				}
+					//
+					//				if (sign.equals("fr") && property.getLanguageValue(sign) != null) {
+					//					String value = property.getLanguageValue(sign);
+					//					value = value.replace("!", " !").replace("  !", " !").replace("?", " ?").replace("  ?", " ?").replace(":", " :").replace("  :", " :");
+					//					property.setLanguageValue(sign, value);
+					//				} else if (!sign.equalsIgnoreCase("fr") && property.getLanguageValue(sign) != null) {
+					//					String value = property.getLanguageValue(sign);
+					//					value = value.replace(" !", "!").replace(" ?", "?").replace(" :", ":");
+					//					property.setLanguageValue(sign, value);
+					//				}
+					//			}
+					//
+					//			// Change check
+					//			for (final String sign : getLanguageSigns()) {
+					//				if (originalData.get(sign) == null && property.getLanguageValue(sign) != null) {
+					//					dataWasChanged = true;
+					//				} else if (originalData.get(sign) != null && !originalData.get(sign).equals(property.getLanguageValue(sign))) {
+					//					dataWasChanged = true;
+					//				}
+					//			}
+					//		}
+					//
+					//		return dataWasChanged;
+					//	}
+
 					hasUnsavedChanges = cleanupChangedData || hasUnsavedChanges;
 					refreshTable();
 					refreshDetailView();
@@ -855,7 +919,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					}
 				}
 			} catch (final Exception ex) {
-				new ErrorDialog(getShell(), APPLICATION_NAME, VERSION.toString(), APPLICATION_ERROR_EMAIL_ADRESS, ex).open();
+				new ErrorDialog(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION.toString(), LanguagePropertiesManager.APPLICATION_ERROR_EMAIL_ADRESS, ex).open();
 			}
 		}
 	}
@@ -875,7 +939,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					setupTable();
 				}
 			} catch (final Exception ex) {
-				new ErrorDialog(getShell(), APPLICATION_NAME, VERSION.toString(), APPLICATION_ERROR_EMAIL_ADRESS, ex).open();
+				new ErrorDialog(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION.toString(), LanguagePropertiesManager.APPLICATION_ERROR_EMAIL_ADRESS, ex).open();
 			}
 			checkButtonStatus();
 		}
@@ -896,7 +960,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					setupTable();
 				}
 			} catch (final Exception ex) {
-				new ErrorDialog(getShell(), APPLICATION_NAME, VERSION.toString(), APPLICATION_ERROR_EMAIL_ADRESS, ex).open();
+				new ErrorDialog(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION.toString(), LanguagePropertiesManager.APPLICATION_ERROR_EMAIL_ADRESS, ex).open();
 			}
 			checkButtonStatus();
 		}
@@ -911,14 +975,14 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					iconData = IoUtilities.toByteArray(inputStream);
 				}
 
-				final ApplicationConfigurationDialog dialog = new ApplicationConfigurationDialog(getShell(), applicationConfiguration, APPLICATION_NAME, APPLICATION_STARTUPCLASS_NAME, iconData, ImageManager.getImage("LanguagePropertiesManager.png"));
+				final ApplicationConfigurationDialog dialog = new ApplicationConfigurationDialog(getShell(), applicationConfiguration, LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.APPLICATION_STARTUPCLASS_NAME, iconData, ImageManager.getImage("LanguagePropertiesManager.png"));
 				if (dialog.open()) {
 					applicationConfiguration.save();
 
 					loadConfiguration();
 				}
 			} catch (final Exception ex) {
-				new ErrorDialog(getShell(), APPLICATION_NAME, VERSION.toString(), APPLICATION_ERROR_EMAIL_ADRESS, ex).open();
+				new ErrorDialog(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION.toString(), LanguagePropertiesManager.APPLICATION_ERROR_EMAIL_ADRESS, ex).open();
 			}
 		}
 	}
@@ -932,7 +996,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 		@Override
 		public void widgetSelected(final SelectionEvent e) {
-			new HelpDialog(applicationDialog, APPLICATION_NAME + " (" + VERSION + ") " + LangResources.get("help"), applicationConfiguration).open();
+			new HelpDialog(applicationDialog, LanguagePropertiesManager.APPLICATION_NAME + " (" + LanguagePropertiesManager.VERSION.toString() + ") " + LangResources.get("help"), applicationConfiguration).open();
 		}
 	}
 
@@ -952,14 +1016,14 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 						final String usagePattern = dialog3.open();
 						if (usagePattern != null) {
 							recentlyCheckUsages.add(CsvWriter.getCsvLine(';', '"', true, directory, filePattern, usagePattern));
-							applicationConfiguration.set(CONFIG_PREVIOUS_CHECK_USAGE, recentlyCheckUsages);
+							applicationConfiguration.set(LanguagePropertiesManager.CONFIG_PREVIOUS_CHECK_USAGE, recentlyCheckUsages);
 							checkUsage(languageProperties, directory, filePattern, usagePattern);
 							checkButtonStatus();
 						}
 					}
 				}
 			} catch (final Exception ex) {
-				new ErrorDialog(getShell(), APPLICATION_NAME, VERSION.toString(), APPLICATION_ERROR_EMAIL_ADRESS, ex).open();
+				new ErrorDialog(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION.toString(), LanguagePropertiesManager.APPLICATION_ERROR_EMAIL_ADRESS, ex).open();
 			}
 		}
 	}
@@ -980,7 +1044,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					checkButtonStatus();
 				}
 			} catch (final Exception ex) {
-				new ErrorDialog(getShell(), APPLICATION_NAME, VERSION.toString(), APPLICATION_ERROR_EMAIL_ADRESS, ex).open();
+				new ErrorDialog(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION.toString(), LanguagePropertiesManager.APPLICATION_ERROR_EMAIL_ADRESS, ex).open();
 			}
 		}
 	}
@@ -1047,7 +1111,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			dataWasModified = false;
 			checkButtonStatus();
 		} catch (final Exception e) {
-			new ErrorDialog(getShell(), APPLICATION_NAME, VERSION.toString(), APPLICATION_ERROR_EMAIL_ADRESS, e).open();
+			new ErrorDialog(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION.toString(), LanguagePropertiesManager.APPLICATION_ERROR_EMAIL_ADRESS, e).open();
 		}
 	}
 
@@ -1095,8 +1159,8 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		if (deleteLanguageButton != null) {
 			deleteLanguageButton.setEnabled(languageProperties != null && languageProperties.size() > 0 && availableLanguageSigns != null && availableLanguageSigns.size() > 1);
 		}
-		if (loadSaveButton != null) {
-			loadSaveButton.setEnabled(languageProperties != null && languageProperties.size() > 0);
+		if (folderSaveButton != null) {
+			folderSaveButton.setEnabled(languageProperties != null && languageProperties.size() > 0);
 		}
 	}
 
@@ -1130,8 +1194,8 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	@Override
 	public void close() {
 		if (!hasUnsavedChanges || askForDiscardChanges()) {
-			applicationConfiguration.set(CONFIG_RECENT_PROPERTIES, recentlyOpenedDirectories);
-			applicationConfiguration.set(CONFIG_PREVIOUS_CHECK_USAGE, recentlyCheckUsages);
+			applicationConfiguration.set(LanguagePropertiesManager.CONFIG_RECENT_PROPERTIES, recentlyOpenedDirectories);
+			applicationConfiguration.set(LanguagePropertiesManager.CONFIG_PREVIOUS_CHECK_USAGE, recentlyCheckUsages);
 			applicationConfiguration.save();
 			hasUnsavedChanges = false;
 			dispose();
@@ -1164,14 +1228,14 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				final String filePath = fileDialog.open();
 				if (filePath != null && new File(filePath).exists() && new File(filePath).isFile()) {
 					recentlyOpenedDirectories.add(filePath); //put selected as latest used
-					applicationConfiguration.set(CONFIG_RECENT_PROPERTIES, recentlyOpenedDirectories);
+					applicationConfiguration.set(LanguagePropertiesManager.CONFIG_RECENT_PROPERTIES, recentlyOpenedDirectories);
 
 					final String filename = new File(filePath).getName();
 					if (filename.contains(".properties")) {
 						if (filename.contains("_")) {
-							setLayoutPropertySetName(filename.substring(0, filename.indexOf("_")));
+							setLanguagePropertiesSetName(filename.substring(0, filename.indexOf("_")));
 						} else {
-							setLayoutPropertySetName(filename.substring(0, filename.indexOf(".properties")));
+							setLanguagePropertiesSetName(filename.substring(0, filename.indexOf(".properties")));
 						}
 					} else {
 						throw new Exception("Missing mandatory file extension '.properties'");
@@ -1184,8 +1248,8 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			} catch (final Exception e) {
 				languageProperties = null;
 				availableLanguageSigns = null;
-				setLayoutPropertySetName(null);
-				new ErrorDialog(getShell(), APPLICATION_NAME, VERSION.toString(), APPLICATION_ERROR_EMAIL_ADRESS, e).open();
+				setLanguagePropertiesSetName(null);
+				new ErrorDialog(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION.toString(), LanguagePropertiesManager.APPLICATION_ERROR_EMAIL_ADRESS, e).open();
 			}
 			hasUnsavedChanges = false;
 			setupTable();
@@ -1202,7 +1266,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				final String basicDirectoryPath = directoryDialog.open();
 				if (basicDirectoryPath != null && new File(basicDirectoryPath).exists()) {
 					recentlyOpenedDirectories.add(basicDirectoryPath); //put selected as latest used
-					applicationConfiguration.set(CONFIG_RECENT_PROPERTIES, recentlyOpenedDirectories);
+					applicationConfiguration.set(LanguagePropertiesManager.CONFIG_RECENT_PROPERTIES, recentlyOpenedDirectories);
 
 					final List<String> propertiesPaths = getAllPropertiesPaths(basicDirectoryPath);
 
@@ -1212,7 +1276,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 						languageProperties.addAll(nextLanguageProperties);
 					}
 					availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), "default");
-					setLayoutPropertySetName("Multiple");
+					setLanguagePropertiesSetName("Multiple");
 
 					final int propertiesSetsAmount = propertiesPaths.size();
 					final int keyAmount = languageProperties.size();
@@ -1222,8 +1286,8 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			} catch (final Exception e) {
 				languageProperties = null;
 				availableLanguageSigns = null;
-				setLayoutPropertySetName(null);
-				new ErrorDialog(getShell(), APPLICATION_NAME, VERSION.toString(), APPLICATION_ERROR_EMAIL_ADRESS, e).open();
+				setLanguagePropertiesSetName(null);
+				new ErrorDialog(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION.toString(), LanguagePropertiesManager.APPLICATION_ERROR_EMAIL_ADRESS, e).open();
 			}
 			hasUnsavedChanges = false;
 			setupTable();
@@ -1234,7 +1298,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private List<String> getAllPropertiesPaths(final String basicDirectoryPath) {
 		final Collection<File> propertiesFiles = FileUtils.listFiles(new File(basicDirectoryPath), new RegexFileFilter("^.*_en.properties$||^.*_de.properties$"), DirectoryFileFilter.DIRECTORY);
 		final Set<String> propertiesSetsPaths = new HashSet<>();
-		final String[] excludeParts = applicationConfiguration.get(LanguagePropertiesManagerDialog.CONFIG_OPEN_DIR_EXCLUDES).split(";");
+		final String[] excludeParts = applicationConfiguration.get(LanguagePropertiesManager.CONFIG_OPEN_DIR_EXCLUDES).split(";");
 		for (final File propertiesFile : propertiesFiles) {
 			boolean excluded = false;
 			for (final String excludePart : excludeParts) {
@@ -1254,7 +1318,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		return returnList;
 	}
 
-	private void setLayoutPropertySetName(final String newLanguagePropertySetName) {
+	private void setLanguagePropertiesSetName(final String newLanguagePropertySetName) {
 		languagePropertySetName = newLanguagePropertySetName;
 		if (Utilities.isNotEmpty(newLanguagePropertySetName)) {
 			propertiesLabel.setText(LangResources.get("table_title") + " \"" + newLanguagePropertySetName + "\"");
@@ -1273,7 +1337,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				if (filePath != null && new File(filePath).exists()) {
 					if (new File(filePath).isDirectory()) {
 						recentlyOpenedDirectories.add(filePath); //put selected as latest used
-						applicationConfiguration.set(CONFIG_RECENT_PROPERTIES, recentlyOpenedDirectories);
+						applicationConfiguration.set(LanguagePropertiesManager.CONFIG_RECENT_PROPERTIES, recentlyOpenedDirectories);
 
 						final List<String> propertySets = getAllPropertiesPaths(filePath);
 
@@ -1283,7 +1347,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 							languageProperties.addAll(nextLanguageProperties);
 						}
 						availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), "default");
-						setLayoutPropertySetName("Multiple");
+						setLanguagePropertiesSetName("Multiple");
 
 						final int propertiesSetsAmount = propertySets.size();
 						final int keyAmount = languageProperties.size();
@@ -1293,9 +1357,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 						final String filename = new File(filePath).getName();
 						if (filename.contains(".properties")) {
 							if (filename.contains("_")) {
-								setLayoutPropertySetName(filename.substring(0, filename.indexOf("_")));
+								setLanguagePropertiesSetName(filename.substring(0, filename.indexOf("_")));
 							} else {
-								setLayoutPropertySetName(filename.substring(0, filename.indexOf(".properties")));
+								setLanguagePropertiesSetName(filename.substring(0, filename.indexOf(".properties")));
 							}
 						} else {
 							throw new Exception("Missing mandatory file extension '.properties'");
@@ -1307,8 +1371,8 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			} catch (final Exception e) {
 				languageProperties = null;
 				availableLanguageSigns = null;
-				setLayoutPropertySetName(null);
-				new ErrorDialog(getShell(), APPLICATION_NAME, VERSION.toString(), APPLICATION_ERROR_EMAIL_ADRESS, e).open();
+				setLanguagePropertiesSetName(null);
+				new ErrorDialog(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION.toString(), LanguagePropertiesManager.APPLICATION_ERROR_EMAIL_ADRESS, e).open();
 			}
 			hasUnsavedChanges = false;
 			setupTable();
@@ -1319,32 +1383,33 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private class SaveFilesSelectionListener extends SelectionAdapter {
 		@Override
 		public void widgetSelected(final SelectionEvent event) {
-			final Set<String> languagePropertiesPaths = languageProperties.stream().map(o -> o.getPath()).collect(Collectors.toSet());
-			if (languagePropertiesPaths.contains("")) {
-				final DirectoryDialog dlg = new DirectoryDialog(getShell());
-				dlg.setText(getShell().getText() + " " + LangResources.get("directory_dialog_title"));
-				dlg.setMessage(LangResources.get("save_directory_dialog_text"));
-				dlg.setFilterPath(recentlyOpenedDirectories.getLatestAdded());
-				final String directory = dlg.open();
-				if (Utilities.isNotEmpty(directory)) {
-					try {
-						LanguagePropertiesFileSetWriter.write(languageProperties, new File(directory), languagePropertySetName);
-						showMessage(APPLICATION_NAME, LangResources.get("saveSuccess"));
-					} catch (final Exception e) {
-						new ErrorDialog(getShell(), APPLICATION_NAME, VERSION.toString(), APPLICATION_ERROR_EMAIL_ADRESS, e).open();
+			try {
+				final Set<String> languagePropertiesPaths = languageProperties.stream().map(o -> o.getPath()).collect(Collectors.toSet());
+				if (languagePropertiesPaths.contains("")) {
+					final DirectoryDialog dlg = new DirectoryDialog(getShell());
+					dlg.setText(getShell().getText() + " " + LangResources.get("directory_dialog_title"));
+					dlg.setMessage(LangResources.get("save_directory_dialog_text"));
+					dlg.setFilterPath(recentlyOpenedDirectories.getLatestAdded());
+					final String directory = dlg.open();
+					if (Utilities.isNotEmpty(directory) && new File(directory).exists() && new File(directory).isDirectory()) {
+						final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(null, languageProperties, languagePropertySetName, new File(directory), null);
+						final ProgressDialog<WriteLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("export_file"), writeLanguagePropertiesWorker);
+						final Result dialogResult = progressDialog.open();
+						if (dialogResult == Result.CANCELED) {
+							showErrorMessage(LangResources.get("open_directory_dialog_text"), LangResources.get("canceledByUser"));
+						} else {
+							// check for errors
+							writeLanguagePropertiesWorker.get();
+
+							showMessage(LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("saveSuccess"));
+						}
+
+						hasUnsavedChanges = false;
+						checkButtonStatus();
 					}
-					hasUnsavedChanges = false;
-					checkButtonStatus();
 				}
-			} else {
-				try {
-					LanguagePropertiesFileSetWriter.write(languageProperties, null, null);
-					showMessage(APPLICATION_NAME, LangResources.get("saveSuccess"));
-				} catch (final Exception e) {
-					new ErrorDialog(getShell(), APPLICATION_NAME, VERSION.toString(), APPLICATION_ERROR_EMAIL_ADRESS, e).open();
-				}
-				hasUnsavedChanges = false;
-				checkButtonStatus();
+			} catch (final Exception e) {
+				new ErrorDialog(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION.toString(), LanguagePropertiesManager.APPLICATION_ERROR_EMAIL_ADRESS, e).open();
 			}
 		}
 	}
@@ -1353,65 +1418,30 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		@Override
 		public void widgetSelected(final SelectionEvent event) {
 			try {
+				final String[] excludeParts = applicationConfiguration.get(LanguagePropertiesManager.CONFIG_OPEN_DIR_EXCLUDES).split(";");
+
 				final DirectoryDialog directoryDialog = new DirectoryDialog(getShell());
 				directoryDialog.setText(LangResources.get("open_directory_dialog_text"));
 				final String directoryPath = directoryDialog.open();
 				if (directoryPath != null && new File(directoryPath).exists() && new File(directoryPath).isDirectory()) {
-					final List<String> existingPropertiesPaths = getAllPropertiesPaths(directoryPath);
-					final Set<String> languagePropertiesPaths = new HashSet<>();
-					for (final LanguageProperty languageProperty : languageProperties) {
-						languagePropertiesPaths.add(languageProperty.getPath());
+					final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(null, languageProperties, "Multiple", new File(directoryPath), excludeParts);
+					final ProgressDialog<WriteLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("export_file"), writeLanguagePropertiesWorker);
+					final Result dialogResult = progressDialog.open();
+					if (dialogResult == Result.CANCELED) {
+						showErrorMessage(LangResources.get("open_directory_dialog_text"), LangResources.get("canceledByUser"));
+					} else {
+						// check for errors
+						writeLanguagePropertiesWorker.get();
+
+						showData(LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("saveDirectoryResult", Utilities.join(writeLanguagePropertiesWorker.getListOfStoredProperties(), "\n")));
 					}
-
-					final Comparator<LanguageProperty> compareByIndex = Comparator.comparing(LanguageProperty::getPath).thenComparing(LanguageProperty::getOriginalIndex);
-
-					final List<String> listOfStoredProperties = new ArrayList<>();
-					for (final String languagePropertiesPath : languagePropertiesPaths) {
-						int foundAmount = 0;
-						String foundPath = null;
-						final String propertySetName = new File(languagePropertiesPath).getName();
-						for (final String existingPropertiesPath : existingPropertiesPaths) {
-							final String existingPropertieSetName = new File(existingPropertiesPath).getName();
-							if (existingPropertieSetName.equals(propertySetName)) {
-								foundPath = existingPropertiesPath;
-								foundAmount++;
-							}
-						}
-						if (foundAmount > 1) {
-							showErrorMessage(APPLICATION_NAME, LangResources.get("foundMultiple", propertySetName));
-						} else {
-							final List<LanguageProperty> languagePropertiesForStorage = languageProperties.stream().filter(o -> o.getPath().equals(languagePropertiesPath)).sorted(compareByIndex).collect(Collectors.toList());
-
-							if (foundAmount == 1) {
-								// Update existing properties set files
-								for (final LanguageProperty languageProperty : languagePropertiesForStorage) {
-									languageProperty.setPath(Utilities.replaceUsersHomeByTilde(new File(foundPath).getAbsolutePath()));
-								}
-								LanguagePropertiesFileSetWriter.write(languagePropertiesForStorage, new File(foundPath).getParentFile(), new File(foundPath).getName());
-								listOfStoredProperties.add(foundPath);
-								hasUnsavedChanges = false;
-								checkButtonStatus();
-							} else {
-								// Create new properties set files
-								for (final LanguageProperty languageProperty : languagePropertiesForStorage) {
-									languageProperty.setPath(Utilities.replaceUsersHomeByTilde(new File(directoryPath, propertySetName).getAbsolutePath()));
-								}
-								LanguagePropertiesFileSetWriter.write(languagePropertiesForStorage, new File(directoryPath), propertySetName);
-								listOfStoredProperties.add(new File(directoryPath, propertySetName).getAbsolutePath());
-								hasUnsavedChanges = false;
-								checkButtonStatus();
-							}
-						}
-					}
-
-					showData(APPLICATION_NAME, LangResources.get("saveDirectoryResult", Utilities.join(listOfStoredProperties, "\n")));
 
 					hasUnsavedChanges = false;
 					setupTable();
 					checkButtonStatus();
 				}
 			} catch (final Exception e) {
-				new ErrorDialog(getShell(), APPLICATION_NAME, VERSION.toString(), APPLICATION_ERROR_EMAIL_ADRESS, e).open();
+				new ErrorDialog(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION.toString(), LanguagePropertiesManager.APPLICATION_ERROR_EMAIL_ADRESS, e).open();
 			}
 		}
 	}
@@ -1426,16 +1456,36 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			final String importFile = fileDialog.open();
 			if (Utilities.isNotEmpty(importFile)) {
 				try {
-					setLayoutPropertySetName(PropertiesHelper.getExcelSheetNames(new File(importFile)).get(0));
-					languageProperties = PropertiesHelper.importFromExcel(new File(importFile), languagePropertySetName);
-					availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), "default");
-					hasUnsavedChanges = true;
+					String languagePropertiesSetName;
+					final List<String> languagePropertiesSetNames = ExcelHelper.getExcelSheetNames(new File(importFile));
+					if (languagePropertiesSetNames.size() == 1) {
+						languagePropertiesSetName = languagePropertiesSetNames.get(0);
+					} else {
+						languagePropertiesSetName = "Multiple";
+					}
+					setLanguagePropertiesSetName(languagePropertiesSetName);
+
+					final ImportFromExcelWorker importFromExcelWorker = new ImportFromExcelWorker(null, new File(importFile));
+					final ProgressDialog<ImportFromExcelWorker> progressDialog = new ProgressDialog<>(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("import_file"), importFromExcelWorker);
+					final Result dialogResult = progressDialog.open();
+					if (dialogResult == Result.CANCELED) {
+						showErrorMessage(LangResources.get("import_file"), LangResources.get("canceledByUser"));
+					} else {
+						// check for errors
+						importFromExcelWorker.get();
+
+						showMessage(LangResources.get("import_file"), LangResources.get("actionSuccessfullyCompleted"));
+
+						languageProperties = importFromExcelWorker.getLanguageProperties();
+						availableLanguageSigns = importFromExcelWorker.getAvailableLanguageSigns();
+						hasUnsavedChanges = true;
+					}
 				} catch (final Exception e) {
 					languageProperties = null;
 					availableLanguageSigns = null;
 					languagePropertySetName = null;
 					hasUnsavedChanges = false;
-					new ErrorDialog(getShell(), APPLICATION_NAME, VERSION.toString(), APPLICATION_ERROR_EMAIL_ADRESS, e).open();
+					new ErrorDialog(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION.toString(), LanguagePropertiesManager.APPLICATION_ERROR_EMAIL_ADRESS, e).open();
 				}
 				setupTable();
 				checkButtonStatus();
@@ -1453,21 +1503,36 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				fileDialog.setFileName(languagePropertySetName + "_Export_" + DateUtilities.formatDate("yyyy-MM-dd_HH-mm", LocalDateTime.now()) + ".xlsx");
 				final String exportFile = fileDialog.open();
 				if (Utilities.isNotEmpty(exportFile)) {
-					if (new File(exportFile).exists() && !askForOverwriteFile(exportFile)) {
-						throw new Exception(LangResources.get("error.destinationFileAlreadyExists", exportFile));
+					if (new File(exportFile).exists()) {
+						if (!askForOverwriteFile(exportFile)) {
+							throw new Exception(LangResources.get("error.destinationFileAlreadyExists", exportFile));
+						} else {
+							new File(exportFile).delete();
+						}
 					}
 
 					try {
-						PropertiesHelper.exportToExcel(languageProperties, new File(exportFile), languagePropertySetName, availableLanguageSigns);
-						hasUnsavedChanges = false;
-						showMessage(APPLICATION_NAME, LangResources.get("exportSuccess"));
+						final List<String> languagePropertySetNames = new ArrayList<>();
+						languagePropertySetNames.add(languagePropertySetName);
+						final ExportToExcelWorker exportToExcelWorker = new ExportToExcelWorker(null, languageProperties, languagePropertySetNames, new File(exportFile), false);
+						final ProgressDialog<ExportToExcelWorker> progressDialog = new ProgressDialog<>(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("export_file"), exportToExcelWorker);
+						final Result dialogResult = progressDialog.open();
+						if (dialogResult == Result.CANCELED) {
+							showErrorMessage(LangResources.get("export_file"), LangResources.get("canceledByUser"));
+						} else {
+							// check for errors
+							exportToExcelWorker.get();
+
+							hasUnsavedChanges = false;
+							showMessage(LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("exportSuccess"));
+						}
 					} catch (final Exception e) {
-						new ErrorDialog(getShell(), APPLICATION_NAME, VERSION.toString(), APPLICATION_ERROR_EMAIL_ADRESS, e).open();
+						new ErrorDialog(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION.toString(), LanguagePropertiesManager.APPLICATION_ERROR_EMAIL_ADRESS, e).open();
 					}
 					checkButtonStatus();
 				}
 			} catch (final Exception e) {
-				new ErrorDialog(getShell(), APPLICATION_NAME, VERSION.toString(), APPLICATION_ERROR_EMAIL_ADRESS, e).open();
+				new ErrorDialog(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION.toString(), LanguagePropertiesManager.APPLICATION_ERROR_EMAIL_ADRESS, e).open();
 			}
 		}
 	}
@@ -1653,34 +1718,8 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		return false;
 	}
 
-	public static void setupDefaultConfig(final ConfigurationProperties applicationConfiguration) {
-		if (!applicationConfiguration.containsKey(CONFIG_CLEANUP_REPAIRPUNCTUATION)) {
-			applicationConfiguration.set(CONFIG_CLEANUP_REPAIRPUNCTUATION, true);
-		}
-		if (!applicationConfiguration.containsKey(CONFIG_LANGUAGE)) {
-			applicationConfiguration.set(CONFIG_LANGUAGE, Locale.getDefault().getLanguage());
-		}
-
-		applicationConfiguration.set(ApplicationConfigurationDialog.CONFIG_PROXY_CONFIGURATION_TYPE + ConfigurationProperties.ENUM_EXTENSION, "None,System,Proxy-URL,WPAD,PAC-URL");
-		if (!applicationConfiguration.containsKey(CONFIG_DAILY_UPDATE_CHECK)) {
-			applicationConfiguration.set(CONFIG_DAILY_UPDATE_CHECK, false);
-		}
-		if (!applicationConfiguration.containsKey(CONFIG_NEXT_DAILY_UPDATE_CHECK)) {
-			applicationConfiguration.set(CONFIG_NEXT_DAILY_UPDATE_CHECK, "");
-		}
-		if (!applicationConfiguration.containsKey(CONFIG_PROXY_CONFIGURATION_TYPE)) {
-			applicationConfiguration.set(CONFIG_PROXY_CONFIGURATION_TYPE, ProxyConfiguration.ProxyConfigurationType.None.name());
-		}
-		if (!applicationConfiguration.containsKey(CONFIG_PROXY_URL)) {
-			applicationConfiguration.set(CONFIG_PROXY_URL, "");
-		}
-		if (!applicationConfiguration.containsKey(CONFIG_OPEN_DIR_EXCLUDES)) {
-			applicationConfiguration.set(CONFIG_OPEN_DIR_EXCLUDES, "__;/src/test/;\\src\\test\\;/bin/;\\bin\\");
-		}
-	}
-
+	@SuppressWarnings("unused")
 	public void checkUsage(final List<LanguageProperty> storageToCheck, final String directory, final String filePattern, final String usagePatternString) throws Exception {
-		// TODO
 		//		final Set<String> existingDefaultProperties = new HashSet<>();
 		//		final Set<String> existingOverallProperties = new HashSet<>();
 		//		final Set<String> missingDefaultProperties = new HashSet<>();
@@ -1768,19 +1807,19 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 	@Override
 	protected void setDailyUpdateCheckStatus(final boolean checkboxStatus) {
-		applicationConfiguration.set(CONFIG_DAILY_UPDATE_CHECK, checkboxStatus);
-		applicationConfiguration.set(CONFIG_NEXT_DAILY_UPDATE_CHECK, LocalDateTime.now().plusDays(1));
+		applicationConfiguration.set(LanguagePropertiesManager.CONFIG_DAILY_UPDATE_CHECK, checkboxStatus);
+		applicationConfiguration.set(LanguagePropertiesManager.CONFIG_NEXT_DAILY_UPDATE_CHECK, LocalDateTime.now().plusDays(1));
 		applicationConfiguration.save();
 	}
 
 	@Override
 	protected Boolean isDailyUpdateCheckActivated() {
-		return applicationConfiguration.getBoolean(CONFIG_DAILY_UPDATE_CHECK);
+		return applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_DAILY_UPDATE_CHECK);
 	}
 
 	protected boolean dailyUpdateCheckIsPending() {
-		return applicationConfiguration.getBoolean(CONFIG_DAILY_UPDATE_CHECK)
-				&& (applicationConfiguration.getDate(CONFIG_NEXT_DAILY_UPDATE_CHECK) == null || applicationConfiguration.getDate(CONFIG_NEXT_DAILY_UPDATE_CHECK).isBefore(LocalDateTime.now()))
+		return applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_DAILY_UPDATE_CHECK)
+				&& (applicationConfiguration.getDate(LanguagePropertiesManager.CONFIG_NEXT_DAILY_UPDATE_CHECK) == null || applicationConfiguration.getDate(LanguagePropertiesManager.CONFIG_NEXT_DAILY_UPDATE_CHECK).isBefore(LocalDateTime.now()))
 				&& NetworkUtilities.checkForNetworkConnection();
 	}
 

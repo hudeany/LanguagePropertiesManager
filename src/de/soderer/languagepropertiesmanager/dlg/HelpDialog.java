@@ -9,6 +9,7 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Shell;
 
+import de.soderer.languagepropertiesmanager.LanguagePropertiesManager;
 import de.soderer.pac.utilities.ProxyConfiguration;
 import de.soderer.pac.utilities.ProxyConfiguration.ProxyConfigurationType;
 import de.soderer.utilities.ConfigurationProperties;
@@ -47,7 +48,7 @@ public class HelpDialog extends ModalDialog<Boolean> {
 
 				text.append(VersionInfo.getVersionInfoText());
 
-				new ShowDataDialog(getParent(), LanguagePropertiesManagerDialog.APPLICATION_NAME + "(" + LanguagePropertiesManagerDialog.VERSION + ") " + LangResources.get("versionInfo"), text.toString()).open();
+				new ShowDataDialog(getParent(), LanguagePropertiesManager.APPLICATION_NAME + "(" + LanguagePropertiesManager.VERSION + ") " + LangResources.get("versionInfo"), text.toString()).open();
 			}
 		});
 
@@ -62,7 +63,7 @@ public class HelpDialog extends ModalDialog<Boolean> {
 					final String proxyUrl = applicationConfiguration.get(ApplicationConfigurationDialog.CONFIG_PROXY_URL);
 					final ProxyConfiguration proxyConfiguration = new ProxyConfiguration(proxyConfigurationType, proxyUrl);
 
-					ApplicationUpdateUtilities.executeUpdate(applicationDialog, LanguagePropertiesManagerDialog.VERSIONINFO_DOWNLOAD_URL, proxyConfiguration, LanguagePropertiesManagerDialog.APPLICATION_NAME, LanguagePropertiesManagerDialog.VERSION, LanguagePropertiesManagerDialog.TRUSTED_UPDATE_CA_CERTIFICATES, null, null, null, true);
+					ApplicationUpdateUtilities.executeUpdate(applicationDialog, LanguagePropertiesManager.VERSIONINFO_DOWNLOAD_URL, proxyConfiguration, LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION, LanguagePropertiesManager.TRUSTED_UPDATE_CA_CERTIFICATES, null, null, null, true);
 				} catch (final Exception e1) {
 					showErrorMessage(LangResources.get("updateCheck"), LangResources.get("error.cannotCheckForUpdate", e1.getMessage()));
 				}

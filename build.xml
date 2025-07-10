@@ -95,7 +95,9 @@
 		<get src="https://repo1.maven.org/maven2/org/apache/xmlbeans/xmlbeans/5.1.1/xmlbeans-5.1.1.jar" dest="lib/" />
 		<get src="https://repo1.maven.org/maven2/org/apache/commons/commons-lang3/3.11/commons-lang3-3.11.jar" dest="lib/" />
 		<get src="https://repo1.maven.org/maven2/org/apache/commons/commons-text/1.9/commons-text-1.9.jar" dest="lib/" />
-		<get src="https://repo1.maven.org/maven2/com/sun/mail/mailapi/2.0.1/mailapi-2.0.1.jar" dest="lib/" />		
+		<get src="https://repo1.maven.org/maven2/com/sun/mail/mailapi/2.0.1/mailapi-2.0.1.jar" dest="lib/" />
+		<get src="https://repo1.maven.org/maven2/net/java/dev/jna/jna/5.6.0/jna-5.6.0.jar" dest="lib/" />
+		<get src="https://repo1.maven.org/maven2/net/java/dev/jna/jna-platform/5.6.0/jna-platform-5.6.0.jar" dest="lib/" />
 		
 		<!-- swt-4.22-gtk-linux-x86_64.jar -->
 		<!-- swt-4.22-win32-win32-x86_64.jar -->
@@ -146,8 +148,8 @@
 	<target name="create_jar" depends="create_versionfile, compile">
 		<jar destfile="${buildPath}/LanguagePropertiesManager.jar">
 			<manifest>
-				<attribute name="Main-Class" value="de.soderer.languagepropertiesmanager.utilities.jarinjarloader.JarInJarLoader" />
-				<attribute name="Rsrc-Main-Class" value="de.soderer.languagepropertiesmanager.dlg.LanguagePropertiesManagerDialog" />
+				<attribute name="Main-Class" value="de.soderer.LanguagePropertiesManager" />
+				<attribute name="Rsrc-Main-Class" value="de.soderer.languagepropertiesmanager.LanguagePropertiesManager" />
 				<attribute name="Class-Path" value="." />
 			</manifest>
 
