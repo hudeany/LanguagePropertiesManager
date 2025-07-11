@@ -1,5 +1,6 @@
 Version ${build.version}
 
+Added manual
 Added command line interface (CLI)
 Added progress bars
 Improve storage of multiple sets in other directory but referenced by set name as far as possible
