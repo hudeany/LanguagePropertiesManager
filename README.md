@@ -7,7 +7,6 @@ Language Properties Manager is a tool for editing language properties files with
 This editor is intended solely for experimental text editing.
 Any use is at your own risk.
 The developer assumes NO WARRANTY, neither for correct functionality nor for damages resulting from the use of the program.
-Please send suggestions for improvements or bug reports to: languagepropertiesmanager@soderer.de
 
 
 2. Definition of Terms
