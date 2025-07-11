@@ -1,0 +1,107 @@
+Language Properties Manager Bedienungsanleitung
+
+1. Disclaimer
+
+Language Properties Manager ist ein Tool zur Bearbeitung von Sprachen Properties Dateien mit speziellen Funktionen die andere Standardprogramme nicht oder nicht so leicht zugänglich bieten.
+Dieser Editor dient dabei ausschließlich der experimentellen Verarbeitung von Texten.
+Jede Verwendung findet auf eigene Gefahr statt.
+Der Entwickler übernimmt KEINERLEI GEWÄHRLEISTUNG, sowohl der korrekten Funktion, sowie für Schäden die aus der Verwendung des Programms entstehen.
+Verbesserungsvorschläge oder Bughinweise bitte an: languagepropertiesmanager@soderer.de
+
+
+2. Begriffsklärung
+
+2.1 LanguagePropertiesSetPath
+
+Der Ablagepfad einer Sammlung von Sprachdateien zu einem Languageproperty zusammen mit seinem Basisnamen wird im Folgenden LanguagePropertiesSetPath genannt.
+Beispiel "C:\Project\I18N\ProjektLanguageProperty" steht als Platzhalter für alle Sprachdateien der Languageproperty:
+	"C:\Project\I18N\ProjektLanguageProperty.properties",
+	"C:\Project\I18N\ProjektLanguageProperty_en.properties",
+	"C:\Project\I18N\ProjektLanguageProperty_*.properties"
+
+
+3. Landen von Language Properties
+
+3.1 Einzelnes Properties Set aus Dateien Set laden
+
+Der Button führt zu einer Datei Auswahl, in welcher man eine der Sprachdateien eines LanguagePropertiesSetPath auswählen kann.
+Alle Dateien dieses Language Properties werden gemeinsam geladen und in der Datentabelle links im Tool angezeigt
+
+3.2 Alle verfügbaren Properties Sets aus Unterverzeichnissen laden
+
+Der Button führt zu einer Ordner Auswahl. Es werden dann alle verfügbaren Language Properties aus allen Unterverzeichnises dieses Ordners geladen.
+Aktuell wird dazu nach Dateien mit einem der Sprachenkennzeichen "_en" oder "_de" und der Dateierweiterung ".properties" gesucht.
+Für alle gefundenden LanguagePropertiesSetPath werden dann auch alle weiteren verfügbaren Sprachen geladen und in der Datentabelle links im Tool angezeigt
+Je nach Anzahl der Unterverzeichnisse und Dateien und deren Größe kann dies einen Moment Zeit beanspruchen.
+
+3.3 Excel Import
+
+Der Button "Import aus einzelner Datei" erlaubt die Angabe einer einzelnen Excel Datei, um alle darin gespeicherten Language Properties Sets daraus zu laden.
+Diese Excel Datei sollte aus einem einzelnen Sheet bestehen und kann folgende Spalten enthalten:
+	"Path" oder "Pfad" (Genauer LanguagePropertiesSetPath für dieses Language Properties Set, Platzhalter ~ und $HOME sind erlaubt, optional)
+	"Key" oder "Schlüssel" (Key zum Property Wert, erforderlich)
+	"Index", "Idx" oder "Org.Idx" (Indizierung innerhalb eines Language Properties Sets um eine Reihenfolge der einzelnen Propertywerte einzuhalten, optional)
+	"Default" (Default Sprachwert für den Key, optional)
+	"en", "de", "de_AT", "de_CH", "fr", ... (Sprachwerte der einzelnen Sprachenkennzeichen, auch Länderspezifische Kennzeichen mit Unterstrich sind erlaubt)
+
+3.4 Kürzlich verwendete Pfade
+
+Geöffnete Dateipfade aus 3.1 und Verzechnispfade aus 3.2 werden in einer Liste zur späteren schnelen Wiederverwendug gespeichert.
+Diese können für späteren schnellen Zugang mittels dem Button "Kürzlich geöffnete Dateien öffnen" verwendet werden und werden dann im gleichen Modus wie zuvor geöffnet.
+
+
+4. Bearbeiten von einzelnen Property Werten
+
+4.1 Neuanlage und Veränderung bestehender Property Werten
+
+Bei Auswahl einer Zeile der Datentabelle links im Tool wird die detailierte Aufstellung von LanguagePropertiesSetPath, Key, optionaler Kommentar und Default
+sowie alle verfügbaren anderen Sprachwerte des Property im Detailbereich des Tools rechts angezeigt.
+Diese können dann bis auf den LanguagePropertiesSetPath auch bearbeitet werden.
+Nach einer gewünschten Änderung kann mittels Button "Ändern" der neue Zustand übernommen werden für eine spätere Speicherung des Properties Set.
+Um einen neuen Key mit Sprachwerten hinzuzufügen kann der Button "Neues Property erstellen" in der zweiten Button Leiste des Tools verwendet werden.
+Nach einer gewünschten Änderung kann mittels Button "Hinzufügen" dem Properties Set angefügt werden.
+Ein verwerfen aller unerwünschten Änderungen mittels Button "Verwerfen" ist in beiden Fällen jederzeit möglich.
+Der Button "Zur Speicher-Text Darstellung wechseln" ändert die Anzeige der Key und Sprachwerte zur technischen Codierung in JAVA Encoding.
+Dies dient der Angabe von komplexen Unicode Zeichen sofern erforderlich.
+Mittels Button "Zur Anzeige-Text Darstellung wechseln" kann zur normalen Anzeigedarstellung zurückgewechselt werden.
+
+4.2 Löschen von Property Werten
+
+Mit dem Button "Gewählte Properties löschen" können alle aktuell ausgewählten Zeilen des linken Toolbereichs auf einmal gelöscht werden.
+Eine Sicherheitsabfrage erfolgt dazu.
+
+4.3 Hinzufügen von Sprachenkennzeichen
+
+Mit dem Button "Ein neues Sprachen Kennzeichen hinzufügen" kann ein zusätzliches Sprachenkennzeichen für alle Zeilen des linken Toolbereichs hinzugefügt werden.
+
+4.4 Löschen von Sprachenkennzeichen
+
+Mit dem Button "Ein bestehendes Sprachen Kennzeichen löschen" kann ein Sprachenkennzeichen komplett für alle Zeilen des linken Toolbereichs entfernt werden.
+Es folgt ein Auswahldialog zur angabe eines der verfügbaren SPrachenkeinnzeichen.
+
+
+5. Speichern von Language Properties Sets
+
+5.1 Dateien speichern
+
+Sobald an den Werten eines Language Properties Änderungen vorgenommen wurden, wird der Button "Dateien speichern" verfügbar.
+Sofern den Werten im Properties Set bereits ein LanguagePropertiesSetPath zugewiesen wurde, werden die Daten genau darin (zurück-)gespeichert.
+Bei neu angelegten Werten und nur einem geladenen LanguagePropertiesSetPath wird dieser LanguagePropertiesSetPath als Standardpfad für neue Werte verwendet.
+Bei mehreren verfügbaren LanguagePropertiesSetPath wird zur einmaligen Angabe des zu verwendenen LanguagePropertiesSetPath für alle neuen Werte aufgefordert.
+
+5.2 Properties Sets in Verzeichnis speichern anhand Set Namen
+
+Der Button "Properties Sets in Verzeichnis speichern anhand Set Namen" forder zur angabe eines Verzeichnispfades auf. Unter diesem werden dann alle verfügbaren LanguagePropertiesSetPath gesucht.
+Die im Tool aktuell verfügbaren LanguagePropertiesSetPath werden mit diesen abgeglichen und dann bei passendem Language Properties Set Namen der Pfad des gefundenen LanguagePropertiesSetPath zur Speicherung verwendet.
+Dies funktioniert nur bei eindeutiger Bezeichnung der Language Properties Set Namen. Treten hierbei uneindeutige Namen auf wird der Vorgang mit einer Fehlermeldung abgebrochen.
+Wird für einen im Tool aktuell verfügbaren LanguagePropertiesSetPath kein passender verfügbarer Pfad gefunden so wird dieses Languag Properties Set im gewählten Basisverzeichnis abgelegt.
+
+5.3 Export in einzelne Datei
+
+Der Button "Export in einzelne Datei" speichert alle im Tool aktuell verfügbaren LanguagePropertiesSetPath in einer einzelnen Exceldatei.
+Hierfür wird eine Exceldatei mit einem Sheet angelegt sowie folgende Spalten mit Daten:
+	"Path" (Genauer LanguagePropertiesSetPath für dieses Language Properties Set, Platzhalter ~ für das Benutzerverzeichnis im System wird soweit möglich verwendet)
+	"Key" (Key zum Property Wert)
+	"Org.Idx" (Indizierung innerhalb eines Language Properties Sets um eine Reihenfolge der einzelnen Propertywerte einzuhalten)
+	"Default" (Default Sprachwert für den Key, soweit verfügbar)
+	"en", "de", "de_AT", "de_CH", "fr", ... (Sprachwerte der einzelnen Sprachenkennzeichen, auch Länderspezifische Kennzeichen mit Unterstrich sind erlaubt)

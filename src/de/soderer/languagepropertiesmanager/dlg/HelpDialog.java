@@ -1,5 +1,9 @@
 package de.soderer.languagepropertiesmanager.dlg;
 
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.Locale;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -13,6 +17,7 @@ import de.soderer.languagepropertiesmanager.LanguagePropertiesManager;
 import de.soderer.pac.utilities.ProxyConfiguration;
 import de.soderer.pac.utilities.ProxyConfiguration.ProxyConfigurationType;
 import de.soderer.utilities.ConfigurationProperties;
+import de.soderer.utilities.IoUtilities;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.VersionInfo;
 import de.soderer.utilities.appupdate.ApplicationUpdateUtilities;
@@ -44,11 +49,34 @@ public class HelpDialog extends ModalDialog<Boolean> {
 		versionInfoButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(final SelectionEvent e) {
-				final StringBuilder text = new StringBuilder();
+				new ShowDataDialog(getParent(), LanguagePropertiesManager.APPLICATION_NAME + "(" + LanguagePropertiesManager.VERSION + ") " + LangResources.get("versionInfo"), VersionInfo.getVersionInfoText()).open();
+			}
+		});
 
-				text.append(VersionInfo.getVersionInfoText());
+		final Button manualButton = new Button(buttonSection, SWT.PUSH);
+		manualButton.setText(LangResources.get("manual"));
+		manualButton.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+		manualButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(final SelectionEvent event) {
+				String manualText;
+				try (InputStream resourceStream = LanguagePropertiesManager.class.getResourceAsStream("/manual_" + Locale.getDefault().getLanguage().toLowerCase() + ".txt")) {
+					if (resourceStream == null) {
+						try (InputStream resourceStreamDefault = LanguagePropertiesManager.class.getResourceAsStream("/manual.txt")) {
+							manualText = IoUtilities.toString(resourceStreamDefault, StandardCharsets.UTF_8);
+						} catch (@SuppressWarnings("unused") final Exception e) {
+							manualText = "Manual not available";
+						}
+					} else {
+						manualText = IoUtilities.toString(resourceStream, StandardCharsets.UTF_8);
+					}
+				} catch (@SuppressWarnings("unused") final Exception e) {
+					manualText = "Manual not available";
+				}
 
-				new ShowDataDialog(getParent(), LanguagePropertiesManager.APPLICATION_NAME + "(" + LanguagePropertiesManager.VERSION + ") " + LangResources.get("versionInfo"), text.toString()).open();
+				final ShowDataDialog showDataDialog = new ShowDataDialog(getParent(), LanguagePropertiesManager.APPLICATION_NAME + "(" + LanguagePropertiesManager.VERSION + ") " + LangResources.get("manual"), manualText);
+				showDataDialog.setSize(800, 400);
+				showDataDialog.open();
 			}
 		});
 

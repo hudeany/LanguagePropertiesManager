@@ -1365,6 +1365,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 						final String filePath = dlg.open();
 						if (filePath == null) {
 							showErrorMessage(LangResources.get("save_file_dialog_text"), LangResources.get("canceledByUser"));
+							return;
 						}
 					}
 				}
