@@ -91,7 +91,7 @@ public class LoadLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 			final List<String> propertiesPaths = new ArrayList<>(propertiesSetsPaths);
 			Collections.sort(propertiesPaths);
 
-			if (cancel()) {
+			if (cancel) {
 				return !cancel;
 			}
 
