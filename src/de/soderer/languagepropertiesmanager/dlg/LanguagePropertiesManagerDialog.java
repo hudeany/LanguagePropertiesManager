@@ -946,7 +946,6 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		public void widgetSelected(final SelectionEvent e) {
 			try {
 				final List<String> availableLanguageSignsToDelete = new ArrayList<>(availableLanguageSigns);
-				availableLanguageSignsToDelete.remove("default");
 				final String languageSignToDelete = new ComboSelectionDialog(getShell(), getText(), LangResources.get("selectLanguageSignToDelete"), availableLanguageSignsToDelete).open();
 				if (Utilities.isNotBlank(languageSignToDelete)) {
 					for (final LanguageProperty languageProperty : languageProperties) {
