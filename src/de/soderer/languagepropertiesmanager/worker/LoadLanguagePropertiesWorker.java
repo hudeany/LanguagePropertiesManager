@@ -91,6 +91,10 @@ public class LoadLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 			final List<String> propertiesPaths = new ArrayList<>(propertiesSetsPaths);
 			Collections.sort(propertiesPaths);
 
+			if (cancel()) {
+				return !cancel;
+			}
+
 			parent.changeTitle(LangResources.get("loadingLanguageProperties"));
 			itemsToDo = propertiesSetsPaths.size();
 			itemsDone = 0;
