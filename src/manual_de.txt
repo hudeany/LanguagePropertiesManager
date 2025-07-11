@@ -20,7 +20,7 @@ Beispiel "C:\Project\I18N\ProjektLanguageProperty" steht als Platzhalter für al
 	"C:\Project\I18N\ProjektLanguageProperty_*.properties"
 
 
-3. Landen von Language Properties
+3. Laden von Language Properties
 
 3.1 Einzelnes Properties Set aus Dateien Set laden
 
