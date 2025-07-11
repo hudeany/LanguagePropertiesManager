@@ -695,7 +695,6 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		public void widgetSelected(final SelectionEvent e) {
 			try {
 				if (askForDropProperties()) {
-					propertiesTable.setItemCount(propertiesTable.getItemCount() - propertiesTable.getSelectionCount());
 					for (final TableItem item : propertiesTable.getSelection()) {
 						for (int i = 0; i < languageProperties.size(); i++) {
 							final LanguageProperty languageProperty = languageProperties.get(i);
@@ -706,9 +705,11 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 						}
 					}
 
-					refreshTable();
+					setupTable();
 					propertiesTable.deselectAll();
 					refreshDetailView();
+					hasUnsavedChanges = true;
+					checkButtonStatus();
 				}
 			} catch (final Exception ex) {
 				new ErrorDialog(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION.toString(), LanguagePropertiesManager.APPLICATION_ERROR_EMAIL_ADRESS, ex).open();
@@ -1368,7 +1369,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					}
 				}
 
-				final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(null, languageProperties, languagePropertySetName, new File(defaultLanguagePropertisPath), null);
+				final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(null, languageProperties, languagePropertySetName, defaultLanguagePropertisPath == null ? null : new File(defaultLanguagePropertisPath), null);
 				final ProgressDialog<WriteLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("save_files"), writeLanguagePropertiesWorker);
 				final Result dialogResult = progressDialog.open();
 				if (dialogResult == Result.CANCELED) {

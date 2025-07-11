@@ -17,6 +17,7 @@ import org.apache.commons.io.filefilter.RegexFileFilter;
 import de.soderer.languagepropertiesmanager.LanguagePropertiesException;
 import de.soderer.languagepropertiesmanager.storage.LanguagePropertiesFileSetReader;
 import de.soderer.languagepropertiesmanager.storage.LanguageProperty;
+import de.soderer.utilities.LangResources;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.worker.WorkerParentSimple;
 import de.soderer.utilities.worker.WorkerSimple;
@@ -39,10 +40,6 @@ public class LoadLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 
 	@Override
 	public Boolean work() throws Exception {
-		parent.changeTitle("Loading language properties");
-
-		signalUnlimitedProgress();
-
 		languagePropertiesSetNames = new ArrayList<>();
 
 		if (languagePropertiesFileOrBasicDirectory == null) {
@@ -50,6 +47,8 @@ public class LoadLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 		} else if (!languagePropertiesFileOrBasicDirectory.exists()) {
 			throw new LanguagePropertiesException("Language properties file or basic directory '" + languagePropertiesFileOrBasicDirectory + "' does not exist");
 		} else if (languagePropertiesFileOrBasicDirectory.isFile()) {
+			parent.changeTitle(LangResources.get("loadingLanguageProperties"));
+
 			final String filename = languagePropertiesFileOrBasicDirectory.getName();
 			itemsToDo = 1;
 			itemsDone = 0;
@@ -67,6 +66,9 @@ public class LoadLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 			languageProperties = LanguagePropertiesFileSetReader.read(languagePropertiesFileOrBasicDirectory.getParentFile(), languagePropertiesSetName, false);
 			languagePropertiesSetNames.add(languagePropertiesSetName);
 		} else {
+			parent.changeTitle(LangResources.get("searchingLanguageProperties"));
+			signalUnlimitedProgress();
+
 			final Collection<File> propertiesFiles = FileUtils.listFiles(languagePropertiesFileOrBasicDirectory, new RegexFileFilter("^.*_en.properties$||^.*_de.properties$"), DirectoryFileFilter.DIRECTORY);
 			final Set<String> propertiesSetsPaths = new HashSet<>();
 			for (final File propertiesFile : propertiesFiles) {
@@ -89,8 +91,10 @@ public class LoadLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 			final List<String> propertiesPaths = new ArrayList<>(propertiesSetsPaths);
 			Collections.sort(propertiesPaths);
 
+			parent.changeTitle(LangResources.get("loadingLanguageProperties"));
 			itemsToDo = propertiesSetsPaths.size();
 			itemsDone = 0;
+			signalProgress(true);
 
 			languageProperties = new ArrayList<>();
 			for (final String propertiesPath : propertiesPaths) {
