@@ -30,7 +30,7 @@ All files of this language property are loaded together and displayed in the dat
 
 3.2 Loading All Available Property Sets from Subdirectories
 
-This button opens a folder selection window. All available language properties from all subdirectories of this folder are then loaded. Currently, the tool searches for files with one of the language identifiers "_en" or "_de" and the file extension ".properties."
+This button opens a folder selection window. All available language properties from all subdirectories of this folder are then loaded. Currently, the tool searches for files with one of the language identifiers "_en" or "_de" and the file extension ".properties".
 
 For all LanguagePropertiesSetPaths found, all other available languages are loaded and displayed in the data table on the left side of the tool.
 
