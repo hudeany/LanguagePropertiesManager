@@ -190,7 +190,7 @@ public class ImportFromExcelWorker extends WorkerSimple<Boolean> {
 		itemsDone = itemsToDo;
 		signalProgress(true);
 
-		availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), "default");
+		availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT);
 
 		final Comparator<LanguageProperty> compareByPathAndIndex = Comparator.comparing(LanguageProperty::getPath).thenComparing(LanguageProperty::getOriginalIndex);
 		languageProperties = languageProperties.stream().sorted(compareByPathAndIndex).collect(Collectors.toList());

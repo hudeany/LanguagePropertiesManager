@@ -40,7 +40,6 @@ import de.soderer.utilities.worker.WorkerParentDual;
  * TODO:
  * Display of multiline value and comments (escape linebreaks in textfield)
  * cleanup errors
- * check usage
  * Excel file Diff
  * Add configuration button to change app display language
  */

@@ -43,7 +43,7 @@ public class ExportToExcelWorker extends WorkerSimple<Boolean> {
 			throw new LanguagePropertiesException("Export excel file '" + excelOutputFile.getAbsolutePath() + "' already exists. Use 'overwrite' to replace existing file.");
 		}
 
-		final List<String> availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), "default");
+		final List<String> availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT);
 
 		final Comparator<LanguageProperty> compareByPathAndIndex = Comparator.comparing(LanguageProperty::getPath).thenComparing(LanguageProperty::getOriginalIndex);
 		final List<LanguageProperty> sortedLanguageProperties = languageProperties.stream().sorted(compareByPathAndIndex).collect(Collectors.toList());
@@ -81,7 +81,7 @@ public class ExportToExcelWorker extends WorkerSimple<Boolean> {
 					headerCell.setCellValue("Comment");
 				}
 
-				final List<String> languageSignsInOutputOrder = Utilities.sortButPutItemsFirst(availableLanguageSigns, "default");
+				final List<String> languageSignsInOutputOrder = Utilities.sortButPutItemsFirst(availableLanguageSigns, LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT);
 
 				for (final String languageSign : languageSignsInOutputOrder) {
 					headerCell = headerRow.createCell(headerColumnIndex++);

@@ -2,15 +2,19 @@ package de.soderer.languagepropertiesmanager.dlg;
 
 import java.io.File;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.commons.text.StringEscapeUtils;
@@ -57,6 +61,7 @@ import de.soderer.pac.utilities.ProxyConfiguration;
 import de.soderer.pac.utilities.ProxyConfiguration.ProxyConfigurationType;
 import de.soderer.utilities.ConfigurationProperties;
 import de.soderer.utilities.DateUtilities;
+import de.soderer.utilities.FileUtilities;
 import de.soderer.utilities.IoUtilities;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.Result;
@@ -612,7 +617,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 							propertiesLabel.setText(LangResources.get("table_title") + " \"" + languagePropertySetName + "\"");
 							propertiesLabel.requestLayout();
 							availableLanguageSigns = new ArrayList<>();
-							availableLanguageSigns.add("default");
+							availableLanguageSigns.add(LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT);
 
 							hasUnsavedChanges = false;
 							setupTable();
@@ -932,7 +937,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 							languageProperty.setLanguageValue(newLanguageSign, null);
 						}
 					}
-					availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), "default");
+					availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT);
 					setupTable();
 				}
 			} catch (final Exception ex) {
@@ -952,7 +957,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					for (final LanguageProperty languageProperty : languageProperties) {
 						languageProperty.removeLanguageValue(languageSignToDelete);
 					}
-					availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), "default");
+					availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT);
 					setupTable();
 				}
 			} catch (final Exception ex) {
@@ -1144,7 +1149,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			searchBox.setEnabled(propertiesTable.getItemCount() > 0);
 		}
 
-		if (checkUsageButton != null && !temporaryDisabled) {
+		if (checkUsageButton != null) {
 			checkUsageButton.setEnabled(languageProperties != null && languageProperties.size() > 0);
 		}
 		if (checkUsageButtonPrevious != null) {
@@ -1259,7 +1264,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			openFilesLanguagePropertiesWorker.get();
 
 			languageProperties = openFilesLanguagePropertiesWorker.getLanguageProperties();
-			availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), "default");
+			availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT);
 			setLanguagePropertiesSetName("Multiple");
 
 			showMessage(LangResources.get("directory_dialog_title"), LangResources.get("openFilesResult", filePath, languageProperties.size(), Utilities.join(availableLanguageSigns, ", ")));
@@ -1305,7 +1310,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			openFolderLanguagePropertiesWorker.get();
 
 			languageProperties = openFolderLanguagePropertiesWorker.getLanguageProperties();
-			availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), "default");
+			availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT);
 			setLanguagePropertiesSetName("Multiple");
 
 			showMessage(LangResources.get("directory_dialog_title"), LangResources.get("openDirectoryResult", basicDirectoryPath, openFolderLanguagePropertiesWorker.getLanguagePropertiesSetNames().size(), languageProperties.size(), Utilities.join(availableLanguageSigns, ", ")));
@@ -1703,82 +1708,82 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 	@SuppressWarnings("unused")
 	public void checkUsage(final List<LanguageProperty> storageToCheck, final String directory, final String filePattern, final String usagePatternString) throws Exception {
-		//		final Set<String> existingDefaultProperties = new HashSet<>();
-		//		final Set<String> existingOverallProperties = new HashSet<>();
-		//		final Set<String> missingDefaultProperties = new HashSet<>();
-		//		final Set<String> missingOverallProperties = new HashSet<>();
-		//		final Set<String> usedProperties = new HashSet<>();
-		//		final Set<String> unusedProperties = new HashSet<>();
-		//		final Set<File> filesWithMissingValues = new HashSet<>();
-		//
-		//		for (final Entry<String, LanguageProperty> propertyEntry : storageToCheck.getProperties().entrySet()) {
-		//			if (propertyEntry.getValue().getLanguageValue("") == null) {
-		//				existingDefaultProperties.add(propertyEntry.getKey());
-		//			}
-		//			existingOverallProperties.add(propertyEntry.getKey());
-		//		}
-		//
-		//		final Pattern usagePattern = Pattern.compile(
-		//				"("
-		//						+ usagePatternString
-		//						.replace("\\", "\\\\")
-		//						.replace("(", "\\(")
-		//						.replace(")", "\\)")
-		//						.replace("<property>", ")([a-zA-Z0-9._]+)(")
-		//						+ ")");
-		//		final List<File> fileList = FileUtilities.getFilesByPattern(new File(directory), filePattern, true);
-		//		for (final File file : fileList) {
-		//			final String fileDataString = FileUtilities.readFileToString(file, StandardCharsets.UTF_8);
-		//			final Matcher matcher = usagePattern.matcher(fileDataString);
-		//			while (matcher.find()) {
-		//				final String propertyName = matcher.group(2);
-		//
-		//				if (existingDefaultProperties.contains(propertyName)) {
-		//					usedProperties.add(propertyName);
-		//				} else {
-		//					filesWithMissingValues.add(file);
-		//					missingDefaultProperties.add(propertyName);
-		//				}
-		//
-		//				if (existingOverallProperties.contains(propertyName)) {
-		//					usedProperties.add(propertyName);
-		//				} else {
-		//					missingOverallProperties.add(propertyName);
-		//				}
-		//			}
-		//		}
-		//		for (final String propertyName : existingOverallProperties) {
-		//			if (!usedProperties.contains(propertyName)) {
-		//				unusedProperties.add(propertyName);
-		//			}
-		//		}
-		//
-		//		String reportText = "";
-		//		reportText += LangResources.get("reportresults") + "\n";
-		//		reportText += "Checked directory: " + directory + "\n";
-		//		reportText += "Checked filePattern: " + filePattern + "\n";
-		//		reportText += "Checked usagePattern: " + usagePatternString + "\n";
-		//		reportText += "Properties in default language: " + existingDefaultProperties.size() + "\n";
-		//		reportText += "Properties in all languages: " + existingOverallProperties.size() + "\n";
-		//		reportText += "Missing properties in default language: " + missingDefaultProperties.size() + "\n";
-		//		reportText += "Missing properties in all languages: " + missingOverallProperties.size() + "\n";
-		//		reportText += "Unused properties in all languages: " + unusedProperties.size() + "\n";
-		//		reportText += "Used properties in all languages: " + usedProperties.size() + "\n";
-		//		reportText += "Checked files: " + fileList.size() + "\n";
-		//		if (filesWithMissingValues.size() > 0) {
-		//			reportText += "\nFiles with missing properties missing in default languages:\n";
-		//			reportText += Utilities.join(filesWithMissingValues, "\n") + "\n";
-		//		}
-		//		if (missingDefaultProperties.size() > 0) {
-		//			reportText += "\nProperties missing in default languages:\n";
-		//			reportText += Utilities.join(missingDefaultProperties, "\n") + "\n";
-		//		}
-		//		if (unusedProperties.size() > 0) {
-		//			reportText += "\nProperties unused in all languages:\n";
-		//			reportText += Utilities.join(unusedProperties, "\n");
-		//		}
-		//
-		//		new ShowDataDialog(getShell(), LangResources.get("usagereport"), reportText, true).open();
+		final Set<String> existingDefaultProperties = new HashSet<>();
+		final Set<String> existingOverallProperties = new HashSet<>();
+		final Set<String> missingDefaultProperties = new HashSet<>();
+		final Set<String> missingOverallProperties = new HashSet<>();
+		final Set<String> usedProperties = new HashSet<>();
+		final Set<String> unusedProperties = new HashSet<>();
+		final Set<File> filesWithMissingValues = new HashSet<>();
+
+		for (final LanguageProperty languageProperty : languageProperties) {
+			if (Utilities.isNotEmpty(languageProperty.getLanguageValue(LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT))) {
+				existingDefaultProperties.add(languageProperty.getKey());
+			}
+			existingOverallProperties.add(languageProperty.getKey());
+		}
+
+		final Pattern usagePattern = Pattern.compile(
+				"("
+						+ usagePatternString
+						.replace("\\", "\\\\")
+						.replace("(", "\\(")
+						.replace(")", "\\)")
+						.replace("<property>", ")([a-zA-Z0-9._]+)(")
+						+ ")");
+		final List<File> fileList = FileUtilities.getFilesByPattern(new File(directory), filePattern, true);
+		for (final File file : fileList) {
+			final String fileDataString = FileUtilities.readFileToString(file, StandardCharsets.UTF_8);
+			final Matcher matcher = usagePattern.matcher(fileDataString);
+			while (matcher.find()) {
+				final String propertyName = matcher.group(2);
+
+				if (existingDefaultProperties.contains(propertyName)) {
+					usedProperties.add(propertyName);
+				} else {
+					filesWithMissingValues.add(file);
+					missingDefaultProperties.add(propertyName);
+				}
+
+				if (existingOverallProperties.contains(propertyName)) {
+					usedProperties.add(propertyName);
+				} else {
+					missingOverallProperties.add(propertyName);
+				}
+			}
+		}
+		for (final String propertyName : existingOverallProperties) {
+			if (!usedProperties.contains(propertyName)) {
+				unusedProperties.add(propertyName);
+			}
+		}
+
+		String reportText = "";
+		reportText += LangResources.get("reportresults") + "\n";
+		reportText += "Checked directory: " + directory + "\n";
+		reportText += "Checked filePattern: " + filePattern + "\n";
+		reportText += "Checked usagePattern: " + usagePatternString + "\n";
+		reportText += "Properties in default language: " + existingDefaultProperties.size() + "\n";
+		reportText += "Properties in all languages: " + existingOverallProperties.size() + "\n";
+		reportText += "Missing properties in default language: " + missingDefaultProperties.size() + "\n";
+		reportText += "Missing properties in all languages: " + missingOverallProperties.size() + "\n";
+		reportText += "Unused properties in all languages: " + unusedProperties.size() + "\n";
+		reportText += "Used properties in all languages: " + usedProperties.size() + "\n";
+		reportText += "Checked files: " + fileList.size() + "\n";
+		if (filesWithMissingValues.size() > 0) {
+			reportText += "\nFiles with missing properties missing in default languages:\n";
+			reportText += Utilities.join(filesWithMissingValues, "\n") + "\n";
+		}
+		if (missingDefaultProperties.size() > 0) {
+			reportText += "\nProperties missing in default languages:\n";
+			reportText += Utilities.join(missingDefaultProperties, "\n") + "\n";
+		}
+		if (unusedProperties.size() > 0) {
+			reportText += "\nProperties unused in all languages:\n";
+			reportText += Utilities.join(unusedProperties, "\n");
+		}
+
+		new ShowDataDialog(getShell(), LangResources.get("usagereport"), reportText, true).open();
 	}
 
 

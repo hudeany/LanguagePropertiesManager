@@ -40,10 +40,10 @@ public class LanguagePropertiesFileSetWriter {
 				throw new Exception("Properties directory '" + propertiesDirectory + "' is not a directory");
 			}
 
-			final List<String> availableLanguageSigns = Utilities.sortButPutItemsFirst(getAvailableLanguageSignsOfProperties(filteredLanguageProperties), "default");
+			final List<String> availableLanguageSigns = Utilities.sortButPutItemsFirst(getAvailableLanguageSignsOfProperties(filteredLanguageProperties), LANGUAGE_SIGN_DEFAULT);
 			for (final String languageSign : availableLanguageSigns) {
 				String filename;
-				if ("default".equals(languageSign)) {
+				if (LANGUAGE_SIGN_DEFAULT.equals(languageSign)) {
 					filename = propertySetName + ".properties";
 				} else {
 					filename = propertySetName + "_" + languageSign + ".properties";
