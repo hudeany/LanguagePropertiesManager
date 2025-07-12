@@ -1,5 +1,6 @@
 Version ${build.version}
 
+Readded check of usage and missing language properties keys
 Added manual
 Added command line interface (CLI)
 Added progress bars
