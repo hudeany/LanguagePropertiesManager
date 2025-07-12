@@ -87,9 +87,6 @@ import de.soderer.utilities.swt.UpdateableGuiApplication;
  * Main Class
  */
 public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
-	// TODO
-	public static boolean temporaryDisabled = true;
-
 	private boolean showStorageTexts = false;
 	private boolean dataWasModified = false;
 	private boolean hasUnsavedChanges = false;
@@ -98,7 +95,6 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private Label propertiesLabel;
 	private Composite rightPart = null;
 	private Button removeButton;
-	private Button cleanupButton;
 	private Button saveButton;
 	private Button folderSaveButton;
 	private Button exportToExcelButton;
@@ -270,12 +266,6 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		removeButton.setEnabled(false);
 		removeButton.addSelectionListener(new RemoveButtonSelectionListener());
 
-		cleanupButton = new Button(buttonSection2, SWT.PUSH);
-		cleanupButton.setImage(ImageManager.getImage("clean.png"));
-		cleanupButton.setToolTipText(LangResources.get("tooltip_cleanup_values"));
-		cleanupButton.setEnabled(false);
-		cleanupButton.addSelectionListener(new CleanupButtonSelectionListener());
-
 		checkUsageButton = new Button(buttonSection2, SWT.PUSH);
 		checkUsageButton.setImage(ImageManager.getImage("puzzle.png"));
 		checkUsageButton.setToolTipText(LangResources.get("checkusage"));
@@ -369,7 +359,6 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		final Button caseButton = new Button(searchBox, SWT.CHECK);
 		caseButton.setText("Aa");
 		caseButton.setToolTipText(LangResources.get("case_sensitive"));
-		caseButton.setLayoutData(new GridData(35, 20));
 		caseButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(final SelectionEvent e) {
@@ -386,7 +375,6 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		final Button valueButton = new Button(searchBox, SWT.CHECK);
 		valueButton.setText(LangResources.get("value"));
 		valueButton.setToolTipText(LangResources.get("value"));
-		valueButton.setLayoutData(new GridData(45, 20));
 		valueButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(final SelectionEvent e) {
@@ -722,210 +710,6 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		}
 	}
 
-	private class CleanupButtonSelectionListener extends SelectionAdapter {
-		@Override
-		public void widgetSelected(final SelectionEvent e) {
-			try {
-				if (askForDropDuplicateProperties()) {
-					final boolean cleanupChangedData = false;
-
-					//					public boolean cleanUp(final boolean repairpunctuation) throws Exception {
-					//		boolean dataWasChanged = false;
-					//
-					//		for (final LanguageProperty property : properties.values()) {
-					//			// Store original values for later change check
-					//			final HashMap<String, String> originalData = new HashMap<>();
-					//			for (final String sign : getLanguageSigns()) {
-					//				originalData.put(sign, property.getLanguageValue(sign));
-					//			}
-					//
-					//			for (final String sign : getLanguageSigns()) {
-					//				String value = property.getLanguageValue(sign);
-					//				if (value != null) {
-					//					// clear blank before and after "<br>"
-					//					value = value.replace(" <br>", "<br>").replace("<br> ", "<br>");
-					//					// remove "<br>" at end
-					//					if (value.endsWith("<br>")) {
-					//						value = value.substring(0, value.length() - 4).trim();
-					//					}
-					//					// remove "<br />" at end
-					//					if (value.endsWith("<br />")) {
-					//						value = value.substring(0, value.length() - 6).trim();
-					//					}
-					//					property.setLanguageValue(sign, value);
-					//				}
-					//
-					//				// Clear empty values
-					//				if (Utilities.isEmpty(property.getLanguageValue(sign))) {
-					//					property.removeLanguageValue(sign);
-					//				}
-					//			}
-					//
-					//			if (repairpunctuation) {
-					//				// Check exclamationmark, questionmark and fullstop unification
-					//				boolean hasExclamationEnd = false;
-					//				boolean hasQuestionEnd = false;
-					//				boolean hasFullstopEnd = false;
-					//				boolean hasColonEnd = false;
-					//				for (final String sign : getLanguageSigns()) {
-					//					final String value = property.getLanguageValue(sign);
-					//					if (value != null) {
-					//						if (!sign.equalsIgnoreCase("zh")) {
-					//							if (value.endsWith("!")) {
-					//								hasExclamationEnd = true;
-					//							} else if (value.endsWith("?")) {
-					//								hasQuestionEnd = true;
-					//							} else if (value.endsWith(":")) {
-					//								hasColonEnd = true;
-					//							} else if (value.endsWith(".")) {
-					//								hasFullstopEnd = true;
-					//							}
-					//						} else {
-					//							if (value.endsWith("\\uFF01")) { // "!"
-					//								hasExclamationEnd = true;
-					//							} else if (value.endsWith("\\uFF1F")) { // "?"
-					//								hasQuestionEnd = true;
-					//							} else if (value.endsWith("\\uFF1A")) { // ":"
-					//								hasColonEnd = true;
-					//							} else if (value.endsWith("\\u3002")) { // "."
-					//								hasFullstopEnd = true;
-					//							}
-					//						}
-					//					}
-					//				}
-					//				for (final String sign : getLanguageSigns()) {
-					//					String value = property.getLanguageValue(sign);
-					//					if (value != null) {
-					//						if (!sign.equalsIgnoreCase("zh")) {
-					//							if (hasExclamationEnd) {
-					//								if (value.endsWith("?") || value.endsWith(":") || value.endsWith(".")) {
-					//									value = value.substring(0, value.length() - 1);
-					//								}
-					//								if (!value.endsWith("!")) {
-					//									value += "!";
-					//								}
-					//							} else if (hasQuestionEnd) {
-					//								if (value.endsWith(":") || value.endsWith(".")) {
-					//									value = value.substring(0, value.length() - 1);
-					//								}
-					//								if (!value.endsWith("?")) {
-					//									value += "?";
-					//								}
-					//							} else if (hasColonEnd) {
-					//								if (value.endsWith(".")) {
-					//									value = value.substring(0, value.length() - 1);
-					//								}
-					//								if (!value.endsWith(":")) {
-					//									value += ":";
-					//								}
-					//							} else if (hasFullstopEnd) {
-					//								if (!value.endsWith(".")) {
-					//									value += ".";
-					//								}
-					//							}
-					//						} else {
-					//							if (hasExclamationEnd) {
-					//								if (value.endsWith("\\uFF1F") || value.endsWith("\\uFF1A") || value.endsWith("\\u3002")) {
-					//									value = value.substring(0, value.length() - 6);
-					//								}
-					//								if (!value.endsWith("\\uFF01")) {
-					//									value += "\\uFF01";
-					//								}
-					//							} else if (hasQuestionEnd) {
-					//								if (value.endsWith("\\uFF1A") || value.endsWith("\\u3002")) {
-					//									value = value.substring(0, value.length() - 6);
-					//								}
-					//								if (!value.endsWith("\\uFF1F")) {
-					//									value += "\\uFF1F";
-					//								}
-					//							} else if (hasQuestionEnd) {
-					//								if (value.endsWith("\\u3002")) {
-					//									value = value.substring(0, value.length() - 6);
-					//								}
-					//								if (!value.endsWith("\\uFF1A")) {
-					//									value += "\\uFF1A";
-					//								}
-					//							} else if (hasFullstopEnd) {
-					//								if (!value.endsWith("\\u3002")) {
-					//									value += "\\u3002";
-					//								}
-					//							}
-					//						}
-					//
-					//						property.setLanguageValue(sign, value);
-					//					}
-					//				}
-					//			}
-					//
-					//			final List<String> signs = getLanguageSigns();
-					//			signs.remove(LANGUAGE_SIGN_DEFAULT);
-					//			for (final String sign : signs) {
-					//				if (property.getLanguageValue(LANGUAGE_SIGN_DEFAULT) != null
-					//						&& Utilities.isNotEmpty(property.getLanguageValue(sign))
-					//						&& property.getLanguageValue(LANGUAGE_SIGN_DEFAULT).equals(property.getLanguageValue(sign))) {
-					//					property.removeLanguageValue(sign);
-					//				} else if (sign.contains("_")) {
-					//					final String firstSignPart = sign.substring(0, sign.indexOf("_"));
-					//					if (property.getLanguageValue(firstSignPart) != null
-					//							&& Utilities.isNotEmpty(property.getLanguageValue(sign))
-					//							&& property.getLanguageValue(firstSignPart).equals(property.getLanguageValue(sign))) {
-					//						property.removeLanguageValue(sign);
-					//					}
-					//				}
-					//			}
-					//
-					//			// Languagespecific changes
-					//			for (final String sign : getLanguageSigns()) {
-					//				if (sign.equalsIgnoreCase("es") && property.getLanguageValue(sign) != null) {
-					//					String value = property.getLanguageValue(sign);
-					//					if (value.endsWith("!") && !value.startsWith("\\u00A1")) {
-					//						value = "\\u00A1" + value;
-					//					} else if (value.endsWith("?") && !value.startsWith("\\u00BF")) {
-					//						value = "\\u00BF" + value;
-					//					}
-					//					property.setLanguageValue(sign, value);
-					//				}
-					//
-					//				if (sign.equals("fr") && property.getLanguageValue(sign) != null) {
-					//					String value = property.getLanguageValue(sign);
-					//					value = value.replace("!", " !").replace("  !", " !").replace("?", " ?").replace("  ?", " ?").replace(":", " :").replace("  :", " :");
-					//					property.setLanguageValue(sign, value);
-					//				} else if (!sign.equalsIgnoreCase("fr") && property.getLanguageValue(sign) != null) {
-					//					String value = property.getLanguageValue(sign);
-					//					value = value.replace(" !", "!").replace(" ?", "?").replace(" :", ":");
-					//					property.setLanguageValue(sign, value);
-					//				}
-					//			}
-					//
-					//			// Change check
-					//			for (final String sign : getLanguageSigns()) {
-					//				if (originalData.get(sign) == null && property.getLanguageValue(sign) != null) {
-					//					dataWasChanged = true;
-					//				} else if (originalData.get(sign) != null && !originalData.get(sign).equals(property.getLanguageValue(sign))) {
-					//					dataWasChanged = true;
-					//				}
-					//			}
-					//		}
-					//
-					//		return dataWasChanged;
-					//	}
-
-					hasUnsavedChanges = cleanupChangedData || hasUnsavedChanges;
-					refreshTable();
-					refreshDetailView();
-					if (!cleanupChangedData) {
-						final MessageBox messageBox = new MessageBox(getShell());
-						messageBox.setText(LangResources.get("nochange_needed"));
-						messageBox.setMessage(LangResources.get("nochange_needed"));
-						messageBox.open();
-					}
-				}
-			} catch (final Exception ex) {
-				new ErrorDialog(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION.toString(), LanguagePropertiesManager.APPLICATION_ERROR_EMAIL_ADRESS, ex).open();
-			}
-		}
-	}
-
 	private class AddLanguageButtonSelectionListener extends SelectionAdapter {
 		@Override
 		public void widgetSelected(final SelectionEvent e) {
@@ -1013,11 +797,13 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					showErrorMessage(LangResources.get("open_directory_dialog_text"), LangResources.get("canceledByUser"));
 				} else if (new File(directory).exists() && new File(directory).isDirectory()) {
 					final SimpleInputDialog dialog2 = new SimpleInputDialog(getShell(), getText(), LangResources.get("enterfilepattern"));
+					dialog2.setDefaultText(".*\\.java");
 					final String filePattern = dialog2.open();
 					if (filePattern == null) {
 						showErrorMessage(LangResources.get("open_directory_dialog_text"), LangResources.get("canceledByUser"));
 					} else {
 						final SimpleInputDialog dialog3 = new SimpleInputDialog(getShell(), getText(), LangResources.get("enterusagepattern"));
+						dialog3.setDefaultText("LangResources.get(\"<property>\"");
 						final String usagePattern = dialog3.open();
 						if (usagePattern != null) {
 							recentlyCheckUsages.add(CsvWriter.getCsvLine(';', '"', true, directory, filePattern, usagePattern));
@@ -1136,9 +922,6 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		if (addButton != null) {
 			addButton.setEnabled(propertiesTable.getItemCount() > 0);
 		}
-		if (cleanupButton != null && !temporaryDisabled) {
-			cleanupButton.setEnabled(propertiesTable.getItemCount() > 0);
-		}
 		if (loadRecentButton != null) {
 			loadRecentButton.setEnabled(recentlyOpenedDirectories != null && recentlyOpenedDirectories.size() > 0);
 		}
@@ -1173,15 +956,6 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		final MessageBox messageBox = new MessageBox(LanguagePropertiesManagerDialog.this, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
 		messageBox.setText(LangResources.get("question_title_delete_property"));
 		messageBox.setMessage(LangResources.get("question_content_delete_property"));
-		final int returncode = messageBox.open();
-
-		return (returncode == SWT.YES);
-	}
-
-	private boolean askForDropDuplicateProperties() {
-		final MessageBox messageBox = new MessageBox(LanguagePropertiesManagerDialog.this, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
-		messageBox.setText(LangResources.get("question_title_cleanup_properties"));
-		messageBox.setMessage(LangResources.get("question_content_cleanup_properties"));
 		final int returncode = messageBox.open();
 
 		return (returncode == SWT.YES);
