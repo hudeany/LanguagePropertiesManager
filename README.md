@@ -18,12 +18,14 @@ All dependencies are downloaded by ANT build script: build.xml
  
 	JAVA jna: 5.6.0
 	JAVA jna-platform: 5.6.0
+	
+	ECLIPSE swt: 4.36
  
 	github.com/hudeany csv: 24.1.0
 	github.com/hudeany json: 25.1.2
 	github.com/hudeany proxyautoconfig: 25.1.2
 	github.com/hudeany network: 25.1.0
- 	github.com/hudeany soderer-utilities: 25.1.6
+	github.com/hudeany soderer-utilities: 25.1.6
 
 Language Properties Manager User Manual
 
