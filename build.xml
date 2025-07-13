@@ -99,7 +99,7 @@
 		<get src="https://repo1.maven.org/maven2/net/java/dev/jna/jna/5.6.0/jna-5.6.0.jar" dest="lib/" />
 		<get src="https://repo1.maven.org/maven2/net/java/dev/jna/jna-platform/5.6.0/jna-platform-5.6.0.jar" dest="lib/" />
 
-		<!-- SWT Windows: -->
+		<!-- SWT Windows: JarInJarLoader decides by OS type which SWT jar to load-->
 		<!-- https://archive.eclipse.org/eclipse/downloads/ -->
 		<!-- https://mirrors.dotsrc.org/eclipse/eclipse/downloads/drops4 -->
 		<get src="https://mirrors.dotsrc.org/eclipse/eclipse/downloads/drops4/R-4.36-202505281830/swt-4.36-win32-win32-x86_64.zip" dest="lib/swt_win.zip" />
@@ -108,7 +108,7 @@
 		<delete dir="lib/swt_win" />
 		<delete file="lib/swt_win.zip" />
 		
-		<!-- SWT Linux: -->
+		<!-- SWT Linux: JarInJarLoader decides by OS type which SWT jar to load-->
 		<!-- https://archive.eclipse.org/eclipse/downloads/ -->
 		<!-- https://mirrors.dotsrc.org/eclipse/eclipse/downloads/drops4 -->
 		<get src="https://mirrors.dotsrc.org/eclipse/eclipse/downloads/drops4/R-4.36-202505281830/swt-4.36-gtk-linux-x86_64.zip" dest="lib/swt_linux.zip" />
