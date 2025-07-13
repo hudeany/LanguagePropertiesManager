@@ -98,18 +98,29 @@
 		<get src="https://repo1.maven.org/maven2/com/sun/mail/mailapi/2.0.1/mailapi-2.0.1.jar" dest="lib/" />
 		<get src="https://repo1.maven.org/maven2/net/java/dev/jna/jna/5.6.0/jna-5.6.0.jar" dest="lib/" />
 		<get src="https://repo1.maven.org/maven2/net/java/dev/jna/jna-platform/5.6.0/jna-platform-5.6.0.jar" dest="lib/" />
+
+		<!-- SWT Windows: -->
+		<!-- https://archive.eclipse.org/eclipse/downloads/ -->
+		<!-- https://mirrors.dotsrc.org/eclipse/eclipse/downloads/drops4 -->
+		<get src="https://mirrors.dotsrc.org/eclipse/eclipse/downloads/drops4/R-4.36-202505281830/swt-4.36-win32-win32-x86_64.zip" dest="lib/swt_win.zip" />
+		<unzip src="lib/swt_win.zip" dest="lib/swt_win" />
+		<move file="lib/swt_win/swt.jar" tofile="lib/swt-4.36-win32-win32-x86_64.jar"/>
+		<delete dir="lib/swt_win"/>
+		<delete file="lib/swt_win.zip"/>
 		
-		<!-- swt-4.22-gtk-linux-x86_64.jar -->
-		<!-- swt-4.22-win32-win32-x86_64.jar -->
+		<!-- SWT Linux: -->
+		<!-- https://archive.eclipse.org/eclipse/downloads/ -->
+		<!-- https://mirrors.dotsrc.org/eclipse/eclipse/downloads/drops4 -->
+		<get src="https://mirrors.dotsrc.org/eclipse/eclipse/downloads/drops4/R-4.36-202505281830/swt-4.36-gtk-linux-x86_64.zip" dest="lib/swt_linux.zip" />
+		<unzip src="lib/swt_linux.zip" dest="lib/swt_linux" />
+		<move file="lib/swt_linux/swt.jar" tofile="lib/swt-4.36-gtk-linux-x86_64.jar"/>
+		<delete dir="lib/swt_linux"/>
+		<delete file="lib/swt_linux.zip"/>
 	</target>
 
 	<target name="compile" depends="download_dependencies">
 		<path id="build.classpath">
 			<fileset dir="lib_soderer">
-				<include name="*.jar" />
-			</fileset>
-			
-			<fileset dir="lib_swt">
 				<include name="*.jar" />
 			</fileset>
 			
@@ -158,7 +169,6 @@
 			<zipfileset file="${CaPublicKey}" />
 			<zipfileset file="${CaPublicKeyOld}" />
 			<zipfileset dir="lib" includes="*.jar" />
-			<zipfileset dir="lib_swt" includes="*.jar" />
 			
 			<zipfileset dir="lib_soderer" includes="soderer-utilities-*.jar" />
 		</jar>
