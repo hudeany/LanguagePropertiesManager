@@ -122,6 +122,7 @@
 		<path id="build.classpath">
 			<fileset dir="lib_soderer">
 				<include name="*.jar" />
+				<exclude name="*-sources.jar" />
 			</fileset>
 			
 			<fileset dir="lib">
@@ -170,7 +171,7 @@
 			<zipfileset file="${CaPublicKeyOld}" />
 			<zipfileset dir="lib" includes="*.jar" />
 			
-			<zipfileset dir="lib_soderer" includes="soderer-utilities-*.jar" />
+			<zipfileset dir="lib_soderer" includes="soderer-utilities-*.jar" excludes="soderer-utilities-*-sources.jar"  />
 		</jar>
 
 		<signjar destDir="${buildPath}" alias="${CodeSigningKeyAlias}" keystore="${CodeSigningKeyStore}" storepass="${CodeSigningKeyStorePassword}" keypass="${CodeSigningKeyPassword}" preservelastmodified="true" tsaurl="${TsaUrl}">
