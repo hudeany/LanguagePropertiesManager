@@ -1,3 +1,29 @@
+All dependencies are downloaded by ANT build script: build.xml
+	APACHE commons-collections4: 4.4
+	APACHE commons-compress: 1.24.0
+	APACHE commons-io: 2.14.0
+	APACHE commons-lang3: 3.11
+	APACHE commons-text: 1.9
+	APACHE poi: 5.2.4
+	APACHE poi-ooxml: 5.2.4
+	APACHE poi-ooxml-full: 5.2.4
+	APACHE xmlbeans: 5.1.1
+ 
+	LOG4J log4j-1.2-api: 2.20.0
+	LOG4J log4j-api: 2.20.0
+	LOG4J log4j-core: 2.20.0
+ 
+	SUN mailapi: 2.0.1
+ 
+	JAVA jna: 5.6.0
+	JAVA jna-platform: 5.6.0
+ 
+	github.com/hudeany csv: 24.1.0
+	github.com/hudeany json: 25.1.2
+	github.com/hudeany proxyautoconfig: 25.1.2
+	github.com/hudeany network: 25.1.0
+ 	github.com/hudeany soderer-utilities: 25.1.6
+
 ```
 Language Properties Manager User Manual
 
