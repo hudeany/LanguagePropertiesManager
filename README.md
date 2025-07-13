@@ -1,3 +1,4 @@
+```
 All dependencies are downloaded by ANT build script: build.xml
 	APACHE commons-collections4: 4.4
 	APACHE commons-compress: 1.24.0
@@ -24,7 +25,6 @@ All dependencies are downloaded by ANT build script: build.xml
 	github.com/hudeany network: 25.1.0
  	github.com/hudeany soderer-utilities: 25.1.6
 
-```
 Language Properties Manager User Manual
 
 1. Disclaimer
