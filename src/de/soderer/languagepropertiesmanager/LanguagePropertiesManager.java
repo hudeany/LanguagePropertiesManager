@@ -361,12 +361,14 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 			final String[] configuredExcludeParts = applicationConfiguration.get(LanguagePropertiesManager.CONFIG_OPEN_DIR_EXCLUDES).split(";");
 
 			if (actionDefinition.getExportToExcel() != null) {
-				final File excelFile = new File(actionDefinition.getExportToExcel());
+				final File propertiesFile = new File(actionDefinition.getExportToExcel());
+
+				final File excelFile = new File(actionDefinition.getExcelFile());
 				if (excelFile.exists() && !actionDefinition.isOverwrite()) {
 					throw new LanguagePropertiesException("Export excel file '" + excelFile.getAbsolutePath() + "' already exists. Use 'overwrite' to replace existing file.");
 				}
 
-				final LoadLanguagePropertiesWorker loadLanguagePropertiesWorker = new LoadLanguagePropertiesWorker(this, excelFile, configuredExcludeParts);
+				final LoadLanguagePropertiesWorker loadLanguagePropertiesWorker = new LoadLanguagePropertiesWorker(this, propertiesFile, configuredExcludeParts);
 
 				loadLanguagePropertiesWorker.setProgressDisplayDelayMilliseconds(2000);
 				loadLanguagePropertiesWorker.run();
