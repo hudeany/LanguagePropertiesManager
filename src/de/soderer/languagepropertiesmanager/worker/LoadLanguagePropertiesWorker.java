@@ -75,7 +75,7 @@ public class LoadLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 				boolean excluded = false;
 				if (excludeParts != null) {
 					for (final String excludePart : excludeParts) {
-						if (propertiesFile.getAbsolutePath().contains(excludePart)) {
+						if (propertiesFile.getAbsolutePath().contains(excludePart.replace("\\\\", "\\"))) {
 							excluded = true;
 							break;
 						}

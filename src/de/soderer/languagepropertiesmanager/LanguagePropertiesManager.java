@@ -110,7 +110,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 			applicationConfiguration.set(LanguagePropertiesManager.CONFIG_PROXY_URL, "");
 		}
 		if (!applicationConfiguration.containsKey(LanguagePropertiesManager.CONFIG_OPEN_DIR_EXCLUDES)) {
-			applicationConfiguration.set(LanguagePropertiesManager.CONFIG_OPEN_DIR_EXCLUDES, "__;/src/test/;\\src\\test\\;/bin/;\\bin\\");
+			applicationConfiguration.set(LanguagePropertiesManager.CONFIG_OPEN_DIR_EXCLUDES, "__;/src/test/;\\\\src\\\\test\\\\;/bin/;\\\\bin\\\\");
 		}
 	}
 
