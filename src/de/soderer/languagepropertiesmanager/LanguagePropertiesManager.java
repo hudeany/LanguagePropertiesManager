@@ -40,7 +40,6 @@ import de.soderer.utilities.worker.WorkerParentDual;
  * TODO:
  * Display of multiline value and comments (escape linebreaks in textfield)
  * Excel file Diff
- * Add configuration button to change app display language
  */
 
 public class LanguagePropertiesManager extends UpdateableConsoleApplication implements WorkerParentDual {
@@ -92,6 +91,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 		if (!applicationConfiguration.containsKey(LanguagePropertiesManager.CONFIG_CLEANUP_REPAIRPUNCTUATION)) {
 			applicationConfiguration.set(LanguagePropertiesManager.CONFIG_CLEANUP_REPAIRPUNCTUATION, true);
 		}
+		applicationConfiguration.set(ApplicationConfigurationDialog.CONFIG_LANGUAGE + ConfigurationProperties.ENUM_EXTENSION, "de,en");
 		if (!applicationConfiguration.containsKey(LanguagePropertiesManager.CONFIG_LANGUAGE)) {
 			applicationConfiguration.set(LanguagePropertiesManager.CONFIG_LANGUAGE, Locale.getDefault().getLanguage());
 		}
