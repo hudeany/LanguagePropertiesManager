@@ -41,7 +41,7 @@ public class HelpDialog extends ModalDialog<Boolean> {
 		shell.setLayout(new FillLayout());
 
 		final Composite buttonSection = new Composite(shell, SWT.NONE);
-		buttonSection.setLayout(SwtUtilities.createNoMarginGridLayout(1, false));
+		buttonSection.setLayout(SwtUtilities.createSmallMarginGridLayout(1, false));
 
 		final Button versionInfoButton = new Button(buttonSection, SWT.PUSH);
 		versionInfoButton.setText(LangResources.get("versionInfo"));
