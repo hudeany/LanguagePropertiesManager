@@ -82,6 +82,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 	public static final String CONFIG_PROXY_CONFIGURATION_TYPE = ApplicationConfigurationDialog.CONFIG_PROXY_CONFIGURATION_TYPE;
 	public static final String CONFIG_PROXY_URL = ApplicationConfigurationDialog.CONFIG_PROXY_URL;
 	public static final String CONFIG_OPEN_DIR_EXCLUDES = "OpenDirExcludes";
+	public static final String CONFIG_DEEPL_APIKEY = "DeepL_ApiKey";
 
 	private int previousTerminalWidth = 0;
 
@@ -111,6 +112,9 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 		}
 		if (!applicationConfiguration.containsKey(LanguagePropertiesManager.CONFIG_OPEN_DIR_EXCLUDES)) {
 			applicationConfiguration.set(LanguagePropertiesManager.CONFIG_OPEN_DIR_EXCLUDES, "__;/src/test/;\\src\\test\\;/bin/;\\bin\\");
+		}
+		if (!applicationConfiguration.containsKey(LanguagePropertiesManager.CONFIG_DEEPL_APIKEY)) {
+			applicationConfiguration.set(LanguagePropertiesManager.CONFIG_DEEPL_APIKEY, "");
 		}
 	}
 

@@ -61,6 +61,7 @@ import de.soderer.pac.utilities.ProxyConfiguration;
 import de.soderer.pac.utilities.ProxyConfiguration.ProxyConfigurationType;
 import de.soderer.utilities.ConfigurationProperties;
 import de.soderer.utilities.DateUtilities;
+import de.soderer.utilities.DeepLHelper;
 import de.soderer.utilities.FileUtilities;
 import de.soderer.utilities.IoUtilities;
 import de.soderer.utilities.LangResources;
@@ -122,6 +123,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private Button checkUsageButtonPrevious;
 	private Button addLanguageButton;
 	private Button deleteLanguageButton;
+	private Button translateButton;
 
 	private Button okButton;
 	private Button cancelButton;
@@ -287,6 +289,11 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		deleteLanguageButton.setImage(ImageManager.getImage("minus.png"));
 		deleteLanguageButton.setToolTipText(LangResources.get("tooltip_DeleteLanguage"));
 		deleteLanguageButton.addSelectionListener(new DeleteLanguageButtonSelectionListener());
+
+		translateButton = new Button(buttonSection2, SWT.PUSH);
+		translateButton.setText("Translate");
+		translateButton.setToolTipText(LangResources.get("tooltip_Translate"));
+		translateButton.addSelectionListener(new TranslateButtonSelectionListener());
 
 		// Searching
 		searchBox = new Composite(leftPart, SWT.BORDER);
@@ -751,6 +758,60 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		}
 	}
 
+	private class TranslateButtonSelectionListener extends SelectionAdapter {
+		@Override
+		public void widgetSelected(final SelectionEvent e) {
+			try {
+				final DeepLHelper deepLHelper = new DeepLHelper(applicationConfiguration.get(LanguagePropertiesManager.CONFIG_DEEPL_APIKEY));
+
+				String languageSourceLanguage = null;
+				final String languageSignTranslateSource = new ComboSelectionDialog(getShell(), getText(), LangResources.get("selectSourceLanguageSignToTranslate"), availableLanguageSigns).open();
+				if (Utilities.isBlank(languageSignTranslateSource)) {
+					return;
+				} else if ("Default".equalsIgnoreCase(languageSignTranslateSource)) {
+					languageSourceLanguage = new ComboSelectionDialog(getShell(), getText(), LangResources.get("selectDefaultLanguageToTranslate"), deepLHelper.getSupportedLanguages()).open();
+					if (Utilities.isBlank(languageSourceLanguage)) {
+						return;
+					}
+				}
+
+				final String languageSignTranslateTarget = new ComboSelectionDialog(getShell(), getText(), LangResources.get("selectTargetLanguageSignToTranslate"), availableLanguageSigns).open();
+				if (Utilities.isBlank(languageSignTranslateTarget)) {
+					return;
+				}
+
+				String sourceLanguage = languageSignTranslateSource;
+				if ("Default".equalsIgnoreCase(sourceLanguage)) {
+					sourceLanguage = languageSourceLanguage;
+				}
+				if (sourceLanguage != null && sourceLanguage.contains("_")) {
+					sourceLanguage = sourceLanguage.substring(sourceLanguage.indexOf("_"));
+				}
+				String targetLanguage = languageSignTranslateTarget;
+				if (targetLanguage.contains("_")) {
+					targetLanguage = targetLanguage.substring(targetLanguage.indexOf("_"));
+				}
+
+				int countTranslations = 0;
+				for (final LanguageProperty languageProperty : languageProperties) {
+					final String sourceValue = languageProperty.getLanguageValue(languageSignTranslateSource);
+					String targetValue = languageProperty.getLanguageValue(languageSignTranslateTarget);
+					if (Utilities.isBlank(targetValue)) {
+						targetValue = deepLHelper.translate(sourceLanguage, sourceValue, targetLanguage);
+						languageProperty.setLanguageValue(languageSignTranslateTarget, targetValue);
+						countTranslations++;
+					}
+				}
+				setupTable();
+
+				showMessage(LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("addedTranslations", countTranslations));
+			} catch (final Exception ex) {
+				new ErrorDialog(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION.toString(), LanguagePropertiesManager.APPLICATION_ERROR_EMAIL_ADRESS, ex).open();
+			}
+			checkButtonStatus();
+		}
+	}
+
 	private class ConfigButtonSelectionListener extends SelectionAdapter {
 		@Override
 		public void widgetSelected(final SelectionEvent e) {
@@ -949,6 +1010,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		}
 		if (folderSaveButton != null) {
 			folderSaveButton.setEnabled(languageProperties != null && languageProperties.size() > 0);
+		}
+		if (translateButton != null) {
+			translateButton.setEnabled(languageProperties != null && languageProperties.size() > 0 && availableLanguageSigns != null && availableLanguageSigns.size() > 1 && Utilities.isNotBlank(applicationConfiguration.get(LanguagePropertiesManager.CONFIG_DEEPL_APIKEY)));
 		}
 	}
 
