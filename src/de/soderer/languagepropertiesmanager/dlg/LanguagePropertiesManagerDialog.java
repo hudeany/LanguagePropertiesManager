@@ -805,6 +805,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				setupTable();
 
 				showMessage(LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("addedTranslations", countTranslations));
+				if (countTranslations > 0) {
+					hasUnsavedChanges = true;
+				}
 			} catch (final Exception ex) {
 				new ErrorDialog(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION.toString(), LanguagePropertiesManager.APPLICATION_ERROR_EMAIL_ADRESS, ex).open();
 			}
