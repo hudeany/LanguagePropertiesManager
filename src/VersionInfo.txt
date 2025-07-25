@@ -1,3 +1,14 @@
 Version ${build.version}
 
 Added DeepL support for translations (needs DeepL API key in config)
+
+
+Version 25.1.42
+
+Fixed usage of excludes
+Readded check of usage and missing language properties keys
+Added manual
+Added command line interface (CLI)
+Added progress bars
+Improve storage of multiple sets in other directory but referenced by set name as far as possible
+Improved loading of single and multiple language properties sets
