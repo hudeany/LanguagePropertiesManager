@@ -796,7 +796,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				for (final LanguageProperty languageProperty : languageProperties) {
 					final String sourceValue = languageProperty.getLanguageValue(languageSignTranslateSource);
 					String targetValue = languageProperty.getLanguageValue(languageSignTranslateTarget);
-					if (Utilities.isBlank(targetValue)) {
+					if (Utilities.isEmpty(targetValue)) {
 						targetValue = deepLHelper.translate(sourceLanguage, sourceValue, targetLanguage);
 						languageProperty.setLanguageValue(languageSignTranslateTarget, targetValue);
 						countTranslations++;
