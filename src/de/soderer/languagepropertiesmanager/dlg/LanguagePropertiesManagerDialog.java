@@ -776,19 +776,16 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 				final DeepLHelper deepLHelper = new DeepLHelper(applicationConfiguration.get(LanguagePropertiesManager.CONFIG_DEEPL_APIKEY));
 
-				String languageSourceLanguage = null;
 				final String languageSignTranslateSource = new ComboSelectionDialog(getShell(), getText(), LangResources.get("selectSourceLanguageSignToTranslate"), availableLanguageSigns, 0).open();
 				if (Utilities.isBlank(languageSignTranslateSource)) {
 					return;
-				} else if ("Default".equalsIgnoreCase(languageSignTranslateSource)) {
-					languageSourceLanguage = new ComboSelectionDialog(getShell(), getText(), LangResources.get("selectDefaultLanguageToTranslate"), deepLHelper.getSupportedLanguages(), deepLHelper.getSupportedLanguages().indexOf("EN")).open();
-					if (Utilities.isBlank(languageSourceLanguage)) {
-						return;
-					}
 				}
 				String sourceLanguage = languageSignTranslateSource;
 				if ("Default".equalsIgnoreCase(sourceLanguage)) {
-					sourceLanguage = languageSourceLanguage;
+					sourceLanguage = new ComboSelectionDialog(getShell(), getText(), LangResources.get("selectDefaultLanguageToTranslate"), deepLHelper.getSupportedLanguages(), deepLHelper.getSupportedLanguages().indexOf("EN")).open();
+					if (Utilities.isBlank(sourceLanguage)) {
+						return;
+					}
 				}
 				if (sourceLanguage.contains("_")) {
 					sourceLanguage = sourceLanguage.substring(0, sourceLanguage.indexOf("_"));
@@ -806,9 +803,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					}
 				}
 				String targetLanguage = languageSignTranslateTarget;
-				if ("Default".equalsIgnoreCase(languageSignTranslateTarget)) {
+				if ("Default".equalsIgnoreCase(targetLanguage)) {
 					targetLanguage = new ComboSelectionDialog(getShell(), getText(), LangResources.get("selectDefaultLanguageToTranslate"), deepLHelper.getSupportedLanguages(), deepLHelper.getSupportedLanguages().indexOf("EN")).open();
-					if (Utilities.isBlank(languageSourceLanguage)) {
+					if (Utilities.isBlank(targetLanguage)) {
 						return;
 					}
 				}
