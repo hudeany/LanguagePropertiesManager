@@ -79,6 +79,14 @@ Mit dem Button "Ein neues Sprachen Kennzeichen hinzufügen" kann ein zusätzlich
 Mit dem Button "Ein bestehendes Sprachen Kennzeichen löschen" kann ein Sprachenkennzeichen komplett für alle Zeilen des linken Toolbereichs entfernt werden.
 Es folgt ein Auswahldialog zur angabe eines der verfügbaren SPrachenkeinnzeichen.
 
+4.5 Übersetzen fehlender Sprachwerte
+
+Mit dem Button "Translate" können fehlende Sprachwerte erstellt werden, indem der Wert in einer anderen Sprache verwendet und mit Hilfe der Dienste von DeepL (https://www.deepl.com) übersetzt wird.
+Dazu ist ein API Key zur Autorisierung erforderlich, der unter "https://www.deepl.com/pro-api/" erhältlich ist.
+Begrenzte Testkonten sind kostenlos, erfordern jedoch eine Kreditkartenregistrierung.
+Der API Key kann im Anwendungs-Konfigurationsdialog oder bei der ersten Verwendung des Buttons "Translate" eingegeben werden.
+Bei Verwendung der Default Sprache muss eine Sprache ausgewählt werden, die als Standardsprache zugeordnet ist.
+Wenn nur eine weitere Sprache verfügbar sind, wird diese automatisch als Zielsprache ausgewählt.
 
 5. Speichern von Language Properties Sets
 

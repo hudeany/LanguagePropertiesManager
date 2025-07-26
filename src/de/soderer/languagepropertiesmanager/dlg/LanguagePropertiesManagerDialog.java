@@ -762,34 +762,52 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		@Override
 		public void widgetSelected(final SelectionEvent e) {
 			try {
+				if (Utilities.isBlank(applicationConfiguration.get(LanguagePropertiesManager.CONFIG_DEEPL_APIKEY))) {
+					final SimpleInputDialog dialog = new SimpleInputDialog(getShell(), getText(), LangResources.get("enterDeeplApiKey"));
+					final String deeplApiKey = dialog.open();
+					if (deeplApiKey != null) {
+						applicationConfiguration.set(LanguagePropertiesManager.CONFIG_DEEPL_APIKEY, deeplApiKey);
+					}
+				}
+
+				if (Utilities.isBlank(applicationConfiguration.get(LanguagePropertiesManager.CONFIG_DEEPL_APIKEY))) {
+					throw new Exception("No DeepL API key available");
+				}
+
 				final DeepLHelper deepLHelper = new DeepLHelper(applicationConfiguration.get(LanguagePropertiesManager.CONFIG_DEEPL_APIKEY));
 
 				String languageSourceLanguage = null;
-				final String languageSignTranslateSource = new ComboSelectionDialog(getShell(), getText(), LangResources.get("selectSourceLanguageSignToTranslate"), availableLanguageSigns).open();
+				final String languageSignTranslateSource = new ComboSelectionDialog(getShell(), getText(), LangResources.get("selectSourceLanguageSignToTranslate"), availableLanguageSigns, 0).open();
 				if (Utilities.isBlank(languageSignTranslateSource)) {
 					return;
 				} else if ("Default".equalsIgnoreCase(languageSignTranslateSource)) {
-					languageSourceLanguage = new ComboSelectionDialog(getShell(), getText(), LangResources.get("selectDefaultLanguageToTranslate"), deepLHelper.getSupportedLanguages()).open();
+					languageSourceLanguage = new ComboSelectionDialog(getShell(), getText(), LangResources.get("selectDefaultLanguageToTranslate"), deepLHelper.getSupportedLanguages(), deepLHelper.getSupportedLanguages().indexOf("EN")).open();
 					if (Utilities.isBlank(languageSourceLanguage)) {
 						return;
 					}
 				}
-
-				final String languageSignTranslateTarget = new ComboSelectionDialog(getShell(), getText(), LangResources.get("selectTargetLanguageSignToTranslate"), availableLanguageSigns).open();
-				if (Utilities.isBlank(languageSignTranslateTarget)) {
-					return;
-				}
-
 				String sourceLanguage = languageSignTranslateSource;
 				if ("Default".equalsIgnoreCase(sourceLanguage)) {
 					sourceLanguage = languageSourceLanguage;
 				}
-				if (sourceLanguage != null && sourceLanguage.contains("_")) {
-					sourceLanguage = sourceLanguage.substring(sourceLanguage.indexOf("_"));
+
+				final List<String> availableOtherLanguageSigns = new ArrayList<>(availableLanguageSigns);
+				availableOtherLanguageSigns.remove(languageSignTranslateSource);
+				String languageSignTranslateTarget;
+				if (availableOtherLanguageSigns.size() == 1) {
+					languageSignTranslateTarget = availableOtherLanguageSigns.get(0);
+				} else {
+					languageSignTranslateTarget = new ComboSelectionDialog(getShell(), getText(), LangResources.get("selectTargetLanguageSignToTranslate"), availableOtherLanguageSigns).open();
+					if (Utilities.isBlank(languageSignTranslateTarget)) {
+						return;
+					}
 				}
 				String targetLanguage = languageSignTranslateTarget;
-				if (targetLanguage.contains("_")) {
-					targetLanguage = targetLanguage.substring(targetLanguage.indexOf("_"));
+				if ("Default".equalsIgnoreCase(languageSignTranslateTarget)) {
+					targetLanguage = new ComboSelectionDialog(getShell(), getText(), LangResources.get("selectDefaultLanguageToTranslate"), deepLHelper.getSupportedLanguages(), deepLHelper.getSupportedLanguages().indexOf("EN")).open();
+					if (Utilities.isBlank(languageSourceLanguage)) {
+						return;
+					}
 				}
 
 				int countTranslations = 0;
@@ -1015,7 +1033,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			folderSaveButton.setEnabled(languageProperties != null && languageProperties.size() > 0);
 		}
 		if (translateButton != null) {
-			translateButton.setEnabled(languageProperties != null && languageProperties.size() > 0 && availableLanguageSigns != null && availableLanguageSigns.size() > 1 && Utilities.isNotBlank(applicationConfiguration.get(LanguagePropertiesManager.CONFIG_DEEPL_APIKEY)));
+			translateButton.setEnabled(languageProperties != null && languageProperties.size() > 0 && availableLanguageSigns != null && availableLanguageSigns.size() > 1);
 		}
 	}
 

@@ -81,6 +81,14 @@ The "Add a New Language Tag" button can be used to add an additional language ta
 The "Delete an existing language tag" button can be used to completely remove a language tag from all rows in the left-hand toolbar.
 A selection dialog appears for specifying one of the available language tags.
 
+4.5 Translating missing language values
+
+The "Translate" button can be used to create missing language values by using the value on a different language an translate it using the services of DeepL (https://www.deepl.com).
+Therefor an API key is needed for authorization, which can be obtained at "https://www.deepl.com/pro-api/".
+Limited test accounts are for free, but still need credit card registration.
+The API key may be entered in application configuration dialog or on first usage of the "Translate" button.
+Using the Default language sign makes it mandatory to select a language wich is associated as default language.
+If there is only one other language sign available, that one will automatically be selected as target language sign.
 
 5. Saving Language Property Sets
 
