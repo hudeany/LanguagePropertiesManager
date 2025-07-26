@@ -790,6 +790,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				if ("Default".equalsIgnoreCase(sourceLanguage)) {
 					sourceLanguage = languageSourceLanguage;
 				}
+				if (sourceLanguage.contains("_")) {
+					sourceLanguage = sourceLanguage.substring(0, sourceLanguage.indexOf("_"));
+				}
 
 				final List<String> availableOtherLanguageSigns = new ArrayList<>(availableLanguageSigns);
 				availableOtherLanguageSigns.remove(languageSignTranslateSource);
@@ -808,6 +811,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					if (Utilities.isBlank(languageSourceLanguage)) {
 						return;
 					}
+				}
+				if (targetLanguage.contains("_")) {
+					targetLanguage = targetLanguage.substring(0, targetLanguage.indexOf("_"));
 				}
 
 				int countTranslations = 0;
