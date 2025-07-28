@@ -760,7 +760,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 	private class TranslateButtonSelectionListener extends SelectionAdapter {
 		@Override
-		public void widgetSelected(final SelectionEvent e) {
+		public void widgetSelected(final SelectionEvent event) {
 			try {
 				if (Utilities.isBlank(applicationConfiguration.get(LanguagePropertiesManager.CONFIG_DEEPL_APIKEY))) {
 					final SimpleInputDialog dialog = new SimpleInputDialog(getShell(), getText(), LangResources.get("enterDeeplApiKey"));
@@ -818,7 +818,13 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					final String sourceValue = languageProperty.getLanguageValue(languageSignTranslateSource);
 					String targetValue = languageProperty.getLanguageValue(languageSignTranslateTarget);
 					if (Utilities.isEmpty(targetValue)) {
-						targetValue = deepLHelper.translate(sourceLanguage, sourceValue, targetLanguage);
+						try {
+							targetValue = deepLHelper.translate(sourceLanguage, sourceValue, targetLanguage);
+						} catch (final Exception e) {
+							// Maybe license limits are reached
+							showErrorMessage(LanguagePropertiesManager.APPLICATION_NAME, "Translate error: " + e.getMessage());
+							break;
+						}
 						languageProperty.setLanguageValue(languageSignTranslateTarget, targetValue);
 						countTranslations++;
 					}

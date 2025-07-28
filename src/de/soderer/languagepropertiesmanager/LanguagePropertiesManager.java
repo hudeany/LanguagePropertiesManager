@@ -19,6 +19,7 @@ import de.soderer.languagepropertiesmanager.worker.ExportToExcelWorker;
 import de.soderer.languagepropertiesmanager.worker.ImportFromExcelWorker;
 import de.soderer.languagepropertiesmanager.worker.LoadLanguagePropertiesWorker;
 import de.soderer.languagepropertiesmanager.worker.WriteLanguagePropertiesWorker;
+import de.soderer.pac.PacScriptParser;
 import de.soderer.pac.utilities.ProxyConfiguration;
 import de.soderer.pac.utilities.ProxyConfiguration.ProxyConfigurationType;
 import de.soderer.utilities.ConfigurationProperties;
@@ -179,6 +180,15 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 		} catch (@SuppressWarnings("unused") final Exception e) {
 			System.err.println("Invalid application configuration");
 			return 1;
+		}
+
+		if (!applicationConfiguration.containsKey(ApplicationConfigurationDialog.CONFIG_PROXY_CONFIGURATION_TYPE)) {
+			if (PacScriptParser.findPacFileUrlByWpad() != null) {
+				applicationConfiguration.set(ApplicationConfigurationDialog.CONFIG_PROXY_CONFIGURATION_TYPE, ProxyConfigurationType.WPAD.name());
+			} else {
+				applicationConfiguration.set(ApplicationConfigurationDialog.CONFIG_PROXY_CONFIGURATION_TYPE, ProxyConfigurationType.None.name());
+			}
+			applicationConfiguration.save();
 		}
 
 		final ProxyConfigurationType proxyConfigurationType = ProxyConfigurationType.getFromString(applicationConfiguration.get(ApplicationConfigurationDialog.CONFIG_PROXY_CONFIGURATION_TYPE));
