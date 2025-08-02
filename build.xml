@@ -3,20 +3,20 @@
 	<echo>Java/JVM HOME: ${java.home}</echo>
 	<echo>Java/JVM version: ${ant.java.version}</echo>
 	<echo>Java/JVM detailed version: ${java.version}</echo>
-	
+
 	<loadfile property="build.version" srcFile="build.version" failonerror="false" />
 	<property name="build.version" value="25.0.0" />
 	<echo message="build.version: ${build.version}" />
-	
+
 	<property file="${user.home}/git/codeSigning.properties" />
-	
+
 	<tstamp>
 		<format property="buildTime" pattern="yyyy-MM-dd HH:mm:ss" locale="en" />
 	</tstamp>
 	<echo message="buildTime: ${buildTime}" />
-	
+
 	<property file="${user.home}/git/codeSigning.properties" />
-	
+
 	<taskdef resource="net/sf/antcontrib/antcontrib.properties">
 		<classpath>
 			<pathelement location="lib_ant/ant-contrib-0.6.jar" />
@@ -78,7 +78,7 @@
 	<available file="lib" property="libsAvailable" />
 	<target name="download_dependencies" unless="libsAvailable">
 		<mkdir dir="lib/" />
-		
+
 		<get src="https://repo1.maven.org/maven2/org/apache/commons/commons-collections4/4.4/commons-collections4-4.4.jar" dest="lib/" />
 		<get src="https://repo1.maven.org/maven2/org/apache/commons/commons-compress/1.24.0/commons-compress-1.24.0.jar" dest="lib/" />
 		<get src="https://repo1.maven.org/maven2/commons-io/commons-io/2.14.0/commons-io-2.14.0.jar" dest="lib/" />
@@ -94,12 +94,12 @@
 		<get src="https://repo1.maven.org/maven2/com/sun/mail/mailapi/2.0.1/mailapi-2.0.1.jar" dest="lib/" />
 		<get src="https://repo1.maven.org/maven2/net/java/dev/jna/jna/5.6.0/jna-5.6.0.jar" dest="lib/" />
 		<get src="https://repo1.maven.org/maven2/net/java/dev/jna/jna-platform/5.6.0/jna-platform-5.6.0.jar" dest="lib/" />
-		
+
 		<get src="https://github.com/hudeany/csv/releases/download/25.1.1/csv-25.1.1.jar" dest="lib/" />
 		<get src="https://github.com/hudeany/json/releases/download/25.1.2/json-25.1.2.jar" dest="lib/" />
 		<get src="https://github.com/hudeany/ProxyAutoConfig/releases/download/25.1.8/proxyautoconfig-25.1.8.jar" dest="lib/" />
 		<get src="https://github.com/hudeany/network/releases/download/25.1.2/network-25.1.2.jar" dest="lib/" />
-		
+
 		<get src="https://soderer.de/maven2/de/soderer/JavaUtilities/25.1.8/soderer-utilities-25.1.8.jar" dest="lib/" />
 		<get src="https://soderer.de/maven2/de/soderer/JavaUtilities/25.1.8/soderer-utilities-25.1.8-sources.jar" dest="lib/" />
 
@@ -111,7 +111,7 @@
 		<move file="lib/swt_win/swt.jar" tofile="lib/swt-4.36-win32-win32-x86_64.jar" />
 		<delete dir="lib/swt_win" />
 		<delete file="lib/swt_win.zip" />
-		
+
 		<!-- SWT Linux: JarInJarLoader decides by OS type which SWT jar to load-->
 		<!-- https://archive.eclipse.org/eclipse/downloads/ -->
 		<!-- https://mirrors.dotsrc.org/eclipse/eclipse/downloads/drops4 -->
@@ -144,7 +144,7 @@
 				<include name="**/*.ico" />
 			</fileset>
 		</copy>
-		
+
 		<replace file="${buildPath}/bin/VersionInfo.txt" token="$${build.version}" value="${build.version}"/>
 	</target>
 
@@ -178,7 +178,7 @@
 				<fileset dir="${buildPath}" includes="LanguagePropertiesManager.jar" />
 			</path>
 		</signjar>
-		
+
 		<copy file="${buildPath}/LanguagePropertiesManager.jar" tofile="${buildPath}/LanguagePropertiesManager-${build.version}.jar" />
 	</target>
 
