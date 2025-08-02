@@ -33,7 +33,7 @@ import de.soderer.utilities.Version;
 import de.soderer.utilities.appupdate.ApplicationUpdateUtilities;
 import de.soderer.utilities.console.ConsoleType;
 import de.soderer.utilities.console.ConsoleUtilities;
-import de.soderer.utilities.swing.ApplicationConfigurationDialog;
+import de.soderer.utilities.swt.ApplicationConfigurationDialog;
 import de.soderer.utilities.swt.ErrorDialog;
 import de.soderer.utilities.worker.WorkerParentDual;
 

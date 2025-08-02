@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="lib" path="lib_soderer/soderer-utilities-25.1.6.jar" sourcepath="/JavaUtilities/target/soderer-utilities-25.1.6-sources.jar"/>
 	<classpathentry kind="lib" path="lib/commons-text-1.9.jar"/>
 	<classpathentry kind="lib" path="lib/commons-lang3-3.11.jar"/>
 	<classpathentry kind="lib" path="lib/mailapi-2.0.1.jar"/>
@@ -21,6 +20,7 @@
 	<classpathentry kind="lib" path="lib/proxyautoconfig-25.1.8.jar"/>
 	<classpathentry kind="lib" path="lib/csv-25.1.1.jar"/>
 	<classpathentry kind="lib" path="lib/network-25.1.2.jar"/>
+	<classpathentry kind="lib" path="lib/soderer-utilities-25.1.8.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">
 		<attributes>
 			<attribute name="module" value="true"/>
