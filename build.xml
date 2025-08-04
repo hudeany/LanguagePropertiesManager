@@ -170,7 +170,7 @@
 
 			<zipfileset file="${CaPublicKey}" />
 			<zipfileset file="${CaPublicKeyOld}" />
-			<zipfileset dir="lib" includes="*.jar" />
+			<zipfileset dir="lib" includes="*.jar" excludes="*sources.jar" />
 		</jar>
 
 		<signjar destDir="${buildPath}" alias="${CodeSigningKeyAlias}" keystore="${CodeSigningKeyStore}" storepass="${CodeSigningKeyStorePassword}" keypass="${CodeSigningKeyPassword}" preservelastmodified="true" tsaurl="${TsaUrl}">
