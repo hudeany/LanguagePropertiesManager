@@ -25,11 +25,11 @@ All dependencies are downloaded by ANT build script: build.xml
 	
 	ECLIPSE swt: 4.36
  
-	github.com/hudeany csv: 24.1.0
+	github.com/hudeany csv: 25.1.1
 	github.com/hudeany json: 25.1.2
-	github.com/hudeany proxyautoconfig: 25.1.2
-	github.com/hudeany network: 25.1.0
-	github.com/hudeany soderer-utilities: 25.1.6
+	github.com/hudeany proxyautoconfig: 25.1.8
+	github.com/hudeany network: 25.1.2
+	github.com/hudeany soderer-utilities: 25.1.13
 
 Language Properties Manager User Manual
 
