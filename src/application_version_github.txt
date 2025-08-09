@@ -1,0 +1,4 @@
+25.0.0
+2025-08-09 21:38:30
+https://api.github.com/repos/hudeany/LanguagePropertiesManager/releases/latest
+soderer-ca-2025-certificate.pem, soderer-ca-2024_v1-certificate.pem
