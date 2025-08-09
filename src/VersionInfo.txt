@@ -1,5 +1,11 @@
 Version ${build.version}
 
+Checking and downloading latest update for application via GitHub
+Menu -> ?-Button (Help Menu) -> Check for Update
+
+
+Version 25.1.53
+
 Added DeepL support for translations (needs DeepL API key in config)
 
 
