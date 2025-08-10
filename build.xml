@@ -6,9 +6,11 @@
 
 	<loadfile property="build.version" srcFile="build.version" failonerror="false" />
 	<property name="build.version" value="25.0.0" />
-	<property name="VersionsUrl" value = "https://api.github.com/repos/hudeany/LanguagePropertiesManager/releases/latest" />
 	<echo message="build.version: ${build.version}" />
 
+	<!-- Default: https://soderer.de/index.php?download=Versions.json -->
+	<!-- Override for GitHub: https://api.github.com/repos/hudeany/LanguagePropertiesManager/releases/latest -->
+	<property name="VersionsUrl" value = "https://api.github.com/repos/hudeany/LanguagePropertiesManager/releases/latest" />
 	<property file="${user.home}/git/codeSigning.properties" />
 
 	<tstamp>
