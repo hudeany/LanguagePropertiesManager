@@ -1,39 +1,39 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <project default="build_jar" name="Create all Jars for Project LanguagePropertiesManager">
-	<echo>Java/JVM HOME: ${java.home}</echo>
-	<echo>Java/JVM version: ${ant.java.version}</echo>
-	<echo>Java/JVM detailed version: ${java.version}</echo>
-
-	<loadfile property="build.version" srcFile="build.version" failonerror="false" />
-	<property name="build.version" value="25.0.0" />
-	<echo message="build.version: ${build.version}" />
-
-	<!-- Default: https://soderer.de/index.php?download=Versions.json -->
-	<!-- Override for GitHub: https://api.github.com/repos/hudeany/LanguagePropertiesManager/releases/latest -->
-	<property name="VersionsUrl" value = "https://api.github.com/repos/hudeany/LanguagePropertiesManager/releases/latest" />
-	<property file="${user.home}/git/codeSigning.properties" />
-	
-	<property environment="env"/>
-	
-	<tstamp>
-		<format property="buildTime" pattern="yyyy-MM-dd HH:mm:ss" locale="en" />
-	</tstamp>
-	<echo message="buildTime: ${buildTime}" />
-
-	<property file="${user.home}/git/codeSigning.properties" />
-	
-	<property name="buildPath" value="build" />
-	<echo message="buildPath: ${buildPath}" />
+	<target name="build_jar" depends="download_build_dependencies, build_setup, cleanup_before, create_jar, cleanup_after" />
 
 	<available file="lib_ant" property="libAntAvailable" />
 	<target name="download_build_dependencies" unless="libAntAvailable">
 		<mkdir dir="lib_ant/" />
 		<get src="https://repo1.maven.org/maven2/ant-contrib/ant-contrib/1.0b3/ant-contrib-1.0b3.jar" dest="lib_ant/" />
 	</target>
-	
-	<target name="build_jar" depends="download_build_dependencies, build_setup, cleanup_before, create_jar, cleanup_after" />
 
 	<target name="build_setup" depends="download_build_dependencies">
+		<echo>Java/JVM HOME: ${java.home}</echo>
+		<echo>Java/JVM version: ${ant.java.version}</echo>
+		<echo>Java/JVM detailed version: ${java.version}</echo>
+
+		<loadfile property="build.version" srcFile="build.version" failonerror="false" />
+		<property name="build.version" value="25.0.0" />
+		<echo message="build.version: ${build.version}" />
+
+		<!-- Default: https://soderer.de/index.php?download=Versions.json -->
+		<!-- Override for GitHub: https://api.github.com/repos/hudeany/LanguagePropertiesManager/releases/latest -->
+		<property name="VersionsUrl" value = "https://api.github.com/repos/hudeany/LanguagePropertiesManager/releases/latest" />
+		<property file="${user.home}/git/codeSigning.properties" />
+		
+		<property environment="env"/>
+		
+		<tstamp>
+			<format property="buildTime" pattern="yyyy-MM-dd HH:mm:ss" locale="en" />
+		</tstamp>
+		<echo message="buildTime: ${buildTime}" />
+
+		<property file="${user.home}/git/codeSigning.properties" />
+		
+		<property name="buildPath" value="build" />
+		<echo message="buildPath: ${buildPath}" />
+		
 		<taskdef resource="net/sf/antcontrib/antlib.xml">
 			<classpath>
 				<pathelement location="lib_ant/ant-contrib-1.0b3.jar" />
