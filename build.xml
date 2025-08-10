@@ -2,8 +2,24 @@
 <project default="build_jar" name="Create all Jars for Project LanguagePropertiesManager">
 	<target name="build_jar" depends="download_build_dependencies, build_setup, cleanup_before, create_jar, cleanup_after" />
 
+	<target name="probe-proxy">
+		<condition property="proxy.enabled">
+			<and>
+				<isset property="proxy.host" />
+				<isreachable host="${proxy.host}" />
+			</and>
+		</condition>
+	</target>
+
+	<target name="proxy" depends="probe-proxy" if="proxy.enabled">
+		<property name="proxy.port" value="80" />
+		<property name="proxy.user" value="" />
+		<property name="proxy.pass" value="" />
+		<setproxy proxyhost="${proxy.host}" proxyport="${proxy.port}" proxyuser="${proxy.user}" proxypassword="${proxy.pass}" />
+	</target>
+
 	<available file="lib_ant" property="libAntAvailable" />
-	<target name="download_build_dependencies" unless="libAntAvailable">
+	<target name="download_build_dependencies" unless="libAntAvailable" depends="proxy">
 		<mkdir dir="lib_ant/" />
 		<get src="https://repo1.maven.org/maven2/ant-contrib/ant-contrib/1.0b3/ant-contrib-1.0b3.jar" dest="lib_ant/" />
 	</target>
@@ -86,7 +102,7 @@
 	</target>
 
 	<available file="lib" property="libsAvailable" />
-	<target name="download_dependencies" unless="libsAvailable">
+	<target name="download_dependencies" unless="libsAvailable" depends="proxy">
 		<mkdir dir="lib/" />
 
 		<get src="https://repo1.maven.org/maven2/org/apache/commons/commons-collections4/4.4/commons-collections4-4.4.jar" dest="lib/" />
