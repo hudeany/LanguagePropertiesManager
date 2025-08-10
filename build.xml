@@ -21,25 +21,25 @@
 		<!-- Override for GitHub: https://api.github.com/repos/hudeany/LanguagePropertiesManager/releases/latest -->
 		<property name="VersionsUrl" value = "https://api.github.com/repos/hudeany/LanguagePropertiesManager/releases/latest" />
 		<property file="${user.home}/git/codeSigning.properties" />
-		
+
 		<property environment="env"/>
-		
+
 		<tstamp>
 			<format property="buildTime" pattern="yyyy-MM-dd HH:mm:ss" locale="en" />
 		</tstamp>
 		<echo message="buildTime: ${buildTime}" />
 
 		<property file="${user.home}/git/codeSigning.properties" />
-		
+
 		<property name="buildPath" value="build" />
 		<echo message="buildPath: ${buildPath}" />
-		
+
 		<taskdef resource="net/sf/antcontrib/antlib.xml">
 			<classpath>
 				<pathelement location="lib_ant/ant-contrib-1.0b3.jar" />
 			</classpath>
 		</taskdef>
-		
+
 		<if>
 			<and>
 				<isset property="user.home" />
