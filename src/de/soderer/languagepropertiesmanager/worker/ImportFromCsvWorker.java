@@ -107,7 +107,7 @@ public class ImportFromCsvWorker extends WorkerSimple<Boolean> {
 						try {
 							languageProperty.setOriginalIndex(Integer.parseInt(indexCell.trim()));
 						} catch (final Exception e) {
-							throw new Exception("Csv file contains invalid index value at row index " + rowIndex + " and column index " + columnIndex_Index, e);
+							throw new Exception("Csv file contains invalid index value at row " + (rowIndex + 1) + " and column " + (columnIndex_Index + 1), e);
 						}
 					} else {
 						languageProperty.setOriginalIndex(rowIndex);
@@ -118,7 +118,7 @@ public class ImportFromCsvWorker extends WorkerSimple<Boolean> {
 						try {
 							languageProperty.setComment(commentCell);
 						} catch (final Exception e) {
-							throw new Exception("Csv file contains invalid comment value at row index " + rowIndex + " and column index " + columnIndex_Index, e);
+							throw new Exception("Csv file contains invalid comment value at row " + (rowIndex + 1) + " and column " + (columnIndex_Index + 1), e);
 						}
 					} else {
 						languageProperty.setComment(null);

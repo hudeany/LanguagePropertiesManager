@@ -115,7 +115,7 @@ public class ImportFromExcelWorker extends WorkerSimple<Boolean> {
 						} else if (pathCell.getCellType() == CellType.BLANK) {
 							path = "";
 						} else {
-							throw new Exception("Excel file contains invalid path value in sheet '" + sheet.getSheetName() + "' at row index " + rowIndex + " and column index " + columnIndex_Keys);
+							throw new Exception("Excel file contains invalid path value in sheet '" + sheet.getSheetName() + "' at row " + (rowIndex + 1) + " and column " + (columnIndex_Keys + 1));
 						}
 					}
 
@@ -130,9 +130,8 @@ public class ImportFromExcelWorker extends WorkerSimple<Boolean> {
 						} else {
 							key = value.toString();
 						}
-
 					} else {
-						throw new Exception("Excel file contains invalid key value in sheet '" + sheet.getSheetName() + "' at row index " + rowIndex + " and column index " + columnIndex_Keys);
+						throw new Exception("Excel file contains invalid key value in sheet '" + sheet.getSheetName() + "' at row " + (rowIndex + 1) + " and column " + (columnIndex_Keys + 1));
 					}
 
 					final LanguageProperty languageProperty = new LanguageProperty(path, key);
@@ -147,10 +146,10 @@ public class ImportFromExcelWorker extends WorkerSimple<Boolean> {
 							} else if (indexCell.getCellType() == CellType.BLANK) {
 								languageProperty.setOriginalIndex(0);
 							} else {
-								throw new Exception("Excel file contains invalid index data type in sheet '" + sheet.getSheetName() + "' at row index " + rowIndex + " and column index " + columnIndex_Index);
+								throw new Exception("Excel file contains invalid index data type '" + indexCell.getCellType().name() + "' in sheet '" + sheet.getSheetName() + "' at row " + (rowIndex + 1) + " and column " + (columnIndex_Index + 1));
 							}
 						} catch (final Exception e) {
-							throw new Exception("Excel file contains invalid index value in sheet '" + sheet.getSheetName() + "' at row index " + rowIndex + " and column index " + columnIndex_Index, e);
+							throw new Exception("Excel file contains invalid index value in sheet '" + sheet.getSheetName() + "' at row " + (rowIndex + 1) + " and column " + (columnIndex_Index + 1), e);
 						}
 					} else {
 						languageProperty.setOriginalIndex(rowIndex);
@@ -171,10 +170,10 @@ public class ImportFromExcelWorker extends WorkerSimple<Boolean> {
 							} else if (commentCell.getCellType() == CellType.BLANK) {
 								languageProperty.setComment(null);
 							} else {
-								throw new Exception("Excel file contains invalid comment data type in sheet '" + sheet.getSheetName() + "' at row index " + rowIndex + " and column index " + columnIndex_Index);
+								throw new Exception("Excel file contains invalid comment data type '" + commentCell.getCellType().name() + "' in sheet '" + sheet.getSheetName() + "' at row " + (rowIndex + 1) + " and column " + (columnIndex_Index + 1));
 							}
 						} catch (final Exception e) {
-							throw new Exception("Excel file contains invalid comment value in sheet '" + sheet.getSheetName() + "' at row index " + rowIndex + " and column index " + columnIndex_Index, e);
+							throw new Exception("Excel file contains invalid comment value in sheet '" + sheet.getSheetName() + "' at row " + (rowIndex + 1) + " and column " + (columnIndex_Index + 1), e);
 						}
 					} else {
 						languageProperty.setComment(null);
@@ -194,7 +193,7 @@ public class ImportFromExcelWorker extends WorkerSimple<Boolean> {
 						} else if (valueCell.getCellType() == CellType.BLANK) {
 							languageProperty.setLanguageValue(entry.getValue(), null);
 						} else {
-							throw new Exception("Excel file contains invalid data type in sheet '" + sheet.getSheetName() + "' at row index " + rowIndex + " and column index " + entry.getKey());
+							throw new Exception("Excel file contains invalid data type '" + valueCell.getCellType().name() + "' in sheet '" + sheet.getSheetName() + "' at row " + (rowIndex + 1) + " and column index " + entry.getKey());
 						}
 					}
 
