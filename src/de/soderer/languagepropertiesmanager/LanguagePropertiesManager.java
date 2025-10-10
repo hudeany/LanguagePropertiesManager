@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutionException;
@@ -15,7 +16,9 @@ import org.eclipse.swt.widgets.Display;
 
 import de.soderer.languagepropertiesmanager.dlg.LanguagePropertiesManagerDialog;
 import de.soderer.languagepropertiesmanager.storage.ExcelHelper;
+import de.soderer.languagepropertiesmanager.worker.ExportToCsvWorker;
 import de.soderer.languagepropertiesmanager.worker.ExportToExcelWorker;
+import de.soderer.languagepropertiesmanager.worker.ImportFromCsvWorker;
 import de.soderer.languagepropertiesmanager.worker.ImportFromExcelWorker;
 import de.soderer.languagepropertiesmanager.worker.LoadLanguagePropertiesWorker;
 import de.soderer.languagepropertiesmanager.worker.WriteLanguagePropertiesWorker;
@@ -282,6 +285,46 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 						actionDefinition.setExcelFile(arguments[i]);
 					}
 					wasAllowedParam = true;
+				} else if ("-importFromCsv".equalsIgnoreCase(arguments[i])) {
+					i++;
+					if (i >= arguments.length) {
+						throw new ParameterException(arguments[i - 1], "Missing parameter for importFromCsv");
+					} else if (Utilities.isBlank(arguments[i])) {
+						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Invalid parameter for importFromCsv");
+					} else if (actionDefinition.getImportFromCsv() != null) {
+						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Duplicate parameter importFromCsv");
+					} else if (actionDefinition.getExportToCsv() != null) {
+						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Only one of parameters importToCsv and exportFromCsv is allowed");
+					} else {
+						actionDefinition.setImportFromCsv(arguments[i]);
+					}
+					wasAllowedParam = true;
+				} else if ("-exportToCsv".equalsIgnoreCase(arguments[i])) {
+					i++;
+					if (i >= arguments.length) {
+						throw new ParameterException(arguments[i - 1], "Missing parameter for exportToCsv");
+					} else if (Utilities.isBlank(arguments[i])) {
+						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Invalid parameter for exportToCsv");
+					} else if (actionDefinition.getExportToCsv() != null) {
+						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Duplicate parameter exportToCsv");
+					} else if (actionDefinition.getImportFromCsv() != null) {
+						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Only one of parameters importToCsv and exportFromCsv is allowed");
+					} else {
+						actionDefinition.setExportToCsv(arguments[i]);
+					}
+					wasAllowedParam = true;
+				} else if ("-csvFile".equalsIgnoreCase(arguments[i])) {
+					i++;
+					if (i >= arguments.length) {
+						throw new ParameterException(arguments[i - 1], "Missing parameter for csvFile");
+					} else if (Utilities.isBlank(arguments[i])) {
+						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Invalid parameter for csvFile");
+					} else if (actionDefinition.getCsvFile() != null) {
+						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Duplicate parameter csvFile");
+					} else {
+						actionDefinition.setCsvFile(arguments[i]);
+					}
+					wasAllowedParam = true;
 				} else if ("-outputDirectory".equalsIgnoreCase(arguments[i])) {
 					i++;
 					if (i >= arguments.length) {
@@ -415,7 +458,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 				}
 
 				System.out.println();
-			} else {
+			} else if (actionDefinition.getImportFromExcel() != null) {
 				final File excelFile = new File(actionDefinition.getImportFromExcel());
 				if (!excelFile.exists() || !excelFile.isFile()) {
 					throw new LanguagePropertiesException("Import excel file '" + excelFile.getAbsolutePath() + "' does not exist.");
@@ -454,6 +497,104 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 				}
 
 				final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(this, importFromExcelWorker.getLanguageProperties(), languagePropertiesSetName, outputDirectory, configuredExcludeParts);
+
+				writeLanguagePropertiesWorker.setProgressDisplayDelayMilliseconds(2000);
+				writeLanguagePropertiesWorker.run();
+
+				// Get result to trigger possible Exception
+				if (writeLanguagePropertiesWorker.get()) {
+					// Write properties success
+					if (outputDirectory != null) {
+						System.out.println("Successfully stored language properties in output directory: \"" + outputDirectory.getAbsolutePath() + "\"");
+					} else {
+						System.out.println("Successfully stored language properties in their defined directories");
+					}
+				} else {
+					throw new LanguagePropertiesException("Cancelled by user");
+				}
+
+				System.out.println();
+			} else if (actionDefinition.getExportToCsv() != null) {
+				final File propertiesFile = new File(actionDefinition.getExportToCsv());
+
+				final File excelFile = new File(actionDefinition.getCsvFile());
+				if (excelFile.exists() && !actionDefinition.isOverwrite()) {
+					throw new LanguagePropertiesException("Export excel file '" + excelFile.getAbsolutePath() + "' already exists. Use 'overwrite' to replace existing file.");
+				}
+
+				final LoadLanguagePropertiesWorker loadLanguagePropertiesWorker = new LoadLanguagePropertiesWorker(this, propertiesFile, configuredExcludeParts);
+
+				loadLanguagePropertiesWorker.setProgressDisplayDelayMilliseconds(2000);
+				loadLanguagePropertiesWorker.run();
+
+				// Get result to trigger possible Exception
+				if (loadLanguagePropertiesWorker.get()) {
+					// Load success
+					System.out.println("Loaded language properties sets: " + loadLanguagePropertiesWorker.getLanguagePropertiesSetNames().size());
+					System.out.println("Loaded language properties set names: " + Utilities.join(loadLanguagePropertiesWorker.getLanguagePropertiesSetNames(), ", "));
+					System.out.println("Loaded language properties keys overall: " + loadLanguagePropertiesWorker.getLanguageProperties().size());
+					System.out.println("Loaded language properties language signs: " + Utilities.join(loadLanguagePropertiesWorker.getAvailableLanguageSigns(), ", "));
+					System.out.println("Comments in language properties: " + (loadLanguagePropertiesWorker.isCommentsFound() ? "Yes" : "No"));
+				} else {
+					throw new LanguagePropertiesException("Cancelled by user");
+				}
+
+				System.out.println();
+
+				final ExportToCsvWorker exportToCsvWorker = new ExportToCsvWorker(this, loadLanguagePropertiesWorker.getLanguageProperties(), loadLanguagePropertiesWorker.getLanguagePropertiesSetNames(), new File(actionDefinition.getCsvFile()), actionDefinition.isOverwrite());
+
+				exportToCsvWorker.setProgressDisplayDelayMilliseconds(2000);
+				exportToCsvWorker.run();
+
+				// Get result to trigger possible Exception
+				if (exportToCsvWorker.get()) {
+					// Export success
+					System.out.println("Successfully exported in excel file: \"" + new File(actionDefinition.getCsvFile()).getAbsolutePath() + "\"");
+				} else {
+					throw new LanguagePropertiesException("Cancelled by user");
+				}
+
+				System.out.println();
+			} else if (actionDefinition.getImportFromCsv() != null) {
+				final File excelFile = new File(actionDefinition.getImportFromCsv());
+				if (!excelFile.exists() || !excelFile.isFile()) {
+					throw new LanguagePropertiesException("Import excel file '" + excelFile.getAbsolutePath() + "' does not exist.");
+				}
+
+				final ImportFromCsvWorker importFromCsvWorker = new ImportFromCsvWorker(this, excelFile);
+
+				importFromCsvWorker.setProgressDisplayDelayMilliseconds(2000);
+				importFromCsvWorker.run();
+
+				// Get result to trigger possible Exception
+				if (importFromCsvWorker.get()) {
+					// Import success
+					System.out.println("Imported language properties sets: " + importFromCsvWorker.getLanguagePropertiesSetNames().size());
+					System.out.println("Imported language properties set names: " + Utilities.join(importFromCsvWorker.getLanguagePropertiesSetNames(), ", "));
+					System.out.println("Imported language properties keys overall: " + importFromCsvWorker.getLanguageProperties().size());
+					System.out.println("Imported language properties language signs: " + Utilities.join(importFromCsvWorker.getAvailableLanguageSigns(), ", "));
+					System.out.println("Comments in language properties: " + (importFromCsvWorker.isCommentsFound() ? "Yes" : "No"));
+				} else {
+					throw new LanguagePropertiesException("Cancelled by user");
+				}
+
+				System.out.println();
+
+				File outputDirectory = null;
+				if (actionDefinition.getOutputDirectory() != null) {
+					outputDirectory = new File(actionDefinition.getOutputDirectory());
+				}
+
+				String languagePropertiesSetName;
+				final List<String> languagePropertiesSetNames = new ArrayList<>();
+				languagePropertiesSetNames.add("CSV");
+				if (languagePropertiesSetNames.size() == 1) {
+					languagePropertiesSetName = languagePropertiesSetNames.get(0);
+				} else {
+					languagePropertiesSetName = "CSV";
+				}
+
+				final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(this, importFromCsvWorker.getLanguageProperties(), languagePropertiesSetName, outputDirectory, configuredExcludeParts);
 
 				writeLanguagePropertiesWorker.setProgressDisplayDelayMilliseconds(2000);
 				writeLanguagePropertiesWorker.run();

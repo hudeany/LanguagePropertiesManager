@@ -3,7 +3,10 @@ package de.soderer.languagepropertiesmanager;
 public class ActionDefinition {
 	private String importFromExcel = null;
 	private String exportToExcel = null;
+	private String importFromCsv = null;
+	private String exportToCsv = null;
 	private String excelFile = null;
+	private String csvFile = null;
 	private String outputDirectory = null;
 	private boolean overwrite = false;
 	private boolean verbose = false;
@@ -26,12 +29,39 @@ public class ActionDefinition {
 		return this;
 	}
 
+	public String getImportFromCsv() {
+		return importFromCsv;
+	}
+
+	public ActionDefinition setImportFromCsv(final String importFromCsv) {
+		this.importFromCsv = importFromCsv;
+		return this;
+	}
+
+	public String getExportToCsv() {
+		return exportToCsv;
+	}
+
+	public ActionDefinition setExportToCsv(final String exportToCsv) {
+		this.exportToCsv = exportToCsv;
+		return this;
+	}
+
 	public String getExcelFile() {
 		return excelFile;
 	}
 
 	public ActionDefinition setExcelFile(final String excelFile) {
 		this.excelFile = excelFile;
+		return this;
+	}
+
+	public String getCsvFile() {
+		return csvFile;
+	}
+
+	public ActionDefinition setCsvFile(final String csvFile) {
+		this.csvFile = csvFile;
 		return this;
 	}
 
