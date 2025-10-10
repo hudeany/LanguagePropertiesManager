@@ -144,24 +144,42 @@ For this purpose, an Excel file is created with a sheet and the following column
 Command Line Interface (CLI)
 
 Usage:
-	java -jar LanguagePropertiesManager.jar -exportToExcel <language properties file or directory path> -excelFile <output excel file path> [-v]
+	java -jar LanguagePropertiesManager.jar -exportToExcel <language properties file or directory path> -excelFile <output Excel file path> [-v]
 	or
-	java -jar LanguagePropertiesManager.jar -importFromExcel <input excel file path> [-outputDirectory <language properties output directory>] [-v]
+	java -jar LanguagePropertiesManager.jar -importFromExcel <input Excel file path> [-outputDirectory <language properties output directory>] [-v]
 
-Mandatory parameters for excel file export
+Mandatory parameters for Excel file export
 	-exportToExcel <language properties file or directory path>
-	-excelFile <output excel file path>
+	-excelFile <output Excel file path>
 
-Optional parameters for excel file export
+Optional parameters for Excel file export
 	-v: verbose output with progress bar
 	
-Mandatory parameters for excel file import
+Mandatory parameters for Excel file import
 	-exportToExcel <language properties file or directory path>
-	-excelFile <output excel file path>
+	-excelFile <output Excel file path>
 
-Optional parameters for excel file import
+Optional parameters for Excel file import
 	-outputDirectory <language properties output directory>:
-		If outputDirectory is not defined, all language properties sets will be imported to the defined original file paths in the excelfile.
+		If outputDirectory is not defined, all language properties sets will be imported to the defined original file paths in the Excel file.
+		If outputDirectory is defined, the existing language properties sets file paths within that directory will be detected and used for matching set names.
+		Other language properties sets without matching file paths will be store as new language properties sets in the base directory itself.
+	-v: verbose output with progress bar
+
+Mandatory parameters for CSV file export
+	-exportToCsv <language properties file or directory path>
+	-csvFile <output CSV file path>
+
+Optional parameters for CSV file export
+	-v: verbose output with progress bar
+
+Mandatory parameters for CSV file import
+	-exportToCsv <language properties file or directory path>
+	-csvFile <output CSV file path>
+
+Optional parameters for CSV file import
+	-outputDirectory <language properties output directory>:
+		If outputDirectory is not defined, all language properties sets will be imported to the defined original file paths in the CSV file.
 		If outputDirectory is defined, the existing language properties sets file paths within that directory will be detected and used for matching set names.
 		Other language properties sets without matching file paths will be store as new language properties sets in the base directory itself.
 	-v: verbose output with progress bar

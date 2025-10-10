@@ -48,7 +48,11 @@ public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 
 		signalUnlimitedProgress();
 
-		if (outputDirectory != null && outputDirectory.exists() && outputDirectory.isDirectory()) {
+		if (outputDirectory != null) {
+			if (!outputDirectory.exists() || !outputDirectory.isDirectory()) {
+				throw new LanguagePropertiesException("Output directory for language properties set does not exist: " + outputDirectory.getAbsolutePath());
+			}
+
 			final Set<String> languagePropertiesPaths = new HashSet<>();
 			for (final LanguageProperty languageProperty : languageProperties) {
 				if (Utilities.isNotBlank(languageProperty.getPath())) {

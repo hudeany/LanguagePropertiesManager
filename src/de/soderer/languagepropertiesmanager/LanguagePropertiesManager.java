@@ -422,7 +422,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 
 				final File excelFile = new File(actionDefinition.getExcelFile());
 				if (excelFile.exists() && !actionDefinition.isOverwrite()) {
-					throw new LanguagePropertiesException("Export excel file '" + excelFile.getAbsolutePath() + "' already exists. Use 'overwrite' to replace existing file.");
+					throw new LanguagePropertiesException("Export Excel file '" + excelFile.getAbsolutePath() + "' already exists. Use 'overwrite' to replace existing file.");
 				}
 
 				final LoadLanguagePropertiesWorker loadLanguagePropertiesWorker = new LoadLanguagePropertiesWorker(this, propertiesFile, configuredExcludeParts);
@@ -452,7 +452,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 				// Get result to trigger possible Exception
 				if (exportToExcelWorker.get()) {
 					// Export success
-					System.out.println("Successfully exported in excel file: \"" + new File(actionDefinition.getExcelFile()).getAbsolutePath() + "\"");
+					System.out.println("Successfully exported in Excel file: \"" + new File(actionDefinition.getExcelFile()).getAbsolutePath() + "\"");
 				} else {
 					throw new LanguagePropertiesException("Cancelled by user");
 				}
@@ -461,7 +461,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 			} else if (actionDefinition.getImportFromExcel() != null) {
 				final File excelFile = new File(actionDefinition.getImportFromExcel());
 				if (!excelFile.exists() || !excelFile.isFile()) {
-					throw new LanguagePropertiesException("Import excel file '" + excelFile.getAbsolutePath() + "' does not exist.");
+					throw new LanguagePropertiesException("Import Excel file '" + excelFile.getAbsolutePath() + "' does not exist.");
 				}
 
 				final ImportFromExcelWorker importFromExcelWorker = new ImportFromExcelWorker(this, excelFile);
@@ -517,9 +517,9 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 			} else if (actionDefinition.getExportToCsv() != null) {
 				final File propertiesFile = new File(actionDefinition.getExportToCsv());
 
-				final File excelFile = new File(actionDefinition.getCsvFile());
-				if (excelFile.exists() && !actionDefinition.isOverwrite()) {
-					throw new LanguagePropertiesException("Export excel file '" + excelFile.getAbsolutePath() + "' already exists. Use 'overwrite' to replace existing file.");
+				final File csvFile = new File(actionDefinition.getCsvFile());
+				if (csvFile.exists() && !actionDefinition.isOverwrite()) {
+					throw new LanguagePropertiesException("Export CSV file '" + csvFile.getAbsolutePath() + "' already exists. Use 'overwrite' to replace existing file.");
 				}
 
 				final LoadLanguagePropertiesWorker loadLanguagePropertiesWorker = new LoadLanguagePropertiesWorker(this, propertiesFile, configuredExcludeParts);
@@ -549,19 +549,19 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 				// Get result to trigger possible Exception
 				if (exportToCsvWorker.get()) {
 					// Export success
-					System.out.println("Successfully exported in excel file: \"" + new File(actionDefinition.getCsvFile()).getAbsolutePath() + "\"");
+					System.out.println("Successfully exported in Excel file: \"" + new File(actionDefinition.getCsvFile()).getAbsolutePath() + "\"");
 				} else {
 					throw new LanguagePropertiesException("Cancelled by user");
 				}
 
 				System.out.println();
 			} else if (actionDefinition.getImportFromCsv() != null) {
-				final File excelFile = new File(actionDefinition.getImportFromCsv());
-				if (!excelFile.exists() || !excelFile.isFile()) {
-					throw new LanguagePropertiesException("Import excel file '" + excelFile.getAbsolutePath() + "' does not exist.");
+				final File csvFile = new File(actionDefinition.getImportFromCsv());
+				if (!csvFile.exists() || !csvFile.isFile()) {
+					throw new LanguagePropertiesException("Import CSV file '" + csvFile.getAbsolutePath() + "' does not exist.");
 				}
 
-				final ImportFromCsvWorker importFromCsvWorker = new ImportFromCsvWorker(this, excelFile);
+				final ImportFromCsvWorker importFromCsvWorker = new ImportFromCsvWorker(this, csvFile);
 
 				importFromCsvWorker.setProgressDisplayDelayMilliseconds(2000);
 				importFromCsvWorker.run();
