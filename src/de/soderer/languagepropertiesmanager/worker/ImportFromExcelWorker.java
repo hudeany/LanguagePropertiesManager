@@ -123,6 +123,14 @@ public class ImportFromExcelWorker extends WorkerSimple<Boolean> {
 					final Cell keyCell = row.getCell(columnIndex_Keys);
 					if (keyCell.getCellType() == CellType.STRING) {
 						key = keyCell.getStringCellValue().trim();
+					} else if (keyCell.getCellType() == CellType.NUMERIC) {
+						final Double value = Double.valueOf(keyCell.getNumericCellValue());
+						if ((value % 1) == 0) {
+							key = Integer.toString(value.intValue());
+						} else {
+							key = value.toString();
+						}
+
 					} else {
 						throw new Exception("Excel file contains invalid key value in sheet '" + sheet.getSheetName() + "' at row index " + rowIndex + " and column index " + columnIndex_Keys);
 					}
@@ -152,7 +160,12 @@ public class ImportFromExcelWorker extends WorkerSimple<Boolean> {
 						final Cell commentCell = row.getCell(columnIndex_Comment);
 						try {
 							if (commentCell.getCellType() == CellType.NUMERIC) {
-								languageProperty.setComment(Double.valueOf(commentCell.getNumericCellValue()).toString());
+								final Double value = Double.valueOf(commentCell.getNumericCellValue());
+								if ((value % 1) == 0) {
+									languageProperty.setComment(Integer.toString(value.intValue()));
+								} else {
+									languageProperty.setComment(value.toString());
+								}
 							} else if (commentCell.getCellType() == CellType.STRING) {
 								languageProperty.setComment(commentCell.getStringCellValue());
 							} else if (commentCell.getCellType() == CellType.BLANK) {
@@ -171,6 +184,13 @@ public class ImportFromExcelWorker extends WorkerSimple<Boolean> {
 						final Cell valueCell = row.getCell(entry.getKey());
 						if (valueCell.getCellType() == CellType.STRING) {
 							languageProperty.setLanguageValue(entry.getValue(), valueCell.getStringCellValue());
+						} else if (valueCell.getCellType() == CellType.NUMERIC) {
+							final Double value = Double.valueOf(valueCell.getNumericCellValue());
+							if ((value % 1) == 0) {
+								languageProperty.setLanguageValue(entry.getValue(), Integer.toString(value.intValue()));
+							} else {
+								languageProperty.setLanguageValue(entry.getValue(), value.toString());
+							}
 						} else if (valueCell.getCellType() == CellType.BLANK) {
 							languageProperty.setLanguageValue(entry.getValue(), null);
 						} else {

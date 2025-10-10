@@ -52,7 +52,9 @@ import de.soderer.languagepropertiesmanager.image.ImageManager;
 import de.soderer.languagepropertiesmanager.storage.ExcelHelper;
 import de.soderer.languagepropertiesmanager.storage.LanguagePropertiesFileSetReader;
 import de.soderer.languagepropertiesmanager.storage.LanguageProperty;
+import de.soderer.languagepropertiesmanager.worker.ExportToCsvWorker;
 import de.soderer.languagepropertiesmanager.worker.ExportToExcelWorker;
+import de.soderer.languagepropertiesmanager.worker.ImportFromCsvWorker;
 import de.soderer.languagepropertiesmanager.worker.ImportFromExcelWorker;
 import de.soderer.languagepropertiesmanager.worker.LoadLanguagePropertiesWorker;
 import de.soderer.languagepropertiesmanager.worker.WriteLanguagePropertiesWorker;
@@ -99,7 +101,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private Button saveButton;
 	private Button folderSaveButton;
 	private Button exportToExcelButton;
+	private Button exportToCsvButton;
 	private Button importFromExcelButton;
+	private Button importFromCsvButton;
 	private Button addButton;
 	private Text pathTextfield;
 	private Text keyTextfield;
@@ -229,8 +233,13 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 		importFromExcelButton = new Button(buttonSection1, SWT.PUSH);
 		importFromExcelButton.setImage(ImageManager.getImage("excelLoad.png"));
-		importFromExcelButton.setToolTipText(LangResources.get("tooltip_import"));
-		importFromExcelButton.addSelectionListener(new ImportSelectionListener());
+		importFromExcelButton.setToolTipText(LangResources.get("tooltip_importExcel"));
+		importFromExcelButton.addSelectionListener(new ImportFromExcelSelectionListener());
+
+		importFromCsvButton = new Button(buttonSection1, SWT.PUSH);
+		importFromCsvButton.setImage(ImageManager.getImage("csvLoad.png"));
+		importFromCsvButton.setToolTipText(LangResources.get("tooltip_importCsv"));
+		importFromCsvButton.addSelectionListener(new ImportFromCsvSelectionListener());
 
 		saveButton = new Button(buttonSection1, SWT.PUSH);
 		saveButton.setImage(ImageManager.getImage("save.png"));
@@ -244,8 +253,13 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 		exportToExcelButton = new Button(buttonSection1, SWT.PUSH);
 		exportToExcelButton.setImage(ImageManager.getImage("excelSave.png"));
-		exportToExcelButton.setToolTipText(LangResources.get("tooltip_export"));
-		exportToExcelButton.addSelectionListener(new ExportSelectionListener());
+		exportToExcelButton.setToolTipText(LangResources.get("tooltip_exportExcel"));
+		exportToExcelButton.addSelectionListener(new ExcelExportSelectionListener());
+
+		exportToCsvButton = new Button(buttonSection1, SWT.PUSH);
+		exportToCsvButton.setImage(ImageManager.getImage("csvSave.png"));
+		exportToCsvButton.setToolTipText(LangResources.get("tooltip_exportCsv"));
+		exportToCsvButton.addSelectionListener(new CsvExportSelectionListener());
 
 		final Button configButton = new Button(buttonSection1, SWT.PUSH);
 		configButton.setImage(ImageManager.getImage("wrench.png"));
@@ -1010,6 +1024,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		if (exportToExcelButton != null) {
 			exportToExcelButton.setEnabled(languageProperties != null);
 		}
+		if (exportToCsvButton != null) {
+			exportToCsvButton.setEnabled(languageProperties != null);
+		}
 		if (addButton != null) {
 			addButton.setEnabled(propertiesTable.getItemCount() > 0);
 		}
@@ -1308,7 +1325,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		}
 	}
 
-	private class ImportSelectionListener extends SelectionAdapter {
+	private class ImportFromExcelSelectionListener extends SelectionAdapter {
 		@Override
 		public void widgetSelected(final SelectionEvent event) {
 			final FileDialog fileDialog = new FileDialog(getShell(), SWT.OPEN);
@@ -1357,7 +1374,53 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		}
 	}
 
-	private class ExportSelectionListener extends SelectionAdapter {
+	private class ImportFromCsvSelectionListener extends SelectionAdapter {
+		@Override
+		public void widgetSelected(final SelectionEvent event) {
+			final FileDialog fileDialog = new FileDialog(getShell(), SWT.OPEN);
+			fileDialog.setText(getShell().getText() + " " + LangResources.get("import_file"));
+			fileDialog.setFilterPath(Utilities.replaceUsersHome("~" + File.separator + "Downloads" + File.separator + ""));
+			fileDialog.setFilterExtensions(new String[] { "*.csv", "*.dsv", "*" });
+			final String importFile = fileDialog.open();
+			if (importFile == null) {
+				showErrorMessage(LangResources.get("import_file"), LangResources.get("canceledByUser"));
+			} else {
+				try {
+					String languagePropertiesSetName;
+					final List<String> languagePropertiesSetNames = new ArrayList<>();
+					languagePropertiesSetNames.add("CSV");
+					languagePropertiesSetName = "CSV";
+					setLanguagePropertiesSetName(languagePropertiesSetName);
+
+					final ImportFromCsvWorker importFromCsvWorker = new ImportFromCsvWorker(null, new File(importFile));
+					final ProgressDialog<ImportFromCsvWorker> progressDialog = new ProgressDialog<>(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("import_file"), importFromCsvWorker);
+					final Result dialogResult = progressDialog.open();
+					if (dialogResult == Result.CANCELED) {
+						showErrorMessage(LangResources.get("import_file"), LangResources.get("canceledByUser"));
+					} else {
+						// check for errors
+						importFromCsvWorker.get();
+
+						showMessage(LangResources.get("import_file"), LangResources.get("actionSuccessfullyCompleted"));
+
+						languageProperties = importFromCsvWorker.getLanguageProperties();
+						availableLanguageSigns = importFromCsvWorker.getAvailableLanguageSigns();
+						hasUnsavedChanges = true;
+					}
+				} catch (final Exception e) {
+					languageProperties = null;
+					availableLanguageSigns = null;
+					languagePropertySetName = null;
+					hasUnsavedChanges = false;
+					new ErrorDialog(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION.toString(), LanguagePropertiesManager.APPLICATION_ERROR_EMAIL_ADRESS, e).open();
+				}
+				setupTable();
+				checkButtonStatus();
+			}
+		}
+	}
+
+	private class ExcelExportSelectionListener extends SelectionAdapter {
 		@Override
 		public void widgetSelected(final SelectionEvent event) {
 			try {
@@ -1388,6 +1451,52 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 						} else {
 							// check for errors
 							exportToExcelWorker.get();
+
+							hasUnsavedChanges = false;
+							showMessage(LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("exportSuccess"));
+						}
+					} catch (final Exception e) {
+						new ErrorDialog(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION.toString(), LanguagePropertiesManager.APPLICATION_ERROR_EMAIL_ADRESS, e).open();
+					}
+					checkButtonStatus();
+				}
+			} catch (final Exception e) {
+				new ErrorDialog(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION.toString(), LanguagePropertiesManager.APPLICATION_ERROR_EMAIL_ADRESS, e).open();
+			}
+		}
+	}
+
+	private class CsvExportSelectionListener extends SelectionAdapter {
+		@Override
+		public void widgetSelected(final SelectionEvent event) {
+			try {
+				final FileDialog fileDialog = new FileDialog(getShell(), SWT.SAVE);
+				fileDialog.setText(getShell().getText() + " " + LangResources.get("export_file"));
+				fileDialog.setFilterPath(Utilities.replaceUsersHome("~" + File.separator + "Downloads"));
+				fileDialog.setFileName(languagePropertySetName + "_Export_" + DateUtilities.formatDate("yyyy-MM-dd_HH-mm", LocalDateTime.now()) + ".csv");
+				final String exportFile = fileDialog.open();
+				if (exportFile == null) {
+					showErrorMessage(LangResources.get("export_file"), LangResources.get("canceledByUser"));
+				} else {
+					if (new File(exportFile).exists()) {
+						if (!askForOverwriteFile(exportFile)) {
+							throw new Exception(LangResources.get("error.destinationFileAlreadyExists", exportFile));
+						} else {
+							new File(exportFile).delete();
+						}
+					}
+
+					try {
+						final List<String> languagePropertySetNames = new ArrayList<>();
+						languagePropertySetNames.add(languagePropertySetName);
+						final ExportToCsvWorker exportToCsvWorker = new ExportToCsvWorker(null, languageProperties, languagePropertySetNames, new File(exportFile), false);
+						final ProgressDialog<ExportToCsvWorker> progressDialog = new ProgressDialog<>(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("export_file"), exportToCsvWorker);
+						final Result dialogResult = progressDialog.open();
+						if (dialogResult == Result.CANCELED) {
+							showErrorMessage(LangResources.get("export_file"), LangResources.get("canceledByUser"));
+						} else {
+							// check for errors
+							exportToCsvWorker.get();
 
 							hasUnsavedChanges = false;
 							showMessage(LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("exportSuccess"));

@@ -40,7 +40,7 @@ public class ExportToExcelWorker extends WorkerSimple<Boolean> {
 		itemsToDo = languageProperties.size();
 
 		if (excelOutputFile.exists() && !overwrite) {
-			throw new LanguagePropertiesException("Export excel file '" + excelOutputFile.getAbsolutePath() + "' already exists. Use 'overwrite' to replace existing file.");
+			throw new LanguagePropertiesException("Export Excel file '" + excelOutputFile.getAbsolutePath() + "' already exists. Use 'overwrite' to replace existing file.");
 		}
 
 		final List<String> availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT);
