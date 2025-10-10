@@ -11,6 +11,7 @@ import java.util.Map.Entry;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import de.soderer.languagepropertiesmanager.LanguagePropertiesException;
 import de.soderer.languagepropertiesmanager.storage.LanguagePropertiesFileSetReader;
 import de.soderer.languagepropertiesmanager.storage.LanguageProperty;
 import de.soderer.utilities.Utilities;
@@ -79,7 +80,7 @@ public class ImportFromCsvWorker extends WorkerSimple<Boolean> {
 			}
 
 			if (columnIndex_Keys == -1) {
-				throw new Exception("Csv file does not contain mandatory column for keys");
+				throw new LanguagePropertiesException("Csv file does not contain mandatory column for keys");
 			}
 
 			// Read data
@@ -107,7 +108,7 @@ public class ImportFromCsvWorker extends WorkerSimple<Boolean> {
 						try {
 							languageProperty.setOriginalIndex(Integer.parseInt(indexCell.trim()));
 						} catch (final Exception e) {
-							throw new Exception("Csv file contains invalid index value at row " + (rowIndex + 1) + " and column " + (columnIndex_Index + 1), e);
+							throw new LanguagePropertiesException("Csv file contains invalid index value at row " + (rowIndex + 1) + " and column " + (columnIndex_Index + 1), e);
 						}
 					} else {
 						languageProperty.setOriginalIndex(rowIndex);
@@ -118,7 +119,7 @@ public class ImportFromCsvWorker extends WorkerSimple<Boolean> {
 						try {
 							languageProperty.setComment(commentCell);
 						} catch (final Exception e) {
-							throw new Exception("Csv file contains invalid comment value at row " + (rowIndex + 1) + " and column " + (columnIndex_Index + 1), e);
+							throw new LanguagePropertiesException("Csv file contains invalid comment value at row " + (rowIndex + 1) + " and column " + (columnIndex_Index + 1), e);
 						}
 					} else {
 						languageProperty.setComment(null);

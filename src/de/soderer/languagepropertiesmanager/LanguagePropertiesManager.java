@@ -614,7 +614,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 				System.out.println();
 			}
 		} catch (final ExecutionException e) {
-			if (e.getCause() instanceof Exception) {
+			if (e.getCause() != null && e.getCause() instanceof Exception) {
 				throw (Exception) e.getCause();
 			} else {
 				throw e;

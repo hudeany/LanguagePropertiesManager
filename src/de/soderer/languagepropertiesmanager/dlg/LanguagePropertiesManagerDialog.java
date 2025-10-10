@@ -47,6 +47,7 @@ import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
 
+import de.soderer.languagepropertiesmanager.LanguagePropertiesException;
 import de.soderer.languagepropertiesmanager.LanguagePropertiesManager;
 import de.soderer.languagepropertiesmanager.image.ImageManager;
 import de.soderer.languagepropertiesmanager.storage.ExcelHelper;
@@ -1361,6 +1362,16 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 						availableLanguageSigns = importFromExcelWorker.getAvailableLanguageSigns();
 						hasUnsavedChanges = true;
 					}
+				} catch (final ExecutionException e) {
+					languageProperties = null;
+					availableLanguageSigns = null;
+					languagePropertySetName = null;
+					hasUnsavedChanges = false;
+					if (e.getCause() != null && e.getCause() instanceof LanguagePropertiesException) {
+						showErrorMessage(LanguagePropertiesManager.APPLICATION_NAME, e.getCause().getMessage());
+					} else {
+						new ErrorDialog(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION.toString(), LanguagePropertiesManager.APPLICATION_ERROR_EMAIL_ADRESS, e).open();
+					}
 				} catch (final Exception e) {
 					languageProperties = null;
 					availableLanguageSigns = null;
@@ -1406,6 +1417,16 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 						languageProperties = importFromCsvWorker.getLanguageProperties();
 						availableLanguageSigns = importFromCsvWorker.getAvailableLanguageSigns();
 						hasUnsavedChanges = true;
+					}
+				} catch (final ExecutionException e) {
+					languageProperties = null;
+					availableLanguageSigns = null;
+					languagePropertySetName = null;
+					hasUnsavedChanges = false;
+					if (e.getCause() != null && e.getCause() instanceof LanguagePropertiesException) {
+						showErrorMessage(LanguagePropertiesManager.APPLICATION_NAME, e.getCause().getMessage());
+					} else {
+						new ErrorDialog(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION.toString(), LanguagePropertiesManager.APPLICATION_ERROR_EMAIL_ADRESS, e).open();
 					}
 				} catch (final Exception e) {
 					languageProperties = null;
