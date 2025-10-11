@@ -2,7 +2,7 @@ Version ${build.version}
 
 CSV files import and export
 Improved Excel data values import
-Improved DeePl translation support
+Improved DeepL translation support
 
 
 Version 25.1.54
