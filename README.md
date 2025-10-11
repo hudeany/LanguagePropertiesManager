@@ -39,6 +39,7 @@ Language Properties Manager is a tool for editing language properties files with
 This editor is intended solely for experimental text editing.
 Any use is at your own risk.
 The developer assumes NO WARRANTY, neither for correct functionality nor for damages resulting from the use of the program.
+Please send suggestions for improvements or bug reports to: languagepropertiesmanager@soderer.de
 
 
 2. Definition of Terms
@@ -70,7 +71,7 @@ Depending on the number of subdirectories and files and their size, this may tak
 
 3.3 Excel Import
 
-The "Import from Single File" button allows you to specify a single Excel file to load all language property sets stored in it.
+The "Import from single Excel file" button allows you to specify a single Excel file to load all language property sets stored in it.
 
 This Excel file should consist of a single sheet and can contain the following columns:
 	"Path" or "Path" (more precisely, LanguagePropertiesSetPath for this language properties set; placeholders ~ and $HOME are allowed, optional)
@@ -79,7 +80,18 @@ This Excel file should consist of a single sheet and can contain the following c
 	"Default" (default language value for the key, optional)
 	"en", "de", "de_AT", "de_CH", "fr", ... (language values of the individual language identifiers, even country-specific identifiers with an underscore are allowed)
 
-3.4 Recently Used Paths
+3.4 CSV Import
+
+The "Import from single CSV file" button allows you to specify a single CSV file to load all language property sets stored in it.
+
+This CSV file should contain the following columns:
+	"Path" or "Path" (more precisely, LanguagePropertiesSetPath for this language properties set; placeholders ~ and $HOME are allowed, optional)
+	"Key" or "Schlüssel" (key to the property value, required)
+	"Index", "Idx", or "Org.Idx" (indexing within a language properties set to maintain an order of the individual property values, optional)
+	"Default" (default language value for the key, optional)
+	"en", "de", "de_AT", "de_CH", "fr", ... (language values of the individual language identifiers, even country-specific identifiers with an underscore are allowed)
+
+3.5 Recently Used Paths
 
 Opened file paths from 3.1 and directory paths from 3.2 are saved in a list for quick reuse later.
 These can be used for quick access later using the "Open recently opened files" button and will then open in the same mode as before.
@@ -113,6 +125,14 @@ The "Add a New Language Tag" button can be used to add an additional language ta
 The "Delete an existing language tag" button can be used to completely remove a language tag from all rows in the left-hand toolbar.
 A selection dialog appears for specifying one of the available language tags.
 
+4.5 Translating missing language values
+
+The "Translate" button can be used to create missing language values by using the value on a different language an translate it using the services of DeepL (https://www.deepl.com).
+Therefor an API key is needed for authorization, which can be obtained at "https://www.deepl.com/pro-api/".
+Limited test accounts are for free, but still need credit card registration.
+The API key may be entered in application configuration dialog or on first usage of the "Translate" button.
+Using the Default language sign makes it mandatory to select a language wich is associated as default language.
+If there is only one other language sign available, that one will automatically be selected as target language sign.
 
 5. Saving Language Property Sets
 
@@ -130,10 +150,20 @@ The LanguagePropertiesSetPaths currently available in the tool are compared with
 This only works if the LanguagePropertiesSetPath names are unique. If ambiguous names occur, the process is aborted with an error message.
 If no suitable path is found for a LanguagePropertiesSetPath currently available in the tool, the LanguagePropertiesSetPath is saved in the selected base directory.
 
-5.3 Export to Single File
+5.3 Export to single Excel file
 
-The "Export to Single File" button saves all LanguagePropertiesSetPaths currently available in the tool to a single Excel file.
+The "Export to single Excel file" button saves all LanguagePropertiesSetPaths currently available in the tool to a single Excel file.
 For this purpose, an Excel file is created with a sheet and the following columns of data:
+	"Path" (more precisely, LanguagePropertiesSetPath for this language properties set; the placeholder ~ for the user directory in the system is used where possible)
+	"Key" (key to the property value)
+	"Org.Idx" (indexing within a language properties set to maintain a sequence of individual property values)
+	"Default" (default language value for the key, if available)
+	"en", "de", "de_AT", "de_CH", "fr", ... (language values of the individual language identifiers; country-specific identifiers with an underscore are also permitted)
+
+5.4 Export to single CSV file
+
+The "Export to single CSV file" button saves all LanguagePropertiesSetPaths currently available in the tool to a single CSV file.
+For this purpose, an CSV file is created the following columns of data:
 	"Path" (more precisely, LanguagePropertiesSetPath for this language properties set; the placeholder ~ for the user directory in the system is used where possible)
 	"Key" (key to the property value)
 	"Org.Idx" (indexing within a language properties set to maintain a sequence of individual property values)
