@@ -44,7 +44,17 @@ Diese Excel Datei sollte aus einem einzelnen Sheet bestehen und kann folgende Sp
 	"Default" (Default Sprachwert für den Key, optional)
 	"en", "de", "de_AT", "de_CH", "fr", ... (Sprachwerte der einzelnen Sprachenkennzeichen, auch Länderspezifische Kennzeichen mit Unterstrich sind erlaubt)
 
-3.4 Kürzlich verwendete Pfade
+3.4 CSV Import
+
+Der Button "Import aus einzelner Datei" erlaubt die Angabe einer einzelnen CSV Datei, um alle darin gespeicherten Language Properties Sets daraus zu laden.
+Diese CSV Datei sollte aus einem einzelnen Sheet bestehen und kann folgende Spalten enthalten:
+	"Path" oder "Pfad" (Genauer LanguagePropertiesSetPath für dieses Language Properties Set, Platzhalter ~ und $HOME sind erlaubt, optional)
+	"Key" oder "Schlüssel" (Key zum Property Wert, erforderlich)
+	"Index", "Idx" oder "Org.Idx" (Indizierung innerhalb eines Language Properties Sets um eine Reihenfolge der einzelnen Propertywerte einzuhalten, optional)
+	"Default" (Default Sprachwert für den Key, optional)
+	"en", "de", "de_AT", "de_CH", "fr", ... (Sprachwerte der einzelnen Sprachenkennzeichen, auch Länderspezifische Kennzeichen mit Unterstrich sind erlaubt)
+
+3.5 Kürzlich verwendete Pfade
 
 Geöffnete Dateipfade aus 3.1 und Verzechnispfade aus 3.2 werden in einer Liste zur späteren schnelen Wiederverwendug gespeichert.
 Diese können für späteren schnellen Zugang mittels dem Button "Kürzlich geöffnete Dateien öffnen" verwendet werden und werden dann im gleichen Modus wie zuvor geöffnet.
@@ -104,10 +114,20 @@ Die im Tool aktuell verfügbaren LanguagePropertiesSetPath werden mit diesen abg
 Dies funktioniert nur bei eindeutiger Bezeichnung der Language Properties Set Namen. Treten hierbei uneindeutige Namen auf wird der Vorgang mit einer Fehlermeldung abgebrochen.
 Wird für einen im Tool aktuell verfügbaren LanguagePropertiesSetPath kein passender verfügbarer Pfad gefunden so wird dieses Languag Properties Set im gewählten Basisverzeichnis abgelegt.
 
-5.3 Export in einzelne Datei
+5.3 Export in einzelne Excel Datei
 
-Der Button "Export in einzelne Datei" speichert alle im Tool aktuell verfügbaren LanguagePropertiesSetPath in einer einzelnen Exceldatei.
-Hierfür wird eine Exceldatei mit einem Sheet angelegt sowie folgende Spalten mit Daten:
+Der Button "Export in einzelne Datei" speichert alle im Tool aktuell verfügbaren LanguagePropertiesSetPath in einer einzelnen Excel Datei.
+Hierfür wird eine Excel Datei mit einem Sheet angelegt sowie folgende Spalten mit Daten:
+	"Path" (Genauer LanguagePropertiesSetPath für dieses Language Properties Set, Platzhalter ~ für das Benutzerverzeichnis im System wird soweit möglich verwendet)
+	"Key" (Key zum Property Wert)
+	"Org.Idx" (Indizierung innerhalb eines Language Properties Sets um eine Reihenfolge der einzelnen Propertywerte einzuhalten)
+	"Default" (Default Sprachwert für den Key, soweit verfügbar)
+	"en", "de", "de_AT", "de_CH", "fr", ... (Sprachwerte der einzelnen Sprachenkennzeichen, auch Länderspezifische Kennzeichen mit Unterstrich sind erlaubt)
+
+5.4 Export in einzelne CSV Datei
+
+Der Button "Export in einzelne CSV Datei" speichert alle im Tool aktuell verfügbaren LanguagePropertiesSetPath in einer einzelnen CSV Datei.
+Hierfür wird eine CSV Datei angelegt mit folgende Spalten mit Daten:
 	"Path" (Genauer LanguagePropertiesSetPath für dieses Language Properties Set, Platzhalter ~ für das Benutzerverzeichnis im System wird soweit möglich verwendet)
 	"Key" (Key zum Property Wert)
 	"Org.Idx" (Indizierung innerhalb eines Language Properties Sets um eine Reihenfolge der einzelnen Propertywerte einzuhalten)
