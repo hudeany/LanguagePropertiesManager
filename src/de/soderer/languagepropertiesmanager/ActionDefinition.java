@@ -93,12 +93,31 @@ public class ActionDefinition {
 	}
 
 	public ActionDefinition checkParameters() throws LanguagePropertiesException {
-		if (importFromExcel != null && exportToExcel != null) {
-			throw new LanguagePropertiesException("Only one of parameters importToExcel and exportFromExcel is allowed");
-		} else if (importFromExcel != null && excelFile != null) {
-			throw new LanguagePropertiesException("Parameter excelFile is allowed for exportToExcel");
-		} else if (exportToExcel != null && outputDirectory != null) {
-			throw new LanguagePropertiesException("Parameter outputDirectory is allowed for importFromExcel");
+		int actionModesCount = 0;
+		if (importFromExcel != null) {
+			actionModesCount++;
+		}
+		if (exportToExcel != null) {
+			actionModesCount++;
+		}
+		if (importFromCsv != null) {
+			actionModesCount++;
+		}
+		if (exportToCsv != null) {
+			actionModesCount++;
+		}
+		if (actionModesCount == 0) {
+			throw new LanguagePropertiesException("One of parameters importToExcel, exportFromExcel, importFromCsv, exportToCsv must be used");
+		} else if (actionModesCount > 1) {
+			throw new LanguagePropertiesException("Only one of parameters importToExcel, exportFromExcel, importFromCsv, exportToCsv may be used at a time");
+		} else if (exportToExcel == null && excelFile != null) {
+			throw new LanguagePropertiesException("Parameter excelFile is allowed for exportToExcel only");
+		} else if (importFromExcel == null && outputDirectory != null) {
+			throw new LanguagePropertiesException("Parameter outputDirectory is allowed for importFromExcel only");
+		} else if (exportToCsv == null && csvFile != null) {
+			throw new LanguagePropertiesException("Parameter csvFile is allowed for exportToCsv only");
+		} else if (importFromCsv == null && outputDirectory != null) {
+			throw new LanguagePropertiesException("Parameter outputDirectory is allowed for importFromCsv only");
 		} else {
 			return this;
 		}

@@ -789,7 +789,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					throw new Exception("No DeepL API key available");
 				}
 
-				final DeepLHelper deepLHelper = new DeepLHelper(applicationConfiguration.get(LanguagePropertiesManager.CONFIG_DEEPL_APIKEY));
+				final DeepLHelper deepLHelper = new DeepLHelper(applicationConfiguration.get(LanguagePropertiesManager.CONFIG_DEEPL_BASEURL), applicationConfiguration.get(LanguagePropertiesManager.CONFIG_DEEPL_APIKEY));
 
 				final String languageSignTranslateSource = new ComboSelectionDialog(getShell(), getText(), LangResources.get("selectSourceLanguageSignToTranslate"), availableLanguageSigns, 0).open();
 				if (Utilities.isBlank(languageSignTranslateSource)) {
