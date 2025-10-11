@@ -171,12 +171,14 @@ For this purpose, an CSV file is created the following columns of data:
 	"en", "de", "de_AT", "de_CH", "fr", ... (language values of the individual language identifiers; country-specific identifiers with an underscore are also permitted)
 
 	
-Command Line Interface (CLI)
-
 Usage:
 	java -jar LanguagePropertiesManager.jar -exportToExcel <language properties file or directory path> -excelFile <output Excel file path> [-v]
 	or
+	java -jar LanguagePropertiesManager.jar -exportToCsv <language properties file or directory path> -csvFile <output CSV file path> [-v]
+	or
 	java -jar LanguagePropertiesManager.jar -importFromExcel <input Excel file path> [-outputDirectory <language properties output directory>] [-v]
+	or
+	java -jar LanguagePropertiesManager.jar -importFromCsv <input CSV file path> [-outputDirectory <language properties output directory>] [-v]
 
 Mandatory parameters for Excel file export
 	-exportToExcel <language properties file or directory path>
@@ -184,7 +186,7 @@ Mandatory parameters for Excel file export
 
 Optional parameters for Excel file export
 	-v: verbose output with progress bar
-	
+
 Mandatory parameters for Excel file import
 	-exportToExcel <language properties file or directory path>
 	-excelFile <output Excel file path>
