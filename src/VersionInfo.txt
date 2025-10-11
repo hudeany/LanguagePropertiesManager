@@ -1,5 +1,12 @@
 Version ${build.version}
 
+CSV files import and export
+Improved Excel data values import
+Improved DeePl translation support
+
+
+Version 25.1.54
+
 Checking and downloading latest update for application via GitHub
 Menu -> ?-Button (Help Menu) -> Check for Update
 
