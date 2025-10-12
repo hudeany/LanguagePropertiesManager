@@ -133,7 +133,6 @@ Hierfür wird eine CSV Datei angelegt mit folgende Spalten mit Daten:
 	"Org.Idx" (Indizierung innerhalb eines Language Properties Sets um eine Reihenfolge der einzelnen Propertywerte einzuhalten)
 	"Default" (Default Sprachwert für den Key, soweit verfügbar)
 	"en", "de", "de_AT", "de_CH", "fr", ... (Sprachwerte der einzelnen Sprachenkennzeichen, auch Länderspezifische Kennzeichen mit Unterstrich sind erlaubt)
-	
 
 
 6.1 Language Properties Dateiendung
