@@ -13,9 +13,13 @@ import de.soderer.utilities.Utilities;
 
 public class LanguagePropertiesFileSetWriter {
 	public static final String LANGUAGE_SIGN_DEFAULT = "default";
-	public static final String POPERTIES_FILE_EXTENSION = "properties";
+	public static final String DEFAULT_POPERTIES_FILE_EXTENSION = ".properties";
 
-	public static void write(final List<LanguageProperty> languageProperties, final File directory, final String languagePropertySetName) throws Exception {
+	public static void writex(final List<LanguageProperty> languageProperties, final File directory, final String languagePropertySetName) throws Exception {
+		write(languageProperties, directory, languagePropertySetName, DEFAULT_POPERTIES_FILE_EXTENSION);
+	}
+
+	public static void write(final List<LanguageProperty> languageProperties, final File directory, final String languagePropertySetName, final String propertiesFileExtension) throws Exception {
 		final Set<String> languagePropertiesPaths = languageProperties.stream().map(o -> o.getPath()).collect(Collectors.toSet());
 		final Comparator<LanguageProperty> compareByPathAndIndex = Comparator.comparing(LanguageProperty::getPath).thenComparing(LanguageProperty::getOriginalIndex);
 		final List<LanguageProperty> sortedLanguageProperties = languageProperties.stream().sorted(compareByPathAndIndex).collect(Collectors.toList());
@@ -44,9 +48,9 @@ public class LanguagePropertiesFileSetWriter {
 			for (final String languageSign : availableLanguageSigns) {
 				String filename;
 				if (LANGUAGE_SIGN_DEFAULT.equals(languageSign)) {
-					filename = propertySetName + ".properties";
+					filename = propertySetName + propertiesFileExtension;
 				} else {
-					filename = propertySetName + "_" + languageSign + ".properties";
+					filename = propertySetName + "_" + languageSign + propertiesFileExtension;
 				}
 				try (PropertiesWriter propertiesWriter = new PropertiesWriter(new FileOutputStream(new File(propertiesDirectory, filename)))) {
 					for (final LanguageProperty languageProperty : filteredLanguageProperties) {

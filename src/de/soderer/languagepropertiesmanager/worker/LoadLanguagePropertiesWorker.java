@@ -8,6 +8,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
@@ -30,12 +31,14 @@ public class LoadLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 	private List<LanguageProperty> languageProperties;
 	private List<String> availableLanguageSigns;
 	private boolean commentsFound;
+	private final String propertiesFileExtension;
 
-	public LoadLanguagePropertiesWorker(final WorkerParentSimple parent, final File languagePropertiesFileOrBasicDirectory, final String[] excludeParts) {
+	public LoadLanguagePropertiesWorker(final WorkerParentSimple parent, final File languagePropertiesFileOrBasicDirectory, final String[] excludeParts, final String propertiesFileExtension) {
 		super(parent);
 
 		this.languagePropertiesFileOrBasicDirectory = languagePropertiesFileOrBasicDirectory;
 		this.excludeParts = excludeParts;
+		this.propertiesFileExtension = propertiesFileExtension;
 	}
 
 	@Override
@@ -53,23 +56,23 @@ public class LoadLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 			itemsToDo = 1;
 			itemsDone = 0;
 			String languagePropertiesSetName;
-			if (filename.endsWith(".properties")) {
+			if (filename.endsWith(propertiesFileExtension)) {
 				if (filename.contains("_")) {
 					languagePropertiesSetName = filename.substring(0, filename.indexOf("_"));
 				} else {
-					languagePropertiesSetName = filename.substring(0, filename.indexOf(".properties"));
+					languagePropertiesSetName = filename.substring(0, filename.indexOf(propertiesFileExtension));
 				}
 			} else {
-				throw new Exception("Missing mandatory file extension '.properties'");
+				throw new Exception("Missing mandatory file extension '" + propertiesFileExtension + "'");
 			}
 
-			languageProperties = LanguagePropertiesFileSetReader.read(languagePropertiesFileOrBasicDirectory.getParentFile(), languagePropertiesSetName, false);
+			languageProperties = LanguagePropertiesFileSetReader.read(languagePropertiesFileOrBasicDirectory.getParentFile(), languagePropertiesSetName, propertiesFileExtension, false);
 			languagePropertiesSetNames.add(languagePropertiesSetName);
 		} else {
 			parent.changeTitle(LangResources.get("searchingLanguageProperties"));
 			signalUnlimitedProgress();
 
-			final Collection<File> propertiesFiles = FileUtils.listFiles(languagePropertiesFileOrBasicDirectory, new RegexFileFilter("^.*_en.properties$||^.*_de.properties$"), DirectoryFileFilter.DIRECTORY);
+			final Collection<File> propertiesFiles = FileUtils.listFiles(languagePropertiesFileOrBasicDirectory, new RegexFileFilter("^.*_en" + Pattern.quote(propertiesFileExtension) + "$||^.*_de" + Pattern.quote(propertiesFileExtension) + "$"), DirectoryFileFilter.DIRECTORY);
 			final Set<String> propertiesSetsPaths = new HashSet<>();
 			for (final File propertiesFile : propertiesFiles) {
 				boolean excluded = false;
@@ -103,7 +106,7 @@ public class LoadLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 			languageProperties = new ArrayList<>();
 			for (final String propertiesPath : propertiesPaths) {
 				final String layoutPropertySetName = new File(propertiesPath).getName();
-				final List<LanguageProperty> nextLanguageProperties = LanguagePropertiesFileSetReader.read(new File(propertiesPath).getParentFile(), layoutPropertySetName, false);
+				final List<LanguageProperty> nextLanguageProperties = LanguagePropertiesFileSetReader.read(new File(propertiesPath).getParentFile(), layoutPropertySetName, propertiesFileExtension, false);
 				languageProperties.addAll(nextLanguageProperties);
 				languagePropertiesSetNames.add(layoutPropertySetName);
 

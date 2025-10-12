@@ -17,7 +17,7 @@ import de.soderer.utilities.WildcardFilenameFilter;
 
 public class LanguagePropertiesFileSetReader {
 	public static final String LANGUAGE_SIGN_DEFAULT = "default";
-	public static final String POPERTIES_FILE_EXTENSION = "properties";
+	public static final String DEFAULT_PROPERTIES_FILE_EXTENSION = ".properties";
 
 	/**
 	 * Reads a set of language properties files into a map with values of item name strings as keys, where each of them is referencing a map of language signs and their value string for display
@@ -25,7 +25,17 @@ public class LanguagePropertiesFileSetReader {
 	 * @return
 	 * @throws Exception
 	 */
-	public static List<LanguageProperty> read(final File propertiesDirectory, final String propertySetName, final boolean readKeysCaseInsensitive) throws Exception {
+	public static List<LanguageProperty> readx(final File propertiesDirectory, final String propertySetName, final boolean readKeysCaseInsensitive) throws Exception {
+		return read(propertiesDirectory, propertySetName, DEFAULT_PROPERTIES_FILE_EXTENSION, readKeysCaseInsensitive);
+	}
+
+	/**
+	 * Reads a set of language properties files into a map with values of item name strings as keys, where each of them is referencing a map of language signs and their value string for display
+	 * @param basePropertiesFilePath
+	 * @return
+	 * @throws Exception
+	 */
+	public static List<LanguageProperty> read(final File propertiesDirectory, final String propertySetName, final String propertiesFileExtension, final boolean readKeysCaseInsensitive) throws Exception {
 		if (!propertiesDirectory.exists()) {
 			throw new Exception("Properties directory '" + propertiesDirectory + "' does not exist");
 		} else if (!propertiesDirectory.isDirectory()) {
@@ -34,7 +44,7 @@ public class LanguagePropertiesFileSetReader {
 
 		final List<LanguageProperty> languageProperties = new ArrayList<>();
 
-		final FilenameFilter fileFilter = new WildcardFilenameFilter(propertySetName + "*." + POPERTIES_FILE_EXTENSION);
+		final FilenameFilter fileFilter = new WildcardFilenameFilter(propertySetName + "*" + propertiesFileExtension);
 
 		for (final File propertyFile : propertiesDirectory.listFiles(fileFilter)) {
 			final String languageSign = getLanguageSignOfFilename(propertyFile.getName());
@@ -42,7 +52,7 @@ public class LanguagePropertiesFileSetReader {
 				try (PropertiesReader propertiesReader = new PropertiesReader(new FileInputStream(propertyFile))) {
 					propertiesReader.setReadKeysCaseInsensitive(readKeysCaseInsensitive);
 					final Map<String, String> languageEntries = propertiesReader.read();
-					final String path = Utilities.replaceUsersHomeByTilde(propertyFile.getAbsolutePath().replace("_" + languageSign, "").replace(".properties", ""));
+					final String path = Utilities.replaceUsersHomeByTilde(propertyFile.getAbsolutePath().replace("_" + languageSign, "").replace(propertiesFileExtension, ""));
 					for (final Entry<String, String> entry : languageEntries.entrySet()) {
 						LanguageProperty property = null;
 						for (final LanguageProperty languageProperty : languageProperties) {

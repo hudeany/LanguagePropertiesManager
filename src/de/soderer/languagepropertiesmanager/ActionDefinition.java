@@ -9,6 +9,7 @@ public class ActionDefinition {
 	private String csvFile = null;
 	private String outputDirectory = null;
 	private boolean overwrite = false;
+	private String propertiesFileExtension;
 	private boolean verbose = false;
 
 	public String getImportFromExcel() {
@@ -81,6 +82,14 @@ public class ActionDefinition {
 	public ActionDefinition setOverwrite(final boolean overwrite) {
 		this.overwrite = overwrite;
 		return this;
+	}
+
+	public String getPropertiesFileExtension() {
+		return propertiesFileExtension;
+	}
+
+	public void setPropertiesFileExtension(final String propertiesFileExtension) {
+		this.propertiesFileExtension = propertiesFileExtension;
 	}
 
 	public boolean isVerbose() {

@@ -8,6 +8,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
@@ -30,16 +31,18 @@ public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 	private final List<LanguageProperty> languageProperties;
 	private final File outputDirectory;
 	private final String[] excludeParts;
+	private final String propertiesFileExtension;
 
 	private List<String> listOfStoredProperties;
 
-	public WriteLanguagePropertiesWorker(final WorkerParentSimple parent, final List<LanguageProperty> languageProperties, final String languagePropertySetName, final File outputDirectory, final String[] excludeParts) {
+	public WriteLanguagePropertiesWorker(final WorkerParentSimple parent, final List<LanguageProperty> languageProperties, final String languagePropertySetName, final File outputDirectory, final String[] excludeParts, final String propertiesFileExtension) {
 		super(parent);
 
 		this.languageProperties = languageProperties;
 		this.languagePropertySetName = languagePropertySetName;
 		this.outputDirectory = outputDirectory;
 		this.excludeParts = excludeParts;
+		this.propertiesFileExtension = propertiesFileExtension;
 	}
 
 	@Override
@@ -90,14 +93,14 @@ public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 							for (final LanguageProperty languageProperty : languagePropertiesForStorage) {
 								languageProperty.setPath(Utilities.replaceUsersHomeByTilde(new File(foundPath).getAbsolutePath()));
 							}
-							LanguagePropertiesFileSetWriter.write(languagePropertiesForStorage, new File(foundPath).getParentFile(), new File(foundPath).getName());
+							LanguagePropertiesFileSetWriter.write(languagePropertiesForStorage, new File(foundPath).getParentFile(), new File(foundPath).getName(), propertiesFileExtension);
 							listOfStoredProperties.add(foundPath);
 						} else {
 							// Create new properties set files
 							for (final LanguageProperty languageProperty : languagePropertiesForStorage) {
 								languageProperty.setPath(Utilities.replaceUsersHomeByTilde(new File(outputDirectory, propertySetName).getAbsolutePath()));
 							}
-							LanguagePropertiesFileSetWriter.write(languagePropertiesForStorage, outputDirectory, propertySetName);
+							LanguagePropertiesFileSetWriter.write(languagePropertiesForStorage, outputDirectory, propertySetName, propertiesFileExtension);
 							listOfStoredProperties.add(new File(outputDirectory, propertySetName).getAbsolutePath());
 						}
 					}
@@ -107,7 +110,7 @@ public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 				}
 			} else {
 				// Store only one language properties set which has no file path defined in LanguageProperty objects
-				LanguagePropertiesFileSetWriter.write(languageProperties, outputDirectory, languagePropertySetName);
+				LanguagePropertiesFileSetWriter.write(languageProperties, outputDirectory, languagePropertySetName, propertiesFileExtension);
 			}
 		} else {
 			final Set<String> languagePropertiesPaths = new HashSet<>();
@@ -139,7 +142,7 @@ public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 				final String propertySetName = new File(languagePropertiesPathToStore).getName();
 				final List<LanguageProperty> languagePropertiesForStorage = languageProperties.stream().filter(o -> Utilities.replaceUsersHome(o.getPath()).equals(Utilities.replaceUsersHome(languagePropertiesPathToStore))).sorted(compareByIndex).collect(Collectors.toList());
 
-				LanguagePropertiesFileSetWriter.write(languagePropertiesForStorage, new File(languagePropertiesPathToStore).getParentFile(), propertySetName);
+				LanguagePropertiesFileSetWriter.write(languagePropertiesForStorage, new File(languagePropertiesPathToStore).getParentFile(), propertySetName, propertiesFileExtension);
 				listOfStoredProperties.add(languagePropertiesPathToStore);
 
 				itemsDone++;
@@ -154,7 +157,7 @@ public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 	}
 
 	private List<String> getAllPropertiesPaths(final File basicDirectory) {
-		final Collection<File> propertiesFiles = FileUtils.listFiles(basicDirectory, new RegexFileFilter("^.*_en.properties$||^.*_de.properties$"), DirectoryFileFilter.DIRECTORY);
+		final Collection<File> propertiesFiles = FileUtils.listFiles(basicDirectory, new RegexFileFilter("^.*_en" + Pattern.quote(propertiesFileExtension) + "$||^.*_de" + Pattern.quote(propertiesFileExtension) + "$"), DirectoryFileFilter.DIRECTORY);
 		final Set<String> propertiesSetsPaths = new HashSet<>();
 		for (final File propertiesFile : propertiesFiles) {
 			boolean excluded = false;

@@ -63,7 +63,7 @@ All files of this language property are loaded together and displayed in the dat
 
 3.2 Loading All Available Property Sets from Subdirectories
 
-This button opens a folder selection window. All available language properties from all subdirectories of this folder are then loaded. Currently, the tool searches for files with one of the language identifiers "_en" or "_de" and the file extension ".properties".
+This button opens a folder selection window. All available language properties from all subdirectories of this folder are then loaded. The tool searches for files with one of the language identifiers "_en" or "_de" and the file extension ".properties".
 
 For all LanguagePropertiesSetPaths found, all other available languages are loaded and displayed in the data table on the left side of the tool.
 
@@ -171,6 +171,8 @@ For this purpose, an CSV file is created the following columns of data:
 	"en", "de", "de_AT", "de_CH", "fr", ... (language values of the individual language identifiers; country-specific identifiers with an underscore are also permitted)
 
 	
+Command Line Interface (CLI)
+	
 Usage:
 	java -jar LanguagePropertiesManager.jar -exportToExcel <language properties file or directory path> -excelFile <output Excel file path> [-v]
 	or
@@ -185,6 +187,8 @@ Mandatory parameters for Excel file export
 	-excelFile <output Excel file path>
 
 Optional parameters for Excel file export
+	-propertiesFileExtension <extension>:
+		Do not use the default language file extension ".properties", but a differently defined customized extension like "_mytext.properties"
 	-v: verbose output with progress bar
 
 Mandatory parameters for Excel file import
@@ -196,6 +200,8 @@ Optional parameters for Excel file import
 		If outputDirectory is not defined, all language properties sets will be imported to the defined original file paths in the Excel file.
 		If outputDirectory is defined, the existing language properties sets file paths within that directory will be detected and used for matching set names.
 		Other language properties sets without matching file paths will be store as new language properties sets in the base directory itself.
+	-propertiesFileExtension <extension>:
+		Do not use the default language file extension ".properties", but a differently defined customized extension like "_mytext.properties"
 	-v: verbose output with progress bar
 
 Mandatory parameters for CSV file export
@@ -203,6 +209,8 @@ Mandatory parameters for CSV file export
 	-csvFile <output CSV file path>
 
 Optional parameters for CSV file export
+	-propertiesFileExtension <extension>:
+		Do not use the default language file extension ".properties", but a differently defined customized extension like "_mytext.properties"
 	-v: verbose output with progress bar
 
 Mandatory parameters for CSV file import
@@ -214,6 +222,8 @@ Optional parameters for CSV file import
 		If outputDirectory is not defined, all language properties sets will be imported to the defined original file paths in the CSV file.
 		If outputDirectory is defined, the existing language properties sets file paths within that directory will be detected and used for matching set names.
 		Other language properties sets without matching file paths will be store as new language properties sets in the base directory itself.
+	-propertiesFileExtension <extension>:
+		Do not use the default language file extension ".properties", but a differently defined customized extension like "_mytext.properties"
 	-v: verbose output with progress bar
 
 Global standalone parameters

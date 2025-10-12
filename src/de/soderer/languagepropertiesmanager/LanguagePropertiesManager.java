@@ -16,6 +16,7 @@ import org.eclipse.swt.widgets.Display;
 
 import de.soderer.languagepropertiesmanager.dlg.LanguagePropertiesManagerDialog;
 import de.soderer.languagepropertiesmanager.storage.ExcelHelper;
+import de.soderer.languagepropertiesmanager.storage.LanguagePropertiesFileSetReader;
 import de.soderer.languagepropertiesmanager.worker.ExportToCsvWorker;
 import de.soderer.languagepropertiesmanager.worker.ExportToExcelWorker;
 import de.soderer.languagepropertiesmanager.worker.ImportFromCsvWorker;
@@ -89,6 +90,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 	public static final String CONFIG_OPEN_DIR_EXCLUDES = "OpenDirExcludes";
 	public static final String CONFIG_DEEPL_BASEURL = "DeepL_BaseUrl";
 	public static final String CONFIG_DEEPL_APIKEY = "DeepL_ApiKey";
+	public static final String PROPERTIES_FILE_EXTENSION = "PropertiesFileExtension";
 
 	private int previousTerminalWidth = 0;
 
@@ -124,6 +126,9 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 		}
 		if (!applicationConfiguration.containsKey(LanguagePropertiesManager.CONFIG_DEEPL_APIKEY)) {
 			applicationConfiguration.set(LanguagePropertiesManager.CONFIG_DEEPL_APIKEY, "");
+		}
+		if (!applicationConfiguration.containsKey(LanguagePropertiesManager.PROPERTIES_FILE_EXTENSION)) {
+			applicationConfiguration.set(LanguagePropertiesManager.PROPERTIES_FILE_EXTENSION, LanguagePropertiesFileSetReader.DEFAULT_PROPERTIES_FILE_EXTENSION);
 		}
 	}
 
@@ -349,6 +354,18 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 						actionDefinition.setOverwrite(true);
 					}
 					wasAllowedParam = true;
+				} else if ("-propertiesFileExtension".equalsIgnoreCase(arguments[i])) {
+					i++;
+					if (i >= arguments.length) {
+						throw new ParameterException(arguments[i - 1], "Missing parameter for propertiesFileExtension");
+					} else if (Utilities.isBlank(arguments[i])) {
+						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Invalid parameter for propertiesFileExtension");
+					} else if (actionDefinition.getOutputDirectory() != null) {
+						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Duplicate parameter propertiesFileExtension");
+					} else {
+						actionDefinition.setPropertiesFileExtension(arguments[i]);
+					}
+					wasAllowedParam = true;
 				} else if ("-v".equalsIgnoreCase(arguments[i])) {
 					if (actionDefinition.isVerbose()) {
 						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Duplicate parameter 'v'");
@@ -419,6 +436,9 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 	private void execute(final ActionDefinition actionDefinition, final ConfigurationProperties applicationConfiguration) throws Exception {
 		try {
 			actionDefinitionToExecute = actionDefinition;
+			if (actionDefinitionToExecute.getPropertiesFileExtension() == null) {
+				actionDefinitionToExecute.setPropertiesFileExtension(LanguagePropertiesFileSetReader.DEFAULT_PROPERTIES_FILE_EXTENSION);
+			}
 
 			final String[] configuredExcludeParts = applicationConfiguration.get(LanguagePropertiesManager.CONFIG_OPEN_DIR_EXCLUDES).split(";");
 
@@ -430,7 +450,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 					throw new LanguagePropertiesException("Export Excel file '" + excelFile.getAbsolutePath() + "' already exists. Use 'overwrite' to replace existing file.");
 				}
 
-				final LoadLanguagePropertiesWorker loadLanguagePropertiesWorker = new LoadLanguagePropertiesWorker(this, propertiesFile, configuredExcludeParts);
+				final LoadLanguagePropertiesWorker loadLanguagePropertiesWorker = new LoadLanguagePropertiesWorker(this, propertiesFile, configuredExcludeParts, actionDefinition.getPropertiesFileExtension());
 
 				loadLanguagePropertiesWorker.setProgressDisplayDelayMilliseconds(2000);
 				loadLanguagePropertiesWorker.run();
@@ -501,7 +521,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 					languagePropertiesSetName = "Multiple";
 				}
 
-				final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(this, importFromExcelWorker.getLanguageProperties(), languagePropertiesSetName, outputDirectory, configuredExcludeParts);
+				final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(this, importFromExcelWorker.getLanguageProperties(), languagePropertiesSetName, outputDirectory, configuredExcludeParts, actionDefinition.getPropertiesFileExtension());
 
 				writeLanguagePropertiesWorker.setProgressDisplayDelayMilliseconds(2000);
 				writeLanguagePropertiesWorker.run();
@@ -527,7 +547,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 					throw new LanguagePropertiesException("Export CSV file '" + csvFile.getAbsolutePath() + "' already exists. Use 'overwrite' to replace existing file.");
 				}
 
-				final LoadLanguagePropertiesWorker loadLanguagePropertiesWorker = new LoadLanguagePropertiesWorker(this, propertiesFile, configuredExcludeParts);
+				final LoadLanguagePropertiesWorker loadLanguagePropertiesWorker = new LoadLanguagePropertiesWorker(this, propertiesFile, configuredExcludeParts, actionDefinition.getPropertiesFileExtension());
 
 				loadLanguagePropertiesWorker.setProgressDisplayDelayMilliseconds(2000);
 				loadLanguagePropertiesWorker.run();
@@ -599,7 +619,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 					languagePropertiesSetName = "CSV";
 				}
 
-				final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(this, importFromCsvWorker.getLanguageProperties(), languagePropertiesSetName, outputDirectory, configuredExcludeParts);
+				final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(this, importFromCsvWorker.getLanguageProperties(), languagePropertiesSetName, outputDirectory, configuredExcludeParts, actionDefinition.getPropertiesFileExtension());
 
 				writeLanguagePropertiesWorker.setProgressDisplayDelayMilliseconds(2000);
 				writeLanguagePropertiesWorker.run();

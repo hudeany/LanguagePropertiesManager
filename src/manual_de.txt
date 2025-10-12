@@ -30,7 +30,7 @@ Alle Dateien dieses Language Properties werden gemeinsam geladen und in der Date
 3.2 Alle verfügbaren Properties Sets aus Unterverzeichnissen laden
 
 Der Button führt zu einer Ordner Auswahl. Es werden dann alle verfügbaren Language Properties aus allen Unterverzeichnises dieses Ordners geladen.
-Aktuell wird dazu nach Dateien mit einem der Sprachenkennzeichen "_en" oder "_de" und der Dateierweiterung ".properties" gesucht.
+Dazu wird nach Dateien mit einem der Sprachenkennzeichen "_en" oder "_de" und der Dateierweiterung ".properties" gesucht.
 Für alle gefundenden LanguagePropertiesSetPath werden dann auch alle weiteren verfügbaren Sprachen geladen und in der Datentabelle links im Tool angezeigt
 Je nach Anzahl der Unterverzeichnisse und Dateien und deren Größe kann dies einen Moment Zeit beanspruchen.
 
@@ -133,3 +133,14 @@ Hierfür wird eine CSV Datei angelegt mit folgende Spalten mit Daten:
 	"Org.Idx" (Indizierung innerhalb eines Language Properties Sets um eine Reihenfolge der einzelnen Propertywerte einzuhalten)
 	"Default" (Default Sprachwert für den Key, soweit verfügbar)
 	"en", "de", "de_AT", "de_CH", "fr", ... (Sprachwerte der einzelnen Sprachenkennzeichen, auch Länderspezifische Kennzeichen mit Unterstrich sind erlaubt)
+	
+
+
+6.1 Language Properties Dateiendung
+
+6.1 Dateiendung der Language Properties Dateien
+
+Standardmäßig verwendet dieses Tool die Dateierweiterung ".properties" für alle Language Properties Dateien.
+Um dieses Verhalten zu überschreiben, können Sie den Konfigurationswert "PropertiesFileExtension" setzen, der im Konfigurationsmenü über die Schaltfläche "Konfiguration" (Schraubenschlüsselsymbol) verfügbar ist.
+This allows file extensions such as "_mytext.properties" to be used, which do not comply with the Language Properties Standard.
+Please note that changing this configuration is permanent and will affect any load or save actions in the GUI.
