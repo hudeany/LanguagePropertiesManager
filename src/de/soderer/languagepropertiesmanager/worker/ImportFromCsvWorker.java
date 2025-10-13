@@ -21,7 +21,7 @@ import de.soderer.utilities.worker.WorkerParentSimple;
 import de.soderer.utilities.worker.WorkerSimple;
 
 public class ImportFromCsvWorker extends WorkerSimple<Boolean> {
-	private static final Pattern LANGUAGEANDCOUNTRYPATTERN = Pattern.compile("^(_[a-zA-Z]{2}){2}$");
+	private static final Pattern LANGUAGEANDCOUNTRYPATTERN = Pattern.compile("^[a-zA-Z]{2}_[a-zA-Z]{2}$");
 	private static final Pattern LANGUAGEPATTERN = Pattern.compile("^[a-zA-Z]{2}$");
 
 	private final File importCsvFile;
