@@ -1252,12 +1252,12 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		@Override
 		public void widgetSelected(final SelectionEvent event) {
 			try {
-				String defaultLanguagePropertisPath = null;
+				String defaultLanguagePropertiesPath = null;
 				final Set<String> languagePropertiesPaths = languageProperties.stream().map(o -> o.getPath()).collect(Collectors.toSet());
 				if (languagePropertiesPaths.contains("")) {
 					if (languagePropertiesPaths.size() == 2) {
 						languagePropertiesPaths.remove("");
-						defaultLanguagePropertisPath = Utilities.replaceUsersHome(new ArrayList<>(languagePropertiesPaths).get(0));
+						defaultLanguagePropertiesPath = Utilities.replaceUsersHome(new ArrayList<>(languagePropertiesPaths).get(0));
 					} else {
 						final FileDialog dlg = new FileDialog(getShell());
 						dlg.setText(getShell().getText() + " " + LangResources.get("save_file_dialog_text"));
@@ -1271,7 +1271,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					}
 				}
 
-				final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(null, languageProperties, languagePropertySetName, defaultLanguagePropertisPath == null ? null : new File(defaultLanguagePropertisPath), null, applicationConfiguration.get(LanguagePropertiesManager.PROPERTIES_FILE_EXTENSION));
+				final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(null, languageProperties, languagePropertySetName, defaultLanguagePropertiesPath == null ? null : new File(defaultLanguagePropertiesPath), null, applicationConfiguration.get(LanguagePropertiesManager.PROPERTIES_FILE_EXTENSION));
 				final ProgressDialog<WriteLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("save_files"), writeLanguagePropertiesWorker);
 				final Result dialogResult = progressDialog.open();
 				if (dialogResult == Result.CANCELED) {
