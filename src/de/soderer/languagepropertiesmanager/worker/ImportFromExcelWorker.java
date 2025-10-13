@@ -108,21 +108,27 @@ public class ImportFromExcelWorker extends WorkerSimple<Boolean> {
 			for (final Row row : sheet) {
 				rowIndex++;
 				if (rowIndex > 0) {
-					String path = null;
+					String path;
 					if (columnIndex_Path >= 0) {
 						final Cell pathCell = row.getCell(columnIndex_Path);
-						if (pathCell.getCellType() == CellType.STRING) {
+						if (pathCell == null) {
+							path = null;
+						} else if (pathCell.getCellType() == CellType.STRING) {
 							path = pathCell.getStringCellValue().trim();
 						} else if (pathCell.getCellType() == CellType.BLANK) {
 							path = "";
 						} else {
 							throw new LanguagePropertiesException("Excel file contains invalid path value in sheet '" + sheet.getSheetName() + "' at row " + (rowIndex + 1) + " and column " + (columnIndex_Keys + 1));
 						}
+					} else {
+						path = null;
 					}
 
 					String key;
 					final Cell keyCell = row.getCell(columnIndex_Keys);
-					if (keyCell.getCellType() == CellType.STRING) {
+					if (keyCell == null || keyCell.getCellType() == CellType.BLANK) {
+						key = null;
+					} else if (keyCell.getCellType() == CellType.STRING) {
 						key = keyCell.getStringCellValue().trim();
 					} else if (keyCell.getCellType() == CellType.NUMERIC) {
 						final Double value = Double.valueOf(keyCell.getNumericCellValue());
@@ -135,70 +141,78 @@ public class ImportFromExcelWorker extends WorkerSimple<Boolean> {
 						throw new LanguagePropertiesException("Excel file contains invalid key value in sheet '" + sheet.getSheetName() + "' at row " + (rowIndex + 1) + " and column " + (columnIndex_Keys + 1));
 					}
 
-					final LanguageProperty languageProperty = new LanguageProperty(path, key);
+					if (Utilities.isNotBlank(key)) {
+						final LanguageProperty languageProperty = new LanguageProperty(path, key);
 
-					if (columnIndex_Index >= 0) {
-						final Cell indexCell = row.getCell(columnIndex_Index);
-						try {
-							if (indexCell.getCellType() == CellType.NUMERIC) {
-								languageProperty.setOriginalIndex(Double.valueOf(indexCell.getNumericCellValue()).intValue());
-							} else if (indexCell.getCellType() == CellType.STRING) {
-								languageProperty.setOriginalIndex(Integer.parseInt(indexCell.getStringCellValue().trim()));
-							} else if (indexCell.getCellType() == CellType.BLANK) {
-								languageProperty.setOriginalIndex(0);
-							} else {
-								throw new LanguagePropertiesException("Excel file contains invalid index data type '" + indexCell.getCellType().name() + "' in sheet '" + sheet.getSheetName() + "' at row " + (rowIndex + 1) + " and column " + (columnIndex_Index + 1));
-							}
-						} catch (final Exception e) {
-							throw new LanguagePropertiesException("Excel file contains invalid index value in sheet '" + sheet.getSheetName() + "' at row " + (rowIndex + 1) + " and column " + (columnIndex_Index + 1), e);
-						}
-					} else {
-						languageProperty.setOriginalIndex(rowIndex);
-					}
-
-					if (columnIndex_Comment >= 0) {
-						final Cell commentCell = row.getCell(columnIndex_Comment);
-						try {
-							if (commentCell.getCellType() == CellType.NUMERIC) {
-								final Double value = Double.valueOf(commentCell.getNumericCellValue());
-								if ((value % 1) == 0) {
-									languageProperty.setComment(Integer.toString(value.intValue()));
+						if (columnIndex_Index >= 0) {
+							final Cell indexCell = row.getCell(columnIndex_Index);
+							try {
+								if (indexCell == null) {
+									languageProperty.setOriginalIndex(0);
+								} else if (indexCell.getCellType() == CellType.NUMERIC) {
+									languageProperty.setOriginalIndex(Double.valueOf(indexCell.getNumericCellValue()).intValue());
+								} else if (indexCell.getCellType() == CellType.STRING) {
+									languageProperty.setOriginalIndex(Integer.parseInt(indexCell.getStringCellValue().trim()));
+								} else if (indexCell.getCellType() == CellType.BLANK) {
+									languageProperty.setOriginalIndex(0);
 								} else {
-									languageProperty.setComment(value.toString());
+									throw new LanguagePropertiesException("Excel file contains invalid index data type '" + indexCell.getCellType().name() + "' in sheet '" + sheet.getSheetName() + "' at row " + (rowIndex + 1) + " and column " + (columnIndex_Index + 1));
 								}
-							} else if (commentCell.getCellType() == CellType.STRING) {
-								languageProperty.setComment(commentCell.getStringCellValue());
-							} else if (commentCell.getCellType() == CellType.BLANK) {
-								languageProperty.setComment(null);
-							} else {
-								throw new LanguagePropertiesException("Excel file contains invalid comment data type '" + commentCell.getCellType().name() + "' in sheet '" + sheet.getSheetName() + "' at row " + (rowIndex + 1) + " and column " + (columnIndex_Index + 1));
+							} catch (final Exception e) {
+								throw new LanguagePropertiesException("Excel file contains invalid index value in sheet '" + sheet.getSheetName() + "' at row " + (rowIndex + 1) + " and column " + (columnIndex_Index + 1), e);
 							}
-						} catch (final Exception e) {
-							throw new LanguagePropertiesException("Excel file contains invalid comment value in sheet '" + sheet.getSheetName() + "' at row " + (rowIndex + 1) + " and column " + (columnIndex_Index + 1), e);
-						}
-					} else {
-						languageProperty.setComment(null);
-					}
-
-					for (final Entry<Integer, String> entry : languageColumnHeaders.entrySet()) {
-						final Cell valueCell = row.getCell(entry.getKey());
-						if (valueCell.getCellType() == CellType.STRING) {
-							languageProperty.setLanguageValue(entry.getValue(), valueCell.getStringCellValue());
-						} else if (valueCell.getCellType() == CellType.NUMERIC) {
-							final Double value = Double.valueOf(valueCell.getNumericCellValue());
-							if ((value % 1) == 0) {
-								languageProperty.setLanguageValue(entry.getValue(), Integer.toString(value.intValue()));
-							} else {
-								languageProperty.setLanguageValue(entry.getValue(), value.toString());
-							}
-						} else if (valueCell.getCellType() == CellType.BLANK) {
-							languageProperty.setLanguageValue(entry.getValue(), null);
 						} else {
-							throw new LanguagePropertiesException("Excel file contains invalid data type '" + valueCell.getCellType().name() + "' in sheet '" + sheet.getSheetName() + "' at row " + (rowIndex + 1) + " and column " + (entry.getKey() + 1));
+							languageProperty.setOriginalIndex(rowIndex);
 						}
-					}
 
-					languageProperties.add(languageProperty);
+						if (columnIndex_Comment >= 0) {
+							final Cell commentCell = row.getCell(columnIndex_Comment);
+							try {
+								if (commentCell == null) {
+									languageProperty.setComment(null);
+								} else if (commentCell.getCellType() == CellType.NUMERIC) {
+									final Double value = Double.valueOf(commentCell.getNumericCellValue());
+									if ((value % 1) == 0) {
+										languageProperty.setComment(Integer.toString(value.intValue()));
+									} else {
+										languageProperty.setComment(value.toString());
+									}
+								} else if (commentCell.getCellType() == CellType.STRING) {
+									languageProperty.setComment(commentCell.getStringCellValue());
+								} else if (commentCell.getCellType() == CellType.BLANK) {
+									languageProperty.setComment(null);
+								} else {
+									throw new LanguagePropertiesException("Excel file contains invalid comment data type '" + commentCell.getCellType().name() + "' in sheet '" + sheet.getSheetName() + "' at row " + (rowIndex + 1) + " and column " + (columnIndex_Index + 1));
+								}
+							} catch (final Exception e) {
+								throw new LanguagePropertiesException("Excel file contains invalid comment value in sheet '" + sheet.getSheetName() + "' at row " + (rowIndex + 1) + " and column " + (columnIndex_Index + 1), e);
+							}
+						} else {
+							languageProperty.setComment(null);
+						}
+
+						for (final Entry<Integer, String> entry : languageColumnHeaders.entrySet()) {
+							final Cell valueCell = row.getCell(entry.getKey());
+							if (valueCell == null) {
+								languageProperty.setLanguageValue(entry.getValue(), null);
+							} else if (valueCell.getCellType() == CellType.STRING) {
+								languageProperty.setLanguageValue(entry.getValue(), valueCell.getStringCellValue());
+							} else if (valueCell.getCellType() == CellType.NUMERIC) {
+								final Double value = Double.valueOf(valueCell.getNumericCellValue());
+								if ((value % 1) == 0) {
+									languageProperty.setLanguageValue(entry.getValue(), Integer.toString(value.intValue()));
+								} else {
+									languageProperty.setLanguageValue(entry.getValue(), value.toString());
+								}
+							} else if (valueCell.getCellType() == CellType.BLANK) {
+								languageProperty.setLanguageValue(entry.getValue(), null);
+							} else {
+								throw new LanguagePropertiesException("Excel file contains invalid data type '" + valueCell.getCellType().name() + "' in sheet '" + sheet.getSheetName() + "' at row " + (rowIndex + 1) + " and column " + (entry.getKey() + 1));
+							}
+						}
+
+						languageProperties.add(languageProperty);
+					}
 				}
 
 
