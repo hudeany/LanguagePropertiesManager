@@ -2,6 +2,8 @@ package de.soderer.languagepropertiesmanager.storage;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -24,18 +26,27 @@ public class LanguagePropertiesFileSetWriter {
 		final Comparator<LanguageProperty> compareByPathAndIndex = Comparator.comparing(LanguageProperty::getPath).thenComparing(LanguageProperty::getOriginalIndex);
 		final List<LanguageProperty> sortedLanguageProperties = languageProperties.stream().sorted(compareByPathAndIndex).collect(Collectors.toList());
 		for (final String nextLanguagePropertiesPath : languagePropertiesPaths) {
-
 			final List<LanguageProperty> filteredLanguageProperties = sortedLanguageProperties.stream().filter(o -> o.getPath().equals(nextLanguagePropertiesPath)).collect(Collectors.toList());
 
 			File propertiesDirectory;
 			String propertySetName;
 			final String languagePropertiesPath = Utilities.replaceUsersHome(nextLanguagePropertiesPath);
 			if (Utilities.isNotBlank(languagePropertiesPath)) {
+				try {
+					Paths.get(languagePropertiesPath);
+				} catch (@SuppressWarnings("unused") final InvalidPathException e) {
+					throw new Exception("Properties directory path is not valid (" + nextLanguagePropertiesPath + ")");
+				}
+
 				propertiesDirectory = new File(languagePropertiesPath).getParentFile();
 				propertySetName = new File(languagePropertiesPath).getName();
 			} else {
 				propertiesDirectory = directory;
 				propertySetName = languagePropertySetName;
+			}
+
+			if (propertiesDirectory == null) {
+				throw new Exception("Properties directory path '" + propertiesDirectory + "' is invalid (Path: " + nextLanguagePropertiesPath + ")");
 			}
 
 			if (!propertiesDirectory.exists()) {
