@@ -25,7 +25,7 @@ public class LanguagePropertiesFileSetReader {
 	 * @return
 	 * @throws Exception
 	 */
-	public static List<LanguageProperty> readx(final File propertiesDirectory, final String propertySetName, final boolean readKeysCaseInsensitive) throws Exception {
+	public static List<LanguageProperty> read(final File propertiesDirectory, final String propertySetName, final boolean readKeysCaseInsensitive) throws Exception {
 		return read(propertiesDirectory, propertySetName, DEFAULT_PROPERTIES_FILE_EXTENSION, readKeysCaseInsensitive);
 	}
 

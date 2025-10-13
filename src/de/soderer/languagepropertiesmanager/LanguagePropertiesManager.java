@@ -521,7 +521,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 					languagePropertiesSetName = "Multiple";
 				}
 
-				final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(this, importFromExcelWorker.getLanguageProperties(), languagePropertiesSetName, outputDirectory, configuredExcludeParts, actionDefinition.getPropertiesFileExtension());
+				final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(this, importFromExcelWorker.getLanguageProperties(), languagePropertiesSetName, outputDirectory, configuredExcludeParts, actionDefinition.isExtendAndKeepExistingProperties(), actionDefinition.getPropertiesFileExtension());
 
 				writeLanguagePropertiesWorker.setProgressDisplayDelayMilliseconds(2000);
 				writeLanguagePropertiesWorker.run();
@@ -619,7 +619,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 					languagePropertiesSetName = "CSV";
 				}
 
-				final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(this, importFromCsvWorker.getLanguageProperties(), languagePropertiesSetName, outputDirectory, configuredExcludeParts, actionDefinition.getPropertiesFileExtension());
+				final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(this, importFromCsvWorker.getLanguageProperties(), languagePropertiesSetName, outputDirectory, configuredExcludeParts, actionDefinition.isExtendAndKeepExistingProperties(), actionDefinition.getPropertiesFileExtension());
 
 				writeLanguagePropertiesWorker.setProgressDisplayDelayMilliseconds(2000);
 				writeLanguagePropertiesWorker.run();

@@ -245,7 +245,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		saveButton = new Button(buttonSection1, SWT.PUSH);
 		saveButton.setImage(ImageManager.getImage("save.png"));
 		saveButton.setToolTipText(LangResources.get("tooltip_save_files"));
-		saveButton.addSelectionListener(new SaveFilesSelectionListener());
+		saveButton.addSelectionListener(new SaveFilesSelectionListener(this));
 
 		folderSaveButton = new Button(buttonSection1, SWT.PUSH);
 		folderSaveButton.setImage(ImageManager.getImage("folderSave.png"));
@@ -1249,6 +1249,12 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	}
 
 	private class SaveFilesSelectionListener extends SelectionAdapter {
+		private final LanguagePropertiesManagerDialog mainDialog;
+
+		public SaveFilesSelectionListener(final LanguagePropertiesManagerDialog mainDialog) {
+			this.mainDialog = mainDialog;
+		}
+
 		@Override
 		public void widgetSelected(final SelectionEvent event) {
 			try {
@@ -1271,7 +1277,11 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					}
 				}
 
-				final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(null, languageProperties, languagePropertySetName, defaultLanguagePropertiesPath == null ? null : new File(defaultLanguagePropertiesPath), null, applicationConfiguration.get(LanguagePropertiesManager.PROPERTIES_FILE_EXTENSION));
+				final QuestionDialog dialog = new QuestionDialog(mainDialog, getText(), LangResources.get("question.keepExistingProperties"), LangResources.get("yes"), LangResources.get("no"));
+				final int returncode = dialog.open();
+				final boolean extendAndKeepExistingProperties = (returncode == 0);
+
+				final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(null, languageProperties, languagePropertySetName, defaultLanguagePropertiesPath == null ? null : new File(defaultLanguagePropertiesPath), null, extendAndKeepExistingProperties, applicationConfiguration.get(LanguagePropertiesManager.PROPERTIES_FILE_EXTENSION));
 				final ProgressDialog<WriteLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("save_files"), writeLanguagePropertiesWorker);
 				final Result dialogResult = progressDialog.open();
 				if (dialogResult == Result.CANCELED) {
@@ -1304,7 +1314,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				if (directoryPath == null) {
 					showErrorMessage(LangResources.get("open_directory_dialog_text"), LangResources.get("canceledByUser"));
 				} else if (new File(directoryPath).exists() && new File(directoryPath).isDirectory()) {
-					final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(null, languageProperties, "Multiple", new File(directoryPath), excludeParts, applicationConfiguration.get(LanguagePropertiesManager.PROPERTIES_FILE_EXTENSION));
+					final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(null, languageProperties, "Multiple", new File(directoryPath), excludeParts, false, applicationConfiguration.get(LanguagePropertiesManager.PROPERTIES_FILE_EXTENSION));
 					final ProgressDialog<WriteLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("save_files"), writeLanguagePropertiesWorker);
 					final Result dialogResult = progressDialog.open();
 					if (dialogResult == Result.CANCELED) {

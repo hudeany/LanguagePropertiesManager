@@ -31,17 +31,19 @@ public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 	private final List<LanguageProperty> languageProperties;
 	private final File outputDirectory;
 	private final String[] excludeParts;
+	private final boolean extendAndKeepExistingProperties;
 	private final String propertiesFileExtension;
 
 	private List<String> listOfStoredProperties;
 
-	public WriteLanguagePropertiesWorker(final WorkerParentSimple parent, final List<LanguageProperty> languageProperties, final String languagePropertySetName, final File outputDirectory, final String[] excludeParts, final String propertiesFileExtension) {
+	public WriteLanguagePropertiesWorker(final WorkerParentSimple parent, final List<LanguageProperty> languageProperties, final String languagePropertySetName, final File outputDirectory, final String[] excludeParts, final boolean extendAndKeepExistingProperties, final String propertiesFileExtension) {
 		super(parent);
 
 		this.languageProperties = languageProperties;
 		this.languagePropertySetName = languagePropertySetName;
 		this.outputDirectory = outputDirectory;
 		this.excludeParts = excludeParts;
+		this.extendAndKeepExistingProperties = extendAndKeepExistingProperties;
 		this.propertiesFileExtension = propertiesFileExtension;
 	}
 
@@ -93,14 +95,14 @@ public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 							for (final LanguageProperty languageProperty : languagePropertiesForStorage) {
 								languageProperty.setPath(Utilities.replaceUsersHomeByTilde(new File(foundPath).getAbsolutePath()));
 							}
-							LanguagePropertiesFileSetWriter.write(languagePropertiesForStorage, new File(foundPath).getParentFile(), new File(foundPath).getName(), propertiesFileExtension);
+							LanguagePropertiesFileSetWriter.write(languagePropertiesForStorage, new File(foundPath).getParentFile(), new File(foundPath).getName(), extendAndKeepExistingProperties, propertiesFileExtension);
 							listOfStoredProperties.add(foundPath);
 						} else {
 							// Create new properties set files
 							for (final LanguageProperty languageProperty : languagePropertiesForStorage) {
 								languageProperty.setPath(Utilities.replaceUsersHomeByTilde(new File(outputDirectory, propertySetName).getAbsolutePath()));
 							}
-							LanguagePropertiesFileSetWriter.write(languagePropertiesForStorage, outputDirectory, propertySetName, propertiesFileExtension);
+							LanguagePropertiesFileSetWriter.write(languagePropertiesForStorage, outputDirectory, propertySetName, extendAndKeepExistingProperties, propertiesFileExtension);
 							listOfStoredProperties.add(new File(outputDirectory, propertySetName).getAbsolutePath());
 						}
 					}
@@ -110,7 +112,7 @@ public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 				}
 			} else {
 				// Store only one language properties set which has no file path defined in LanguageProperty objects
-				LanguagePropertiesFileSetWriter.write(languageProperties, outputDirectory, languagePropertySetName, propertiesFileExtension);
+				LanguagePropertiesFileSetWriter.write(languageProperties, outputDirectory, languagePropertySetName, extendAndKeepExistingProperties, propertiesFileExtension);
 			}
 		} else {
 			final Set<String> languagePropertiesPaths = new HashSet<>();
@@ -142,7 +144,7 @@ public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 				final String propertySetName = new File(languagePropertiesPathToStore).getName();
 				final List<LanguageProperty> languagePropertiesForStorage = languageProperties.stream().filter(o -> Utilities.replaceUsersHome(o.getPath()).equals(Utilities.replaceUsersHome(languagePropertiesPathToStore))).sorted(compareByIndex).collect(Collectors.toList());
 
-				LanguagePropertiesFileSetWriter.write(languagePropertiesForStorage, new File(languagePropertiesPathToStore).getParentFile(), propertySetName, propertiesFileExtension);
+				LanguagePropertiesFileSetWriter.write(languagePropertiesForStorage, new File(languagePropertiesPathToStore).getParentFile(), propertySetName, extendAndKeepExistingProperties, propertiesFileExtension);
 				listOfStoredProperties.add(languagePropertiesPathToStore);
 
 				itemsDone++;

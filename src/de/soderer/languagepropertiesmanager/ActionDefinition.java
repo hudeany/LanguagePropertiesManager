@@ -8,6 +8,7 @@ public class ActionDefinition {
 	private String excelFile = null;
 	private String csvFile = null;
 	private String outputDirectory = null;
+	private boolean extendAndKeepExistingProperties = true;
 	private boolean overwrite = false;
 	private String propertiesFileExtension;
 	private boolean verbose = false;
@@ -73,6 +74,14 @@ public class ActionDefinition {
 	public ActionDefinition setOutputDirectory(final String outputDirectory) {
 		this.outputDirectory = outputDirectory;
 		return this;
+	}
+
+	public boolean isExtendAndKeepExistingProperties() {
+		return extendAndKeepExistingProperties;
+	}
+
+	public void setExtendAndKeepExistingProperties(final boolean extendAndKeepExistingProperties) {
+		this.extendAndKeepExistingProperties = extendAndKeepExistingProperties;
 	}
 
 	public boolean isOverwrite() {
