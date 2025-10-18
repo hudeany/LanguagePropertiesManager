@@ -102,7 +102,7 @@ public class ImportFromExcelWorker extends WorkerSimple<Boolean> {
 			languageProperties = new ArrayList<>();
 			int rowIndex = -1;
 
-			itemsToDo = sheet.getLastRowNum();
+			itemsToDo = sheet.getPhysicalNumberOfRows();
 			itemsDone = 0;
 
 			for (final Row row : sheet) {
@@ -215,7 +215,6 @@ public class ImportFromExcelWorker extends WorkerSimple<Boolean> {
 					}
 				}
 
-
 				itemsDone++;
 				signalProgress(false);
 			}
@@ -262,5 +261,13 @@ public class ImportFromExcelWorker extends WorkerSimple<Boolean> {
 
 	public boolean isCommentsFound() {
 		return commentsFound;
+	}
+
+	public String getLanguagePropertiesSetName() {
+		if (languagePropertiesSetNames.size() == 1) {
+			return languagePropertiesSetNames.get(0);
+		} else {
+			return "Multiple";
+		}
 	}
 }

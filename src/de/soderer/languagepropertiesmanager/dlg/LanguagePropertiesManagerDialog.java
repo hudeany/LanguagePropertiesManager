@@ -50,7 +50,6 @@ import org.eclipse.swt.widgets.Text;
 import de.soderer.languagepropertiesmanager.LanguagePropertiesException;
 import de.soderer.languagepropertiesmanager.LanguagePropertiesManager;
 import de.soderer.languagepropertiesmanager.image.ImageManager;
-import de.soderer.languagepropertiesmanager.storage.ExcelHelper;
 import de.soderer.languagepropertiesmanager.storage.LanguagePropertiesFileSetReader;
 import de.soderer.languagepropertiesmanager.storage.LanguageProperty;
 import de.soderer.languagepropertiesmanager.worker.ExportToCsvWorker;
@@ -1348,15 +1347,6 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				showErrorMessage(LangResources.get("import_file"), LangResources.get("canceledByUser"));
 			} else {
 				try {
-					String languagePropertiesSetName;
-					final List<String> languagePropertiesSetNames = ExcelHelper.getExcelSheetNames(new File(importFile));
-					if (languagePropertiesSetNames.size() == 1) {
-						languagePropertiesSetName = languagePropertiesSetNames.get(0);
-					} else {
-						languagePropertiesSetName = "Multiple";
-					}
-					setLanguagePropertiesSetName(languagePropertiesSetName);
-
 					final ImportFromExcelWorker importFromExcelWorker = new ImportFromExcelWorker(null, new File(importFile));
 					final ProgressDialog<ImportFromExcelWorker> progressDialog = new ProgressDialog<>(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("import_file"), importFromExcelWorker);
 					final Result dialogResult = progressDialog.open();
@@ -1368,6 +1358,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 						showMessage(LangResources.get("import_file"), LangResources.get("actionSuccessfullyCompleted"));
 
+						setLanguagePropertiesSetName(importFromExcelWorker.getLanguagePropertiesSetName());
 						languageProperties = importFromExcelWorker.getLanguageProperties();
 						availableLanguageSigns = importFromExcelWorker.getAvailableLanguageSigns();
 						hasUnsavedChanges = true;
