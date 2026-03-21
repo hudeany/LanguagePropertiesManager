@@ -155,14 +155,14 @@
 			</fileset>
 		</path>
 
-		<javac debug="true" nowarn="true" deprecation="false" destdir="${buildPath}/bin" fork="yes" source="1.8" target="1.8" srcdir="src" includeantruntime="false" encoding="UTF-8" classpath="lib/*">
+		<javac debug="true" nowarn="true" deprecation="false" destdir="${buildPath}/bin" fork="yes" source="15" target="15" srcdir="src" includeantruntime="false" encoding="UTF-8" classpath="lib/*">
 			<classpath refid="build.classpath" />
 			<compilerarg value="-Xlint:unchecked" />
 			<compilerarg value="-parameters" />
 		</javac>
 
 		<copy todir="${buildPath}/bin">
-			<fileset dir="src">
+			<fileset dir="src/main/resources">
 				<include name="**/LanguageProperties*.properties" />
 				<include name="**/*.txt" />
 				<include name="**/*.pem" />
@@ -180,8 +180,8 @@
 
 		<delete file="${buildPath}/bin/application_version.txt" />
 		<echo file="${buildPath}/bin/application_version.txt" append="false">${build.version}${line.separator}${buildTime}${line.separator}${VersionsUrl}${line.separator}${CaPublicKeyFileName}, ${CaPublicKeyFileNameOld}${line.separator}</echo>
-		<delete file="src/application_version.txt" />
-		<echo file="src/application_version.txt" append="false">${build.version}${line.separator}${buildTime}${line.separator}${VersionsUrl}${line.separator}${CaPublicKeyFileName}, ${CaPublicKeyFileNameOld}${line.separator}</echo>
+		<delete file="src/main/resources/application_version.txt" />
+		<echo file="src/main/resources/application_version.txt" append="false">${build.version}${line.separator}${buildTime}${line.separator}${VersionsUrl}${line.separator}${CaPublicKeyFileName}, ${CaPublicKeyFileNameOld}${line.separator}</echo>
 	</target>
 
 	<target name="create_jar" depends="create_versionfile, compile">
