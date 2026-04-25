@@ -17,11 +17,11 @@ public class LanguagePropertiesFileSetWriter {
 	public static final String LANGUAGE_SIGN_DEFAULT = "default";
 	public static final String DEFAULT_POPERTIES_FILE_EXTENSION = ".properties";
 
-	public static void write(final List<LanguageProperty> languageProperties, final File directory, final String languagePropertySetName, final boolean extendAndKeepExistingProperties) throws Exception {
-		write(languageProperties, directory, languagePropertySetName, extendAndKeepExistingProperties, DEFAULT_POPERTIES_FILE_EXTENSION);
+	public static void write(final List<LanguageProperty> languageProperties, final File directory, final String languagePropertySetName, final boolean extendAndKeepExistingProperties, final boolean readComments) throws Exception {
+		write(languageProperties, directory, languagePropertySetName, extendAndKeepExistingProperties, DEFAULT_POPERTIES_FILE_EXTENSION, readComments);
 	}
 
-	public static void write(final List<LanguageProperty> languageProperties, final File directory, final String languagePropertySetName, final boolean extendAndKeepExistingProperties, final String propertiesFileExtension) throws Exception {
+	public static void write(final List<LanguageProperty> languageProperties, final File directory, final String languagePropertySetName, final boolean extendAndKeepExistingProperties, final String propertiesFileExtension, final boolean readComments) throws Exception {
 		final Set<String> languagePropertiesPaths = languageProperties.stream().map(o -> o.getPath()).collect(Collectors.toSet());
 		final Comparator<LanguageProperty> compareByPathAndIndex = Comparator.comparing(LanguageProperty::getPath).thenComparing(LanguageProperty::getOriginalIndex);
 		final List<LanguageProperty> sortedLanguageProperties = languageProperties.stream().sorted(compareByPathAndIndex).collect(Collectors.toList());
@@ -57,7 +57,7 @@ public class LanguagePropertiesFileSetWriter {
 
 			final List<String> availableLanguageSigns = Utilities.sortButPutItemsFirst(getAvailableLanguageSignsOfProperties(filteredLanguageProperties), LANGUAGE_SIGN_DEFAULT);
 			if (extendAndKeepExistingProperties) {
-				final List<LanguageProperty> existingProperties = LanguagePropertiesFileSetReader.read(propertiesDirectory, propertySetName, false);
+				final List<LanguageProperty> existingProperties = LanguagePropertiesFileSetReader.read(propertiesDirectory, propertySetName, false, readComments);
 				if (existingProperties != null) {
 					for (final LanguageProperty existingProperty : existingProperties) {
 						boolean foundExistingProperty = false;

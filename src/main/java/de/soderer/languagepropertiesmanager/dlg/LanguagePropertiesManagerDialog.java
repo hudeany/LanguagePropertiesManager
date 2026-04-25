@@ -1140,11 +1140,12 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 	private boolean loadSingleLanguagePropertiesSet(final String filePath) throws ExecutionException {
 		final File languagePropertiesFile = new File(filePath);
-		if (!languagePropertiesFile.getName().endsWith(applicationConfiguration.get(LanguagePropertiesManager.PROPERTIES_FILE_EXTENSION))) {
-			showErrorMessage(LangResources.get("open_file_dialog_text"), LangResources.get("missingMandatoryFileExtension", applicationConfiguration.get(LanguagePropertiesManager.PROPERTIES_FILE_EXTENSION)));
+		if (!languagePropertiesFile.getName().endsWith(applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION))) {
+			showErrorMessage(LangResources.get("open_file_dialog_text"), LangResources.get("missingMandatoryFileExtension", applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION)));
 			return false;
 		} else {
-			final LoadLanguagePropertiesWorker openFilesLanguagePropertiesWorker = new LoadLanguagePropertiesWorker(null, languagePropertiesFile, null, applicationConfiguration.get(LanguagePropertiesManager.PROPERTIES_FILE_EXTENSION));
+			final LoadLanguagePropertiesWorker openFilesLanguagePropertiesWorker = new LoadLanguagePropertiesWorker(null, languagePropertiesFile, null, applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION));
+			openFilesLanguagePropertiesWorker.setReadComments(!applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS));
 			final ProgressDialog<LoadLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("openFilesResult"), openFilesLanguagePropertiesWorker);
 			final Result dialogResult = progressDialog.open();
 			if (dialogResult == Result.CANCELED) {
@@ -1193,7 +1194,8 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 	private boolean openAllLanguagePropertiesSets(final String basicDirectoryPath) throws ExecutionException {
 		final String[] excludeParts = applicationConfiguration.get(LanguagePropertiesManager.CONFIG_OPEN_DIR_EXCLUDES).split(";");
-		final LoadLanguagePropertiesWorker openFolderLanguagePropertiesWorker = new LoadLanguagePropertiesWorker(null, new File(basicDirectoryPath), excludeParts, applicationConfiguration.get(LanguagePropertiesManager.PROPERTIES_FILE_EXTENSION));
+		final LoadLanguagePropertiesWorker openFolderLanguagePropertiesWorker = new LoadLanguagePropertiesWorker(null, new File(basicDirectoryPath), excludeParts, applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION));
+		openFolderLanguagePropertiesWorker.setReadComments(!applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS));
 		final ProgressDialog<LoadLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("load_folder"), openFolderLanguagePropertiesWorker);
 		final Result dialogResult = progressDialog.open();
 		if (dialogResult == Result.CANCELED) {
@@ -1280,7 +1282,8 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				final int returncode = dialog.open();
 				final boolean extendAndKeepExistingProperties = (returncode == 0);
 
-				final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(null, languageProperties, languagePropertySetName, defaultLanguagePropertiesPath == null ? null : new File(defaultLanguagePropertiesPath), null, extendAndKeepExistingProperties, applicationConfiguration.get(LanguagePropertiesManager.PROPERTIES_FILE_EXTENSION));
+				final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(null, languageProperties, languagePropertySetName, defaultLanguagePropertiesPath == null ? null : new File(defaultLanguagePropertiesPath), null, extendAndKeepExistingProperties, applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION));
+				writeLanguagePropertiesWorker.setReadComments(!applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS));
 				final ProgressDialog<WriteLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("save_files"), writeLanguagePropertiesWorker);
 				final Result dialogResult = progressDialog.open();
 				if (dialogResult == Result.CANCELED) {
@@ -1313,7 +1316,8 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				if (directoryPath == null) {
 					showErrorMessage(LangResources.get("open_directory_dialog_text"), LangResources.get("canceledByUser"));
 				} else if (new File(directoryPath).exists() && new File(directoryPath).isDirectory()) {
-					final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(null, languageProperties, "Multiple", new File(directoryPath), excludeParts, false, applicationConfiguration.get(LanguagePropertiesManager.PROPERTIES_FILE_EXTENSION));
+					final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(null, languageProperties, "Multiple", new File(directoryPath), excludeParts, false, applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION));
+					writeLanguagePropertiesWorker.setReadComments(!applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS));
 					final ProgressDialog<WriteLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("save_files"), writeLanguagePropertiesWorker);
 					final Result dialogResult = progressDialog.open();
 					if (dialogResult == Result.CANCELED) {

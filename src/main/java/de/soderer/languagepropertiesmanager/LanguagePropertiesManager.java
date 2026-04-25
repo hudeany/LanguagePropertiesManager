@@ -90,7 +90,8 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 	public static final String CONFIG_OPEN_DIR_EXCLUDES = "OpenDirExcludes";
 	public static final String CONFIG_DEEPL_BASEURL = "DeepL_BaseUrl";
 	public static final String CONFIG_DEEPL_APIKEY = "DeepL_ApiKey";
-	public static final String PROPERTIES_FILE_EXTENSION = "PropertiesFileExtension";
+	public static final String CONFIG_PROPERTIES_FILE_EXTENSION = "PropertiesFileExtension";
+	public static final String CONFIG_IGNORE_COMMENTS = "IgnoreComments";
 
 	private int previousTerminalWidth = 0;
 
@@ -127,8 +128,11 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 		if (!applicationConfiguration.containsKey(LanguagePropertiesManager.CONFIG_DEEPL_APIKEY)) {
 			applicationConfiguration.set(LanguagePropertiesManager.CONFIG_DEEPL_APIKEY, "");
 		}
-		if (!applicationConfiguration.containsKey(LanguagePropertiesManager.PROPERTIES_FILE_EXTENSION)) {
-			applicationConfiguration.set(LanguagePropertiesManager.PROPERTIES_FILE_EXTENSION, LanguagePropertiesFileSetReader.DEFAULT_PROPERTIES_FILE_EXTENSION);
+		if (!applicationConfiguration.containsKey(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION)) {
+			applicationConfiguration.set(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION, LanguagePropertiesFileSetReader.DEFAULT_PROPERTIES_FILE_EXTENSION);
+		}
+		if (!applicationConfiguration.containsKey(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS)) {
+			applicationConfiguration.set(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS, "false");
 		}
 	}
 
@@ -453,6 +457,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 				}
 
 				final LoadLanguagePropertiesWorker loadLanguagePropertiesWorker = new LoadLanguagePropertiesWorker(this, propertiesFile, configuredExcludeParts, actionDefinition.getPropertiesFileExtension());
+				loadLanguagePropertiesWorker.setReadComments(!applicationConfiguration.getBoolean(CONFIG_IGNORE_COMMENTS));
 
 				loadLanguagePropertiesWorker.setProgressDisplayDelayMilliseconds(2000);
 				loadLanguagePropertiesWorker.run();
@@ -524,6 +529,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 				}
 
 				final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(this, importFromExcelWorker.getLanguageProperties(), languagePropertiesSetName, outputDirectory, configuredExcludeParts, actionDefinition.isExtendAndKeepExistingProperties(), actionDefinition.getPropertiesFileExtension());
+				writeLanguagePropertiesWorker.setReadComments(!applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS));
 
 				writeLanguagePropertiesWorker.setProgressDisplayDelayMilliseconds(2000);
 				writeLanguagePropertiesWorker.run();

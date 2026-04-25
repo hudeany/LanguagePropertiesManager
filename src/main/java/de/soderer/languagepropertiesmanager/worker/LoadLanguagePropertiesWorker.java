@@ -32,6 +32,7 @@ public class LoadLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 	private List<String> availableLanguageSigns;
 	private boolean commentsFound;
 	private final String propertiesFileExtension;
+	private boolean readComments = true;
 
 	public LoadLanguagePropertiesWorker(final WorkerParentSimple parent, final File languagePropertiesFileOrBasicDirectory, final String[] excludeParts, final String propertiesFileExtension) {
 		super(parent);
@@ -66,7 +67,7 @@ public class LoadLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 				throw new Exception("Missing mandatory file extension '" + propertiesFileExtension + "'");
 			}
 
-			languageProperties = LanguagePropertiesFileSetReader.read(languagePropertiesFileOrBasicDirectory.getParentFile(), languagePropertiesSetName, propertiesFileExtension, false);
+			languageProperties = LanguagePropertiesFileSetReader.read(languagePropertiesFileOrBasicDirectory.getParentFile(), languagePropertiesSetName, propertiesFileExtension, false, readComments);
 			languagePropertiesSetNames.add(languagePropertiesSetName);
 		} else {
 			parent.changeTitle(LangResources.get("searchingLanguageProperties"));
@@ -106,7 +107,7 @@ public class LoadLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 			languageProperties = new ArrayList<>();
 			for (final String propertiesPath : propertiesPaths) {
 				final String layoutPropertySetName = new File(propertiesPath).getName();
-				final List<LanguageProperty> nextLanguageProperties = LanguagePropertiesFileSetReader.read(new File(propertiesPath).getParentFile(), layoutPropertySetName, propertiesFileExtension, false);
+				final List<LanguageProperty> nextLanguageProperties = LanguagePropertiesFileSetReader.read(new File(propertiesPath).getParentFile(), layoutPropertySetName, propertiesFileExtension, false, readComments);
 				languageProperties.addAll(nextLanguageProperties);
 				languagePropertiesSetNames.add(layoutPropertySetName);
 
@@ -153,5 +154,13 @@ public class LoadLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 	@Override
 	public String getResultText() {
 		return null;
+	}
+
+	public boolean isReadComments() {
+		return readComments;
+	}
+
+	public void setReadComments(final boolean readComments) {
+		this.readComments = readComments;
 	}
 }

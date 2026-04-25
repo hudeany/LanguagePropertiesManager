@@ -33,6 +33,7 @@ public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 	private final String[] excludeParts;
 	private final boolean extendAndKeepExistingProperties;
 	private final String propertiesFileExtension;
+	private boolean readComments = true;
 
 	private List<String> listOfStoredProperties;
 
@@ -95,14 +96,14 @@ public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 							for (final LanguageProperty languageProperty : languagePropertiesForStorage) {
 								languageProperty.setPath(Utilities.replaceUsersHomeByTilde(new File(foundPath).getAbsolutePath()));
 							}
-							LanguagePropertiesFileSetWriter.write(languagePropertiesForStorage, new File(foundPath).getParentFile(), new File(foundPath).getName(), extendAndKeepExistingProperties, propertiesFileExtension);
+							LanguagePropertiesFileSetWriter.write(languagePropertiesForStorage, new File(foundPath).getParentFile(), new File(foundPath).getName(), extendAndKeepExistingProperties, propertiesFileExtension, readComments);
 							listOfStoredProperties.add(foundPath);
 						} else {
 							// Create new properties set files
 							for (final LanguageProperty languageProperty : languagePropertiesForStorage) {
 								languageProperty.setPath(Utilities.replaceUsersHomeByTilde(new File(outputDirectory, propertySetName).getAbsolutePath()));
 							}
-							LanguagePropertiesFileSetWriter.write(languagePropertiesForStorage, outputDirectory, propertySetName, extendAndKeepExistingProperties, propertiesFileExtension);
+							LanguagePropertiesFileSetWriter.write(languagePropertiesForStorage, outputDirectory, propertySetName, extendAndKeepExistingProperties, propertiesFileExtension, readComments);
 							listOfStoredProperties.add(new File(outputDirectory, propertySetName).getAbsolutePath());
 						}
 					}
@@ -112,7 +113,7 @@ public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 				}
 			} else {
 				// Store only one language properties set which has no file path defined in LanguageProperty objects
-				LanguagePropertiesFileSetWriter.write(languageProperties, outputDirectory, languagePropertySetName, extendAndKeepExistingProperties, propertiesFileExtension);
+				LanguagePropertiesFileSetWriter.write(languageProperties, outputDirectory, languagePropertySetName, extendAndKeepExistingProperties, propertiesFileExtension, readComments);
 			}
 		} else {
 			final Set<String> languagePropertiesPaths = new HashSet<>();
@@ -144,7 +145,7 @@ public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 				final String propertySetName = new File(languagePropertiesPathToStore).getName();
 				final List<LanguageProperty> languagePropertiesForStorage = languageProperties.stream().filter(o -> Utilities.replaceUsersHome(o.getPath()).equals(Utilities.replaceUsersHome(languagePropertiesPathToStore))).sorted(compareByIndex).collect(Collectors.toList());
 
-				LanguagePropertiesFileSetWriter.write(languagePropertiesForStorage, new File(languagePropertiesPathToStore).getParentFile(), propertySetName, extendAndKeepExistingProperties, propertiesFileExtension);
+				LanguagePropertiesFileSetWriter.write(languagePropertiesForStorage, new File(languagePropertiesPathToStore).getParentFile(), propertySetName, extendAndKeepExistingProperties, propertiesFileExtension, readComments);
 				listOfStoredProperties.add(languagePropertiesPathToStore);
 
 				itemsDone++;
@@ -189,5 +190,13 @@ public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 	@Override
 	public String getResultText() {
 		return null;
+	}
+
+	public boolean isReadComments() {
+		return readComments;
+	}
+
+	public void setReadComments(final boolean readComments) {
+		this.readComments = readComments;
 	}
 }

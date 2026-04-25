@@ -25,8 +25,8 @@ public class LanguagePropertiesFileSetReader {
 	 * @return
 	 * @throws Exception
 	 */
-	public static List<LanguageProperty> read(final File propertiesDirectory, final String propertySetName, final boolean readKeysCaseInsensitive) throws Exception {
-		return read(propertiesDirectory, propertySetName, DEFAULT_PROPERTIES_FILE_EXTENSION, readKeysCaseInsensitive);
+	public static List<LanguageProperty> read(final File propertiesDirectory, final String propertySetName, final boolean readKeysCaseInsensitive, final boolean readComments) throws Exception {
+		return read(propertiesDirectory, propertySetName, DEFAULT_PROPERTIES_FILE_EXTENSION, readKeysCaseInsensitive, readComments);
 	}
 
 	/**
@@ -35,7 +35,7 @@ public class LanguagePropertiesFileSetReader {
 	 * @return
 	 * @throws Exception
 	 */
-	public static List<LanguageProperty> read(final File propertiesDirectory, final String propertySetName, final String propertiesFileExtension, final boolean readKeysCaseInsensitive) throws Exception {
+	public static List<LanguageProperty> read(final File propertiesDirectory, final String propertySetName, final String propertiesFileExtension, final boolean readKeysCaseInsensitive, final boolean readComments) throws Exception {
 		if (!propertiesDirectory.exists()) {
 			throw new Exception("Properties directory '" + propertiesDirectory + "' does not exist");
 		} else if (!propertiesDirectory.isDirectory()) {
@@ -66,8 +66,10 @@ public class LanguagePropertiesFileSetReader {
 							property.setOriginalIndex(languageProperties.size() + 1);
 							languageProperties.add(property);
 						}
-						if (Utilities.isNotEmpty(propertiesReader.getComments().get(entry.getKey())) && Utilities.isEmpty(property.getComment())) {
-							property.setComment(propertiesReader.getComments().get(entry.getKey()));
+						if (readComments) {
+							if (Utilities.isNotEmpty(propertiesReader.getComments().get(entry.getKey())) && Utilities.isEmpty(property.getComment())) {
+								property.setComment(propertiesReader.getComments().get(entry.getKey()));
+							}
 						}
 						property.setLanguageValue(languageSign, entry.getValue());
 					}

@@ -1,5 +1,9 @@
 Version ${build.version}
 
+25.1.63
+Added configuration option to ignore comments
+
+25.1.62
 CSV files import and export
 Improved Excel data values import
 Improved DeepL translation support
