@@ -497,6 +497,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 				}
 
 				final ImportFromExcelWorker importFromExcelWorker = new ImportFromExcelWorker(this, excelFile);
+				importFromExcelWorker.setIgnoreComments(applicationConfiguration.getBoolean(CONFIG_IGNORE_COMMENTS));
 
 				importFromExcelWorker.setProgressDisplayDelayMilliseconds(2000);
 				importFromExcelWorker.run();
@@ -595,6 +596,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 				}
 
 				final ImportFromCsvWorker importFromCsvWorker = new ImportFromCsvWorker(this, csvFile);
+				importFromCsvWorker.setIgnoreComments(applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS));
 
 				importFromCsvWorker.setProgressDisplayDelayMilliseconds(2000);
 				importFromCsvWorker.run();

@@ -33,6 +33,7 @@ public class ImportFromExcelWorker extends WorkerSimple<Boolean> {
 	private List<String> languagePropertiesSetNames;
 	private List<LanguageProperty> languageProperties;
 	private List<String> availableLanguageSigns;
+	private boolean ignoreComments = false;
 	private boolean commentsFound;
 
 	public ImportFromExcelWorker(final WorkerParentSimple parent, final File importExcelFile) {
@@ -82,8 +83,8 @@ public class ImportFromExcelWorker extends WorkerSimple<Boolean> {
 							|| "idx".equalsIgnoreCase(cellValue.trim())
 							|| "org.idx".equalsIgnoreCase(cellValue.trim())) {
 						columnIndex_Index = headerColumnIndex;
-					} else if ("comment".equalsIgnoreCase(cellValue.trim())
-							|| "kommentar".equalsIgnoreCase(cellValue.trim())) {
+					} else if (("comment".equalsIgnoreCase(cellValue.trim())
+							|| "kommentar".equalsIgnoreCase(cellValue.trim())) && !ignoreComments) {
 						columnIndex_Comment = headerColumnIndex;
 					} else if ("default".equalsIgnoreCase(cellValue)) {
 						languageColumnHeaders.put(headerColumnIndex, cellValue.toLowerCase());
@@ -261,6 +262,14 @@ public class ImportFromExcelWorker extends WorkerSimple<Boolean> {
 
 	public boolean isCommentsFound() {
 		return commentsFound;
+	}
+
+	public boolean isIgnoreComments() {
+		return ignoreComments;
+	}
+
+	public void setIgnoreComments(final boolean ignoreComments) {
+		this.ignoreComments = ignoreComments;
 	}
 
 	public String getLanguagePropertiesSetName() {

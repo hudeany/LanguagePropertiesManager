@@ -1352,6 +1352,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			} else {
 				try {
 					final ImportFromExcelWorker importFromExcelWorker = new ImportFromExcelWorker(null, new File(importFile));
+					importFromExcelWorker.setIgnoreComments(applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS));
 					final ProgressDialog<ImportFromExcelWorker> progressDialog = new ProgressDialog<>(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("import_file"), importFromExcelWorker);
 					final Result dialogResult = progressDialog.open();
 					if (dialogResult == Result.CANCELED) {
@@ -1409,6 +1410,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					setLanguagePropertiesSetName(languagePropertiesSetName);
 
 					final ImportFromCsvWorker importFromCsvWorker = new ImportFromCsvWorker(null, new File(importFile));
+					importFromCsvWorker.setIgnoreComments(applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS));
 					final ProgressDialog<ImportFromCsvWorker> progressDialog = new ProgressDialog<>(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("import_file"), importFromCsvWorker);
 					final Result dialogResult = progressDialog.open();
 					if (dialogResult == Result.CANCELED) {
