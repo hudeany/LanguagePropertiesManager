@@ -8,12 +8,12 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.AbstractFileFilter;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
-import org.apache.commons.io.filefilter.RegexFileFilter;
+import org.apache.commons.io.filefilter.IOFileFilter;
 
 import de.soderer.languagepropertiesmanager.LanguagePropertiesException;
 import de.soderer.languagepropertiesmanager.storage.LanguagePropertiesFileSetReader;
@@ -73,7 +73,8 @@ public class LoadLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 			parent.changeTitle(LangResources.get("searchingLanguageProperties"));
 			signalUnlimitedProgress();
 
-			final Collection<File> propertiesFiles = FileUtils.listFiles(languagePropertiesFileOrBasicDirectory, new RegexFileFilter("^.*_en" + Pattern.quote(propertiesFileExtension) + "$||^.*_de" + Pattern.quote(propertiesFileExtension) + "$"), DirectoryFileFilter.DIRECTORY);
+			final Collection<File> propertiesFiles = FileUtils.listFiles(languagePropertiesFileOrBasicDirectory, languagePropertiesFilter, DirectoryFileFilter.DIRECTORY);
+
 			final Set<String> propertiesSetsPaths = new HashSet<>();
 			for (final File propertiesFile : propertiesFiles) {
 				boolean excluded = false;
@@ -163,4 +164,30 @@ public class LoadLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 	public void setReadComments(final boolean readComments) {
 		this.readComments = readComments;
 	}
+
+	final IOFileFilter languagePropertiesFilter = new AbstractFileFilter() {
+		@Override
+		public boolean accept(final File file) {
+			final String name = file.getName();
+			if (!name.endsWith(propertiesFileExtension)) {
+				return false;
+			}
+			final String baseName = name.substring(0, name.length() - propertiesFileExtension.length());
+			final String[] parts = baseName.split("_");
+			if (parts.length < 2) {
+				return false;
+			}
+
+			final String lastPart = parts[parts.length - 1];
+			final String secondLastPart = parts.length >= 3 ? parts[parts.length - 2] : null;
+
+			if (lastPart.matches("[A-Z]{2}") && secondLastPart != null && secondLastPart.matches("[a-z]{2}")) {
+				return true; // e.g. _de_AT
+			} else if (lastPart.matches("[a-z]{2}")) {
+				return true; // e.g. _de
+			} else {
+				return false;
+			}
+		}
+	};
 }
