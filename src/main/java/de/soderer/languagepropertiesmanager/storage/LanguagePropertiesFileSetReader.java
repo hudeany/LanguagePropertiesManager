@@ -4,11 +4,15 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import de.soderer.utilities.PropertiesReader;
@@ -18,6 +22,9 @@ import de.soderer.utilities.WildcardFilenameFilter;
 public class LanguagePropertiesFileSetReader {
 	public static final String LANGUAGE_SIGN_DEFAULT = "default";
 	public static final String DEFAULT_PROPERTIES_FILE_EXTENSION = ".properties";
+	private static final Set<String> ISO_LANGUAGES = new HashSet<>(Arrays.asList(Locale.getISOLanguages()));
+	private static final Set<String> ISO_COUNTRIES = new HashSet<>(Arrays.asList(Locale.getISOCountries()));
+	private static final Pattern LOCALE_SUFFIX_PATTERN = Pattern.compile("_([a-z]{2})(?:_([A-Z]{2})(?:_([A-Za-z0-9]+))?)?$");
 
 	/**
 	 * Reads a set of language properties files into a map with values of item name strings as keys, where each of them is referencing a map of language signs and their value string for display
@@ -95,11 +102,17 @@ public class LanguagePropertiesFileSetReader {
 		if (lastPoint >= 0) {
 			fileNamePart = fileNamePart.substring(0, lastPoint);
 		}
-		final String[] fileNameParts = fileNamePart.split("_");
-		if (fileNameParts.length == 2) {
-			return fileNameParts[1];
-		} else if (fileNameParts.length >= 3) {
-			return fileNameParts[fileNameParts.length - 2] + "_" + fileNameParts[fileNameParts.length - 1];
+
+		final Matcher matcher = LOCALE_SUFFIX_PATTERN.matcher(fileNamePart);
+		if (matcher.find()) {
+			final String lang = matcher.group(1);
+			final String country = matcher.group(2);
+
+			if (ISO_LANGUAGES.contains(lang) && (country == null || ISO_COUNTRIES.contains(country))) {
+				return fileNamePart.substring(matcher.start() + 1);
+			} else {
+				return LANGUAGE_SIGN_DEFAULT;
+			}
 		} else {
 			return LANGUAGE_SIGN_DEFAULT;
 		}

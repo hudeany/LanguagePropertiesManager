@@ -8,6 +8,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
@@ -59,7 +60,7 @@ public class LoadLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 			String languagePropertiesSetName;
 			if (filename.endsWith(propertiesFileExtension)) {
 				if (filename.contains("_")) {
-					languagePropertiesSetName = filename.substring(0, filename.indexOf("_"));
+					languagePropertiesSetName = getLanguagePropertiesSetName(filename);
 				} else {
 					languagePropertiesSetName = filename.substring(0, filename.indexOf(propertiesFileExtension));
 				}
@@ -87,7 +88,7 @@ public class LoadLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 					}
 				}
 				if (!excluded) {
-					final String propertySetName = propertiesFile.getName().substring(0, propertiesFile.getName().indexOf("_"));
+					final String propertySetName = getLanguagePropertiesSetName(propertiesFile.getName());
 					final String propertiesSetsPath = propertiesFile.getParentFile().getAbsolutePath() + File.separator + propertySetName;
 					propertiesSetsPaths.add(propertiesSetsPath);
 				}
@@ -134,6 +135,13 @@ public class LoadLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 		}
 
 		return !cancel;
+	}
+
+	private String getLanguagePropertiesSetName(final String languagePropertiesFileName) {
+		String baseName = languagePropertiesFileName.replaceFirst(Pattern.quote(propertiesFileExtension) + "$", "");
+		baseName = baseName.replaceFirst("_[a-z]{2}(_[A-Z]{2}(_[A-Za-z0-9]+)?)?$", "");
+
+		return baseName;
 	}
 
 	public List<String> getLanguagePropertiesSetNames() {
