@@ -17,7 +17,6 @@ import java.util.stream.Collectors;
 
 import de.soderer.utilities.PropertiesReader;
 import de.soderer.utilities.Utilities;
-import de.soderer.utilities.WildcardFilenameFilter;
 
 public class LanguagePropertiesFileSetReader {
 	public static final String LANGUAGE_SIGN_DEFAULT = "default";
@@ -51,7 +50,7 @@ public class LanguagePropertiesFileSetReader {
 
 		final List<LanguageProperty> languageProperties = new ArrayList<>();
 
-		final FilenameFilter fileFilter = new WildcardFilenameFilter(propertySetName + "*" + propertiesFileExtension);
+		final FilenameFilter fileFilter = (dir, name) -> isFileOfPropertySet(name, propertySetName, propertiesFileExtension);
 
 		for (final File propertyFile : propertiesDirectory.listFiles(fileFilter)) {
 			final String languageSign = getLanguageSignOfFilename(propertyFile.getName());
@@ -59,7 +58,7 @@ public class LanguagePropertiesFileSetReader {
 				try (PropertiesReader propertiesReader = new PropertiesReader(new FileInputStream(propertyFile))) {
 					propertiesReader.setReadKeysCaseInsensitive(readKeysCaseInsensitive);
 					final Map<String, String> languageEntries = propertiesReader.read();
-					final String path = Utilities.replaceUsersHomeByTilde(propertyFile.getAbsolutePath().replace("_" + languageSign, "").replace(propertiesFileExtension, ""));
+					final String path = Utilities.replaceUsersHomeByTilde(new File(propertiesDirectory, propertySetName).getAbsolutePath());
 					for (final Entry<String, String> entry : languageEntries.entrySet()) {
 						LanguageProperty property = null;
 						for (final LanguageProperty languageProperty : languageProperties) {
@@ -69,7 +68,7 @@ public class LanguagePropertiesFileSetReader {
 							}
 						}
 						if (property == null) {
-							property = new LanguageProperty(Utilities.replaceUsersHomeByTilde(new File(propertiesDirectory, propertySetName).getAbsolutePath()), entry.getKey());
+							property = new LanguageProperty(path, entry.getKey());
 							property.setOriginalIndex(languageProperties.size() + 1);
 							languageProperties.add(property);
 						}
@@ -87,6 +86,38 @@ public class LanguagePropertiesFileSetReader {
 		}
 
 		return languageProperties;
+	}
+
+	/**
+	 * Checks whether a filename belongs to the given property set:
+	 * either an exact match of "propertySetName + extension" (the default language file),
+	 * or "propertySetName + '_' + validLocaleSuffix + extension".
+	 * A plain wildcard match on "propertySetName*extension" would also match unrelated files
+	 * like "propertySetName-customer.properties", which must be excluded here.
+	 */
+	public static boolean isFileOfPropertySet(final String fileName, final String propertySetName, final String propertiesFileExtension) {
+		if (fileName == null || !fileName.endsWith(propertiesFileExtension)) {
+			return false;
+		}
+
+		final String baseName = fileName.substring(0, fileName.length() - propertiesFileExtension.length());
+		if (baseName.equals(propertySetName)) {
+			return true;
+		}
+
+		if (!baseName.startsWith(propertySetName)) {
+			return false;
+		}
+
+		final String localeSuffix = baseName.substring(propertySetName.length());
+		final Matcher matcher = LOCALE_SUFFIX_PATTERN.matcher(localeSuffix);
+		if (matcher.matches()) {
+			final String lang = matcher.group(1);
+			final String country = matcher.group(2);
+			return ISO_LANGUAGES.contains(lang) && (country == null || ISO_COUNTRIES.contains(country));
+		} else {
+			return false;
+		}
 	}
 
 	/**
