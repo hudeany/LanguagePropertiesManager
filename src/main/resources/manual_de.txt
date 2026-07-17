@@ -135,11 +135,11 @@ Hierfür wird eine CSV Datei angelegt mit folgende Spalten mit Daten:
 	"en", "de", "de_AT", "de_CH", "fr", ... (Sprachwerte der einzelnen Sprachenkennzeichen, auch Länderspezifische Kennzeichen mit Unterstrich sind erlaubt)
 
 
-6.1 Language Properties Dateiendung
+6. Individuell anpassbare Konfigurationswerte
 
 6.1 Dateiendung der Language Properties Dateien
 
 Standardmäßig verwendet dieses Tool die Dateierweiterung ".properties" für alle Language Properties Dateien.
 Um dieses Verhalten zu überschreiben, können Sie den Konfigurationswert "PropertiesFileExtension" setzen, der im Konfigurationsmenü über die Schaltfläche "Konfiguration" (Schraubenschlüsselsymbol) verfügbar ist.
-This allows file extensions such as "_mytext.properties" to be used, which do not comply with the Language Properties Standard.
-Please note that changing this configuration is permanent and will affect any load or save actions in the GUI.
+Dies erlaubt die Verwendung von Dateiendungen wie "_mytext.properties", die nicht dem Language-Properties-Standard entsprechen.
+Bitte beachten Sie, dass diese Änderung dauerhaft ist und sich auf jeden Lade- oder Speichervorgang in der GUI auswirkt.
