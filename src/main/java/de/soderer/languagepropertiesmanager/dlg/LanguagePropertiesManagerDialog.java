@@ -1309,7 +1309,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				final ProgressDialog<WriteLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("save_files"), writeLanguagePropertiesWorker);
 				final Result dialogResult = progressDialog.open();
 				if (dialogResult == Result.CANCELED) {
-					showErrorMessage(LangResources.get("open_directory_dialog_text"), LangResources.get("canceledByUser"));
+					showErrorMessage(LangResources.get("save_file_dialog_text"), LangResources.get("canceledByUser"));
 				} else {
 					// check for errors
 					writeLanguagePropertiesWorker.get();
@@ -1340,10 +1340,10 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				String newPropertiesSetName = "Multiple";
 				if (hasPropertiesWithoutPath) {
 					final DirectoryDialog directoryDialog = new DirectoryDialog(getShell());
-					directoryDialog.setText(LangResources.get("open_directory_dialog_text"));
+					directoryDialog.setText(LangResources.get("save_directory_dialog_text"));
 					final String directoryPath = directoryDialog.open();
 					if (directoryPath == null) {
-						showErrorMessage(LangResources.get("open_directory_dialog_text"), LangResources.get("canceledByUser"));
+						showErrorMessage(LangResources.get("save_directory_dialog_text"), LangResources.get("canceledByUser"));
 						return;
 					} else if (!new File(directoryPath).exists() || !new File(directoryPath).isDirectory()) {
 						return;
@@ -1354,7 +1354,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					nameDialog.setDefaultText(newPropertiesSetName);
 					final String enteredName = nameDialog.open();
 					if (Utilities.isBlank(enteredName)) {
-						showErrorMessage(LangResources.get("open_directory_dialog_text"), LangResources.get("canceledByUser"));
+						showErrorMessage(LangResources.get("save_directory_dialog_text"), LangResources.get("canceledByUser"));
 						return;
 					}
 					newPropertiesSetName = enteredName;
@@ -1369,7 +1369,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				final ProgressDialog<WriteLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("save_files"), writeLanguagePropertiesWorker);
 				final Result dialogResult = progressDialog.open();
 				if (dialogResult == Result.CANCELED) {
-					showErrorMessage(LangResources.get("open_directory_dialog_text"), LangResources.get("canceledByUser"));
+					showErrorMessage(LangResources.get("save_directory_dialog_text"), LangResources.get("canceledByUser"));
 				} else {
 					// check for errors
 					writeLanguagePropertiesWorker.get();
