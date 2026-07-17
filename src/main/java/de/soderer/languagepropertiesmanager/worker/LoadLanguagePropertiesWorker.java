@@ -8,7 +8,6 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
@@ -60,7 +59,7 @@ public class LoadLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 			String languagePropertiesSetName;
 			if (filename.endsWith(propertiesFileExtension)) {
 				if (filename.contains("_")) {
-					languagePropertiesSetName = getLanguagePropertiesSetName(filename);
+					languagePropertiesSetName = LanguagePropertiesFileSetReader.getPropertySetBaseName(filename, propertiesFileExtension);
 				} else {
 					languagePropertiesSetName = filename.substring(0, filename.indexOf(propertiesFileExtension));
 				}
@@ -88,7 +87,7 @@ public class LoadLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 					}
 				}
 				if (!excluded) {
-					final String propertySetName = getLanguagePropertiesSetName(propertiesFile.getName());
+					final String propertySetName = LanguagePropertiesFileSetReader.getPropertySetBaseName(propertiesFile.getName(), propertiesFileExtension);
 					final String propertiesSetsPath = propertiesFile.getParentFile().getAbsolutePath() + File.separator + propertySetName;
 					propertiesSetsPaths.add(propertiesSetsPath);
 				}
@@ -137,13 +136,6 @@ public class LoadLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 		return !cancel;
 	}
 
-	private String getLanguagePropertiesSetName(final String languagePropertiesFileName) {
-		String baseName = languagePropertiesFileName.replaceFirst(Pattern.quote(propertiesFileExtension) + "$", "");
-		baseName = baseName.replaceFirst("_[a-z]{2}(_[A-Z]{2}(_[A-Za-z0-9]+)?)?$", "");
-
-		return baseName;
-	}
-
 	public List<String> getLanguagePropertiesSetNames() {
 		return languagePropertiesSetNames;
 	}
@@ -176,26 +168,7 @@ public class LoadLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 	final IOFileFilter languagePropertiesFilter = new AbstractFileFilter() {
 		@Override
 		public boolean accept(final File file) {
-			final String name = file.getName();
-			if (!name.endsWith(propertiesFileExtension)) {
-				return false;
-			}
-			final String baseName = name.substring(0, name.length() - propertiesFileExtension.length());
-			final String[] parts = baseName.split("_");
-			if (parts.length < 2) {
-				return false;
-			}
-
-			final String lastPart = parts[parts.length - 1];
-			final String secondLastPart = parts.length >= 3 ? parts[parts.length - 2] : null;
-
-			if (lastPart.matches("[A-Z]{2}") && secondLastPart != null && secondLastPart.matches("[a-z]{2}")) {
-				return true; // e.g. _de_AT
-			} else if (lastPart.matches("[a-z]{2}")) {
-				return true; // e.g. _de
-			} else {
-				return false;
-			}
+			return file.getName().endsWith(propertiesFileExtension);
 		}
 	};
 }

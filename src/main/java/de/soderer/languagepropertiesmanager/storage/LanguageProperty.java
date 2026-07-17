@@ -56,7 +56,15 @@ public class LanguageProperty {
 	}
 
 	public boolean isEmpty() {
-		return Utilities.isEmpty(key) || languageValues.size() == 0;
+		if (Utilities.isEmpty(key)) {
+			return true;
+		}
+		for (final String value : languageValues.values()) {
+			if (Utilities.isNotEmpty(value)) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	public LanguageProperty removeLanguageValue(final String languageSign) {

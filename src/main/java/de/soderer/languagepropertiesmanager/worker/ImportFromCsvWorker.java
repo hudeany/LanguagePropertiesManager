@@ -88,8 +88,8 @@ public class ImportFromCsvWorker extends WorkerSimple<Boolean> {
 			languageProperties = new ArrayList<>();
 			int rowIndex = -1;
 
-			itemsToDo = 1000;
 			itemsDone = 0;
+			signalUnlimitedProgress();
 
 			List<String> valuesRow;
 			while ((valuesRow = csvReader.readNextCsvLine()) != null) {
@@ -140,7 +140,7 @@ public class ImportFromCsvWorker extends WorkerSimple<Boolean> {
 			}
 		}
 
-		itemsDone = itemsToDo;
+		itemsToDo = itemsDone;
 		signalProgress(true);
 
 		availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT);

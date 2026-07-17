@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -41,7 +42,9 @@ public class LanguagePropertiesFileSetReader {
 	 * @return
 	 * @throws Exception
 	 */
-	public static List<LanguageProperty> read(final File propertiesDirectory, final String propertySetName, final String propertiesFileExtension, final boolean readKeysCaseInsensitive, final boolean readComments) throws Exception {
+	public static List<LanguageProperty> read(final File propertiesDirectory, final String propertySetName,
+			final String propertiesFileExtension, final boolean readKeysCaseInsensitive, final boolean readComments)
+			throws Exception {
 		if (!propertiesDirectory.exists()) {
 			throw new Exception("Properties directory '" + propertiesDirectory + "' does not exist");
 		} else if (!propertiesDirectory.isDirectory()) {
@@ -49,6 +52,7 @@ public class LanguagePropertiesFileSetReader {
 		}
 
 		final List<LanguageProperty> languageProperties = new ArrayList<>();
+		final Map<String, Map<String, LanguageProperty>> propertyIndex = new HashMap<>();
 
 		final FilenameFilter fileFilter = (dir, name) -> isFileOfPropertySet(name, propertySetName, propertiesFileExtension);
 
@@ -59,21 +63,19 @@ public class LanguagePropertiesFileSetReader {
 					propertiesReader.setReadKeysCaseInsensitive(readKeysCaseInsensitive);
 					final Map<String, String> languageEntries = propertiesReader.read();
 					final String path = Utilities.replaceUsersHomeByTilde(new File(propertiesDirectory, propertySetName).getAbsolutePath());
+					final Map<String, LanguageProperty> keyIndex = propertyIndex.computeIfAbsent(path, p -> new HashMap<>());
+
 					for (final Entry<String, String> entry : languageEntries.entrySet()) {
-						LanguageProperty property = null;
-						for (final LanguageProperty languageProperty : languageProperties) {
-							if (languageProperty.getPath().equals(path) && languageProperty.getKey().equals(entry.getKey())) {
-								property = languageProperty;
-								break;
-							}
-						}
+						LanguageProperty property = keyIndex.get(entry.getKey());
 						if (property == null) {
 							property = new LanguageProperty(path, entry.getKey());
 							property.setOriginalIndex(languageProperties.size() + 1);
 							languageProperties.add(property);
+							keyIndex.put(entry.getKey(), property);
 						}
 						if (readComments) {
-							if (Utilities.isNotEmpty(propertiesReader.getComments().get(entry.getKey())) && Utilities.isEmpty(property.getComment())) {
+							if (Utilities.isNotEmpty(propertiesReader.getComments().get(entry.getKey()))
+									&& Utilities.isEmpty(property.getComment())) {
 								property.setComment(propertiesReader.getComments().get(entry.getKey()));
 							}
 						}
@@ -166,5 +168,25 @@ public class LanguagePropertiesFileSetReader {
 		}
 
 		return languagePropertiesSetNames;
+	}
+
+	public static String getPropertySetBaseName(final String fileName, final String propertiesFileExtension) {
+		if (fileName == null || !fileName.endsWith(propertiesFileExtension)) {
+			return null;
+		}
+
+		final String baseName = fileName.substring(0, fileName.length() - propertiesFileExtension.length());
+		final Matcher matcher = LOCALE_SUFFIX_PATTERN.matcher(baseName);
+		if (matcher.find()) {
+			final String lang = matcher.group(1);
+			final String country = matcher.group(2);
+			if (ISO_LANGUAGES.contains(lang) && (country == null || ISO_COUNTRIES.contains(country))) {
+				// Strip the validated locale suffix, keep everything before it
+				return baseName.substring(0, matcher.start());
+			}
+		}
+
+		// No valid locale suffix found -> this file IS the base/default file itself
+		return baseName;
 	}
 }

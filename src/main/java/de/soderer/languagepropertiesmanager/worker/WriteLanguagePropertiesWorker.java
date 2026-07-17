@@ -8,14 +8,14 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
-import org.apache.commons.io.filefilter.RegexFileFilter;
+import org.apache.commons.io.filefilter.SuffixFileFilter;
 
 import de.soderer.languagepropertiesmanager.LanguagePropertiesException;
+import de.soderer.languagepropertiesmanager.storage.LanguagePropertiesFileSetReader;
 import de.soderer.languagepropertiesmanager.storage.LanguagePropertiesFileSetWriter;
 import de.soderer.languagepropertiesmanager.storage.LanguageProperty;
 import de.soderer.utilities.Utilities;
@@ -116,37 +116,43 @@ public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 				LanguagePropertiesFileSetWriter.write(languageProperties, outputDirectory, languagePropertySetName, extendAndKeepExistingProperties, propertiesFileExtension, readComments);
 			}
 		} else {
+			if (outputDirectory == null) {
+				for (final LanguageProperty languageProperty : languageProperties) {
+					if (Utilities.isBlank(languageProperty.getPath())) {
+						throw new LanguagePropertiesException("Property '" + languageProperty.getKey() + "' has no path and no outputDirectory was given");
+					}
+				}
+			}
+
+			for (final LanguageProperty languageProperty : languageProperties) {
+				if (Utilities.isBlank(languageProperty.getPath())) {
+					languageProperty.setPath(Utilities.replaceUsersHomeByTilde(outputDirectory.getAbsolutePath()));
+				}
+			}
+
 			final Set<String> languagePropertiesPaths = new HashSet<>();
 			for (final LanguageProperty languageProperty : languageProperties) {
 				languagePropertiesPaths.add(languageProperty.getPath());
 			}
 
-			final Comparator<LanguageProperty> compareByIndex = Comparator.comparing(LanguageProperty::getPath).thenComparing(LanguageProperty::getOriginalIndex);
+			final Comparator<LanguageProperty> compareByIndex = Comparator
+				.comparing(LanguageProperty::getPath)
+				.thenComparing(LanguageProperty::getOriginalIndex);
 
 			itemsToDo = languagePropertiesPaths.size();
 			itemsDone = 0;
 
 			listOfStoredProperties = new ArrayList<>();
 			for (final String languagePropertiesPath : languagePropertiesPaths) {
-				String languagePropertiesPathToStore;
-				if (Utilities.isBlank(languagePropertiesPath)) {
-					languagePropertiesPathToStore = outputDirectory.getAbsolutePath();
-				} else {
-					languagePropertiesPathToStore = languagePropertiesPath;
-				}
+				final String propertySetName = new File(languagePropertiesPath).getName();
+				final List<LanguageProperty> languagePropertiesForStorage = languageProperties.stream()
+						.filter(o -> Utilities.replaceUsersHome(o.getPath()).equals(Utilities.replaceUsersHome(languagePropertiesPath)))
+						.sorted(compareByIndex).collect(Collectors.toList());
 
-				// Update existing properties set files
-				for (final LanguageProperty languageProperty : languageProperties) {
-					if (Utilities.isBlank(languageProperty.getPath())) {
-						languageProperty.setPath(Utilities.replaceUsersHomeByTilde(languagePropertiesPathToStore));
-					}
-				}
-
-				final String propertySetName = new File(languagePropertiesPathToStore).getName();
-				final List<LanguageProperty> languagePropertiesForStorage = languageProperties.stream().filter(o -> Utilities.replaceUsersHome(o.getPath()).equals(Utilities.replaceUsersHome(languagePropertiesPathToStore))).sorted(compareByIndex).collect(Collectors.toList());
-
-				LanguagePropertiesFileSetWriter.write(languagePropertiesForStorage, new File(languagePropertiesPathToStore).getParentFile(), propertySetName, extendAndKeepExistingProperties, propertiesFileExtension, readComments);
-				listOfStoredProperties.add(languagePropertiesPathToStore);
+				LanguagePropertiesFileSetWriter.write(languagePropertiesForStorage,
+						new File(languagePropertiesPath).getParentFile(), propertySetName,
+						extendAndKeepExistingProperties, propertiesFileExtension, readComments);
+				listOfStoredProperties.add(languagePropertiesPath);
 
 				itemsDone++;
 				signalProgress(false);
@@ -160,7 +166,8 @@ public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 	}
 
 	private List<String> getAllPropertiesPaths(final File basicDirectory) {
-		final Collection<File> propertiesFiles = FileUtils.listFiles(basicDirectory, new RegexFileFilter("^.*_en" + Pattern.quote(propertiesFileExtension) + "$||^.*_de" + Pattern.quote(propertiesFileExtension) + "$"), DirectoryFileFilter.DIRECTORY);
+		final Collection<File> propertiesFiles = FileUtils.listFiles(basicDirectory, new SuffixFileFilter(propertiesFileExtension), DirectoryFileFilter.DIRECTORY);
+
 		final Set<String> propertiesSetsPaths = new HashSet<>();
 		for (final File propertiesFile : propertiesFiles) {
 			boolean excluded = false;
@@ -173,11 +180,14 @@ public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 				}
 			}
 			if (!excluded) {
-				final String propertySetName = propertiesFile.getName().substring(0, propertiesFile.getName().indexOf("_"));
-				final String propertiesSetsPath = propertiesFile.getParentFile().getAbsolutePath() + File.separator + propertySetName;
-				propertiesSetsPaths.add(propertiesSetsPath);
+				final String propertySetName = LanguagePropertiesFileSetReader.getPropertySetBaseName(propertiesFile.getName(), propertiesFileExtension);
+				if (propertySetName != null) {
+					final String propertiesSetsPath = propertiesFile.getParentFile().getAbsolutePath() + File.separator + propertySetName;
+					propertiesSetsPaths.add(propertiesSetsPath);
+				}
 			}
 		}
+
 		final List<String> returnList = new ArrayList<>(propertiesSetsPaths);
 		Collections.sort(returnList);
 		return returnList;

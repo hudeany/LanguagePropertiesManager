@@ -125,17 +125,17 @@ public class ActionDefinition {
 			actionModesCount++;
 		}
 		if (actionModesCount == 0) {
-			throw new LanguagePropertiesException("One of parameters importToExcel, exportFromExcel, importFromCsv, exportToCsv must be used");
+			throw new LanguagePropertiesException(
+					"One of parameters importToExcel, exportFromExcel, importFromCsv, exportToCsv must be used");
 		} else if (actionModesCount > 1) {
-			throw new LanguagePropertiesException("Only one of parameters importToExcel, exportFromExcel, importFromCsv, exportToCsv may be used at a time");
+			throw new LanguagePropertiesException(
+					"Only one of parameters importToExcel, exportFromExcel, importFromCsv, exportToCsv may be used at a time");
 		} else if (exportToExcel == null && excelFile != null) {
 			throw new LanguagePropertiesException("Parameter excelFile is allowed for exportToExcel only");
-		} else if (importFromExcel == null && outputDirectory != null) {
-			throw new LanguagePropertiesException("Parameter outputDirectory is allowed for importFromExcel only");
 		} else if (exportToCsv == null && csvFile != null) {
 			throw new LanguagePropertiesException("Parameter csvFile is allowed for exportToCsv only");
-		} else if (importFromCsv == null && outputDirectory != null) {
-			throw new LanguagePropertiesException("Parameter outputDirectory is allowed for importFromCsv only");
+		} else if (outputDirectory != null && importFromExcel == null && importFromCsv == null) {
+			throw new LanguagePropertiesException("Parameter outputDirectory is allowed for importFromExcel or importFromCsv only");
 		} else {
 			return this;
 		}

@@ -2,6 +2,8 @@ package de.soderer.languagepropertiesmanager.worker;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -56,83 +58,108 @@ public class ExportToExcelWorker extends WorkerSimple<Boolean> {
 			}
 		}
 
-		try (final XSSFWorkbook workbook = new XSSFWorkbook()) {
-			try (final FileOutputStream outputStream = new FileOutputStream(excelOutputFile)) {
-				final XSSFSheet sheet = workbook.createSheet(languagePropertiesSetNames.size() == 1 ? languagePropertiesSetNames.get(0) : "Multiple");
+		// Write to a temp file in the same directory first and only replace the real
+		// target file on full success. This prevents a failed or cancelled export from
+		// leaving a truncated/broken xlsx file at the destination path.
+		final File targetDirectory = excelOutputFile.getAbsoluteFile().getParentFile();
+		final File tempOutputFile = File.createTempFile("export_", ".xlsx.tmp", targetDirectory);
+		try {
+			try (final XSSFWorkbook workbook = new XSSFWorkbook()) {
+				try (final FileOutputStream outputStream = new FileOutputStream(tempOutputFile)) {
+					final XSSFSheet sheet = workbook.createSheet(languagePropertiesSetNames.size() == 1 ? languagePropertiesSetNames.get(0) : "Multiple");
 
-				final XSSFCellStyle cellStyle = workbook.createCellStyle();
-				cellStyle.setWrapText(true);
+					final XSSFCellStyle cellStyle = workbook.createCellStyle();
+					cellStyle.setWrapText(true);
 
-				// Write header row
-				final Row headerRow = sheet.createRow(0);
-				int headerColumnIndex = 0;
+					// Write header row
+					final Row headerRow = sheet.createRow(0);
+					int headerColumnIndex = 0;
 
-				Cell headerCell = headerRow.createCell(headerColumnIndex++);
-				headerCell.setCellValue("Path");
+					Cell headerCell = headerRow.createCell(headerColumnIndex++);
+					headerCell.setCellValue("Path");
 
-				headerCell = headerRow.createCell(headerColumnIndex++);
-				headerCell.setCellValue("Index");
-
-				headerCell = headerRow.createCell(headerColumnIndex++);
-				headerCell.setCellValue("Key");
-
-				if (commentsFound) {
 					headerCell = headerRow.createCell(headerColumnIndex++);
-					headerCell.setCellValue("Comment");
-				}
+					headerCell.setCellValue("Index");
 
-				final List<String> languageSignsInOutputOrder = Utilities.sortButPutItemsFirst(availableLanguageSigns, LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT);
-
-				for (final String languageSign : languageSignsInOutputOrder) {
 					headerCell = headerRow.createCell(headerColumnIndex++);
-					headerCell.setCellValue(languageSign);
-				}
-
-				// Write data rows
-				int dataRowIndex = 1;
-				for (final LanguageProperty languageproperty : sortedLanguageProperties) {
-					int dataColumnIndex = 0;
-					final Row dataRow = sheet.createRow(dataRowIndex++);
-
-					Cell dataCell = dataRow.createCell(dataColumnIndex++);
-					dataCell.setCellValue(languageproperty.getPath());
-
-					dataCell = dataRow.createCell(dataColumnIndex++);
-					dataCell.setCellValue(languageproperty.getOriginalIndex());
-
-					dataCell = dataRow.createCell(dataColumnIndex++);
-					dataCell.setCellValue(languageproperty.getKey());
+					headerCell.setCellValue("Key");
 
 					if (commentsFound) {
-						dataCell = dataRow.createCell(dataColumnIndex++);
-						dataCell.setCellValue(languageproperty.getComment() == null ? "" : languageproperty.getComment());
+						headerCell = headerRow.createCell(headerColumnIndex++);
+						headerCell.setCellValue("Comment");
 					}
+
+					final List<String> languageSignsInOutputOrder = Utilities.sortButPutItemsFirst(availableLanguageSigns, LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT);
 
 					for (final String languageSign : languageSignsInOutputOrder) {
-						dataCell = dataRow.createCell(dataColumnIndex++);
-						dataCell.setCellStyle(cellStyle);
-						final String languageValue = languageproperty.getLanguageValue(languageSign);
-						if (languageValue != null) {
-							dataCell.setCellValue(languageValue);
-						} else {
-							dataCell.setCellValue("");
-						}
+						headerCell = headerRow.createCell(headerColumnIndex++);
+						headerCell.setCellValue(languageSign);
 					}
 
-					itemsDone++;
-					signalProgress(false);
+					// Write data rows
+					int dataRowIndex = 1;
+					for (final LanguageProperty languageproperty : sortedLanguageProperties) {
+						if (cancel) {
+							break;
+						}
+
+						int dataColumnIndex = 0;
+						final Row dataRow = sheet.createRow(dataRowIndex++);
+
+						Cell dataCell = dataRow.createCell(dataColumnIndex++);
+						dataCell.setCellValue(languageproperty.getPath());
+
+						dataCell = dataRow.createCell(dataColumnIndex++);
+						dataCell.setCellValue(languageproperty.getOriginalIndex());
+
+						dataCell = dataRow.createCell(dataColumnIndex++);
+						dataCell.setCellValue(languageproperty.getKey());
+
+						if (commentsFound) {
+							dataCell = dataRow.createCell(dataColumnIndex++);
+							dataCell.setCellValue(languageproperty.getComment() == null ? "" : languageproperty.getComment());
+						}
+
+						for (final String languageSign : languageSignsInOutputOrder) {
+							dataCell = dataRow.createCell(dataColumnIndex++);
+							dataCell.setCellStyle(cellStyle);
+							final String languageValue = languageproperty.getLanguageValue(languageSign);
+							if (languageValue != null) {
+								dataCell.setCellValue(languageValue);
+							} else {
+								dataCell.setCellValue("");
+							}
+						}
+
+						itemsDone++;
+						signalProgress(false);
+					}
+
+					if (!cancel) {
+						itemsDone = itemsToDo;
+						signalProgress(true);
+					}
+
+					// Resize columns for optimal width
+					for (int i = 0; i < languageSignsInOutputOrder.size() + 3; i++) {
+						sheet.autoSizeColumn(i);
+					}
+
+					if (!cancel) {
+						workbook.write(outputStream);
+					}
 				}
-
-				itemsDone = itemsToDo;
-				signalProgress(true);
-
-				// Resize columns for optimal width
-				for (int i = 0; i < languageSignsInOutputOrder.size() + 3; i++) {
-					sheet.autoSizeColumn(i);
-				}
-
-				workbook.write(outputStream);
 			}
+
+			if (cancel) {
+				return false;
+			}
+
+			Files.move(tempOutputFile.toPath(), excelOutputFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+		} finally {
+			// Clean up the temp file if it is still around, e.g. because of a
+			// thrown exception, a cancel, or the move above having failed.
+			Files.deleteIfExists(tempOutputFile.toPath());
 		}
 
 		return !cancel;

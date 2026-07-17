@@ -57,7 +57,7 @@ public class LanguagePropertiesFileSetWriter {
 
 			final List<String> availableLanguageSigns = Utilities.sortButPutItemsFirst(getAvailableLanguageSignsOfProperties(filteredLanguageProperties), LANGUAGE_SIGN_DEFAULT);
 			if (extendAndKeepExistingProperties) {
-				final List<LanguageProperty> existingProperties = LanguagePropertiesFileSetReader.read(propertiesDirectory, propertySetName, false, readComments);
+				final List<LanguageProperty> existingProperties = LanguagePropertiesFileSetReader.read(propertiesDirectory, propertySetName, propertiesFileExtension, false, readComments);
 				if (existingProperties != null) {
 					for (final LanguageProperty existingProperty : existingProperties) {
 						boolean foundExistingProperty = false;
@@ -94,29 +94,6 @@ public class LanguagePropertiesFileSetWriter {
 					}
 				}
 			}
-		}
-	}
-
-	/**
-	 * Get language sign of a language properties filename
-	 */
-	public static String getLanguageSignOfFilename(final String fileName) {
-		String fileNamePart = fileName.replace("\\", "/");
-		final int lastFileSeparator = fileNamePart.lastIndexOf("/");
-		if (lastFileSeparator >= 0) {
-			fileNamePart = fileNamePart.substring(lastFileSeparator + 1);
-		}
-		final int lastPoint = fileNamePart.lastIndexOf(".");
-		if (lastPoint >= 0) {
-			fileNamePart = fileNamePart.substring(0, lastPoint);
-		}
-		final String[] fileNameParts = fileNamePart.split("_");
-		if (fileNameParts.length == 2) {
-			return fileNameParts[1];
-		} else if (fileNameParts.length >= 3) {
-			return fileNameParts[fileNameParts.length - 2] + "_" + fileNameParts[fileNameParts.length - 1];
-		} else {
-			return LANGUAGE_SIGN_DEFAULT;
 		}
 	}
 

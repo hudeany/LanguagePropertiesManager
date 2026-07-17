@@ -63,9 +63,8 @@ public class ImportFromExcelWorker extends WorkerSimple<Boolean> {
 			int columnIndex_Comment = -1;
 			final Map<Integer, String> languageColumnHeaders = new HashMap<>();
 			final Row headerRow = sheet.getRow(0);
-			int headerColumnIndex = -1;
 			for (final Cell headerCell : headerRow) {
-				headerColumnIndex++;
+				final int headerColumnIndex = headerCell.getColumnIndex();
 				if (headerCell.getCellType() == CellType.STRING) {
 					final String cellValue = headerCell.getStringCellValue().trim();
 					if ("path".equalsIgnoreCase(cellValue.trim())

@@ -2,6 +2,8 @@ package de.soderer.languagepropertiesmanager.worker;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -51,56 +53,79 @@ public class ExportToCsvWorker extends WorkerSimple<Boolean> {
 			}
 		}
 
-		try (final FileOutputStream outputStream = new FileOutputStream(csvOutputFile)) {
-			try (final CsvWriter csvWriter = new CsvWriter(outputStream, new CsvFormat().setSeparator(';').setStringQuote('"').setStringQuoteEscapeCharacter('\\'))) {
-				// Write header row
-				final List<String> headerList = new ArrayList<>();
-				headerList.add("Path");
-				headerList.add("Index");
-				headerList.add("Key");
-
-				if (commentsFound) {
-					headerList.add("Comment");
-				}
-
-				final List<String> languageSignsInOutputOrder = Utilities.sortButPutItemsFirst(availableLanguageSigns, LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT);
-
-				for (final String languageSign : languageSignsInOutputOrder) {
-					headerList.add(languageSign);
-				}
-
-				csvWriter.writeValues(headerList);
-
-				// Write data rows
-				for (final LanguageProperty languageproperty : sortedLanguageProperties) {
-					final List<String> dataRow = new ArrayList<>();
-
-					dataRow.add(languageproperty.getPath());
-					dataRow.add(Integer.toString(languageproperty.getOriginalIndex()));
-					dataRow.add(languageproperty.getKey());
+		// Write to a temp file in the same directory first and only replace the real
+		// target file on full success. This prevents a failed or cancelled export from
+		// leaving a truncated/broken file at the destination path.
+		final File targetDirectory = csvOutputFile.getAbsoluteFile().getParentFile();
+		final File tempOutputFile = File.createTempFile("export_", ".csv.tmp", targetDirectory);
+		try {
+			try (final FileOutputStream outputStream = new FileOutputStream(tempOutputFile)) {
+				try (final CsvWriter csvWriter = new CsvWriter(outputStream, new CsvFormat().setSeparator(';').setStringQuote('"').setStringQuoteEscapeCharacter('\\'))) {
+					// Write header row
+					final List<String> headerList = new ArrayList<>();
+					headerList.add("Path");
+					headerList.add("Index");
+					headerList.add("Key");
 
 					if (commentsFound) {
-						dataRow.add(languageproperty.getComment() == null ? "" : languageproperty.getComment());
+						headerList.add("Comment");
 					}
+
+					final List<String> languageSignsInOutputOrder = Utilities.sortButPutItemsFirst(availableLanguageSigns, LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT);
 
 					for (final String languageSign : languageSignsInOutputOrder) {
-						final String languageValue = languageproperty.getLanguageValue(languageSign);
-						if (languageValue != null) {
-							dataRow.add(languageValue);
-						} else {
-							dataRow.add("");
-						}
+						headerList.add(languageSign);
 					}
 
-					csvWriter.writeValues(dataRow);
+					csvWriter.writeValues(headerList);
 
-					itemsDone++;
-					signalProgress(false);
+					// Write data rows
+					for (final LanguageProperty languageproperty : sortedLanguageProperties) {
+						if (cancel) {
+							break;
+						}
+
+						final List<String> dataRow = new ArrayList<>();
+
+						dataRow.add(languageproperty.getPath());
+						dataRow.add(Integer.toString(languageproperty.getOriginalIndex()));
+						dataRow.add(languageproperty.getKey());
+
+						if (commentsFound) {
+							dataRow.add(languageproperty.getComment() == null ? "" : languageproperty.getComment());
+						}
+
+						for (final String languageSign : languageSignsInOutputOrder) {
+							final String languageValue = languageproperty.getLanguageValue(languageSign);
+							if (languageValue != null) {
+								dataRow.add(languageValue);
+							} else {
+								dataRow.add("");
+							}
+						}
+
+						csvWriter.writeValues(dataRow);
+
+						itemsDone++;
+						signalProgress(false);
+					}
+
+					if (!cancel) {
+						itemsDone = itemsToDo;
+						signalProgress(true);
+					}
 				}
-
-				itemsDone = itemsToDo;
-				signalProgress(true);
 			}
+
+			if (cancel) {
+				return false;
+			}
+
+			Files.move(tempOutputFile.toPath(), csvOutputFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+		} finally {
+			// Clean up the temp file if it is still around, e.g. because of a
+			// thrown exception, a cancel, or the move above having failed.
+			Files.deleteIfExists(tempOutputFile.toPath());
 		}
 
 		return !cancel;
