@@ -14,7 +14,6 @@ import java.util.concurrent.ExecutionException;
 import org.eclipse.swt.widgets.Display;
 
 import de.soderer.languagepropertiesmanager.dlg.LanguagePropertiesManagerDialog;
-import de.soderer.languagepropertiesmanager.storage.ExcelHelper;
 import de.soderer.languagepropertiesmanager.storage.LanguagePropertiesFileSetReader;
 import de.soderer.languagepropertiesmanager.worker.ExportToCsvWorker;
 import de.soderer.languagepropertiesmanager.worker.ExportToExcelWorker;
@@ -520,13 +519,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 					outputDirectory = new File(actionDefinition.getOutputDirectory());
 				}
 
-				String languagePropertiesSetName;
-				final List<String> languagePropertiesSetNames = ExcelHelper.getExcelSheetNames(excelFile);
-				if (languagePropertiesSetNames.size() == 1) {
-					languagePropertiesSetName = languagePropertiesSetNames.get(0);
-				} else {
-					languagePropertiesSetName = "Multiple";
-				}
+				final String languagePropertiesSetName = importFromExcelWorker.getLanguagePropertiesSetName();
 
 				final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(this, importFromExcelWorker.getLanguageProperties(), languagePropertiesSetName, outputDirectory, configuredExcludeParts, actionDefinition.isExtendAndKeepExistingProperties(), actionDefinition.getPropertiesFileExtension());
 				writeLanguagePropertiesWorker.setReadComments(!applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS));
