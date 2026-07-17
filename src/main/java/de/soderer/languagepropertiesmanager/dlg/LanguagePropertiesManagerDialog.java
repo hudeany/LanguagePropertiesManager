@@ -1157,7 +1157,12 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 				languageProperties = openFilesLanguagePropertiesWorker.getLanguageProperties();
 				availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT);
-				setLanguagePropertiesSetName("Multiple");
+				final List<String> loadedLanguagePropertiesSetNames = openFilesLanguagePropertiesWorker.getLanguagePropertiesSetNames();
+				if (loadedLanguagePropertiesSetNames.size() == 1) {
+					setLanguagePropertiesSetName(loadedLanguagePropertiesSetNames.get(0));
+				} else {
+					setLanguagePropertiesSetName("Multiple");
+				}
 
 				showMessage(LangResources.get("directory_dialog_title"), LangResources.get("openFilesResult", filePath, languageProperties.size(), Utilities.join(availableLanguageSigns, ", ")));
 				return true;
@@ -1207,9 +1212,14 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 			languageProperties = openFolderLanguagePropertiesWorker.getLanguageProperties();
 			availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT);
-			setLanguagePropertiesSetName("Multiple");
+			final List<String> loadedLanguagePropertiesSetNames = openFolderLanguagePropertiesWorker.getLanguagePropertiesSetNames();
+			if (loadedLanguagePropertiesSetNames.size() == 1) {
+				setLanguagePropertiesSetName(loadedLanguagePropertiesSetNames.get(0));
+			} else {
+				setLanguagePropertiesSetName("Multiple");
+			}
 
-			showMessage(LangResources.get("directory_dialog_title"), LangResources.get("openDirectoryResult", basicDirectoryPath, openFolderLanguagePropertiesWorker.getLanguagePropertiesSetNames().size(), languageProperties.size(), Utilities.join(availableLanguageSigns, ", ")));
+			showMessage(LangResources.get("directory_dialog_title"), LangResources.get("openDirectoryResult", basicDirectoryPath, loadedLanguagePropertiesSetNames.size(), languageProperties.size(), Utilities.join(availableLanguageSigns, ", ")));
 			return true;
 		}
 	}
@@ -1230,12 +1240,14 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			try {
 				final ComboSelectionDialog dialog = new ComboSelectionDialog(getShell(), getText() + " " + LangResources.get("recent_directories_dialog_title"), LangResources.get("recent_directories_dialog_text"), recentlyOpenedDirectories);
 				final String filePath = dialog.open();
-				if (filePath != null && new File(filePath).exists()) {
-					if (new File(filePath).isDirectory()) {
-						openAllLanguagePropertiesSets(filePath);
-					} else {
-						loadSingleLanguagePropertiesSet(filePath);
-					}
+				if (filePath == null) {
+					showErrorMessage(LangResources.get("recent_directories_dialog_title"), LangResources.get("canceledByUser"));
+				} else if (!new File(filePath).exists()) {
+					showErrorMessage(LangResources.get("recent_directories_dialog_title"), LangResources.get("error.recentPathDoesNotExistAnymore", filePath));
+				} else if (new File(filePath).isDirectory()) {
+					openAllLanguagePropertiesSets(filePath);
+				} else {
+					loadSingleLanguagePropertiesSet(filePath);
 				}
 			} catch (final Exception e) {
 				languageProperties = null;
