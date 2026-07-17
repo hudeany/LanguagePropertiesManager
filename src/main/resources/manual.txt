@@ -112,7 +112,8 @@ If multiple LanguagePropertiesSetPaths are available, you will be prompted to sp
 
 5.2 Save Property Sets to a Directory Based on Set Name
 
-The "Save Property Sets to a Directory Based on Set Name" button prompts you to specify a directory path. All available LanguagePropertiesSetPaths are then searched for under this path.
+If all properties currently available in the tool already have their own LanguagePropertiesSetPath, the "Save Property Sets to a Directory Based on Set Name" button saves them directly to those known paths without prompting.
+If, however, there are properties without a LanguagePropertiesSetPath, the button prompts you to specify a directory path. All available LanguagePropertiesSetPaths are then searched for under this path.
 The LanguagePropertiesSetPaths currently available in the tool are compared with these paths, and if a matching LanguagePropertiesSetPath name is found, the path of the LanguagePropertiesSetPath is used for saving.
 This only works if the LanguagePropertiesSetPath names are unique. If ambiguous names occur, the process is aborted with an error message.
 If no suitable path is found for a LanguagePropertiesSetPath currently available in the tool, the LanguagePropertiesSetPath is saved in the selected base directory.

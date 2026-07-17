@@ -1332,29 +1332,40 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			try {
 				final String[] excludeParts = applicationConfiguration.get(LanguagePropertiesManager.CONFIG_OPEN_DIR_EXCLUDES).split(";");
 
-				final DirectoryDialog directoryDialog = new DirectoryDialog(getShell());
-				directoryDialog.setText(LangResources.get("open_directory_dialog_text"));
-				final String directoryPath = directoryDialog.open();
-				if (directoryPath == null) {
-					showErrorMessage(LangResources.get("open_directory_dialog_text"), LangResources.get("canceledByUser"));
-				} else if (new File(directoryPath).exists() && new File(directoryPath).isDirectory()) {
-					final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(null, languageProperties, "Multiple", new File(directoryPath), excludeParts, false, applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION));
-					writeLanguagePropertiesWorker.setReadComments(!applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS));
-					final ProgressDialog<WriteLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("save_files"), writeLanguagePropertiesWorker);
-					final Result dialogResult = progressDialog.open();
-					if (dialogResult == Result.CANCELED) {
+				// A directory selection is only needed to place properties that don't have a path of their own yet.
+				// If every property already has a path, it can be saved directly to those paths without asking.
+				final boolean hasPropertiesWithoutPath = languageProperties.stream().anyMatch(o -> Utilities.isBlank(o.getPath()));
+
+				File directory = null;
+				if (hasPropertiesWithoutPath) {
+					final DirectoryDialog directoryDialog = new DirectoryDialog(getShell());
+					directoryDialog.setText(LangResources.get("open_directory_dialog_text"));
+					final String directoryPath = directoryDialog.open();
+					if (directoryPath == null) {
 						showErrorMessage(LangResources.get("open_directory_dialog_text"), LangResources.get("canceledByUser"));
-					} else {
-						// check for errors
-						writeLanguagePropertiesWorker.get();
-
-						showData(LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("saveDirectoryResult", Utilities.join(writeLanguagePropertiesWorker.getListOfStoredProperties(), "\n")));
+						return;
+					} else if (!new File(directoryPath).exists() || !new File(directoryPath).isDirectory()) {
+						return;
 					}
-
-					hasUnsavedChanges = false;
-					setupTable();
-					checkButtonStatus();
+					directory = new File(directoryPath);
 				}
+
+				final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(null, languageProperties, "Multiple", directory, excludeParts, false, applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION));
+				writeLanguagePropertiesWorker.setReadComments(!applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS));
+				final ProgressDialog<WriteLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("save_files"), writeLanguagePropertiesWorker);
+				final Result dialogResult = progressDialog.open();
+				if (dialogResult == Result.CANCELED) {
+					showErrorMessage(LangResources.get("open_directory_dialog_text"), LangResources.get("canceledByUser"));
+				} else {
+					// check for errors
+					writeLanguagePropertiesWorker.get();
+
+					showData(LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("saveDirectoryResult", Utilities.join(writeLanguagePropertiesWorker.getListOfStoredProperties(), "\n")));
+				}
+
+				hasUnsavedChanges = false;
+				setupTable();
+				checkButtonStatus();
 			} catch (final Exception e) {
 				new ErrorDialog(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION.toString(), LanguagePropertiesManager.APPLICATION_ERROR_EMAIL_ADRESS, e).open();
 			}
