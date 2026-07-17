@@ -111,6 +111,7 @@ Bei mehreren verfügbaren LanguagePropertiesSetPath wird zur einmaligen Angabe d
 
 Wenn alle aktuell im Tool verfügbaren Properties bereits einen eigenen LanguagePropertiesSetPath besitzen, speichert der Button "Properties Sets in Verzeichnis speichern anhand Set Namen" diese direkt an ihren bekannten Pfaden, ohne nachzufragen.
 Liegen jedoch Properties ohne LanguagePropertiesSetPath vor, fordert der Button zur Angabe eines Verzeichnispfades auf. Unter diesem werden dann alle verfügbaren LanguagePropertiesSetPath gesucht.
+Zusätzlich wird für diese pfadlosen Properties ein Name abgefragt (vorbelegt mit "Multiple"), unter dem sie als eigenes Language Properties Set behandelt werden.
 Die im Tool aktuell verfügbaren LanguagePropertiesSetPath werden mit diesen abgeglichen und dann bei passendem Language Properties Set Namen der Pfad des gefundenen LanguagePropertiesSetPath zur Speicherung verwendet.
 Dies funktioniert nur bei eindeutiger Bezeichnung der Language Properties Set Namen. Treten hierbei uneindeutige Namen auf wird der Vorgang mit einer Fehlermeldung abgebrochen.
 Wird für einen im Tool aktuell verfügbaren LanguagePropertiesSetPath kein passender verfügbarer Pfad gefunden, so wird dieses Language Properties Set im gewählten Basisverzeichnis abgelegt.

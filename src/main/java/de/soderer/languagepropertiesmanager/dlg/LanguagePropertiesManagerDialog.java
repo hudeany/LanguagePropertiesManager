@@ -1337,6 +1337,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				final boolean hasPropertiesWithoutPath = languageProperties.stream().anyMatch(o -> Utilities.isBlank(o.getPath()));
 
 				File directory = null;
+				String newPropertiesSetName = "Multiple";
 				if (hasPropertiesWithoutPath) {
 					final DirectoryDialog directoryDialog = new DirectoryDialog(getShell());
 					directoryDialog.setText(LangResources.get("open_directory_dialog_text"));
@@ -1348,9 +1349,22 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 						return;
 					}
 					directory = new File(directoryPath);
+
+					final SimpleInputDialog nameDialog = new SimpleInputDialog(getShell(), getText(), LangResources.get("enterNewLanguagePropertiesName"));
+					nameDialog.setDefaultText(newPropertiesSetName);
+					final String enteredName = nameDialog.open();
+					if (Utilities.isBlank(enteredName)) {
+						showErrorMessage(LangResources.get("open_directory_dialog_text"), LangResources.get("canceledByUser"));
+						return;
+					}
+					newPropertiesSetName = enteredName;
 				}
 
-				final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(null, languageProperties, "Multiple", directory, excludeParts, false, applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION));
+				final QuestionDialog dialog = new QuestionDialog(LanguagePropertiesManagerDialog.this, getText(), LangResources.get("question.keepExistingProperties"), LangResources.get("yes"), LangResources.get("no"));
+				final int returncode = dialog.open();
+				final boolean extendAndKeepExistingProperties = (returncode == 0);
+
+				final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(null, languageProperties, newPropertiesSetName, directory, excludeParts, extendAndKeepExistingProperties, applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION));
 				writeLanguagePropertiesWorker.setReadComments(!applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS));
 				final ProgressDialog<WriteLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("save_files"), writeLanguagePropertiesWorker);
 				final Result dialogResult = progressDialog.open();

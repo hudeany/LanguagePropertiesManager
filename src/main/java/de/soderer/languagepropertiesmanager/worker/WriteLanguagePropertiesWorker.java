@@ -60,25 +60,35 @@ public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 			}
 
 			final Set<String> languagePropertiesPaths = new HashSet<>();
+			boolean hasPropertiesWithoutPath = false;
 			for (final LanguageProperty languageProperty : languageProperties) {
 				if (Utilities.isNotBlank(languageProperty.getPath())) {
 					languagePropertiesPaths.add(languageProperty.getPath());
+				} else {
+					hasPropertiesWithoutPath = true;
 				}
 			}
 
-			if (languagePropertiesPaths.size() > 0) {
+			if (languagePropertiesPaths.size() > 0 || hasPropertiesWithoutPath) {
 				final List<String> existingPropertiesPaths = getAllPropertiesPaths(outputDirectory);
 
 				final Comparator<LanguageProperty> compareByIndex = Comparator.comparing(LanguageProperty::getPath).thenComparing(LanguageProperty::getOriginalIndex);
 
-				itemsToDo = languagePropertiesPaths.size();
+				// Properties without a path yet are handled as one additional group, identified by languagePropertySetName
+				final List<String> groupsToProcess = new ArrayList<>(languagePropertiesPaths);
+				if (hasPropertiesWithoutPath) {
+					groupsToProcess.add(null);
+				}
+
+				itemsToDo = groupsToProcess.size();
 				itemsDone = 0;
 
 				listOfStoredProperties = new ArrayList<>();
-				for (final String languagePropertiesPath : languagePropertiesPaths) {
+				for (final String languagePropertiesPath : groupsToProcess) {
+					final boolean isNewGroup = languagePropertiesPath == null;
 					int foundAmount = 0;
 					String foundPath = null;
-					final String propertySetName = new File(languagePropertiesPath).getName();
+					final String propertySetName = isNewGroup ? languagePropertySetName : new File(languagePropertiesPath).getName();
 					for (final String existingPropertiesPath : existingPropertiesPaths) {
 						final String existingPropertieSetName = new File(existingPropertiesPath).getName();
 						if (existingPropertieSetName.equals(propertySetName)) {
@@ -89,7 +99,9 @@ public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 					if (foundAmount > 1) {
 						throw new LanguagePropertiesException("Found multiple storage paths for language properties set: " + propertySetName);
 					} else {
-						final List<LanguageProperty> languagePropertiesForStorage = languageProperties.stream().filter(o -> o.getPath().equals(languagePropertiesPath)).sorted(compareByIndex).collect(Collectors.toList());
+						final List<LanguageProperty> languagePropertiesForStorage = isNewGroup
+								? languageProperties.stream().filter(o -> Utilities.isBlank(o.getPath())).sorted(compareByIndex).collect(Collectors.toList())
+								: languageProperties.stream().filter(o -> o.getPath().equals(languagePropertiesPath)).sorted(compareByIndex).collect(Collectors.toList());
 
 						if (foundAmount == 1) {
 							// Update existing properties set files
