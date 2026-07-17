@@ -112,7 +112,7 @@ public class ImportFromExcelWorker extends WorkerSimple<Boolean> {
 					if (columnIndex_Path >= 0) {
 						final Cell pathCell = row.getCell(columnIndex_Path);
 						if (pathCell == null) {
-							path = null;
+							path = "";
 						} else if (pathCell.getCellType() == CellType.STRING) {
 							path = pathCell.getStringCellValue().trim();
 						} else if (pathCell.getCellType() == CellType.BLANK) {
@@ -121,7 +121,7 @@ public class ImportFromExcelWorker extends WorkerSimple<Boolean> {
 							throw new LanguagePropertiesException("Excel file contains invalid path value in sheet '" + sheet.getSheetName() + "' at row " + (rowIndex + 1) + " and column " + (columnIndex_Keys + 1));
 						}
 					} else {
-						path = null;
+						path = "";
 					}
 
 					String key;

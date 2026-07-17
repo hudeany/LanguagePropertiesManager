@@ -95,7 +95,7 @@ public class ImportFromCsvWorker extends WorkerSimple<Boolean> {
 			while ((valuesRow = csvReader.readNextCsvLine()) != null) {
 				rowIndex++;
 				if (rowIndex > 0) {
-					String path = null;
+					String path = "";
 					if (columnIndex_Path >= 0) {
 						path = valuesRow.get(columnIndex_Path).trim();
 					}
@@ -189,5 +189,13 @@ public class ImportFromCsvWorker extends WorkerSimple<Boolean> {
 
 	public void setIgnoreComments(final boolean ignoreComments) {
 		this.ignoreComments = ignoreComments;
+	}
+
+	public String getLanguagePropertiesSetName() {
+		if (languagePropertiesSetNames.size() == 1) {
+			return languagePropertiesSetNames.get(0);
+		} else {
+			return "Multiple";
+		}
 	}
 }
