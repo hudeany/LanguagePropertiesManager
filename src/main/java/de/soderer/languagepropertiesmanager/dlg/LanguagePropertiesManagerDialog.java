@@ -1277,16 +1277,26 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 						languagePropertiesPaths.remove("");
 						defaultLanguagePropertiesPath = Utilities.replaceUsersHome(new ArrayList<>(languagePropertiesPaths).get(0));
 					} else {
+						final String propertiesFileExtension = applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION);
 						final FileDialog dlg = new FileDialog(getShell(), SWT.SAVE);
 						dlg.setText(getShell().getText() + " " + LangResources.get("save_file_dialog_text"));
 						dlg.setFilterPath(recentlyOpenedDirectories.getLatestAdded());
-						dlg.setFileName("MyLanguageProperties.properties");
+						dlg.setFileName("MyLanguageProperties" + propertiesFileExtension);
 						final String filePath = dlg.open();
 						if (filePath == null) {
 							showErrorMessage(LangResources.get("save_file_dialog_text"), LangResources.get("canceledByUser"));
 							return;
 						}
-						defaultLanguagePropertiesPath = filePath;
+						// The dialog path still has the file extension, but a LanguagePropertiesSetPath must not include it
+						defaultLanguagePropertiesPath = filePath.endsWith(propertiesFileExtension) ? filePath.substring(0, filePath.length() - propertiesFileExtension.length()) : filePath;
+					}
+
+					// Assign the determined path to all properties that don't have one yet,
+					// so the worker can treat every property by its own (now always non-blank) path.
+					for (final LanguageProperty languageProperty : languageProperties) {
+						if (Utilities.isBlank(languageProperty.getPath())) {
+							languageProperty.setPath(defaultLanguagePropertiesPath);
+						}
 					}
 				}
 
@@ -1294,7 +1304,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				final int returncode = dialog.open();
 				final boolean extendAndKeepExistingProperties = (returncode == 0);
 
-				final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(null, languageProperties, languagePropertySetName, defaultLanguagePropertiesPath == null ? null : new File(defaultLanguagePropertiesPath), null, extendAndKeepExistingProperties, applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION));
+				final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(null, languageProperties, languagePropertySetName, null, null, extendAndKeepExistingProperties, applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION));
 				writeLanguagePropertiesWorker.setReadComments(!applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS));
 				final ProgressDialog<WriteLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("save_files"), writeLanguagePropertiesWorker);
 				final Result dialogResult = progressDialog.open();
