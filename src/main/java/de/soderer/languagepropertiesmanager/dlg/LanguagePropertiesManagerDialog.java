@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -128,6 +129,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private Button addLanguageButton;
 	private Button deleteLanguageButton;
 	private Button translateButton;
+	private Button removeDuplicatesButton;
 
 	private Button okButton;
 	private Button cancelButton;
@@ -308,6 +310,11 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		translateButton.setText("Translate");
 		translateButton.setToolTipText(LangResources.get("tooltip_Translate"));
 		translateButton.addSelectionListener(new TranslateButtonSelectionListener());
+
+		removeDuplicatesButton = new Button(buttonSection2, SWT.PUSH);
+		removeDuplicatesButton.setImage(ImageManager.getImage("clean.png"));
+		removeDuplicatesButton.setToolTipText(LangResources.get("tooltip_removeDuplicates"));
+		removeDuplicatesButton.addSelectionListener(new RemoveDuplicatesButtonSelectionListener());
 
 		// Searching
 		searchBox = new Composite(leftPart, SWT.BORDER);
@@ -856,6 +863,71 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		}
 	}
 
+	private class RemoveDuplicatesButtonSelectionListener extends SelectionAdapter {
+		@Override
+		public void widgetSelected(final SelectionEvent event) {
+			try {
+				// Group properties by the combination of PropertiesSetPath and PropertyKey
+				final Map<String, List<LanguageProperty>> groupedByPathAndKey = new LinkedHashMap<>();
+				for (final LanguageProperty languageProperty : languageProperties) {
+					final String groupKey = languageProperty.getPath() + "\u0000" + languageProperty.getKey();
+					groupedByPathAndKey.computeIfAbsent(groupKey, k -> new ArrayList<>()).add(languageProperty);
+				}
+
+				// For every group with more than one entry, keep the one with the lowest original index.
+				// Before discarding the rest, adopt any language value (and comment) the winner is still missing
+				// from the duplicates, in order of original index, so the first available value wins.
+				final List<LanguageProperty> duplicatesToRemove = new ArrayList<>();
+				final StringBuilder reportText = new StringBuilder();
+				for (final List<LanguageProperty> group : groupedByPathAndKey.values()) {
+					if (group.size() > 1) {
+						final List<LanguageProperty> sortedGroup = group.stream()
+								.sorted(Comparator.comparing(LanguageProperty::getOriginalIndex))
+								.collect(Collectors.toList());
+						final LanguageProperty winner = sortedGroup.get(0);
+						final List<LanguageProperty> losers = sortedGroup.subList(1, sortedGroup.size());
+
+						for (final LanguageProperty loser : losers) {
+							for (final String languageSign : loser.getAvailableLanguageSigns()) {
+								final String loserValue = loser.getLanguageValue(languageSign);
+								if (Utilities.isNotEmpty(loserValue) && Utilities.isEmpty(winner.getLanguageValue(languageSign))) {
+									winner.setLanguageValue(languageSign, loserValue);
+								}
+							}
+							if (Utilities.isEmpty(winner.getComment()) && Utilities.isNotEmpty(loser.getComment())) {
+								winner.setComment(loser.getComment());
+							}
+						}
+
+						reportText.append("\"").append(winner.getPath()).append("\" / \"").append(winner.getKey()).append("\": ").append(group.size()).append("\n");
+						duplicatesToRemove.addAll(losers);
+					}
+				}
+
+				if (duplicatesToRemove.isEmpty()) {
+					showMessage(LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("noDuplicatesFound"));
+				} else {
+					final MessageBox messageBox = new MessageBox(LanguagePropertiesManagerDialog.this, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
+					messageBox.setText(LangResources.get("question_title_remove_duplicates"));
+					messageBox.setMessage(LangResources.get("question_content_remove_duplicates", duplicatesToRemove.size()) + "\n\n" + reportText.toString());
+					final int returncode = messageBox.open();
+					if (returncode == SWT.YES) {
+						languageProperties.removeAll(duplicatesToRemove);
+						propertiesTable.deselectAll();
+						currentSelectedKeys = null;
+						refreshDetailView();
+						setupTable();
+						hasUnsavedChanges = true;
+						showMessage(LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("duplicatesRemoved", duplicatesToRemove.size()));
+					}
+				}
+			} catch (final Exception ex) {
+				new ErrorDialog(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION.toString(), LanguagePropertiesManager.APPLICATION_ERROR_EMAIL_ADRESS, ex).open();
+			}
+			checkButtonStatus();
+		}
+	}
+
 	private class ConfigButtonSelectionListener extends SelectionAdapter {
 		@Override
 		public void widgetSelected(final SelectionEvent e) {
@@ -1060,6 +1132,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		}
 		if (translateButton != null) {
 			translateButton.setEnabled(languageProperties != null && languageProperties.size() > 0 && availableLanguageSigns != null && availableLanguageSigns.size() > 1);
+		}
+		if (removeDuplicatesButton != null) {
+			removeDuplicatesButton.setEnabled(languageProperties != null && languageProperties.size() > 0);
 		}
 	}
 

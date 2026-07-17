@@ -101,6 +101,13 @@ The API key may be entered in application configuration dialog or on first usage
 Using the Default language sign makes it mandatory to select a language wich is associated as default language.
 If there is only one other language sign available, that one will automatically be selected as target language sign.
 
+4.6 Removing Duplicates
+
+The "Find and remove duplicate properties" button can be used to find and clean up properties that occur more than once, i.e. share the same LanguagePropertiesSetPath and the same key.
+The first occurrence (by original index) is kept. If that kept entry is missing a language value or a comment that one of the other (discarded) occurrences does have, that value is automatically merged into it before removal.
+Before the actual removal, a confirmation prompt appears showing an overview of the affected LanguagePropertiesSetPath/key combinations and their count.
+If no duplicates are found, only a corresponding notice is shown and no further action is taken.
+
 5. Saving Language Property Sets
 
 5.1 Saving Files

@@ -98,6 +98,13 @@ Der API Key kann im Anwendungs-Konfigurationsdialog oder bei der ersten Verwendu
 Bei Verwendung der Default Sprache muss eine Sprache ausgewählt werden, die als Standardsprache zugeordnet ist.
 Wenn nur eine weitere Sprache verfügbar sind, wird diese automatisch als Zielsprache ausgewählt.
 
+4.6 Duplikate entfernen
+
+Mit dem Button "Doppelte Properties finden und entfernen" können Properties gefunden und bereinigt werden, die doppelt vorkommen, also denselben LanguagePropertiesSetPath und denselben Key besitzen.
+Es wird jeweils das erste Vorkommen (nach ursprünglichem Index) behalten. Fehlt diesem behaltenen Eintrag ein Sprachwert oder ein Kommentar, der aber bei einem der weiteren (verworfenen) Vorkommen vorhanden ist, wird dieser Wert vor dem Entfernen automatisch übernommen.
+Vor der eigentlichen Entfernung erfolgt eine Sicherheitsabfrage mit einer Übersicht der betroffenen LanguagePropertiesSetPath/Key-Kombinationen und deren Anzahl.
+Werden keine Duplikate gefunden, erfolgt lediglich ein entsprechender Hinweis ohne weitere Aktion.
+
 5. Speichern von Language Properties Sets
 
 5.1 Dateien speichern
