@@ -1415,12 +1415,6 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				showErrorMessage(LangResources.get("import_file"), LangResources.get("canceledByUser"));
 			} else {
 				try {
-					String languagePropertiesSetName;
-					final List<String> languagePropertiesSetNames = new ArrayList<>();
-					languagePropertiesSetNames.add("CSV");
-					languagePropertiesSetName = "CSV";
-					setLanguagePropertiesSetName(languagePropertiesSetName);
-
 					final ImportFromCsvWorker importFromCsvWorker = new ImportFromCsvWorker(null, new File(importFile));
 					importFromCsvWorker.setIgnoreComments(applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS));
 					final ProgressDialog<ImportFromCsvWorker> progressDialog = new ProgressDialog<>(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("import_file"), importFromCsvWorker);
@@ -1433,6 +1427,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 						showMessage(LangResources.get("import_file"), LangResources.get("actionSuccessfullyCompleted"));
 
+						setLanguagePropertiesSetName(importFromCsvWorker.getLanguagePropertiesSetName());
 						languageProperties = importFromCsvWorker.getLanguageProperties();
 						availableLanguageSigns = importFromCsvWorker.getAvailableLanguageSigns();
 						hasUnsavedChanges = true;
