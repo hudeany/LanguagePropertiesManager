@@ -1113,11 +1113,10 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		public void widgetSelected(final SelectionEvent event) {
 			try {
 				final FileDialog fileDialog = new FileDialog(getShell());
-				fileDialog.setText(getText() + " " + LangResources.get("directory_dialog_title"));
-				fileDialog.setText(LangResources.get("open_directory_dialog_text"));
+				fileDialog.setText(getText() + " " + LangResources.get("open_file_dialog_text"));
 				final String filePath = fileDialog.open();
 				if (filePath == null) {
-					showErrorMessage(LangResources.get("directory_dialog_title"), LangResources.get("canceledByUser"));
+					showErrorMessage(LangResources.get("open_file_dialog_text"), LangResources.get("canceledByUser"));
 				} else if (new File(filePath).exists() && new File(filePath).isFile()) {
 					if (loadSingleLanguagePropertiesSet(filePath)) {
 						recentlyOpenedDirectories.add(filePath); //put selected as latest used
@@ -1278,15 +1277,16 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 						languagePropertiesPaths.remove("");
 						defaultLanguagePropertiesPath = Utilities.replaceUsersHome(new ArrayList<>(languagePropertiesPaths).get(0));
 					} else {
-						final FileDialog dlg = new FileDialog(getShell());
+						final FileDialog dlg = new FileDialog(getShell(), SWT.SAVE);
 						dlg.setText(getShell().getText() + " " + LangResources.get("save_file_dialog_text"));
-						dlg.setFilterPath(Utilities.replaceUsersHome("~") + File.separator + "MyLanguageProperties.properties");
 						dlg.setFilterPath(recentlyOpenedDirectories.getLatestAdded());
+						dlg.setFileName("MyLanguageProperties.properties");
 						final String filePath = dlg.open();
 						if (filePath == null) {
 							showErrorMessage(LangResources.get("save_file_dialog_text"), LangResources.get("canceledByUser"));
 							return;
 						}
+						defaultLanguagePropertiesPath = filePath;
 					}
 				}
 
@@ -1634,7 +1634,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		if (currentSelectedKeys != null && currentSelectedKeys.size() > 0) {
 			final int[] indices = new int[currentSelectedKeys.size()];
 			for (int i = 0; i < currentSelectedKeys.size(); i++) {
-				for (int searchIndex = 0; i < languageProperties.size(); searchIndex++) {
+				for (int searchIndex = 0; searchIndex < languageProperties.size(); searchIndex++) {
 					final LanguageProperty languageProperty = languageProperties.get(searchIndex);
 					if (languageProperty.getPath().equals(currentSelectedKeys.get(i).getFirst()) && languageProperty.getKey().equals(currentSelectedKeys.get(i).getSecond())) {
 						indices[i] = searchIndex;
