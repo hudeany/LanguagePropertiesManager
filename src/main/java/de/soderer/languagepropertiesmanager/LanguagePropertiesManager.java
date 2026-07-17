@@ -7,7 +7,6 @@ import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutionException;
@@ -235,7 +234,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 					} else if ("version".equalsIgnoreCase(arguments[i]) && arguments.length == 1) {
 						System.out.println(VERSION.toString());
 						return 1;
-					} else if ("update".equalsIgnoreCase(arguments[i]) && arguments.length == 1) {
+					} else if ("update".equalsIgnoreCase(arguments[i]) && i == 0 && arguments.length <= 3) {
 						final LanguagePropertiesManager languagePropertiesManager = new LanguagePropertiesManager();
 						if (arguments.length > i + 2) {
 							ApplicationUpdateUtilities.executeUpdate(languagePropertiesManager, LanguagePropertiesManager.VERSIONINFO_DOWNLOAD_URL, proxyConfiguration, LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION, LanguagePropertiesManager.TRUSTED_UPDATE_CA_CERTIFICATES, arguments[i + 1], arguments[i + 2].toCharArray(), null, false, false);
@@ -366,7 +365,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 						throw new ParameterException(arguments[i - 1], "Missing parameter for propertiesFileExtension");
 					} else if (Utilities.isBlank(arguments[i])) {
 						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Invalid parameter for propertiesFileExtension");
-					} else if (actionDefinition.getOutputDirectory() != null) {
+					} else if (actionDefinition.getPropertiesFileExtension() != null) {
 						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Duplicate parameter propertiesFileExtension");
 					} else {
 						actionDefinition.setPropertiesFileExtension(arguments[i]);
@@ -620,14 +619,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 					outputDirectory = new File(actionDefinition.getOutputDirectory());
 				}
 
-				String languagePropertiesSetName;
-				final List<String> languagePropertiesSetNames = new ArrayList<>();
-				languagePropertiesSetNames.add("CSV");
-				if (languagePropertiesSetNames.size() == 1) {
-					languagePropertiesSetName = languagePropertiesSetNames.get(0);
-				} else {
-					languagePropertiesSetName = "CSV";
-				}
+				final String languagePropertiesSetName = importFromCsvWorker.getLanguagePropertiesSetName();
 
 				final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(this, importFromCsvWorker.getLanguageProperties(), languagePropertiesSetName, outputDirectory, configuredExcludeParts, actionDefinition.isExtendAndKeepExistingProperties(), actionDefinition.getPropertiesFileExtension());
 
