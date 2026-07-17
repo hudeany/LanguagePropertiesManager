@@ -12,6 +12,8 @@ Mandatory parameters for Excel file export
 	-excelFile <output Excel file path>
 
 Optional parameters for Excel file export
+	-overwrite:
+		Allow overwriting the output Excel file, if it already exists
 	-propertiesFileExtension <extension>:
 		Do not use the default language file extension ".properties", but a differently defined customized extension like "_mytext.properties"
 	-v: verbose output with progress bar
@@ -33,6 +35,8 @@ Mandatory parameters for CSV file export
 	-csvFile <output CSV file path>
 
 Optional parameters for CSV file export
+	-overwrite:
+		Allow overwriting the output CSV file, if it already exists
 	-propertiesFileExtension <extension>:
 		Do not use the default language file extension ".properties", but a differently defined customized extension like "_mytext.properties"
 	-v: verbose output with progress bar
