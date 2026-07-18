@@ -5,7 +5,7 @@
 	<classpathentry kind="lib" path="lib/commons-text-1.9.jar"/>
 	<classpathentry kind="lib" path="lib/commons-lang3-3.11.jar"/>
 	<classpathentry kind="lib" path="lib/mailapi-2.0.1.jar"/>
-	<classpathentry kind="lib" path="lib/json-26.1.53.jar"/>
+	<classpathentry kind="lib" path="lib/json-26.1.54.jar"/>
 	<classpathentry kind="lib" path="lib/poi-5.2.4.jar"/>
 	<classpathentry kind="lib" path="lib/poi-ooxml-5.2.4.jar"/>
 	<classpathentry kind="lib" path="lib/poi-ooxml-full-5.2.4.jar"/>
@@ -21,7 +21,7 @@
 	<classpathentry kind="lib" path="lib/proxyautoconfig-26.0.8.jar"/>
 	<classpathentry kind="lib" path="lib/csv-26.0.5.jar"/>
 	<classpathentry kind="lib" path="lib/network-26.0.17.jar"/>
-	<classpathentry kind="lib" path="lib/soderer-utilities-26.2.14.jar"/>
+	<classpathentry kind="lib" path="lib/soderer-utilities-26.2.17.jar"/>
 	<classpathentry kind="lib" path="lib/swt-4.38-win32-win32-x86_64.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">
 		<attributes>
