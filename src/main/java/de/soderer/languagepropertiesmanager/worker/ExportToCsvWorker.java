@@ -60,7 +60,7 @@ public class ExportToCsvWorker extends WorkerSimple<Boolean> {
 		final File tempOutputFile = File.createTempFile("export_", ".csv.tmp", targetDirectory);
 		try {
 			try (final FileOutputStream outputStream = new FileOutputStream(tempOutputFile)) {
-				try (final CsvWriter csvWriter = new CsvWriter(outputStream, new CsvFormat().setSeparator(';').setStringQuote('"').setStringQuoteEscapeCharacter('\\'))) {
+				try (final CsvWriter csvWriter = new CsvWriter(outputStream, new CsvFormat().withSeparator(';').withStringQuote('"').withStringQuoteEscapeCharacter('\\'))) {
 					// Write header row
 					final List<String> headerList = new ArrayList<>();
 					headerList.add("Path");

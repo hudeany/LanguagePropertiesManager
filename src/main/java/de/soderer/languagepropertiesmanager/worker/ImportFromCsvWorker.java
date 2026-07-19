@@ -42,7 +42,7 @@ public class ImportFromCsvWorker extends WorkerSimple<Boolean> {
 	public Boolean work() throws Exception {
 		parent.changeTitle("CSV import");
 		try (FileInputStream inputStream = new FileInputStream(importCsvFile);
-				CsvReader csvReader = new CsvReader(inputStream, new CsvFormat().setSeparator(';').setStringQuote('"').setStringQuoteEscapeCharacter('\\'))) {
+				CsvReader csvReader = new CsvReader(inputStream, new CsvFormat().withSeparator(';').withStringQuote('"').withStringQuoteEscapeCharacter('\\'))) {
 			// Read headers
 			int columnIndex_Path = -1;
 			int columnIndex_Keys = -1;
