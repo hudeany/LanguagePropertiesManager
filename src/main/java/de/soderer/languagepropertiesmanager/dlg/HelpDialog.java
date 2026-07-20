@@ -7,6 +7,9 @@ import java.util.Locale;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.GC;
+import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Button;
@@ -19,6 +22,7 @@ import de.soderer.pac.utilities.ProxyConfiguration.ProxyConfigurationType;
 import de.soderer.utilities.ConfigurationProperties;
 import de.soderer.utilities.IoUtilities;
 import de.soderer.utilities.LangResources;
+import de.soderer.utilities.Utilities;
 import de.soderer.utilities.VersionInfo;
 import de.soderer.utilities.appupdate.ApplicationUpdateUtilities;
 import de.soderer.utilities.swt.ApplicationConfigurationDialog;
@@ -110,5 +114,82 @@ public class HelpDialog extends ModalDialog<Boolean> {
 		});
 
 		shell.pack();
+		widenToFitTitle(shell);
+
+		// Fix for Linux/GTK: the window manager sometimes enforces a minimum width
+		// only after the initial pack(), so the full window title can be displayed.
+		// Without a re-layout, the buttons then keep their original (small) width
+		// and stick to the left.
+		// This resize listener makes sure GridData(SWT.FILL, ...) is re-applied
+		// whenever the size changes afterwards.
+		shell.addListener(SWT.Resize, event -> shell.layout(true, true));
+
+		// Centering must happen last, once the shell has its final size -
+		// otherwise the position would be computed against a size that is
+		// still about to change.
+		centerOverMainShell(shell);
+	}
+
+	/**
+	 * Computes the position that centers this dialog's shell over the main
+	 * application shell, as far as the screen allows (i.e. clamped to stay
+	 * fully on-screen if the main shell is positioned close to a screen
+	 * edge), and registers it via setLocation(Point).
+	 *
+	 * Note: this deliberately does NOT call shell.setLocation(...) directly.
+	 * ModalDialog.open() calls setPosition(getParent()) right after
+	 * createComponents() returns, which would simply overwrite any direct
+	 * shell.setLocation(...) call made here with its own default centering
+	 * (over shell.getParent(), not necessarily the same as our main
+	 * application shell). Going through setLocation(Point) instead stores
+	 * the position in ModalDialog's own "location" field, which
+	 * setPosition() then uses as-is instead of recomputing its default.
+	 */
+	private void centerOverMainShell(final Shell shell) {
+		final Shell mainShell = applicationDialog.getShell();
+		if (mainShell == null || mainShell.isDisposed()) {
+			return;
+		}
+
+		final Rectangle mainShellBounds = mainShell.getBounds();
+		final Point shellSize = shell.getSize();
+
+		int x = mainShellBounds.x + (mainShellBounds.width - shellSize.x) / 2;
+		int y = mainShellBounds.y + (mainShellBounds.height - shellSize.y) / 2;
+
+		final Rectangle screenBounds = mainShell.getMonitor().getBounds();
+		x = Math.max(screenBounds.x, Math.min(x, screenBounds.x + screenBounds.width - shellSize.x));
+		y = Math.max(screenBounds.y, Math.min(y, screenBounds.y + screenBounds.height - shellSize.y));
+
+		setLocation(new Point(x, y));
+	}
+
+	/**
+	 * Widens the shell, if necessary, so that its full window title text
+	 * fits into the title bar. shell.pack() only sizes the shell based on
+	 * its content widgets, never based on the (often much longer) window
+	 * title string, so without this the title can get truncated/ellipsized
+	 * by the OS, especially since this dialog's title includes the
+	 * application name, version, and "Help" suffix.
+	 */
+	private static void widenToFitTitle(final Shell shell) {
+		final String title = shell.getText();
+		if (Utilities.isBlank(title)) {
+			return;
+		}
+
+		final GC gc = new GC(shell);
+		try {
+			// getFontMetrics()/textExtent() approximate the title bar font
+			// reasonably well; add generous padding for the OS-drawn title
+			// bar icon, close/min/max buttons, and window border/frame.
+			final int textWidth = gc.textExtent(title).x;
+			final int requiredWidth = textWidth + 120;
+			if (shell.getSize().x < requiredWidth) {
+				shell.setSize(requiredWidth, shell.getSize().y);
+			}
+		} finally {
+			gc.dispose();
+		}
 	}
 }
