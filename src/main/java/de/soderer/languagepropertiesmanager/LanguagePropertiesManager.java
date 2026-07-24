@@ -21,9 +21,6 @@ import de.soderer.languagepropertiesmanager.worker.ImportFromCsvWorker;
 import de.soderer.languagepropertiesmanager.worker.ImportFromExcelWorker;
 import de.soderer.languagepropertiesmanager.worker.LoadLanguagePropertiesWorker;
 import de.soderer.languagepropertiesmanager.worker.WriteLanguagePropertiesWorker;
-import de.soderer.pac.PacScriptParser;
-import de.soderer.pac.utilities.ProxyConfiguration;
-import de.soderer.pac.utilities.ProxyConfiguration.ProxyConfigurationType;
 import de.soderer.utilities.ConfigurationProperties;
 import de.soderer.utilities.DateUtilities;
 import de.soderer.utilities.DeepLHelper;
@@ -36,7 +33,6 @@ import de.soderer.utilities.Version;
 import de.soderer.utilities.appupdate.ApplicationUpdateUtilities;
 import de.soderer.utilities.console.ConsoleType;
 import de.soderer.utilities.console.ConsoleUtilities;
-import de.soderer.utilities.swt.ApplicationConfigurationDialog;
 import de.soderer.utilities.swt.ErrorDialog;
 import de.soderer.utilities.worker.WorkerParentDual;
 
@@ -76,15 +72,9 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 	/** The Constant CONFIGURATION_FILE. */
 	public static final File CONFIGURATION_FILE = new File(System.getProperty("user.home") + File.separator + "." + APPLICATION_NAME + ".config");
 
-	public static final String CONFIG_VERSION = "Application.Version";
 	public static final String CONFIG_CLEANUP_REPAIRPUNCTUATION = "Cleanup.RepairPunctuation";
-	public static final String CONFIG_LANGUAGE = "Application.Language";
 	public static final String CONFIG_PREVIOUS_CHECK_USAGE = "CheckUsage.Previous";
 	public static final String CONFIG_RECENT_PROPERTIES = "Recent";
-	public static final String CONFIG_DAILY_UPDATE_CHECK = "DailyUpdateCheck";
-	public static final String CONFIG_NEXT_DAILY_UPDATE_CHECK = "NextDailyUpdateCheck";
-	public static final String CONFIG_PROXY_CONFIGURATION_TYPE = ApplicationConfigurationDialog.CONFIG_PROXY_CONFIGURATION_TYPE;
-	public static final String CONFIG_PROXY_URL = ApplicationConfigurationDialog.CONFIG_PROXY_URL;
 	public static final String CONFIG_OPEN_DIR_EXCLUDES = "OpenDirExcludes";
 	public static final String CONFIG_DEEPL_BASEURL = "DeepL_BaseUrl";
 	public static final String CONFIG_DEEPL_APIKEY = "DeepL_ApiKey";
@@ -96,26 +86,10 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 	private ActionDefinition actionDefinitionToExecute;
 
 	public static void setupDefaultConfig(final ConfigurationProperties applicationConfiguration) {
+		applicationConfiguration.setupDefaultConfig();
+
 		if (!applicationConfiguration.containsKey(LanguagePropertiesManager.CONFIG_CLEANUP_REPAIRPUNCTUATION)) {
 			applicationConfiguration.set(LanguagePropertiesManager.CONFIG_CLEANUP_REPAIRPUNCTUATION, true);
-		}
-		applicationConfiguration.set(ApplicationConfigurationDialog.CONFIG_LANGUAGE + ConfigurationProperties.ENUM_EXTENSION, "de,en");
-		if (!applicationConfiguration.containsKey(LanguagePropertiesManager.CONFIG_LANGUAGE)) {
-			applicationConfiguration.set(LanguagePropertiesManager.CONFIG_LANGUAGE, Locale.getDefault().getLanguage());
-		}
-
-		applicationConfiguration.set(ApplicationConfigurationDialog.CONFIG_PROXY_CONFIGURATION_TYPE + ConfigurationProperties.ENUM_EXTENSION, "None,System,Proxy-URL,WPAD,PAC-URL");
-		if (!applicationConfiguration.containsKey(LanguagePropertiesManager.CONFIG_DAILY_UPDATE_CHECK)) {
-			applicationConfiguration.set(LanguagePropertiesManager.CONFIG_DAILY_UPDATE_CHECK, false);
-		}
-		if (!applicationConfiguration.containsKey(LanguagePropertiesManager.CONFIG_NEXT_DAILY_UPDATE_CHECK)) {
-			applicationConfiguration.set(LanguagePropertiesManager.CONFIG_NEXT_DAILY_UPDATE_CHECK, "");
-		}
-		if (!applicationConfiguration.containsKey(LanguagePropertiesManager.CONFIG_PROXY_CONFIGURATION_TYPE)) {
-			applicationConfiguration.set(LanguagePropertiesManager.CONFIG_PROXY_CONFIGURATION_TYPE, ProxyConfiguration.ProxyConfigurationType.None.name());
-		}
-		if (!applicationConfiguration.containsKey(LanguagePropertiesManager.CONFIG_PROXY_URL)) {
-			applicationConfiguration.set(LanguagePropertiesManager.CONFIG_PROXY_URL, "");
 		}
 		if (!applicationConfiguration.containsKey(LanguagePropertiesManager.CONFIG_OPEN_DIR_EXCLUDES)) {
 			applicationConfiguration.set(LanguagePropertiesManager.CONFIG_OPEN_DIR_EXCLUDES, "__;/src/test/;\\src\\test\\;/bin/;\\bin\\");
@@ -189,7 +163,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 		try {
 			applicationConfiguration = new ConfigurationProperties(LanguagePropertiesManager.APPLICATION_NAME, true);
 			LanguagePropertiesManager.setupDefaultConfig(applicationConfiguration);
-			if ("de".equalsIgnoreCase(applicationConfiguration.get(LanguagePropertiesManager.CONFIG_LANGUAGE))) {
+			if ("de".equalsIgnoreCase(applicationConfiguration.get(ConfigurationProperties.CONFIG_KEY_LANGUAGE))) {
 				Locale.setDefault(Locale.GERMAN);
 			} else {
 				Locale.setDefault(Locale.ENGLISH);
@@ -198,19 +172,6 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 			System.err.println("Invalid application configuration");
 			return 1;
 		}
-
-		if (!applicationConfiguration.containsKey(ApplicationConfigurationDialog.CONFIG_PROXY_CONFIGURATION_TYPE)) {
-			if (PacScriptParser.findPacFileUrlByWpad() != null) {
-				applicationConfiguration.set(ApplicationConfigurationDialog.CONFIG_PROXY_CONFIGURATION_TYPE, ProxyConfigurationType.WPAD.name());
-			} else {
-				applicationConfiguration.set(ApplicationConfigurationDialog.CONFIG_PROXY_CONFIGURATION_TYPE, ProxyConfigurationType.None.name());
-			}
-			applicationConfiguration.save();
-		}
-
-		final ProxyConfigurationType proxyConfigurationType = ProxyConfigurationType.getFromString(applicationConfiguration.get(ApplicationConfigurationDialog.CONFIG_PROXY_CONFIGURATION_TYPE));
-		final String proxyUrl = applicationConfiguration.get(ApplicationConfigurationDialog.CONFIG_PROXY_URL);
-		final ProxyConfiguration proxyConfiguration = new ProxyConfiguration(proxyConfigurationType, proxyUrl);
 
 		try {
 			String[] arguments = args;
@@ -236,11 +197,11 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 					} else if ("update".equalsIgnoreCase(arguments[i]) && i == 0 && arguments.length <= 3) {
 						final LanguagePropertiesManager languagePropertiesManager = new LanguagePropertiesManager();
 						if (arguments.length > i + 2) {
-							ApplicationUpdateUtilities.executeUpdate(languagePropertiesManager, LanguagePropertiesManager.VERSIONINFO_DOWNLOAD_URL, proxyConfiguration, LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION, LanguagePropertiesManager.TRUSTED_UPDATE_CA_CERTIFICATES, arguments[i + 1], arguments[i + 2].toCharArray(), null, null, false, false);
+							ApplicationUpdateUtilities.executeUpdate(languagePropertiesManager, LanguagePropertiesManager.VERSIONINFO_DOWNLOAD_URL, applicationConfiguration.getProxyConfiguration(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION, LanguagePropertiesManager.TRUSTED_UPDATE_CA_CERTIFICATES, arguments[i + 1], arguments[i + 2].toCharArray(), null, null, false, false);
 						} else if (arguments.length > i + 1) {
-							ApplicationUpdateUtilities.executeUpdate(languagePropertiesManager, LanguagePropertiesManager.VERSIONINFO_DOWNLOAD_URL, proxyConfiguration, LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION, LanguagePropertiesManager.TRUSTED_UPDATE_CA_CERTIFICATES, arguments[i + 1], null, null, null, false, false);
+							ApplicationUpdateUtilities.executeUpdate(languagePropertiesManager, LanguagePropertiesManager.VERSIONINFO_DOWNLOAD_URL, applicationConfiguration.getProxyConfiguration(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION, LanguagePropertiesManager.TRUSTED_UPDATE_CA_CERTIFICATES, arguments[i + 1], null, null, null, false, false);
 						} else {
-							ApplicationUpdateUtilities.executeUpdate(languagePropertiesManager, LanguagePropertiesManager.VERSIONINFO_DOWNLOAD_URL, proxyConfiguration, LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION, LanguagePropertiesManager.TRUSTED_UPDATE_CA_CERTIFICATES, null, null, null, null, false, false);
+							ApplicationUpdateUtilities.executeUpdate(languagePropertiesManager, LanguagePropertiesManager.VERSIONINFO_DOWNLOAD_URL, applicationConfiguration.getProxyConfiguration(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION, LanguagePropertiesManager.TRUSTED_UPDATE_CA_CERTIFICATES, null, null, null, null, false, false);
 						}
 						return 1;
 					} else if ("gui".equalsIgnoreCase(arguments[i])) {
