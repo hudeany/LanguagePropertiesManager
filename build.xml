@@ -30,7 +30,7 @@
 		<echo>Java/JVM detailed version: ${java.version}</echo>
 
 		<loadfile property="build.version" srcFile="build.version" failonerror="false" />
-		<property name="build.version" value="25.0.0" />
+		<property name="build.version" value="26.0.0" />
 		<echo message="build.version: ${build.version}" />
 
 		<!-- Default: https://soderer.de/index.php?download=Versions.json -->

@@ -49,7 +49,6 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 	public static final String APPLICATION_ERROR_EMAIL_ADRESS = "LanguagePropertiesManager.Error@soderer.de";
 
 	public static final File KEYSTORE_FILE = new File(System.getProperty("user.home") + File.separator + "." + APPLICATION_NAME + File.separator + "." + APPLICATION_NAME + ".keystore");
-	public static final String HOME_URL = "https://soderer.de/index.php?menu=tools";
 
 	/** The Constant VERSION_RESOURCE_FILE, which contains version number and versioninfo download url. */
 	public static final String VERSION_RESOURCE_FILE = "/application_version.txt";
