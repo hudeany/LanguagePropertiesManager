@@ -24,6 +24,8 @@ import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.FocusEvent;
 import org.eclipse.swt.events.FocusListener;
+import org.eclipse.swt.events.KeyAdapter;
+import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -415,6 +417,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		propertiesTable.setHeaderVisible(true);
 		propertiesTable.setLinesVisible(true);
 		propertiesTable.addSelectionListener(new TableItemSelectionListener());
+		propertiesTable.addKeyListener(new PropertiesTableKeyListener());
 
 		columnSortListener = new ColumnSortListener();
 
@@ -708,27 +711,45 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private class RemoveButtonSelectionListener extends SelectionAdapter {
 		@Override
 		public void widgetSelected(final SelectionEvent e) {
-			try {
-				if (askForDropProperties()) {
-					for (final TableItem item : propertiesTable.getSelection()) {
-						for (int i = 0; i < languageProperties.size(); i++) {
-							final LanguageProperty languageProperty = languageProperties.get(i);
-							if (languageProperty.getPath().equals(item.getText(columnPathIndex)) && languageProperty.getKey().equals(item.getText(columnKeyIndex))) {
-								languageProperties.remove(languageProperty);
-								break;
-							}
+			removeSelectedProperties();
+		}
+	}
+
+	/**
+	 * Same DEL-key deletion as the trash button (RemoveButtonSelectionListener): asks for
+	 * confirmation via {@link #askForDropProperties()} and removes the currently selected rows.
+	 */
+	private class PropertiesTableKeyListener extends KeyAdapter {
+		@Override
+		public void keyPressed(final KeyEvent e) {
+			if (e.keyCode == SWT.DEL && propertiesTable.getSelectionCount() > 0) {
+				removeSelectedProperties();
+			}
+		}
+	}
+
+	/** Shared by the trash button and the DEL key on {@link #propertiesTable} */
+	private void removeSelectedProperties() {
+		try {
+			if (propertiesTable.getSelectionCount() > 0 && askForDropProperties()) {
+				for (final TableItem item : propertiesTable.getSelection()) {
+					for (int i = 0; i < languageProperties.size(); i++) {
+						final LanguageProperty languageProperty = languageProperties.get(i);
+						if (languageProperty.getPath().equals(item.getText(columnPathIndex)) && languageProperty.getKey().equals(item.getText(columnKeyIndex))) {
+							languageProperties.remove(languageProperty);
+							break;
 						}
 					}
-
-					setupTable();
-					propertiesTable.deselectAll();
-					refreshDetailView();
-					hasUnsavedChanges = true;
-					checkButtonStatus();
 				}
-			} catch (final Exception ex) {
-				new ErrorDialog(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION.toString(), LanguagePropertiesManager.APPLICATION_ERROR_EMAIL_ADRESS, ex).open();
+
+				setupTable();
+				propertiesTable.deselectAll();
+				refreshDetailView();
+				hasUnsavedChanges = true;
+				checkButtonStatus();
 			}
+		} catch (final Exception ex) {
+			new ErrorDialog(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION.toString(), LanguagePropertiesManager.APPLICATION_ERROR_EMAIL_ADRESS, ex).open();
 		}
 	}
 
@@ -831,17 +852,24 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				int countTranslations = 0;
 				for (final LanguageProperty languageProperty : languageProperties) {
 					final String sourceValue = languageProperty.getLanguageValue(languageSignTranslateSource);
-					String targetValue = languageProperty.getLanguageValue(languageSignTranslateTarget);
-					if (Utilities.isEmpty(targetValue)) {
-						try {
-							targetValue = deepLHelper.translate(sourceLanguage, sourceValue, targetLanguage);
-						} catch (final Exception e) {
-							// Maybe license limits are reached
-							showErrorMessage(LanguagePropertiesManager.APPLICATION_NAME, "Translate error: " + e.getMessage());
-							break;
-						}
+					String targetValue;
+					if (Utilities.isBlank(sourceValue)) {
+						targetValue = sourceValue;
 						languageProperty.setLanguageValue(languageSignTranslateTarget, targetValue);
 						countTranslations++;
+					} else {
+						targetValue = languageProperty.getLanguageValue(languageSignTranslateTarget);
+						if (Utilities.isEmpty(targetValue)) {
+							try {
+								targetValue = deepLHelper.translate(sourceLanguage, sourceValue, targetLanguage);
+							} catch (final Exception e) {
+								// Maybe license limits are reached
+								showErrorMessage(LanguagePropertiesManager.APPLICATION_NAME, "Translate error: " + e.getMessage());
+								break;
+							}
+							languageProperty.setLanguageValue(languageSignTranslateTarget, targetValue);
+							countTranslations++;
+						}
 					}
 				}
 				setupTable();
