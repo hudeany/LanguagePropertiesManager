@@ -807,7 +807,8 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				}
 
 				if (Utilities.isBlank(applicationConfiguration.get(LanguagePropertiesManager.CONFIG_DEEPL_APIKEY))) {
-					throw new Exception("No DeepL API key available");
+					showErrorMessage(LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("missingDeeplApiKey"));
+					return;
 				}
 
 				final DeepLHelper deepLHelper = new DeepLHelper(applicationConfiguration.get(LanguagePropertiesManager.CONFIG_DEEPL_BASEURL), applicationConfiguration.get(LanguagePropertiesManager.CONFIG_DEEPL_APIKEY));
