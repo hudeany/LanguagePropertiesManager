@@ -31,6 +31,8 @@ import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.events.ShellAdapter;
+import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
@@ -91,6 +93,7 @@ import de.soderer.utilities.swt.UpdateableGuiApplication;
  * Main Class
  */
 public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
+	private boolean updateCheckDone = false;
 	private boolean showStorageTexts = false;
 	private boolean dataWasModified = false;
 	private boolean hasUnsavedChanges = false;
@@ -152,17 +155,6 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			getShell().setLocation((monitorArray[0].getClientArea().width - getSize().x) / 2, (monitorArray[0].getClientArea().height - getSize().y) / 2);
 		}
 
-		if (dailyUpdateCheckIsPending()) {
-			setDailyUpdateCheckStatus(true);
-			try {
-				if (ApplicationUpdateUtilities.checkForNewVersionAvailable(LanguagePropertiesManager.VERSIONINFO_DOWNLOAD_URL, applicationConfiguration.getProxyConfiguration(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION) != null) {
-					ApplicationUpdateUtilities.executeUpdate(this, LanguagePropertiesManager.VERSIONINFO_DOWNLOAD_URL, applicationConfiguration.getProxyConfiguration(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION, LanguagePropertiesManager.TRUSTED_UPDATE_CA_CERTIFICATES, null, null, null, null, true, false);
-				}
-			} catch (final Exception e) {
-				showErrorMessage(LangResources.get("updateCheck"), LangResources.get("error.cannotCheckForUpdate", e.getMessage()));
-			}
-		}
-
 		@SuppressWarnings("unused")
 		final
 		ImageManager imageManager = new ImageManager(getShell());
@@ -184,6 +176,29 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		});
 
 		checkButtonStatus();
+
+		getShell().addShellListener(new ShellAdapter() {
+			@Override
+			public void shellActivated(final ShellEvent event) {
+				if (updateCheckDone) {
+					return;
+				} else {
+					updateCheckDone = true;
+					getShell().removeShellListener(this);
+
+					if (dailyUpdateCheckIsPending()) {
+						setDailyUpdateCheckStatus(true);
+						try {
+							if (ApplicationUpdateUtilities.checkForNewVersionAvailable(LanguagePropertiesManager.VERSIONINFO_DOWNLOAD_URL, applicationConfiguration.getProxyConfiguration(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION) != null) {
+								ApplicationUpdateUtilities.executeUpdate(LanguagePropertiesManagerDialog.this, LanguagePropertiesManager.VERSIONINFO_DOWNLOAD_URL, applicationConfiguration.getProxyConfiguration(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION, LanguagePropertiesManager.TRUSTED_UPDATE_CA_CERTIFICATES, null, null, null, null, true, false);
+							}
+						} catch (final Exception e) {
+							showErrorMessage(LangResources.get("updateCheck"), LangResources.get("error.cannotCheckForUpdate", e.getMessage()));
+						}
+					}
+				}
+			}
+		});
 	}
 
 	private void loadConfiguration() {
