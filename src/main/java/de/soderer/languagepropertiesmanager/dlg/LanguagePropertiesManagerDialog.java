@@ -182,16 +182,18 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			public void shellActivated(final ShellEvent event) {
 				getShell().removeShellListener(this);
 
-				if (Utilities.isNotBlank(LanguagePropertiesManager.VERSIONINFO_DOWNLOAD_URL) && dailyUpdateCheckIsPending()) {
-					setDailyUpdateCheckStatus(true);
-					try {
-						if (ApplicationUpdateUtilities.checkForNewVersionAvailable(LanguagePropertiesManager.VERSIONINFO_DOWNLOAD_URL, applicationConfiguration.getProxyConfiguration(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION) != null) {
-							ApplicationUpdateUtilities.executeUpdate(mainDialog, LanguagePropertiesManager.VERSIONINFO_DOWNLOAD_URL, applicationConfiguration.getProxyConfiguration(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION, LanguagePropertiesManager.TRUSTED_UPDATE_CA_CERTIFICATES, null, null, null, null, true, false);
+				display.asyncExec(() -> {
+					if (Utilities.isNotBlank(LanguagePropertiesManager.VERSIONINFO_DOWNLOAD_URL) && dailyUpdateCheckIsPending()) {
+						setDailyUpdateCheckStatus(true);
+						try {
+							if (ApplicationUpdateUtilities.checkForNewVersionAvailable(LanguagePropertiesManager.VERSIONINFO_DOWNLOAD_URL, applicationConfiguration.getProxyConfiguration(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION) != null) {
+								ApplicationUpdateUtilities.executeUpdate(mainDialog, LanguagePropertiesManager.VERSIONINFO_DOWNLOAD_URL, applicationConfiguration.getProxyConfiguration(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION, LanguagePropertiesManager.TRUSTED_UPDATE_CA_CERTIFICATES, null, null, null, null, true, false);
+							}
+						} catch (final Exception e) {
+							showErrorMessage(LangResources.get("updateCheck"), LangResources.get("error.cannotCheckForUpdate", e.getMessage()));
 						}
-					} catch (final Exception e) {
-						showErrorMessage(LangResources.get("updateCheck"), LangResources.get("error.cannotCheckForUpdate", e.getMessage()));
 					}
-				}
+				});
 			}
 		});
 	}
