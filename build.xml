@@ -19,7 +19,7 @@
 	<property name="swt.version" value="4.38" />
 	<property name="swt.build" value="R-4.38-202512010920" />
 
-	<target name="build_jar" depends="download_build_dependencies, build_setup, cleanup_before, create_jar, cleanup_after" />
+	<target name="build_jar" depends="build_setup, cleanup_before, create_jar, cleanup_after" />
 
 	<target name="probe-proxy">
 		<condition property="proxy.enabled">
@@ -37,13 +37,7 @@
 		<setproxy proxyhost="${proxy.host}" proxyport="${proxy.port}" proxyuser="${proxy.user}" proxypassword="${proxy.pass}" />
 	</target>
 
-	<available file="lib_ant" property="libAntAvailable" />
-	<target name="download_build_dependencies" unless="libAntAvailable" depends="proxy">
-		<mkdir dir="lib_ant/" />
-		<get src="https://repo1.maven.org/maven2/ant-contrib/ant-contrib/1.0b3/ant-contrib-1.0b3.jar" dest="lib_ant/" />
-	</target>
-
-	<target name="build_setup" depends="download_build_dependencies">
+	<target name="build_setup">
 		<echo>Java/JVM HOME: ${java.home}</echo>
 		<echo>Java/JVM version: ${ant.java.version}</echo>
 		<echo>Java/JVM detailed version: ${java.version}</echo>
@@ -68,50 +62,6 @@
 
 		<property name="buildPath" value="build" />
 		<echo message="buildPath: ${buildPath}" />
-
-		<taskdef resource="net/sf/antcontrib/antlib.xml">
-			<classpath>
-				<pathelement location="lib_ant/ant-contrib-1.0b3.jar" />
-			</classpath>
-		</taskdef>
-
-		<if>
-			<and>
-				<isset property="user.home" />
-				<available file="${user.home}" type="dir" />
-			</and>
-			<then>
-				<property name="HOME" value="${user.home}" />
-			</then>
-			<else>
-				<if>
-					<and>
-						<isset property="env.HOME" />
-						<available file="${env.HOME}" type="dir" />
-					</and>
-					<then>
-						<property name="HOME" value="${env.HOME}" />
-					</then>
-					<else>
-						<fail message="Property &quot;env.HOME&quot; or &quot;user.home&quot; was not set properly" />
-					</else>
-				</if>
-			</else>
-		</if>
-
-		<if>
-			<and>
-				<isset property="env.SodererGitProjects" />
-				<available file="${env.SodererGitProjects}" type="dir" />
-			</and>
-			<then>
-				<property name="projectsPath" value="${env.SodererGitProjects}" />
-			</then>
-			<else>
-				<property name="projectsPath" value="${HOME}/git" />
-			</else>
-		</if>
-		<echo message="projectsPath: ${projectsPath}" />
 	</target>
 
 	<target name="cleanup_before">
