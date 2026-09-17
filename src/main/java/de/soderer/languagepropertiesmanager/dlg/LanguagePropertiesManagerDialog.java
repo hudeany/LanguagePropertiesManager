@@ -45,7 +45,6 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
-import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Monitor;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
@@ -944,11 +943,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				if (duplicatesToRemove.isEmpty()) {
 					showMessage(LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("noDuplicatesFound"));
 				} else {
-					final MessageBox messageBox = new MessageBox(LanguagePropertiesManagerDialog.this, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
-					messageBox.setText(LangResources.get("question_title_remove_duplicates"));
-					messageBox.setMessage(LangResources.get("question_content_remove_duplicates", duplicatesToRemove.size()) + "\n\n" + reportText.toString());
-					final int returncode = messageBox.open();
-					if (returncode == SWT.YES) {
+					final QuestionDialog dialog = new QuestionDialog(LanguagePropertiesManagerDialog.this, LangResources.get("question_title_remove_duplicates"), LangResources.get("question_content_remove_duplicates", duplicatesToRemove.size()) + "\n\n" + reportText.toString(), LangResources.get("yes"), LangResources.get("no"));
+					final int returncode = dialog.open();
+					if (returncode == 0) {
 						languageProperties.removeAll(duplicatesToRemove);
 						propertiesTable.deselectAll();
 						currentSelectedKeys = null;
@@ -1176,21 +1173,15 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	}
 
 	private boolean askForDropProperties() {
-		final MessageBox messageBox = new MessageBox(LanguagePropertiesManagerDialog.this, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
-		messageBox.setText(LangResources.get("question_title_delete_property"));
-		messageBox.setMessage(LangResources.get("question_content_delete_property"));
-		final int returncode = messageBox.open();
-
-		return (returncode == SWT.YES);
+		final QuestionDialog dialog = new QuestionDialog(this, LangResources.get("question_title_delete_property"), LangResources.get("question_content_delete_property"), LangResources.get("yes"), LangResources.get("no"));
+		final int returncode = dialog.open();
+		return returncode == 0;
 	}
 
 	private boolean askForDiscardChanges() {
-		final MessageBox messageBox = new MessageBox(LanguagePropertiesManagerDialog.this, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
-		messageBox.setText(LangResources.get("question_title_discard_changes"));
-		messageBox.setMessage(LangResources.get("question_content_discard_changes"));
-		final int returncode = messageBox.open();
-
-		return (returncode == SWT.YES);
+		final QuestionDialog dialog = new QuestionDialog(this, LangResources.get("question_title_discard_changes"), LangResources.get("question_content_discard_changes"), LangResources.get("yes"), LangResources.get("no"));
+		final int returncode = dialog.open();
+		return returncode == 0;
 	}
 
 	@Override
