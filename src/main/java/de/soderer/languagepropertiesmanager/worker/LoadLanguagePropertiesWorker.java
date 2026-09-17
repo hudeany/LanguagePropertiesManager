@@ -5,8 +5,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -75,7 +78,12 @@ public class LoadLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 
 			final Collection<File> propertiesFiles = FileUtils.listFiles(languagePropertiesFileOrBasicDirectory, languagePropertiesFilter, DirectoryFileFilter.DIRECTORY);
 
-			final Set<String> propertiesSetsPaths = new HashSet<>();
+			// Group candidate files by their property set path first, so a set is only
+			// accepted when at least one of its files actually has a language sign in its
+			// filename (e.g. "_de"). This excludes unrelated standalone properties files
+			// (e.g. configuration properties) that have no dedicated language file next to
+			// them, and which might otherwise not be readable as language properties anyway.
+			final Map<String, List<File>> propertiesFilesBySetPath = new HashMap<>();
 			for (final File propertiesFile : propertiesFiles) {
 				boolean excluded = false;
 				if (excludeParts != null) {
@@ -89,7 +97,16 @@ public class LoadLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 				if (!excluded) {
 					final String propertySetName = LanguagePropertiesFileSetReader.getPropertySetBaseName(propertiesFile.getName(), propertiesFileExtension);
 					final String propertiesSetsPath = propertiesFile.getParentFile().getAbsolutePath() + File.separator + propertySetName;
-					propertiesSetsPaths.add(propertiesSetsPath);
+					propertiesFilesBySetPath.computeIfAbsent(propertiesSetsPath, p -> new ArrayList<>()).add(propertiesFile);
+				}
+			}
+
+			final Set<String> propertiesSetsPaths = new HashSet<>();
+			for (final Entry<String, List<File>> propertiesFilesOfSetPathEntry : propertiesFilesBySetPath.entrySet()) {
+				final boolean hasDedicatedLanguageFile = propertiesFilesOfSetPathEntry.getValue().stream()
+						.anyMatch(propertiesFile -> !LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT.equals(LanguagePropertiesFileSetReader.getLanguageSignOfFilename(propertiesFile.getName())));
+				if (hasDedicatedLanguageFile) {
+					propertiesSetsPaths.add(propertiesFilesOfSetPathEntry.getKey());
 				}
 			}
 
