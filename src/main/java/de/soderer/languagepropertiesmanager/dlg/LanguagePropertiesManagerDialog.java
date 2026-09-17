@@ -505,6 +505,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			for (final Control field : detailFieldsPart.getChildren()) {
 				field.dispose();
 			}
+			languageTextFields.clear();
 
 			for (final String sign : availableLanguageSigns) {
 				final Label languageLabel = new Label(detailFieldsPart, SWT.NONE);
@@ -522,6 +523,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			for (final Control field : detailFieldsPart.getChildren()) {
 				field.dispose();
 			}
+			languageTextFields.clear();
 		}
 		detailFieldsPart.layout();
 	}
