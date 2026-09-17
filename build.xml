@@ -16,8 +16,8 @@
 	<property name="network.version" value="26.0.30" />
 	<property name="soderer-utilities.version" value="26.2.49" />
 
-	<property name="swt.version" value="4.39" />
-	<property name="swt.build" value="R-4.39-202602260420" />
+	<property name="swt.version" value="4.38" />
+	<property name="swt.build" value="R-4.38-202512010920" />
 
 	<target name="build_jar" depends="build_setup, cleanup_before, create_jar, cleanup_after" />
 
@@ -268,7 +268,7 @@
 		<delete>
 			<fileset dir="lib" includes="swt-*-win32-win32-x86_64.jar" />
 		</delete>
-		<get src="https://mirrors.dotsrc.org/eclipse/eclipse/downloads/drops4/${swt.build}/swt-${swt.version}-win32-win32-x86_64.zip" dest="lib/swt_win.zip" />
+		<get src="https://archive.eclipse.org/eclipse/downloads/drops4/${swt.build}/swt-${swt.version}-win32-win32-x86_64.zip" dest="lib/swt_win.zip" />
 		<unzip src="lib/swt_win.zip" dest="lib/swt_win" />
 		<move file="lib/swt_win/swt.jar" tofile="lib/swt-${swt.version}-win32-win32-x86_64.jar" />
 		<delete dir="lib/swt_win" />
@@ -284,7 +284,7 @@
 		<delete>
 			<fileset dir="lib" includes="swt-*-gtk-linux-x86_64.jar" />
 		</delete>
-		<get src="https://mirrors.dotsrc.org/eclipse/eclipse/downloads/drops4/${swt.build}/swt-${swt.version}-gtk-linux-x86_64.zip" dest="lib/swt_linux.zip" />
+		<get src="https://archive.eclipse.org/eclipse/downloads/drops4/${swt.build}/swt-${swt.version}-gtk-linux-x86_64.zip" dest="lib/swt_linux.zip" />
 		<unzip src="lib/swt_linux.zip" dest="lib/swt_linux" />
 		<move file="lib/swt_linux/swt.jar" tofile="lib/swt-${swt.version}-gtk-linux-x86_64.jar" />
 		<delete dir="lib/swt_linux" />
