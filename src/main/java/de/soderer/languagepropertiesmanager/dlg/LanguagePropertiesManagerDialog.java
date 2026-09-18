@@ -130,6 +130,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private Button addLanguageButton;
 	private Button deleteLanguageButton;
 	private Button translateButton;
+	private Button transferButton;
 	private Button removeDuplicatesButton;
 
 	private Button okButton;
@@ -314,9 +315,14 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		deleteLanguageButton.addSelectionListener(new DeleteLanguageButtonSelectionListener());
 
 		translateButton = new Button(buttonSection2, SWT.PUSH);
-		translateButton.setText("Translate");
+		translateButton.setText(LangResources.get("Translate"));
 		translateButton.setToolTipText(LangResources.get("tooltip_Translate"));
 		translateButton.addSelectionListener(new TranslateButtonSelectionListener());
+
+		transferButton = new Button(buttonSection2, SWT.PUSH);
+		transferButton.setText(LangResources.get("Transfer"));
+		transferButton.setToolTipText(LangResources.get("tooltip_Transfer"));
+		transferButton.addSelectionListener(new TransferButtonSelectionListener());
 
 		removeDuplicatesButton = new Button(buttonSection2, SWT.PUSH);
 		removeDuplicatesButton.setImage(ImageManager.getImage("clean.png"));
@@ -867,11 +873,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				for (final LanguageProperty languageProperty : languageProperties) {
 					final String sourceValue = languageProperty.getLanguageValue(languageSignTranslateSource);
 					String targetValue;
-					if (Utilities.isBlank(sourceValue)) {
-						targetValue = sourceValue;
-						languageProperty.setLanguageValue(languageSignTranslateTarget, targetValue);
-						countTranslations++;
-					} else {
+					if (Utilities.isNotBlank(sourceValue)) {
 						targetValue = languageProperty.getLanguageValue(languageSignTranslateTarget);
 						if (Utilities.isEmpty(targetValue)) {
 							try {
@@ -890,6 +892,64 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 				showMessage(LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("addedTranslations", countTranslations));
 				if (countTranslations > 0) {
+					hasUnsavedChanges = true;
+				}
+			} catch (final Exception ex) {
+				new ErrorDialog(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION.toString(), LanguagePropertiesManager.APPLICATION_ERROR_EMAIL_ADRESS, ex).open();
+			}
+			checkButtonStatus();
+		}
+	}
+
+	private class TransferButtonSelectionListener extends SelectionAdapter {
+		@Override
+		public void widgetSelected(final SelectionEvent event) {
+			try {
+				final String languageSignTransferSource = new ComboSelectionDialog(getShell(), getText(), LangResources.get("selectSourceLanguageSignToTransfer"), availableLanguageSigns, 0).open();
+				if (Utilities.isBlank(languageSignTransferSource)) {
+					return;
+				}
+
+				final List<String> availableOtherLanguageSigns = new ArrayList<>(availableLanguageSigns);
+				availableOtherLanguageSigns.remove(languageSignTransferSource);
+				String languageSignTransferTarget;
+				if (availableOtherLanguageSigns.size() == 1) {
+					languageSignTransferTarget = availableOtherLanguageSigns.get(0);
+				} else {
+					languageSignTransferTarget = new ComboSelectionDialog(getShell(), getText(), LangResources.get("selectTargetLanguageSignToTransfer"), availableOtherLanguageSigns).open();
+					if (Utilities.isBlank(languageSignTransferTarget)) {
+						return;
+					}
+				}
+
+				// Only restrict to the selected rows if any are selected, otherwise transfer all properties
+				final List<LanguageProperty> languagePropertiesToTransfer;
+				if (propertiesTable.getSelectionCount() > 0) {
+					languagePropertiesToTransfer = new ArrayList<>();
+					for (final TableItem item : propertiesTable.getSelection()) {
+						for (final LanguageProperty languageProperty : languageProperties) {
+							if (languageProperty.getPath().equals(item.getText(columnPathIndex)) && languageProperty.getKey().equals(item.getText(columnKeyIndex))) {
+								languagePropertiesToTransfer.add(languageProperty);
+								break;
+							}
+						}
+					}
+				} else {
+					languagePropertiesToTransfer = languageProperties;
+				}
+
+				int countTransfers = 0;
+				for (final LanguageProperty languageProperty : languagePropertiesToTransfer) {
+					final String sourceValue = languageProperty.getLanguageValue(languageSignTransferSource);
+					if (Utilities.isNotBlank(sourceValue)) {
+						languageProperty.setLanguageValue(languageSignTransferTarget, sourceValue);
+						countTransfers++;
+					}
+				}
+				setupTable();
+
+				showMessage(LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("addedTransfers", countTransfers));
+				if (countTransfers > 0) {
 					hasUnsavedChanges = true;
 				}
 			} catch (final Exception ex) {
@@ -1166,6 +1226,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		}
 		if (translateButton != null) {
 			translateButton.setEnabled(languageProperties != null && languageProperties.size() > 0 && availableLanguageSigns != null && availableLanguageSigns.size() > 1);
+		}
+		if (transferButton != null) {
+			transferButton.setEnabled(languageProperties != null && languageProperties.size() > 0 && availableLanguageSigns != null && availableLanguageSigns.size() > 1);
 		}
 		if (removeDuplicatesButton != null) {
 			removeDuplicatesButton.setEnabled(languageProperties != null && languageProperties.size() > 0);
