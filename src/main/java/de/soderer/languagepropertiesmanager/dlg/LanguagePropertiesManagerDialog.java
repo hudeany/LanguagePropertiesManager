@@ -321,7 +321,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		translateButton.addSelectionListener(new TranslateButtonSelectionListener());
 
 		transferButton = new Button(buttonSection2, SWT.PUSH);
-		transferButton.setText(LangResources.get("transfer"));
+		transferButton.setText(LangResources.get("Transfer"));
 		transferButton.setToolTipText(LangResources.get("tooltip_Transfer"));
 		transferButton.addSelectionListener(new TransferButtonSelectionListener());
 
@@ -875,8 +875,24 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					targetLanguage = targetLanguage.substring(0, targetLanguage.indexOf("_"));
 				}
 
+				// Only restrict to the selected rows if any are selected, otherwise translate all properties
+				final List<LanguageProperty> languagePropertiesToTranslate;
+				if (propertiesTable.getSelectionCount() > 0) {
+					languagePropertiesToTranslate = new ArrayList<>();
+					for (final TableItem item : propertiesTable.getSelection()) {
+						for (final LanguageProperty languageProperty : languageProperties) {
+							if (languageProperty.getPath().equals(item.getText(columnPathIndex)) && languageProperty.getKey().equals(item.getText(columnKeyIndex))) {
+								languagePropertiesToTranslate.add(languageProperty);
+								break;
+							}
+						}
+					}
+				} else {
+					languagePropertiesToTranslate = languageProperties;
+				}
+
 				int countTranslations = 0;
-				for (final LanguageProperty languageProperty : languageProperties) {
+				for (final LanguageProperty languageProperty : languagePropertiesToTranslate) {
 					final String sourceValue = languageProperty.getLanguageValue(languageSignTranslateSource);
 					String targetValue;
 					if (Utilities.isNotBlank(sourceValue)) {
