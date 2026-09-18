@@ -837,7 +837,8 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					return;
 				}
 
-				final DeepLHelper deepLHelper = new DeepLHelper(applicationConfiguration.get(LanguagePropertiesManager.CONFIG_DEEPL_BASEURL), applicationConfiguration.get(LanguagePropertiesManager.CONFIG_DEEPL_APIKEY));
+				final String deeplBaseUrl = applicationConfiguration.get(LanguagePropertiesManager.CONFIG_DEEPL_BASEURL);
+				final DeepLHelper deepLHelper = new DeepLHelper(deeplBaseUrl, applicationConfiguration.get(LanguagePropertiesManager.CONFIG_DEEPL_APIKEY), applicationConfiguration.getProxyConfiguration().getProxy(deeplBaseUrl));
 
 				final String languageSignTranslateSource = new ComboSelectionDialog(getShell(), getText(), LangResources.get("selectSourceLanguageSignToTranslate"), availableLanguageSigns, 0).open();
 				if (Utilities.isBlank(languageSignTranslateSource)) {
