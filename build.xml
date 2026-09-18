@@ -247,7 +247,7 @@
 		<delete>
 			<fileset dir="lib" includes="soderer-utilities-*.jar" excludes="soderer-utilities-*-sources.jar" />
 		</delete>
-		<get src="https://soderer.de/maven2/de/soderer/JavaUtilities/${soderer-utilities.version}/soderer-utilities-${soderer-utilities.version}.jar" dest="lib/" />
+		<get src="https://soderer.de/maven2/de/soderer/soderer-utilities/${soderer-utilities.version}/soderer-utilities-${soderer-utilities.version}.jar" dest="lib/" />
 	</target>
 
 	<available file="lib/soderer-utilities-${soderer-utilities.version}-sources.jar" property="soderer-utilities-sources.available" />
@@ -256,7 +256,7 @@
 		<delete>
 			<fileset dir="lib" includes="soderer-utilities-*-sources.jar" />
 		</delete>
-		<get src="https://soderer.de/maven2/de/soderer/JavaUtilities/${soderer-utilities.version}/soderer-utilities-${soderer-utilities.version}-sources.jar" dest="lib/" />
+		<get src="https://soderer.de/maven2/de/soderer/soderer-utilities/${soderer-utilities.version}/soderer-utilities-${soderer-utilities.version}-sources.jar" dest="lib/" />
 	</target>
 
 	<!-- SWT Windows: JarInJarLoader decides by OS type which SWT jar to load-->
