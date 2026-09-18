@@ -131,6 +131,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private Button deleteLanguageButton;
 	private Button translateButton;
 	private Button transferButton;
+	private Button clearIdenticalButton;
 	private Button removeDuplicatesButton;
 
 	private Button okButton;
@@ -315,14 +316,19 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		deleteLanguageButton.addSelectionListener(new DeleteLanguageButtonSelectionListener());
 
 		translateButton = new Button(buttonSection2, SWT.PUSH);
-		translateButton.setText(LangResources.get("Translate"));
+		translateButton.setText("Translate");
 		translateButton.setToolTipText(LangResources.get("tooltip_Translate"));
 		translateButton.addSelectionListener(new TranslateButtonSelectionListener());
 
 		transferButton = new Button(buttonSection2, SWT.PUSH);
-		transferButton.setText(LangResources.get("Transfer"));
+		transferButton.setText(LangResources.get("transfer"));
 		transferButton.setToolTipText(LangResources.get("tooltip_Transfer"));
 		transferButton.addSelectionListener(new TransferButtonSelectionListener());
+
+		clearIdenticalButton = new Button(buttonSection2, SWT.PUSH);
+		clearIdenticalButton.setText(LangResources.get("clearIdentical"));
+		clearIdenticalButton.setToolTipText(LangResources.get("tooltip_ClearIdentical"));
+		clearIdenticalButton.addSelectionListener(new ClearIdenticalButtonSelectionListener());
 
 		removeDuplicatesButton = new Button(buttonSection2, SWT.PUSH);
 		removeDuplicatesButton.setImage(ImageManager.getImage("clean.png"));
@@ -959,6 +965,65 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		}
 	}
 
+	private class ClearIdenticalButtonSelectionListener extends SelectionAdapter {
+		@Override
+		public void widgetSelected(final SelectionEvent event) {
+			try {
+				final String languageSignClearSource = new ComboSelectionDialog(getShell(), getText(), LangResources.get("selectSourceLanguageSignToClearIdentical"), availableLanguageSigns, 0).open();
+				if (Utilities.isBlank(languageSignClearSource)) {
+					return;
+				}
+
+				final List<String> availableOtherLanguageSigns = new ArrayList<>(availableLanguageSigns);
+				availableOtherLanguageSigns.remove(languageSignClearSource);
+				String languageSignClearTarget;
+				if (availableOtherLanguageSigns.size() == 1) {
+					languageSignClearTarget = availableOtherLanguageSigns.get(0);
+				} else {
+					languageSignClearTarget = new ComboSelectionDialog(getShell(), getText(), LangResources.get("selectTargetLanguageSignToClearIdentical"), availableOtherLanguageSigns).open();
+					if (Utilities.isBlank(languageSignClearTarget)) {
+						return;
+					}
+				}
+
+				// Only restrict to the selected rows if any are selected, otherwise check all properties
+				final List<LanguageProperty> languagePropertiesToCheck;
+				if (propertiesTable.getSelectionCount() > 0) {
+					languagePropertiesToCheck = new ArrayList<>();
+					for (final TableItem item : propertiesTable.getSelection()) {
+						for (final LanguageProperty languageProperty : languageProperties) {
+							if (languageProperty.getPath().equals(item.getText(columnPathIndex)) && languageProperty.getKey().equals(item.getText(columnKeyIndex))) {
+								languagePropertiesToCheck.add(languageProperty);
+								break;
+							}
+						}
+					}
+				} else {
+					languagePropertiesToCheck = languageProperties;
+				}
+
+				int countCleared = 0;
+				for (final LanguageProperty languageProperty : languagePropertiesToCheck) {
+					final String sourceValue = languageProperty.getLanguageValue(languageSignClearSource);
+					final String targetValue = languageProperty.getLanguageValue(languageSignClearTarget);
+					if (Utilities.isNotBlank(targetValue) && targetValue.equals(sourceValue)) {
+						languageProperty.setLanguageValue(languageSignClearTarget, null);
+						countCleared++;
+					}
+				}
+				setupTable();
+
+				showMessage(LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("clearedIdenticalValues", countCleared));
+				if (countCleared > 0) {
+					hasUnsavedChanges = true;
+				}
+			} catch (final Exception ex) {
+				new ErrorDialog(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION.toString(), LanguagePropertiesManager.APPLICATION_ERROR_EMAIL_ADRESS, ex).open();
+			}
+			checkButtonStatus();
+		}
+	}
+
 	private class RemoveDuplicatesButtonSelectionListener extends SelectionAdapter {
 		@Override
 		public void widgetSelected(final SelectionEvent event) {
@@ -1229,6 +1294,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		}
 		if (transferButton != null) {
 			transferButton.setEnabled(languageProperties != null && languageProperties.size() > 0 && availableLanguageSigns != null && availableLanguageSigns.size() > 1);
+		}
+		if (clearIdenticalButton != null) {
+			clearIdenticalButton.setEnabled(languageProperties != null && languageProperties.size() > 0 && availableLanguageSigns != null && availableLanguageSigns.size() > 1);
 		}
 		if (removeDuplicatesButton != null) {
 			removeDuplicatesButton.setEnabled(languageProperties != null && languageProperties.size() > 0);
