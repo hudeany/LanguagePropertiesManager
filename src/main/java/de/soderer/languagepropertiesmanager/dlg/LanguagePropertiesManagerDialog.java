@@ -61,6 +61,7 @@ import de.soderer.languagepropertiesmanager.worker.ExportToExcelWorker;
 import de.soderer.languagepropertiesmanager.worker.ImportFromCsvWorker;
 import de.soderer.languagepropertiesmanager.worker.ImportFromExcelWorker;
 import de.soderer.languagepropertiesmanager.worker.LoadLanguagePropertiesWorker;
+import de.soderer.languagepropertiesmanager.worker.TranslateLanguagePropertiesWorker;
 import de.soderer.languagepropertiesmanager.worker.WriteLanguagePropertiesWorker;
 import de.soderer.network.NetworkUtilities;
 import de.soderer.utilities.ConfigurationProperties;
@@ -891,26 +892,20 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					languagePropertiesToTranslate = languageProperties;
 				}
 
-				int countTranslations = 0;
-				for (final LanguageProperty languageProperty : languagePropertiesToTranslate) {
-					final String sourceValue = languageProperty.getLanguageValue(languageSignTranslateSource);
-					String targetValue;
-					if (Utilities.isNotBlank(sourceValue)) {
-						targetValue = languageProperty.getLanguageValue(languageSignTranslateTarget);
-						if (Utilities.isEmpty(targetValue)) {
-							try {
-								targetValue = deepLHelper.translate(sourceLanguage, sourceValue, targetLanguage);
-							} catch (final Exception e) {
-								// Maybe license limits are reached
-								showErrorMessage(LanguagePropertiesManager.APPLICATION_NAME, "Translate error: " + e.getMessage());
-								break;
-							}
-							languageProperty.setLanguageValue(languageSignTranslateTarget, targetValue);
-							countTranslations++;
-						}
-					}
+				final TranslateLanguagePropertiesWorker translateLanguagePropertiesWorker = new TranslateLanguagePropertiesWorker(null, languagePropertiesToTranslate, deepLHelper, languageSignTranslateSource, languageSignTranslateTarget, sourceLanguage, targetLanguage);
+				final ProgressDialog<TranslateLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("translatingLanguageProperties"), translateLanguagePropertiesWorker);
+				final Result dialogResult = progressDialog.open();
+				if (dialogResult != Result.CANCELED) {
+					// check for errors
+					translateLanguagePropertiesWorker.get();
 				}
+
+				final int countTranslations = translateLanguagePropertiesWorker.getCountTranslations();
 				setupTable();
+
+				if (Utilities.isNotBlank(translateLanguagePropertiesWorker.getTranslateErrorMessage())) {
+					showErrorMessage(LanguagePropertiesManager.APPLICATION_NAME, translateLanguagePropertiesWorker.getTranslateErrorMessage());
+				}
 
 				showMessage(LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("addedTranslations", countTranslations));
 				if (countTranslations > 0) {
@@ -1658,12 +1653,13 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 						// check for errors
 						importFromExcelWorker.get();
 
-						showMessage(LangResources.get("import_file"), LangResources.get("actionSuccessfullyCompleted"));
-
 						setLanguagePropertiesSetName(importFromExcelWorker.getLanguagePropertiesSetName());
 						languageProperties = importFromExcelWorker.getLanguageProperties();
 						availableLanguageSigns = importFromExcelWorker.getAvailableLanguageSigns();
 						hasUnsavedChanges = true;
+
+						setupTable();
+						showMessage(LangResources.get("import_file"), LangResources.get("actionSuccessfullyCompleted"));
 					}
 				} catch (final ExecutionException e) {
 					languageProperties = null;
@@ -1675,14 +1671,15 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					} else {
 						new ErrorDialog(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION.toString(), LanguagePropertiesManager.APPLICATION_ERROR_EMAIL_ADRESS, e).open();
 					}
+					setupTable();
 				} catch (final Exception e) {
 					languageProperties = null;
 					availableLanguageSigns = null;
 					languagePropertySetName = null;
 					hasUnsavedChanges = false;
 					new ErrorDialog(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION.toString(), LanguagePropertiesManager.APPLICATION_ERROR_EMAIL_ADRESS, e).open();
+					setupTable();
 				}
-				setupTable();
 				checkButtonStatus();
 			}
 		}
