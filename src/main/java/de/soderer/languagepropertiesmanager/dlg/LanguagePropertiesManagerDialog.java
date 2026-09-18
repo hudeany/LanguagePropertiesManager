@@ -317,17 +317,17 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		deleteLanguageButton.addSelectionListener(new DeleteLanguageButtonSelectionListener());
 
 		translateButton = new Button(buttonSection2, SWT.PUSH);
-		translateButton.setText("Translate");
+		translateButton.setImage(ImageManager.getImage("translate.png"));
 		translateButton.setToolTipText(LangResources.get("tooltip_Translate"));
 		translateButton.addSelectionListener(new TranslateButtonSelectionListener());
 
 		transferButton = new Button(buttonSection2, SWT.PUSH);
-		transferButton.setText(LangResources.get("Transfer"));
+		transferButton.setImage(ImageManager.getImage("transfer.png"));
 		transferButton.setToolTipText(LangResources.get("tooltip_Transfer"));
 		transferButton.addSelectionListener(new TransferButtonSelectionListener());
 
 		clearIdenticalButton = new Button(buttonSection2, SWT.PUSH);
-		clearIdenticalButton.setText(LangResources.get("clearIdentical"));
+		clearIdenticalButton.setImage(ImageManager.getImage("clearIdentical.png"));
 		clearIdenticalButton.setToolTipText(LangResources.get("tooltip_ClearIdentical"));
 		clearIdenticalButton.addSelectionListener(new ClearIdenticalButtonSelectionListener());
 
