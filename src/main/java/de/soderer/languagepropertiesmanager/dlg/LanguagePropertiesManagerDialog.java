@@ -658,7 +658,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					if (okButton.getText().equals(LangResources.get("button_text_change"))) {
 						// Change existing property
 						final String oldKey = propertiesTable.getSelection()[0].getText(columnKeyIndex);
-						final String newKey = keyTextfield.getText();
+						final String newKey = getPlainFieldValue(keyTextfield.getText());
 
 						LanguageProperty propertyToChange = null;
 						for (final LanguageProperty languageProperty : languageProperties) {
@@ -673,16 +673,16 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 						propertyToChange.setKey(newKey);
 						for (final String languageKey : languageTextFields.keySet()) {
-							propertyToChange.setLanguageValue(languageKey, languageTextFields.get(languageKey).getText());
+							propertyToChange.setLanguageValue(languageKey, getPlainFieldValue(languageTextFields.get(languageKey).getText()));
 						}
 
 						refreshTable();
 						dataWasModified = false;
 						checkButtonStatus();
 					} else {
-						final LanguageProperty newValues = new LanguageProperty(pathTextfield.getText(), keyTextfield.getText());
+						final LanguageProperty newValues = new LanguageProperty(pathTextfield.getText(), getPlainFieldValue(keyTextfield.getText()));
 						for (final String languageKey : languageTextFields.keySet()) {
-							newValues.setLanguageValue(languageKey, languageTextFields.get(languageKey).getText());
+							newValues.setLanguageValue(languageKey, getPlainFieldValue(languageTextFields.get(languageKey).getText()));
 						}
 
 						if (Utilities.isNotEmpty(commentTextfield.getText())) {
@@ -1156,7 +1156,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	 * or other structural problems and returns a list of human readable problem descriptions.
 	 * Returns an empty list if no problems were found.
 	 */
-	private static List<String> findTextErrors(final String text) {
+	private List<String> findTextErrors(final String text) {
 		final List<String> problems = new ArrayList<>();
 		if (text == null) {
 			return problems;
@@ -1393,9 +1393,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 						if (value == null) {
 							languageTextfield.setText("");
 						} else if (showStorageTexts) {
-							languageTextfield.setText(value);
+							languageTextfield.setText(StringEscapeUtils.escapeJava(value));
 						} else {
-							languageTextfield.setText(StringEscapeUtils.unescapeJava(value));
+							languageTextfield.setText(value);
 						}
 					}
 				}
@@ -1507,6 +1507,15 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			hasUnsavedChanges = false;
 			dispose();
 		}
+	}
+
+	/**
+	 * Converts a text field's current content back to its plain (unescaped) form.
+	 * When showStorageTexts is active the fields display the escaped storage representation
+	 * (see changeDisplayMode), so it needs to be unescaped before it is written back into the model.
+	 */
+	private String getPlainFieldValue(final String fieldText) {
+		return showStorageTexts ? StringEscapeUtils.unescapeJava(fieldText) : fieldText;
 	}
 
 	private void changeDisplayMode(final boolean changeToShowStorageTexts) {
