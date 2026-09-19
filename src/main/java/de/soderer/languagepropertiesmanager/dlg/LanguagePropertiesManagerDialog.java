@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -137,6 +138,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private Button clearIdenticalButton;
 	private Button removeDuplicatesButton;
 	private Button checkErrorsButton;
+	private Button showStatisticsButton;
 
 	private Button okButton;
 	private Button cancelButton;
@@ -343,6 +345,11 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		checkErrorsButton.setImage(ImageManager.getImage("lightning.png"));
 		checkErrorsButton.setToolTipText(LangResources.get("tooltip_checkErrors"));
 		checkErrorsButton.addSelectionListener(new CheckErrorsButtonSelectionListener());
+
+		showStatisticsButton = new Button(buttonSection2, SWT.PUSH);
+		showStatisticsButton.setImage(ImageManager.getImage("info.png"));
+		showStatisticsButton.setToolTipText(LangResources.get("tooltip_showStatistics"));
+		showStatisticsButton.addSelectionListener(new ShowStatisticsButtonSelectionListener());
 
 		// Searching
 		searchBox = new Composite(leftPart, SWT.BORDER);
@@ -1267,6 +1274,102 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		}
 	}
 
+	private class ShowStatisticsButtonSelectionListener extends SelectionAdapter {
+		@Override
+		public void widgetSelected(final SelectionEvent event) {
+			try {
+				final int totalProperties = languageProperties.size();
+
+				// Number of entries per properties path (i.e. per properties file / properties set)
+				final Map<String, Integer> countByPath = new LinkedHashMap<>();
+				for (final LanguageProperty languageProperty : languageProperties) {
+					countByPath.merge(languageProperty.getPath(), 1, Integer::sum);
+				}
+
+				// Duplicate groups (same path + key), without altering any data
+				final Map<String, Integer> countByPathAndKey = new LinkedHashMap<>();
+				for (final LanguageProperty languageProperty : languageProperties) {
+					final String groupKey = languageProperty.getPath() + "\u0000" + languageProperty.getKey();
+					countByPathAndKey.merge(groupKey, 1, Integer::sum);
+				}
+				int duplicateGroupCount = 0;
+				int duplicateEntryCount = 0;
+				for (final int count : countByPathAndKey.values()) {
+					if (count > 1) {
+						duplicateGroupCount++;
+						duplicateEntryCount += count - 1;
+					}
+				}
+
+				int propertiesWithCommentCount = 0;
+				for (final LanguageProperty languageProperty : languageProperties) {
+					if (Utilities.isNotEmpty(languageProperty.getComment())) {
+						propertiesWithCommentCount++;
+					}
+				}
+
+				// Per-language completeness and value length statistics
+				final Map<String, Integer> filledCountByLanguage = new LinkedHashMap<>();
+				final Map<String, Long> totalLengthByLanguage = new LinkedHashMap<>();
+				for (final String sign : availableLanguageSigns) {
+					filledCountByLanguage.put(sign, 0);
+					totalLengthByLanguage.put(sign, 0L);
+				}
+
+				String longestValuePath = null;
+				String longestValueKey = null;
+				String longestValueLanguage = null;
+				int longestValueLength = -1;
+
+				for (final LanguageProperty languageProperty : languageProperties) {
+					for (final String sign : availableLanguageSigns) {
+						final String value = languageProperty.getLanguageValue(sign);
+						if (Utilities.isNotEmpty(value)) {
+							filledCountByLanguage.merge(sign, 1, Integer::sum);
+							totalLengthByLanguage.merge(sign, (long) value.length(), Long::sum);
+							if (value.length() > longestValueLength) {
+								longestValueLength = value.length();
+								longestValuePath = languageProperty.getPath();
+								longestValueKey = languageProperty.getKey();
+								longestValueLanguage = sign;
+							}
+						}
+					}
+				}
+
+				final StringBuilder reportText = new StringBuilder();
+				reportText.append(LangResources.get("statistics_totalProperties", totalProperties)).append("\n");
+				reportText.append(LangResources.get("statistics_totalPropertySets", countByPath.size())).append("\n");
+				reportText.append(LangResources.get("statistics_totalLanguages", availableLanguageSigns.size(), Utilities.join(availableLanguageSigns, ", "))).append("\n");
+				reportText.append(LangResources.get("statistics_propertiesWithComment", propertiesWithCommentCount)).append("\n");
+				reportText.append(LangResources.get("statistics_duplicateGroups", duplicateGroupCount, duplicateEntryCount)).append("\n");
+
+				reportText.append("\n").append(LangResources.get("statistics_perSetHeader")).append("\n");
+				for (final Map.Entry<String, Integer> entry : countByPath.entrySet()) {
+					reportText.append("  \"").append(entry.getKey()).append("\": ").append(entry.getValue()).append("\n");
+				}
+
+				reportText.append("\n").append(LangResources.get("statistics_perLanguageHeader")).append("\n");
+				for (final String sign : availableLanguageSigns) {
+					final int filledCount = filledCountByLanguage.get(sign);
+					final int missingCount = totalProperties - filledCount;
+					final double filledPercent = totalProperties == 0 ? 0 : filledCount * 100.0 / totalProperties;
+					final double averageLength = filledCount == 0 ? 0 : (double) totalLengthByLanguage.get(sign) / filledCount;
+					reportText.append("  ").append(sign).append(": ").append(LangResources.get("statistics_languageLine",
+							filledCount, missingCount, String.format(Locale.US, "%.1f", filledPercent), String.format(Locale.US, "%.1f", averageLength))).append("\n");
+				}
+
+				if (longestValueLength >= 0) {
+					reportText.append("\n").append(LangResources.get("statistics_longestValue", longestValueLength, longestValueLanguage, longestValuePath, longestValueKey)).append("\n");
+				}
+
+				showData(LangResources.get("statisticsReportTitle"), reportText.toString());
+			} catch (final Exception ex) {
+				new ErrorDialog(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION.toString(), LanguagePropertiesManager.APPLICATION_ERROR_EMAIL_ADRESS, ex).open();
+			}
+		}
+	}
+
 	private class ConfigButtonSelectionListener extends SelectionAdapter {
 		@Override
 		public void widgetSelected(final SelectionEvent e) {
@@ -1483,6 +1586,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		}
 		if (checkErrorsButton != null) {
 			checkErrorsButton.setEnabled(languageProperties != null && languageProperties.size() > 0);
+		}
+		if (showStatisticsButton != null) {
+			showStatisticsButton.setEnabled(languageProperties != null && languageProperties.size() > 0);
 		}
 	}
 
