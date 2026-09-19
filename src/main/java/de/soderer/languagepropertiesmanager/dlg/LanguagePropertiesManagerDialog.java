@@ -1156,7 +1156,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	 * or other structural problems and returns a list of human readable problem descriptions.
 	 * Returns an empty list if no problems were found.
 	 */
-	private List<String> findTextErrors(final String text) {
+	private static List<String> findTextErrors(final String text) {
 		final List<String> problems = new ArrayList<>();
 		if (text == null) {
 			return problems;
