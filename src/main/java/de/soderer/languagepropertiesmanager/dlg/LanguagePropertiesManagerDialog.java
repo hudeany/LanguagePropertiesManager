@@ -136,6 +136,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private Button transferButton;
 	private Button clearIdenticalButton;
 	private Button removeDuplicatesButton;
+	private Button checkErrorsButton;
 
 	private Button okButton;
 	private Button cancelButton;
@@ -337,6 +338,11 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		removeDuplicatesButton.setImage(ImageManager.getImage("clean.png"));
 		removeDuplicatesButton.setToolTipText(LangResources.get("tooltip_removeDuplicates"));
 		removeDuplicatesButton.addSelectionListener(new RemoveDuplicatesButtonSelectionListener());
+
+		checkErrorsButton = new Button(buttonSection2, SWT.PUSH);
+		checkErrorsButton.setImage(ImageManager.getImage("lightning.png"));
+		checkErrorsButton.setToolTipText(LangResources.get("tooltip_checkErrors"));
+		checkErrorsButton.addSelectionListener(new CheckErrorsButtonSelectionListener());
 
 		// Searching
 		searchBox = new Composite(leftPart, SWT.BORDER);
@@ -1134,6 +1140,133 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		}
 	}
 
+	/**
+	 * Typical byte sequences that occur when UTF-8 encoded text was mistakenly
+	 * re-interpreted as ISO-8859-1 / Windows-1252 ("Mojibake"), e.g. "ä" becoming "Ã¤".
+	 */
+	private static final String[] MOJIBAKE_MARKERS = new String[] {
+			"Ã¤", "Ã„", "Ã¶", "Ã–", "Ã¼", "Ã\u009C", "Ã\u009F",
+			"â€ž", "â€œ", "â€\u009D", "â€“", "â€”", "â€¦", "Â"
+	};
+
+	private static final Pattern UNRESOLVED_UNICODE_ESCAPE_PATTERN = Pattern.compile("\\\\u[0-9A-Fa-f]{4}");
+
+	/**
+	 * Checks a single piece of text (key, value or comment) for signs of encoding corruption
+	 * or other structural problems and returns a list of human readable problem descriptions.
+	 * Returns an empty list if no problems were found.
+	 */
+	private List<String> findTextErrors(final String text) {
+		final List<String> problems = new ArrayList<>();
+		if (text == null) {
+			return problems;
+		}
+
+		if (text.indexOf('\uFFFD') >= 0) {
+			problems.add(LangResources.get("error_replacement_char"));
+		}
+
+		for (final String marker : MOJIBAKE_MARKERS) {
+			if (text.contains(marker)) {
+				problems.add(LangResources.get("error_mojibake"));
+				break;
+			}
+		}
+
+		if (UNRESOLVED_UNICODE_ESCAPE_PATTERN.matcher(text).find()) {
+			problems.add(LangResources.get("error_unresolved_unicode_escape"));
+		}
+
+		if (text.indexOf('\uFEFF') >= 0) {
+			problems.add(LangResources.get("error_bom_char"));
+		}
+
+		boolean isolatedSurrogateFound = false;
+		boolean controlCharFound = false;
+		for (int i = 0; i < text.length() && !(isolatedSurrogateFound && controlCharFound); i++) {
+			final char currentChar = text.charAt(i);
+			if (!isolatedSurrogateFound) {
+				if (Character.isHighSurrogate(currentChar)) {
+					if (i + 1 >= text.length() || !Character.isLowSurrogate(text.charAt(i + 1))) {
+						isolatedSurrogateFound = true;
+					}
+				} else if (Character.isLowSurrogate(currentChar)) {
+					if (i == 0 || !Character.isHighSurrogate(text.charAt(i - 1))) {
+						isolatedSurrogateFound = true;
+					}
+				}
+			}
+			if (!controlCharFound && Character.isISOControl(currentChar) && currentChar != '\t' && currentChar != '\n' && currentChar != '\r') {
+				controlCharFound = true;
+			}
+		}
+		if (isolatedSurrogateFound) {
+			problems.add(LangResources.get("error_isolated_surrogate"));
+		}
+		if (controlCharFound) {
+			problems.add(LangResources.get("error_control_char"));
+		}
+
+		return problems;
+	}
+
+	private class CheckErrorsButtonSelectionListener extends SelectionAdapter {
+		@Override
+		public void widgetSelected(final SelectionEvent event) {
+			try {
+				final StringBuilder reportText = new StringBuilder();
+				int issueCount = 0;
+
+				for (final LanguageProperty languageProperty : languageProperties) {
+					final List<String> entryProblems = new ArrayList<>();
+
+					final String key = languageProperty.getKey();
+					if (Utilities.isBlank(key)) {
+						entryProblems.add(LangResources.get("error_key_empty"));
+					} else {
+						for (final String textProblem : findTextErrors(key)) {
+							entryProblems.add(LangResources.get("field_key") + ": " + textProblem);
+						}
+						if (!key.equals(key.trim()) || key.contains(" ")) {
+							entryProblems.add(LangResources.get("field_key") + ": " + LangResources.get("error_key_whitespace"));
+						}
+						if (key.contains("=") || key.contains(":")) {
+							entryProblems.add(LangResources.get("field_key") + ": " + LangResources.get("error_key_illegal_char"));
+						}
+					}
+
+					for (final String textProblem : findTextErrors(languageProperty.getComment())) {
+						entryProblems.add(LangResources.get("field_comment") + ": " + textProblem);
+					}
+
+					for (final String languageSign : languageProperty.getAvailableLanguageSigns()) {
+						final String value = languageProperty.getLanguageValue(languageSign);
+						for (final String textProblem : findTextErrors(value)) {
+							entryProblems.add(LangResources.get("field_value", languageSign) + ": " + textProblem);
+						}
+					}
+
+					if (!entryProblems.isEmpty()) {
+						issueCount += entryProblems.size();
+						reportText.append("\"").append(languageProperty.getPath()).append("\" / \"").append(key).append("\":\n");
+						for (final String problem : entryProblems) {
+							reportText.append("  - ").append(problem).append("\n");
+						}
+					}
+				}
+
+				if (issueCount == 0) {
+					showMessage(LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("noErrorsFound"));
+				} else {
+					showData(LangResources.get("checkErrorsReportTitle"), LangResources.get("checkErrorsFound", issueCount) + "\n\n" + reportText.toString());
+				}
+			} catch (final Exception ex) {
+				new ErrorDialog(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION.toString(), LanguagePropertiesManager.APPLICATION_ERROR_EMAIL_ADRESS, ex).open();
+			}
+			checkButtonStatus();
+		}
+	}
+
 	private class ConfigButtonSelectionListener extends SelectionAdapter {
 		@Override
 		public void widgetSelected(final SelectionEvent e) {
@@ -1347,6 +1480,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		}
 		if (removeDuplicatesButton != null) {
 			removeDuplicatesButton.setEnabled(languageProperties != null && languageProperties.size() > 0);
+		}
+		if (checkErrorsButton != null) {
+			checkErrorsButton.setEnabled(languageProperties != null && languageProperties.size() > 0);
 		}
 	}
 
