@@ -85,35 +85,35 @@
 	</target>
 	
 	<target name="download_dependencies" depends="proxy">
-		<getDependency url="https://repo1.maven.org/maven2" groupId="com.sun.mail" artifactId="mailapi" version="2.0.2" />
+		<getMavenDependency groupId="com.sun.mail" artifactId="mailapi" version="2.0.2" />
 		
 		<getDependency name="csv" version="${csv.version}" url="https://github.com/hudeany/csv/releases/download/{version}/csv-{version}.jar" />
 		<getDependency name="json" version="${json.version}" url="https://github.com/hudeany/json/releases/download/{version}/json-{version}.jar" />
 		<getDependency name="proxyautoconfig" version="${proxyautoconfig.version}" url="https://github.com/hudeany/ProxyAutoConfig/releases/download/{version}/proxyautoconfig-{version}.jar" />
 		<getDependency name="network" version="${network.version}" url="https://github.com/hudeany/network/releases/download/{version}/network-{version}.jar" />
 		
-		<getDependency url="https://soderer.de/maven2" groupId="de.soderer" artifactid="soderer-utilities" version="${soderer-utilities.version}" />
+		<getMavenDependency repositoryUrl="https://soderer.de/maven2" groupId="de.soderer" artifactId="soderer-utilities" version="${soderer-utilities.version}" />
 
 		<!-- SWT Windows or Linux: JarInJarLoader decides by OS type which SWT jar to load-->
 		<getDependency name="swt-win" version="${swt.version}-win32-win32-x86_64" url="https://archive.eclipse.org/eclipse/downloads/drops4/${swt.build}/swt-${swt.version}-win32-win32-x86_64.zip" zipEntry="swt.jar" groupId="org.eclipse.swt" />
 		<getDependency name="swt-linux" version="${swt.version}-gtk-linux-x86_64" url="https://archive.eclipse.org/eclipse/downloads/drops4/${swt.build}/swt-${swt.version}-gtk-linux-x86_64.zip" zipEntry="swt.jar" groupId="org.eclipse.swt" />
 
-		<getDependency url="https://soderer.de/maven2" groupId="de.soderer" artifactid="soderer-utilities" version="${soderer-utilities.version}" classifier="sources" />
+		<getMavenDependency repositoryUrl="https://soderer.de/maven2" groupId="de.soderer" artifactId="soderer-utilities" version="${soderer-utilities.version}" classifier="sources" />
 
-		<getDependency url="https://repo1.maven.org/maven2" groupId="org.apache.commons" artifactId="commons-collections4" version="${commons-collections4.version}" />
-		<getDependency url="https://repo1.maven.org/maven2" groupId="org.apache.commons" artifactId="commons-compress" version="${commons-compress.version}" />
-		<getDependency url="https://repo1.maven.org/maven2" groupId="commons-io" artifactId="commons-io" version="${commons-io.version}" />
-		<getDependency url="https://repo1.maven.org/maven2" groupId="org.apache.logging.log4j" artifactId="log4j-1.2-api" version="${log4j.version}" />
-		<getDependency url="https://repo1.maven.org/maven2" groupId="org.apache.logging.log4j" artifactId="log4j-api" version="${log4j.version}" />
-		<getDependency url="https://repo1.maven.org/maven2" groupId="org.apache.logging.log4j" artifactId="log4j-core" version="${log4j.version}" />
-		<getDependency url="https://repo1.maven.org/maven2" groupId="org.apache.poi" artifactId="poi" version="${poi.version}" />
-		<getDependency url="https://repo1.maven.org/maven2" groupId="org.apache.poi" artifactId="poi-ooxml" version="${poi.version}" />
-		<getDependency url="https://repo1.maven.org/maven2" groupId="org.apache.poi" artifactId="poi-ooxml-full" version="${poi.version}" />
-		<getDependency url="https://repo1.maven.org/maven2" groupId="org.apache.xmlbeans" artifactId="xmlbeans" version="${xmlbeans.version}" />
-		<getDependency url="https://repo1.maven.org/maven2" groupId="org.apache.commons" artifactId="commons-lang3" version="${commons-lang3.version}" />
-		<getDependency url="https://repo1.maven.org/maven2" groupId="org.apache.commons" artifactId="commons-text" version="${commons-text.version}" />
-		<getDependency url="https://repo1.maven.org/maven2" groupId="net.java.dev.jna" artifactId="jna" version="${jna.version}" />
-		<getDependency url="https://repo1.maven.org/maven2" groupId="net.java.dev.jna" artifactId="jna-platform" version="${jna.version}" />
+		<getMavenDependency groupId="org.apache.commons" artifactId="commons-collections4" version="${commons-collections4.version}" />
+		<getMavenDependency groupId="org.apache.commons" artifactId="commons-compress" version="${commons-compress.version}" />
+		<getMavenDependency groupId="commons-io" artifactId="commons-io" version="${commons-io.version}" />
+		<getMavenDependency groupId="org.apache.logging.log4j" artifactId="log4j-1.2-api" version="${log4j.version}" />
+		<getMavenDependency groupId="org.apache.logging.log4j" artifactId="log4j-api" version="${log4j.version}" />
+		<getMavenDependency groupId="org.apache.logging.log4j" artifactId="log4j-core" version="${log4j.version}" />
+		<getMavenDependency groupId="org.apache.poi" artifactId="poi" version="${poi.version}" />
+		<getMavenDependency groupId="org.apache.poi" artifactId="poi-ooxml" version="${poi.version}" />
+		<getMavenDependency groupId="org.apache.poi" artifactId="poi-ooxml-full" version="${poi.version}" />
+		<getMavenDependency groupId="org.apache.xmlbeans" artifactId="xmlbeans" version="${xmlbeans.version}" />
+		<getMavenDependency groupId="org.apache.commons" artifactId="commons-lang3" version="${commons-lang3.version}" />
+		<getMavenDependency groupId="org.apache.commons" artifactId="commons-text" version="${commons-text.version}" />
+		<getMavenDependency groupId="net.java.dev.jna" artifactId="jna" version="${jna.version}" />
+		<getMavenDependency groupId="net.java.dev.jna" artifactId="jna-platform" version="${jna.version}" />
 	</target>
 
 	<target name="compile" depends="download_dependencies">
