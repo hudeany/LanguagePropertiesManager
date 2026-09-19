@@ -125,7 +125,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private String languagePropertySetName;
 	private String searchText;
 	private boolean searchCaseInsensitivePreference = true;
-	private boolean searchValuePreference = false;
+	private boolean searchInKeysPreference = true;
+	private boolean searchInValuesPreference = false;
+	private boolean searchInPathPreference = false;
 	private Button checkUsageButton;
 	private Button checkUsageButtonPrevious;
 	private Button addLanguageButton;
@@ -338,7 +340,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 		// Searching
 		searchBox = new Composite(leftPart, SWT.BORDER);
-		searchBox.setLayout(SwtUtilities.createSmallMarginGridLayout(5, false));
+		searchBox.setLayout(SwtUtilities.createSmallMarginGridLayout(7, false));
 		searchBox.setLayoutData(new GridData(SWT.FILL, SWT.BOTTOM, true, false, 1, 1));
 
 		final Text searchTextField = new Text(searchBox, SWT.NONE);
@@ -368,7 +370,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 						propertiesTable.setSelection(0);
 					}
 					searchText = textItem.getText();
-					selectSearch(searchText, propertiesTable.getSelectionIndex(), true, searchCaseInsensitivePreference, searchValuePreference);
+					selectSearch(searchText, propertiesTable.getSelectionIndex(), true, searchCaseInsensitivePreference, searchInKeysPreference, searchInValuesPreference, searchInPathPreference);
 				}
 			}
 		});
@@ -381,14 +383,14 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			@Override
 			public void widgetSelected(final SelectionEvent e) {
 				if (Utilities.isNotEmpty(searchText)) {
-					selectSearch(searchText, propertiesTable.getSelectionIndex() + 1, true, searchCaseInsensitivePreference, searchValuePreference);
+					selectSearch(searchText, propertiesTable.getSelectionIndex() + 1, true, searchCaseInsensitivePreference, searchInKeysPreference, searchInValuesPreference, searchInPathPreference);
 				}
 			}
 
 			@Override
 			public void widgetDefaultSelected(final SelectionEvent e) {
 				if (Utilities.isNotEmpty(searchText)) {
-					selectSearch(searchText, propertiesTable.getSelectionIndex() + 1, true, searchCaseInsensitivePreference, searchValuePreference);
+					selectSearch(searchText, propertiesTable.getSelectionIndex() + 1, true, searchCaseInsensitivePreference, searchInKeysPreference, searchInValuesPreference, searchInPathPreference);
 				}
 			}
 		});
@@ -400,7 +402,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		searchUpButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(final SelectionEvent e) {
-				selectSearch(searchText, propertiesTable.getSelectionIndex() - 1, false, searchCaseInsensitivePreference, searchValuePreference);
+				selectSearch(searchText, propertiesTable.getSelectionIndex() - 1, false, searchCaseInsensitivePreference, searchInKeysPreference, searchInValuesPreference, searchInPathPreference);
 			}
 		});
 
@@ -415,7 +417,24 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					if (propertiesTable.getSelectionCount() == 0) {
 						propertiesTable.setSelection(0);
 					}
-					selectSearch(searchText, propertiesTable.getSelectionIndex(), true, searchCaseInsensitivePreference, searchValuePreference);
+					selectSearch(searchText, propertiesTable.getSelectionIndex(), true, searchCaseInsensitivePreference, searchInKeysPreference, searchInValuesPreference, searchInPathPreference);
+				}
+			}
+		});
+
+		final Button keyButton = new Button(searchBox, SWT.CHECK);
+		keyButton.setSelection(searchInKeysPreference);
+		keyButton.setText(LangResources.get("columnheader_key"));
+		keyButton.setToolTipText(LangResources.get("columnheader_key"));
+		keyButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(final SelectionEvent e) {
+				searchInKeysPreference = ((Button)e.widget).getSelection();
+				if (Utilities.isNotEmpty(searchText) && !searchText.equals(LangResources.get("search")) && languageProperties != null) {
+					if (propertiesTable.getSelectionCount() == 0) {
+						propertiesTable.setSelection(0);
+					}
+					selectSearch(searchText, propertiesTable.getSelectionIndex(), true, searchCaseInsensitivePreference, searchInKeysPreference, searchInValuesPreference, searchInPathPreference);
 				}
 			}
 		});
@@ -426,12 +445,28 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		valueButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(final SelectionEvent e) {
-				searchValuePreference = ((Button)e.widget).getSelection();
+				searchInValuesPreference = ((Button)e.widget).getSelection();
 				if (Utilities.isNotEmpty(searchText) && !searchText.equals(LangResources.get("search")) && languageProperties != null) {
 					if (propertiesTable.getSelectionCount() == 0) {
 						propertiesTable.setSelection(0);
 					}
-					selectSearch(searchText, propertiesTable.getSelectionIndex(), true, searchCaseInsensitivePreference, searchValuePreference);
+					selectSearch(searchText, propertiesTable.getSelectionIndex(), true, searchCaseInsensitivePreference, searchInKeysPreference, searchInValuesPreference, searchInPathPreference);
+				}
+			}
+		});
+
+		final Button pathButton = new Button(searchBox, SWT.CHECK);
+		pathButton.setText(LangResources.get("columnheader_path"));
+		pathButton.setToolTipText(LangResources.get("columnheader_path"));
+		pathButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(final SelectionEvent e) {
+				searchInPathPreference = ((Button)e.widget).getSelection();
+				if (Utilities.isNotEmpty(searchText) && !searchText.equals(LangResources.get("search")) && languageProperties != null) {
+					if (propertiesTable.getSelectionCount() == 0) {
+						propertiesTable.setSelection(0);
+					}
+					selectSearch(searchText, propertiesTable.getSelectionIndex(), true, searchCaseInsensitivePreference, searchInKeysPreference, searchInValuesPreference, searchInPathPreference);
 				}
 			}
 		});
@@ -1946,10 +1981,11 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		return returnValue;
 	}
 
-	private void selectSearch(final String text, int startIndex, final boolean searchUp, final boolean searchCaseInsensitive, final boolean searchValue) {
+	private void selectSearch(final String text, int startIndex, final boolean searchUp, final boolean searchCaseInsensitive,
+			final boolean searchInKeys, final boolean searchInValues, final boolean searchInPath) {
 		propertiesTable.deselectAll();
 
-		if (Utilities.isNotEmpty(text) && languageProperties != null) {
+		if (Utilities.isNotEmpty(text) && languageProperties != null && (searchInKeys || searchInValues || searchInPath)) {
 			if (startIndex < 0) {
 				startIndex = languageProperties.size() - 1;
 			} else if (startIndex >= languageProperties.size()) {
@@ -1962,27 +1998,10 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					currentIndex = startIndex;
 				}
 
-				final String key = languageProperties.get(currentIndex).getKey();
-				if (!searchValue) {
-					if (!searchCaseInsensitive && key.contains(text)) {
-						propertiesTable.setSelection(currentIndex);
-						refreshDetailView();
-						break;
-					} else if (searchCaseInsensitive && key.toLowerCase().contains(text.toLowerCase())) {
-						propertiesTable.setSelection(currentIndex);
-						refreshDetailView();
-						break;
-					}
-				} else {
-					if (!searchCaseInsensitive && (key.contains(text) || containsLanguageValuePart(languageProperties.get(currentIndex), text, false))) {
-						propertiesTable.setSelection(currentIndex);
-						refreshDetailView();
-						break;
-					} else if (searchCaseInsensitive && (key.toLowerCase().contains(text.toLowerCase()) || containsLanguageValuePart(languageProperties.get(currentIndex), text, true))) {
-						propertiesTable.setSelection(currentIndex);
-						refreshDetailView();
-						break;
-					}
+				if (matchesSearch(languageProperties.get(currentIndex), text, searchCaseInsensitive, searchInKeys, searchInValues, searchInPath)) {
+					propertiesTable.setSelection(currentIndex);
+					refreshDetailView();
+					break;
 				}
 
 				if (searchUp) {
@@ -2000,11 +2019,32 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		}
 	}
 
+	private static boolean matchesSearch(final LanguageProperty languageProperty, final String searchText, final boolean searchCaseInsensitive,
+			final boolean searchInKeys, final boolean searchInValues, final boolean searchInPath) {
+		if (searchInKeys && containsIgnoringCase(languageProperty.getKey(), searchText, searchCaseInsensitive)) {
+			return true;
+		} else if (searchInPath && containsIgnoringCase(languageProperty.getPath(), searchText, searchCaseInsensitive)) {
+			return true;
+		} else if (searchInValues && containsLanguageValuePart(languageProperty, searchText, searchCaseInsensitive)) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	private static boolean containsIgnoringCase(final String haystack, final String needle, final boolean searchCaseInsensitive) {
+		if (haystack == null) {
+			return false;
+		} else if (searchCaseInsensitive) {
+			return haystack.toLowerCase().contains(needle.toLowerCase());
+		} else {
+			return haystack.contains(needle);
+		}
+	}
+
 	private static boolean containsLanguageValuePart(final LanguageProperty languageProperty, final String searchText, final boolean searchCaseInsensitive) {
 		for (final String languageSign : languageProperty.getAvailableLanguageSigns()) {
-			if (!searchCaseInsensitive && languageProperty.getLanguageValue(languageSign) != null && languageProperty.getLanguageValue(languageSign).contains(searchText)) {
-				return true;
-			} else if (searchCaseInsensitive && languageProperty.getLanguageValue(languageSign) != null && languageProperty.getLanguageValue(languageSign).toLowerCase().contains(searchText.toLowerCase())) {
+			if (containsIgnoringCase(languageProperty.getLanguageValue(languageSign), searchText, searchCaseInsensitive)) {
 				return true;
 			}
 		}
