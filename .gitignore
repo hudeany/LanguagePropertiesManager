@@ -2,3 +2,4 @@
 /build
 /lib/
 /src/main/resources/application_version.txt
+/lib_build/

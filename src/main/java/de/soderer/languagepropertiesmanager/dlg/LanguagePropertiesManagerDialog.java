@@ -1769,8 +1769,15 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		@Override
 		public void widgetSelected(final SelectionEvent event) {
 			try {
-				final ComboSelectionDialog dialog = new ComboSelectionDialog(getShell(), getText() + " " + LangResources.get("recent_directories_dialog_title"), LangResources.get("recent_directories_dialog_text"), recentlyOpenedDirectories);
+				final ComboSelectionDialog dialog = new ComboSelectionDialog(getShell(), getText() + " " + LangResources.get("recent_directories_dialog_title"), LangResources.get("recent_directories_dialog_text"), recentlyOpenedDirectories).withSize(600, -1);
 				final String filePath = dialog.open();
+
+				// Take over a possible reordering (drag&drop) of the recent directories done in the dialog,
+				// regardless of whether an entry was selected or the dialog was canceled
+				recentlyOpenedDirectories.clear();
+				recentlyOpenedDirectories.addAll(dialog.getItems());
+				applicationConfiguration.set(LanguagePropertiesManager.CONFIG_RECENT_PROPERTIES, recentlyOpenedDirectories);
+
 				if (filePath == null) {
 					showErrorMessage(LangResources.get("recent_directories_dialog_title"), LangResources.get("canceledByUser"));
 				} else if (!new File(filePath).exists()) {
