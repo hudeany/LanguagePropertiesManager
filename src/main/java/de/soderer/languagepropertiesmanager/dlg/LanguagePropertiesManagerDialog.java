@@ -1444,8 +1444,17 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			try {
 				final ComboSelectionDialog dialog = new ComboSelectionDialog(getShell(), getText() + " " + LangResources.get("recentsettingsdialogtitle"), LangResources.get("recent_settings_dialog_text"), recentlyCheckUsages);
 				final String setting = dialog.open();
+
+				// Take over a possible reordering (drag&drop) or deletion of the recent
+				// settings done in the dialog, regardless of whether an entry was selected
+				// or the dialog was canceled
+				recentlyCheckUsages.clear();
+				recentlyCheckUsages.addAll(dialog.getItems());
+				applicationConfiguration.set(LanguagePropertiesManager.CONFIG_PREVIOUS_CHECK_USAGE, recentlyCheckUsages);
+
 				if (setting != null) {
 					recentlyCheckUsages.add(setting); //put selected as latest used
+					applicationConfiguration.set(LanguagePropertiesManager.CONFIG_PREVIOUS_CHECK_USAGE, recentlyCheckUsages);
 					final List<String> settings = CsvReader.parseCsvLine(new CsvFormat().withSeparator(';').withStringQuote('"'), setting);
 					final String directory = settings.get(0);
 					final String filePattern = settings.get(1);
