@@ -45,6 +45,7 @@ public class LanguagePropertiesFileSetReader {
 	public static List<LanguageProperty> read(final File propertiesDirectory, final String propertySetName,
 			final String propertiesFileExtension, final boolean readKeysCaseInsensitive, final boolean readComments)
 			throws Exception {
+		final String normalizedPropertiesFileExtension = normalizePropertiesFileExtension(propertiesFileExtension);
 		if (!propertiesDirectory.exists()) {
 			throw new Exception("Properties directory '" + propertiesDirectory + "' does not exist");
 		} else if (!propertiesDirectory.isDirectory()) {
@@ -54,11 +55,15 @@ public class LanguagePropertiesFileSetReader {
 		final List<LanguageProperty> languageProperties = new ArrayList<>();
 		final Map<String, Map<String, LanguageProperty>> propertyIndex = new HashMap<>();
 
-		final FilenameFilter fileFilter = (dir, name) -> isFileOfPropertySet(name, propertySetName, propertiesFileExtension);
+		// Language signs of all files of this set, including files without any entries
+		final Set<String> languageSignsOfFiles = new HashSet<>();
+
+		final FilenameFilter fileFilter = (dir, name) -> isFileOfPropertySet(name, propertySetName, normalizedPropertiesFileExtension);
 
 		for (final File propertyFile : propertiesDirectory.listFiles(fileFilter)) {
 			final String languageSign = getLanguageSignOfFilename(propertyFile.getName());
 			if (languageSign != null) {
+				languageSignsOfFiles.add(languageSign);
 				try (PropertiesReader propertiesReader = new PropertiesReader(new FileInputStream(propertyFile))) {
 					propertiesReader.setReadKeysCaseInsensitive(readKeysCaseInsensitive);
 					final Map<String, String> languageEntries = propertiesReader.read();
@@ -87,6 +92,17 @@ public class LanguagePropertiesFileSetReader {
 			}
 		}
 
+		// Register languages of empty files (e.g. newly created "_en" file) like the "add language" function does,
+		// so they are shown as columns and can be filled via translate or transfer
+		final Set<String> languageSignsWithValues = getAvailableLanguageSignsOfProperties(languageProperties);
+		for (final String languageSign : languageSignsOfFiles) {
+			if (!languageSignsWithValues.contains(languageSign)) {
+				for (final LanguageProperty languageProperty : languageProperties) {
+					languageProperty.setLanguageValue(languageSign, null);
+				}
+			}
+		}
+
 		return languageProperties;
 	}
 
@@ -98,11 +114,12 @@ public class LanguagePropertiesFileSetReader {
 	 * like "propertySetName-customer.properties", which must be excluded here.
 	 */
 	public static boolean isFileOfPropertySet(final String fileName, final String propertySetName, final String propertiesFileExtension) {
-		if (fileName == null || !fileName.endsWith(propertiesFileExtension)) {
+		final String normalizedPropertiesFileExtension = normalizePropertiesFileExtension(propertiesFileExtension);
+		if (fileName == null || !fileName.endsWith(normalizedPropertiesFileExtension)) {
 			return false;
 		}
 
-		final String baseName = fileName.substring(0, fileName.length() - propertiesFileExtension.length());
+		final String baseName = fileName.substring(0, fileName.length() - normalizedPropertiesFileExtension.length());
 		if (baseName.equals(propertySetName)) {
 			return true;
 		}
@@ -171,11 +188,12 @@ public class LanguagePropertiesFileSetReader {
 	}
 
 	public static String getPropertySetBaseName(final String fileName, final String propertiesFileExtension) {
-		if (fileName == null || !fileName.endsWith(propertiesFileExtension)) {
+		final String normalizedPropertiesFileExtension = normalizePropertiesFileExtension(propertiesFileExtension);
+		if (fileName == null || !fileName.endsWith(normalizedPropertiesFileExtension)) {
 			return null;
 		}
 
-		final String baseName = fileName.substring(0, fileName.length() - propertiesFileExtension.length());
+		final String baseName = fileName.substring(0, fileName.length() - normalizedPropertiesFileExtension.length());
 		final Matcher matcher = LOCALE_SUFFIX_PATTERN.matcher(baseName);
 		if (matcher.find()) {
 			final String lang = matcher.group(1);
@@ -188,5 +206,22 @@ public class LanguagePropertiesFileSetReader {
 
 		// No valid locale suffix found -> this file IS the base/default file itself
 		return baseName;
+	}
+
+	/**
+	 * Ensures the properties file extension starts with a dot (e.g. configured "properties" becomes ".properties").
+	 * Without the dot, the remaining base name would end with "." and locale suffixes like "_de" would not be detected.
+	 */
+	public static String normalizePropertiesFileExtension(final String propertiesFileExtension) {
+		if (propertiesFileExtension == null || propertiesFileExtension.trim().isEmpty()) {
+			return DEFAULT_PROPERTIES_FILE_EXTENSION;
+		}
+
+		final String trimmedPropertiesFileExtension = propertiesFileExtension.trim();
+		if (trimmedPropertiesFileExtension.startsWith(".")) {
+			return trimmedPropertiesFileExtension;
+		} else {
+			return "." + trimmedPropertiesFileExtension;
+		}
 	}
 }

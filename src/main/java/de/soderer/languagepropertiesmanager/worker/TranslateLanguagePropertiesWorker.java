@@ -2,6 +2,7 @@ package de.soderer.languagepropertiesmanager.worker;
 
 import java.util.List;
 
+import de.soderer.languagepropertiesmanager.TranslationConstants;
 import de.soderer.languagepropertiesmanager.storage.LanguageProperty;
 import de.soderer.utilities.DeepLHelper;
 import de.soderer.utilities.LangResources;
@@ -13,6 +14,7 @@ import de.soderer.utilities.worker.WorkerSimple;
  * Translates the language values of a set of {@link LanguageProperty} items from one language
  * sign to another via DeepL, running in the background so a {@code ProgressDialog} can show
  * progress and allow cancellation.
+ * Values found in the optional {@link TranslationConstants} and plain numbers are not sent to DeepL.
  */
 public class TranslateLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 	private final List<LanguageProperty> languagePropertiesToTranslate;
@@ -21,12 +23,13 @@ public class TranslateLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 	private final String languageSignTarget;
 	private final String sourceLanguage;
 	private final String targetLanguage;
+	private final TranslationConstants translationConstants;
 
 	private int countTranslations = 0;
 	private String translateErrorMessage = null;
 
 	public TranslateLanguagePropertiesWorker(final WorkerParentSimple parent, final List<LanguageProperty> languagePropertiesToTranslate, final DeepLHelper deepLHelper,
-			final String languageSignSource, final String languageSignTarget, final String sourceLanguage, final String targetLanguage) {
+			final String languageSignSource, final String languageSignTarget, final String sourceLanguage, final String targetLanguage, final TranslationConstants translationConstants) {
 		super(parent);
 
 		this.languagePropertiesToTranslate = languagePropertiesToTranslate;
@@ -35,6 +38,7 @@ public class TranslateLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 		this.languageSignTarget = languageSignTarget;
 		this.sourceLanguage = sourceLanguage;
 		this.targetLanguage = targetLanguage;
+		this.translationConstants = translationConstants;
 	}
 
 	@Override
@@ -54,12 +58,15 @@ public class TranslateLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 			if (Utilities.isNotBlank(sourceValue)) {
 				String targetValue = languageProperty.getLanguageValue(languageSignTarget);
 				if (Utilities.isEmpty(targetValue)) {
-					try {
-						targetValue = deepLHelper.translate(sourceLanguage, sourceValue, targetLanguage);
-					} catch (final Exception e) {
-						// Maybe license limits are reached: stop translating, but keep what was done so far
-						translateErrorMessage = "Translate error: " + e.getMessage();
-						break;
+					targetValue = getConstantTranslation(sourceValue);
+					if (targetValue == null) {
+						try {
+							targetValue = deepLHelper.translate(sourceLanguage, sourceValue, targetLanguage);
+						} catch (final Exception e) {
+							// Maybe license limits are reached: stop translating, but keep what was done so far
+							translateErrorMessage = "Translate error: " + e.getMessage();
+							break;
+						}
 					}
 					languageProperty.setLanguageValue(languageSignTarget, targetValue);
 					countTranslations++;
@@ -74,6 +81,27 @@ public class TranslateLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 		signalProgress(true);
 
 		return !cancel;
+	}
+
+	/**
+	 * Returns the value to use without DeepL translation, or null if DeepL translation is needed
+	 */
+	private String getConstantTranslation(final String sourceValue) {
+		if (translationConstants != null) {
+			// Language sign "Default" has no CSV column of its own, so use the selected DeepL language instead
+			final String languageSignSourceForConstants = "Default".equalsIgnoreCase(languageSignSource) ? sourceLanguage : languageSignSource;
+			final String languageSignTargetForConstants = "Default".equalsIgnoreCase(languageSignTarget) ? targetLanguage : languageSignTarget;
+			final String constantTranslation = translationConstants.getTranslation(languageSignSourceForConstants, sourceValue, languageSignTargetForConstants);
+			if (constantTranslation != null) {
+				return constantTranslation;
+			}
+		}
+
+		if (TranslationConstants.isNumberConstant(sourceValue)) {
+			return sourceValue;
+		}
+
+		return null;
 	}
 
 	public int getCountTranslations() {

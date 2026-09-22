@@ -79,6 +79,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 	public static final String CONFIG_DEEPL_APIKEY = "DeepL_ApiKey";
 	public static final String CONFIG_PROPERTIES_FILE_EXTENSION = "PropertiesFileExtension";
 	public static final String CONFIG_IGNORE_COMMENTS = "IgnoreComments";
+	public static final String CONFIG_TRANSLATION_CONSTANTS_FILE = "TranslationConstantsFile";
 
 	private int previousTerminalWidth = 0;
 
@@ -104,6 +105,10 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 		}
 		if (!applicationConfiguration.containsKey(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS)) {
 			applicationConfiguration.set(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS, "false");
+		}
+		if (!applicationConfiguration.containsKey(LanguagePropertiesManager.CONFIG_TRANSLATION_CONSTANTS_FILE)) {
+			// Optional CSV file with values that must not be altered by DeepL translation
+			applicationConfiguration.set(LanguagePropertiesManager.CONFIG_TRANSLATION_CONSTANTS_FILE, "");
 		}
 	}
 

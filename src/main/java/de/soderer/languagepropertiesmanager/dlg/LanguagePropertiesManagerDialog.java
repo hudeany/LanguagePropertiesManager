@@ -54,6 +54,7 @@ import org.eclipse.swt.widgets.Text;
 
 import de.soderer.languagepropertiesmanager.LanguagePropertiesException;
 import de.soderer.languagepropertiesmanager.LanguagePropertiesManager;
+import de.soderer.languagepropertiesmanager.TranslationConstants;
 import de.soderer.languagepropertiesmanager.image.ImageManager;
 import de.soderer.languagepropertiesmanager.storage.LanguagePropertiesFileSetReader;
 import de.soderer.languagepropertiesmanager.storage.LanguageProperty;
@@ -885,6 +886,17 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					return;
 				}
 
+				TranslationConstants translationConstants = null;
+				final String translationConstantsFilePath = applicationConfiguration.get(LanguagePropertiesManager.CONFIG_TRANSLATION_CONSTANTS_FILE);
+				if (Utilities.isNotBlank(translationConstantsFilePath)) {
+					try {
+						translationConstants = TranslationConstants.read(new File(translationConstantsFilePath.trim()));
+					} catch (final Exception e) {
+						showErrorMessage(LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("errorReadingTranslationConstantsFile", translationConstantsFilePath, e.getMessage()));
+						return;
+					}
+				}
+
 				final String deeplBaseUrl = applicationConfiguration.get(LanguagePropertiesManager.CONFIG_DEEPL_BASEURL);
 				final DeepLHelper deepLHelper = new DeepLHelper(deeplBaseUrl, applicationConfiguration.get(LanguagePropertiesManager.CONFIG_DEEPL_APIKEY), applicationConfiguration.getProxyConfiguration().getProxy(deeplBaseUrl));
 
@@ -941,7 +953,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					languagePropertiesToTranslate = languageProperties;
 				}
 
-				final TranslateLanguagePropertiesWorker translateLanguagePropertiesWorker = new TranslateLanguagePropertiesWorker(null, languagePropertiesToTranslate, deepLHelper, languageSignTranslateSource, languageSignTranslateTarget, sourceLanguage, targetLanguage);
+				final TranslateLanguagePropertiesWorker translateLanguagePropertiesWorker = new TranslateLanguagePropertiesWorker(null, languagePropertiesToTranslate, deepLHelper, languageSignTranslateSource, languageSignTranslateTarget, sourceLanguage, targetLanguage, translationConstants);
 				final ProgressDialog<TranslateLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(getShell(), LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("translatingLanguageProperties"), translateLanguagePropertiesWorker);
 				final Result dialogResult = progressDialog.open();
 				if (dialogResult != Result.CANCELED) {
@@ -1652,6 +1664,10 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private class OpenFilesSelectionListener extends SelectionAdapter {
 		@Override
 		public void widgetSelected(final SelectionEvent event) {
+			if (hasUnsavedChanges && !askForDiscardChanges()) {
+				return;
+			}
+
 			try {
 				final FileDialog fileDialog = new FileDialog(getShell());
 				fileDialog.setText(getText() + " " + LangResources.get("open_file_dialog_text"));
@@ -1713,6 +1729,10 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private class OpenFolderSelectionListener extends SelectionAdapter {
 		@Override
 		public void widgetSelected(final SelectionEvent event) {
+			if (hasUnsavedChanges && !askForDiscardChanges()) {
+				return;
+			}
+
 			try {
 				final DirectoryDialog directoryDialog = new DirectoryDialog(getShell());
 				directoryDialog.setText(LangResources.get("open_directory_dialog_text"));
@@ -1777,6 +1797,10 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private class OpenRecentSelectionListener extends SelectionAdapter {
 		@Override
 		public void widgetSelected(final SelectionEvent event) {
+			if (hasUnsavedChanges && !askForDiscardChanges()) {
+				return;
+			}
+
 			try {
 				final ComboSelectionDialog dialog = new ComboSelectionDialog(getShell(), getText() + " " + LangResources.get("recent_directories_dialog_title"), LangResources.get("recent_directories_dialog_text"), recentlyOpenedDirectories).withSize(600, -1);
 				final String filePath = dialog.open();
@@ -1937,6 +1961,10 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private class ImportFromExcelSelectionListener extends SelectionAdapter {
 		@Override
 		public void widgetSelected(final SelectionEvent event) {
+			if (hasUnsavedChanges && !askForDiscardChanges()) {
+				return;
+			}
+
 			final FileDialog fileDialog = new FileDialog(getShell(), SWT.OPEN);
 			fileDialog.setText(getShell().getText() + " " + LangResources.get("import_file"));
 			fileDialog.setFilterPath(Utilities.replaceUsersHome("~" + File.separator + "Downloads" + File.separator + ""));
@@ -1991,6 +2019,10 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private class ImportFromCsvSelectionListener extends SelectionAdapter {
 		@Override
 		public void widgetSelected(final SelectionEvent event) {
+			if (hasUnsavedChanges && !askForDiscardChanges()) {
+				return;
+			}
+
 			final FileDialog fileDialog = new FileDialog(getShell(), SWT.OPEN);
 			fileDialog.setText(getShell().getText() + " " + LangResources.get("import_file"));
 			fileDialog.setFilterPath(Utilities.replaceUsersHome("~" + File.separator + "Downloads" + File.separator + ""));

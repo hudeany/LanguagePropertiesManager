@@ -42,7 +42,7 @@ public class LoadLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 
 		this.languagePropertiesFileOrBasicDirectory = languagePropertiesFileOrBasicDirectory;
 		this.excludeParts = excludeParts;
-		this.propertiesFileExtension = propertiesFileExtension;
+		this.propertiesFileExtension = LanguagePropertiesFileSetReader.normalizePropertiesFileExtension(propertiesFileExtension);
 	}
 
 	@Override
@@ -61,11 +61,8 @@ public class LoadLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 			itemsDone = 0;
 			String languagePropertiesSetName;
 			if (filename.endsWith(propertiesFileExtension)) {
-				if (filename.contains("_")) {
-					languagePropertiesSetName = LanguagePropertiesFileSetReader.getPropertySetBaseName(filename, propertiesFileExtension);
-				} else {
-					languagePropertiesSetName = filename.substring(0, filename.indexOf(propertiesFileExtension));
-				}
+				// Handles files with and without locale suffix (e.g. "my_test_de.properties" and "my_test.properties" both give "my_test")
+				languagePropertiesSetName = LanguagePropertiesFileSetReader.getPropertySetBaseName(filename, propertiesFileExtension);
 			} else {
 				throw new Exception("Missing mandatory file extension '" + propertiesFileExtension + "'");
 			}
