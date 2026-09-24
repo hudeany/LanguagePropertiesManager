@@ -252,7 +252,15 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		recentlyOpenedDirectories.addAll(applicationConfiguration.getList(LanguagePropertiesManager.CONFIG_RECENT_PROPERTIES));
 
 		recentlyCheckUsages = new UniqueFifoQueuedList<>(5);
-		recentlyCheckUsages.addAll(applicationConfiguration.getList(LanguagePropertiesManager.CONFIG_PREVIOUS_CHECK_USAGE));
+		for (final String checkUsageSetting : applicationConfiguration.getList(LanguagePropertiesManager.CONFIG_PREVIOUS_CHECK_USAGE)) {
+			// Converts entries of older versions (with backslash escaping) into the plain format
+			try {
+				recentlyCheckUsages.add(CsvWriter.getCsvLine(createCheckUsageCsvFormat(), parseCheckUsageSetting(checkUsageSetting)));
+			} catch (final Exception e) {
+				System.err.println("Cannot read recent check usage setting '" + checkUsageSetting + "': " + e.getMessage());
+				recentlyCheckUsages.add(checkUsageSetting);
+			}
+		}
 
 		checkButtonStatus();
 	}
@@ -1378,7 +1386,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					usagePatternDialog.setDefaultText("LangResources.get(\"<property>\"");
 					final String usagePattern = usagePatternDialog.open();
 					if (usagePattern != null) {
-						recentlyCheckUsages.add(CsvWriter.getCsvLine(';', '"', true, directory.getAbsolutePath(), filePattern, usagePattern));
+						recentlyCheckUsages.add(CsvWriter.getCsvLine(createCheckUsageCsvFormat(), directory.getAbsolutePath(), filePattern, usagePattern));
 						applicationConfiguration.set(LanguagePropertiesManager.CONFIG_PREVIOUS_CHECK_USAGE, recentlyCheckUsages);
 						checkUsage(languageProperties, directory.getAbsolutePath(), filePattern, usagePattern);
 						checkButtonStatus();
@@ -1388,6 +1396,41 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		} catch (final Exception ex) {
 			showError(ex);
 		}
+	}
+
+	/**
+	 * CSV format of a single recent check usage setting (directory, file pattern, usage pattern).
+	 * Plain RFC 4180 csv: backslashes in paths and regular expressions are stored as they are.
+	 */
+	private static CsvFormat createCheckUsageCsvFormat() {
+		return new CsvFormat()
+				.withSeparator(';')
+				.withStringQuote('"')
+				.withEscapeLineBreaks(false);
+	}
+
+	/**
+	 * Parses a recent check usage setting (directory, file pattern, usage pattern).
+	 * Settings of older versions were stored with backslash escaping. Such a setting is only
+	 * accepted as legacy setting, if it is readable with backslash escaping and its directory exists.
+	 * A plain setting with Windows paths is practically never readable with backslash escaping
+	 * (e.g. "\U" in "C:\Users" is no valid escape sequence).
+	 */
+	private static List<String> parseCheckUsageSetting(final String setting) throws Exception {
+		try {
+			final List<String> legacySettings = CsvReader.parseCsvLine(createCheckUsageCsvFormat().withEscapeLineBreaks(true), setting);
+			if (legacySettings.size() == 3 && new File(legacySettings.get(0)).isDirectory()) {
+				return legacySettings;
+			}
+		} catch (@SuppressWarnings("unused") final Exception e) {
+			// Not a legacy setting
+		}
+
+		final List<String> settings = CsvReader.parseCsvLine(createCheckUsageCsvFormat(), setting);
+		if (settings.size() != 3) {
+			throw new Exception("Invalid recent check usage setting: " + setting);
+		}
+		return settings;
 	}
 
 	private void checkUsagePrevious() {
@@ -1405,8 +1448,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			if (setting != null) {
 				recentlyCheckUsages.add(setting); // put selected as latest used
 				applicationConfiguration.set(LanguagePropertiesManager.CONFIG_PREVIOUS_CHECK_USAGE, recentlyCheckUsages);
-				// Escape handling must match CsvWriter.getCsvLine(..., true, ...) used when storing the recent settings
-				final List<String> settings = CsvReader.parseCsvLine(new CsvFormat().withSeparator(';').withStringQuote('"').withEscapeLineBreaks(true), setting);
+				final List<String> settings = parseCheckUsageSetting(setting);
 				final String directory = settings.get(0);
 				final String filePattern = settings.get(1);
 				final String usagePattern = settings.get(2);
