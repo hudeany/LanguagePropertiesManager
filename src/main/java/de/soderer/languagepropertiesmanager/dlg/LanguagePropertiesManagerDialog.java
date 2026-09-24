@@ -1405,7 +1405,8 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			if (setting != null) {
 				recentlyCheckUsages.add(setting); // put selected as latest used
 				applicationConfiguration.set(LanguagePropertiesManager.CONFIG_PREVIOUS_CHECK_USAGE, recentlyCheckUsages);
-				final List<String> settings = CsvReader.parseCsvLine(new CsvFormat().withSeparator(';').withStringQuote('"'), setting);
+				// Escape handling must match CsvWriter.getCsvLine(..., true, ...) used when storing the recent settings
+				final List<String> settings = CsvReader.parseCsvLine(new CsvFormat().withSeparator(';').withStringQuote('"').withEscapeLineBreaks(true), setting);
 				final String directory = settings.get(0);
 				final String filePattern = settings.get(1);
 				final String usagePattern = settings.get(2);
