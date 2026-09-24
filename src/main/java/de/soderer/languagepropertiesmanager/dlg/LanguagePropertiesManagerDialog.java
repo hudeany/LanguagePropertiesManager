@@ -21,11 +21,16 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.Charset;
+import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
@@ -1136,13 +1141,110 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	}
 
 	/**
-	 * Typical byte sequences that occur when UTF-8 encoded text was mistakenly
-	 * re-interpreted as ISO-8859-1 / Windows-1252 ("Mojibake"), e.g. "ä" becoming "Ã¤".
+	 * Byte values of the Windows-1252 characters in the range 0x80-0x9F (e.g. '€' = 0x80, '“' = 0x93).
+	 * All other characters up to U+00FF have the same byte value as their code point (ISO-8859-1).
 	 */
-	private static final String[] MOJIBAKE_MARKERS = new String[] {
-			"Ã¤", "Ã„", "Ã¶", "Ã–", "Ã¼", "Ã\u009C", "Ã\u009F",
-			"â€ž", "â€œ", "â€\u009D", "â€“", "â€”", "â€¦", "Â"
-	};
+	private static final Map<Character, Integer> WINDOWS_1252_SPECIAL_CHARACTER_BYTES = createWindows1252SpecialCharacterBytes();
+
+	private static Map<Character, Integer> createWindows1252SpecialCharacterBytes() {
+		final Map<Character, Integer> characterBytes = new HashMap<>();
+		final Charset windows1252 = Charset.forName("windows-1252");
+		for (int byteValue = 0x80; byteValue <= 0x9F; byteValue++) {
+			final String decoded = new String(new byte[] { (byte) byteValue }, windows1252);
+			if (decoded.length() == 1 && decoded.charAt(0) != '\uFFFD') {
+				characterBytes.put(decoded.charAt(0), byteValue);
+			}
+		}
+		return characterBytes;
+	}
+
+	/**
+	 * Returns the single byte value of a character in ISO-8859-1 / Windows-1252, or -1 if the
+	 * character does not exist in these charsets (then it can not be part of a mojibake sequence).
+	 */
+	private static int getSingleByteValue(final char character) {
+		if (character <= 0xFF) {
+			return character;
+		} else {
+			final Integer byteValue = WINDOWS_1252_SPECIAL_CHARACTER_BYTES.get(character);
+			return byteValue == null ? -1 : byteValue;
+		}
+	}
+
+	/**
+	 * Returns the length of a valid UTF-8 byte sequence, which is represented by the characters
+	 * of the text starting at the given index when those are read as ISO-8859-1 / Windows-1252
+	 * (e.g. "Ã¤" for "ä", "â€ž" for "„"), or 0 if there is no such sequence at this index.
+	 */
+	private static int getMojibakeSequenceLength(final String text, final int index) {
+		final int leadByte = getSingleByteValue(text.charAt(index));
+		final int sequenceLength;
+		if (leadByte >= 0xC2 && leadByte <= 0xDF) {
+			sequenceLength = 2;
+		} else if (leadByte >= 0xE0 && leadByte <= 0xEF) {
+			sequenceLength = 3;
+		} else if (leadByte >= 0xF0 && leadByte <= 0xF4) {
+			sequenceLength = 4;
+		} else {
+			return 0;
+		}
+		if (index + sequenceLength > text.length()) {
+			return 0;
+		}
+
+		final byte[] sequenceBytes = new byte[sequenceLength];
+		sequenceBytes[0] = (byte) leadByte;
+		for (int i = 1; i < sequenceLength; i++) {
+			final int continuationByte = getSingleByteValue(text.charAt(index + i));
+			if (continuationByte < 0x80 || continuationByte > 0xBF) {
+				return 0;
+			}
+			sequenceBytes[i] = (byte) continuationByte;
+		}
+
+		// Strict decoding rejects overlong encodings and encoded surrogates
+		try {
+			StandardCharsets.UTF_8.newDecoder()
+					.onMalformedInput(CodingErrorAction.REPORT)
+					.onUnmappableCharacter(CodingErrorAction.REPORT)
+					.decode(ByteBuffer.wrap(sequenceBytes));
+			return sequenceLength;
+		} catch (@SuppressWarnings("unused") final CharacterCodingException e) {
+			return 0;
+		}
+	}
+
+	/**
+	 * Detects UTF-8 encoded text, which was mistakenly read as ISO-8859-1 / Windows-1252 ("Mojibake"),
+	 * e.g. "ä" becoming "Ã¤" or "„" becoming "â€ž".
+	 *
+	 * <p>
+	 * Instead of searching for single suspicious characters like "Â" (which is a valid letter,
+	 * e.g. in the French word "Âge"), only complete and valid UTF-8 byte sequences are reported:
+	 * <ul>
+	 * <li>3 and 4 byte sequences (e.g. "â€ž", "ðŸ˜€"), which practically never occur in real text</li>
+	 * <li>2 byte sequences starting with "Â" or "Ã" (U+0080 - U+00FF, e.g. "Ã¤", "Â°")</li>
+	 * <li>other 2 byte sequences (e.g. cyrillic "Ð¿Ñ€") only if directly followed by another sequence,
+	 * because a single one also occurs in real text (e.g. "Fuß“" or "ÉTÉ" followed by a no-break space)</li>
+	 * </ul>
+	 * </p>
+	 */
+	private static boolean containsMojibake(final String text) {
+		for (int i = 0; i < text.length(); i++) {
+			final int sequenceLength = getMojibakeSequenceLength(text, i);
+			if (sequenceLength >= 3) {
+				return true;
+			} else if (sequenceLength == 2) {
+				final char leadCharacter = text.charAt(i);
+				if (leadCharacter == '\u00C2' || leadCharacter == '\u00C3') {
+					return true;
+				} else if (i + 2 < text.length() && getMojibakeSequenceLength(text, i + 2) > 0) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
 
 	private static final Pattern UNRESOLVED_UNICODE_ESCAPE_PATTERN = Pattern.compile("\\\\u[0-9A-Fa-f]{4}");
 
@@ -1161,11 +1263,8 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			problems.add(LangResources.get("error_replacement_char"));
 		}
 
-		for (final String marker : MOJIBAKE_MARKERS) {
-			if (text.contains(marker)) {
-				problems.add(LangResources.get("error_mojibake"));
-				break;
-			}
+		if (containsMojibake(text)) {
+			problems.add(LangResources.get("error_mojibake"));
 		}
 
 		if (UNRESOLVED_UNICODE_ESCAPE_PATTERN.matcher(text).find()) {
