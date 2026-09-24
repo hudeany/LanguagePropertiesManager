@@ -22,8 +22,7 @@
 	<classpathentry kind="lib" path="lib/proxyautoconfig-26.1.1.jar"/>
 	<classpathentry kind="lib" path="lib/csv-26.1.2.jar"/>
 	<classpathentry kind="lib" path="lib/network-26.0.31.jar"/>
-	<classpathentry kind="lib" path="lib/soderer-utilities-26.2.61.jar"/>
-	<classpathentry kind="lib" path="lib/swt-4.38-win32-win32-x86_64.jar"/>
+	<classpathentry kind="lib" path="lib/soderer-utilities-26.2.63.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">
 		<attributes>
 			<attribute name="module" value="true"/>

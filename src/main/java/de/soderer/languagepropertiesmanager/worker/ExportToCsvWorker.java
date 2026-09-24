@@ -40,7 +40,8 @@ public class ExportToCsvWorker extends WorkerSimple<Boolean> {
 			throw new LanguagePropertiesException("Export CSV file '" + csvOutputFile.getAbsolutePath() + "' already exists. Use 'overwrite' to replace existing file.");
 		}
 
-		final List<String> availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT);
+		// Already sorted with default language sign first, which is also the output order of the language columns
+		final List<String> languageSignsInOutputOrder = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT);
 
 		final Comparator<LanguageProperty> compareByPathAndIndex = Comparator.comparing(LanguageProperty::getPath).thenComparing(LanguageProperty::getOriginalIndex);
 		final List<LanguageProperty> sortedLanguageProperties = languageProperties.stream().sorted(compareByPathAndIndex).collect(Collectors.toList());
@@ -60,7 +61,13 @@ public class ExportToCsvWorker extends WorkerSimple<Boolean> {
 		final File tempOutputFile = File.createTempFile("export_", ".csv.tmp", targetDirectory);
 		try {
 			try (final FileOutputStream outputStream = new FileOutputStream(tempOutputFile)) {
-				try (final CsvWriter csvWriter = new CsvWriter(outputStream, new CsvFormat().withSeparator(';').withStringQuote('"').withStringQuoteEscapeCharacter('\\'))) {
+				// Shared RFC 4180 format, identical to the one used by ImportFromCsvWorker
+				final CsvFormat csvFormat = new CsvFormat()
+						.withSeparator(';')
+						.withStringQuote('"')
+						.withStringQuoteEscapeCharacter('"')
+						.withEscapeLineBreaks(false);
+				try (final CsvWriter csvWriter = new CsvWriter(outputStream, csvFormat)) {
 					// Write header row
 					final List<String> headerList = new ArrayList<>();
 					headerList.add("Path");
@@ -70,8 +77,6 @@ public class ExportToCsvWorker extends WorkerSimple<Boolean> {
 					if (commentsFound) {
 						headerList.add("Comment");
 					}
-
-					final List<String> languageSignsInOutputOrder = Utilities.sortButPutItemsFirst(availableLanguageSigns, LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT);
 
 					for (final String languageSign : languageSignsInOutputOrder) {
 						headerList.add(languageSign);

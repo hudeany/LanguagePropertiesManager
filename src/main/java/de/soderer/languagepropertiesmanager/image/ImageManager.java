@@ -1,37 +1,43 @@
 package de.soderer.languagepropertiesmanager.image;
 
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.widgets.Shell;
+import javax.swing.ImageIcon;
 
 import de.soderer.utilities.VisibleException;
 
+/**
+ * Loads and caches the application's icons from "/images/icons/".
+ *
+ * <p>
+ * Unlike the SWT variant, Swing images need no Display/Shell and no disposal,
+ * so there is no instance to initialize anymore.
+ * </p>
+ */
 public class ImageManager {
-	private static ImageManager instance = null;
+	private static final Map<String, ImageIcon> STORE = new HashMap<>();
 
-	private final Shell shell;
-	private final Map<String, Image> store = new HashMap<>();
-
-	public ImageManager(final Shell shell) {
-		this.shell = shell;
-		instance = this;
+	private ImageManager() {
+		// Static access only
 	}
 
-	private Image getImageFromString(final String name) {
-		if (!store.containsKey(name)) {
-			store.put(name, new Image(shell.getDisplay(), getClass().getResourceAsStream("/images/icons/" + name)));
+	public static synchronized ImageIcon getImage(final String name) throws VisibleException {
+		ImageIcon image = STORE.get(name);
+		if (image == null) {
+			try (InputStream inputStream = ImageManager.class.getResourceAsStream("/images/icons/" + name)) {
+				if (inputStream == null) {
+					throw new VisibleException("Image not found: " + name);
+				}
+				image = new ImageIcon(inputStream.readAllBytes());
+			} catch (final VisibleException e) {
+				throw e;
+			} catch (final Exception e) {
+				throw new VisibleException("Cannot load image '" + name + "': " + e.getMessage());
+			}
+			STORE.put(name, image);
 		}
-
-		return store.get(name);
-	}
-
-	public static Image getImage(final String name) throws VisibleException {
-		if (instance == null) {
-			throw new VisibleException("ImageManager needs to be initialized before usage");
-		}
-
-		return instance.getImageFromString(name);
+		return image;
 	}
 }

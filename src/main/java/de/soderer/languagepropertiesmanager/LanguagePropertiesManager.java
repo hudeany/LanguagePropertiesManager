@@ -11,8 +11,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 
-import org.eclipse.swt.widgets.Display;
-
 import de.soderer.languagepropertiesmanager.dlg.LanguagePropertiesManagerDialog;
 import de.soderer.languagepropertiesmanager.storage.LanguagePropertiesFileSetReader;
 import de.soderer.languagepropertiesmanager.worker.ExportToCsvWorker;
@@ -33,7 +31,7 @@ import de.soderer.utilities.Version;
 import de.soderer.utilities.appupdate.ApplicationUpdateUtilities;
 import de.soderer.utilities.console.ConsoleType;
 import de.soderer.utilities.console.ConsoleUtilities;
-import de.soderer.utilities.swt.ErrorDialog;
+import de.soderer.utilities.swing.ErrorDialog;
 import de.soderer.utilities.worker.WorkerParentDual;
 
 /**
@@ -350,25 +348,30 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 			}
 
 			if (openGui) {
-				Display display = null;
-				try {
-					display = new Display();
-					final LanguagePropertiesManagerDialog mainDialog = new LanguagePropertiesManagerDialog(display, applicationConfiguration);
-					mainDialog.run();
-					return -1;
-				} catch (final Exception ex) {
-					if (display != null) {
-						new ErrorDialog(display.getActiveShell(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION.toString(), LanguagePropertiesManager.APPLICATION_ERROR_EMAIL_ADRESS, ex).open();
-					} else {
-						System.out.println(ex.toString());
-						ex.printStackTrace();
+				// Allows pinning the application to the Linux Gnome dock (needs "--add-opens=java.desktop/sun.awt.X11=ALL-UNNAMED")
+				de.soderer.utilities.swing.SwingUtilities.setAwtWmClass(APPLICATION_STARTUPCLASS_NAME);
+				de.soderer.utilities.swing.SwingUtilities.setSystemLookAndFeel();
+
+				final ConfigurationProperties guiApplicationConfiguration = applicationConfiguration;
+				final int[] guiReturnCode = new int[] { -1 };
+				javax.swing.SwingUtilities.invokeAndWait(() -> {
+					try {
+						final LanguagePropertiesManagerDialog mainDialog = new LanguagePropertiesManagerDialog(guiApplicationConfiguration);
+						mainDialog.setVisible(true);
+					} catch (final Exception ex) {
+						guiReturnCode[0] = 1;
+						try {
+							new ErrorDialog(null, LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION.toString(), LanguagePropertiesManager.APPLICATION_ERROR_EMAIL_ADRESS, ex).open();
+						} catch (final Exception dialogException) {
+							System.out.println(ex.toString());
+							ex.printStackTrace();
+							dialogException.printStackTrace();
+						}
 					}
-					return 1;
-				} finally {
-					if (display != null) {
-						display.dispose();
-					}
-				}
+				});
+
+				// -1: The GUI keeps running on the Swing event dispatch thread, so main() must not call System.exit()
+				return guiReturnCode[0];
 			} else {
 				LangResources.enforceDefaultLocale();
 
