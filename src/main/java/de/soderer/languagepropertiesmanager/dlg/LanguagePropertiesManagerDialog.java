@@ -74,8 +74,6 @@ import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 
-import org.apache.commons.text.StringEscapeUtils;
-
 import de.soderer.languagepropertiesmanager.LanguagePropertiesException;
 import de.soderer.languagepropertiesmanager.LanguagePropertiesManager;
 import de.soderer.languagepropertiesmanager.TranslationConstants;
@@ -96,6 +94,8 @@ import de.soderer.utilities.DeepLHelper;
 import de.soderer.utilities.FileUtilities;
 import de.soderer.utilities.IoUtilities;
 import de.soderer.utilities.LangResources;
+import de.soderer.utilities.PropertiesReader;
+import de.soderer.utilities.PropertiesWriter;
 import de.soderer.utilities.Result;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.appupdate.ApplicationUpdateUtilities;
@@ -709,9 +709,11 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 		textConversionButton = new JButton(showStorageTexts ? LangResources.get("change_to_show_visble_texts") : LangResources.get("change_to_show_storage_texts"));
 		textConversionButton.addActionListener(e -> {
-			showStorageTexts = !showStorageTexts;
-			textConversionButton.setText(showStorageTexts ? LangResources.get("change_to_show_visble_texts") : LangResources.get("change_to_show_storage_texts"));
-			changeDisplayMode(showStorageTexts);
+			// Only switch the mode, if all field contents could be converted
+			if (changeDisplayMode(!showStorageTexts)) {
+				showStorageTexts = !showStorageTexts;
+				textConversionButton.setText(showStorageTexts ? LangResources.get("change_to_show_visble_texts") : LangResources.get("change_to_show_storage_texts"));
+			}
 		});
 		buttonConstraints.gridy = 1;
 		buttonBereich.add(textConversionButton, buttonConstraints);
@@ -749,19 +751,19 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				}
 				final LanguageProperty propertyToChange = currentSelectedProperties.get(0);
 
-				propertyToChange.setKey(getPlainFieldValue(keyTextfield.getText()));
+				propertyToChange.setKey(getPlainKey(keyTextfield.getText()));
 				propertyToChange.setComment(Utilities.isNotEmpty(commentTextfield.getText()) ? commentTextfield.getText() : null);
 				for (final Map.Entry<String, JTextArea> languageTextField : languageTextFields.entrySet()) {
-					propertyToChange.setLanguageValue(languageTextField.getKey(), getPlainFieldValue(languageTextField.getValue().getText()));
+					propertyToChange.setLanguageValue(languageTextField.getKey(), getPlainValue(languageTextField.getValue().getText()));
 				}
 
 				refreshTable();
 				dataWasModified = false;
 				checkButtonStatus();
 			} else {
-				final LanguageProperty newValues = new LanguageProperty(pathTextfield.getText(), getPlainFieldValue(keyTextfield.getText()));
+				final LanguageProperty newValues = new LanguageProperty(pathTextfield.getText(), getPlainKey(keyTextfield.getText()));
 				for (final Map.Entry<String, JTextArea> languageTextField : languageTextFields.entrySet()) {
-					newValues.setLanguageValue(languageTextField.getKey(), getPlainFieldValue(languageTextField.getValue().getText()));
+					newValues.setLanguageValue(languageTextField.getKey(), getPlainValue(languageTextField.getValue().getText()));
 				}
 
 				if (Utilities.isNotEmpty(commentTextfield.getText())) {
@@ -1590,14 +1592,14 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			final LanguageProperty property = currentSelectedProperties.isEmpty() ? null : currentSelectedProperties.get(0);
 			if (property != null) {
 				pathTextfield.setText(property.getPath());
-				keyTextfield.setText(showStorageTexts ? StringEscapeUtils.escapeJava(property.getKey()) : property.getKey());
+				keyTextfield.setText(showStorageTexts ? PropertiesWriter.escapeKey(property.getKey()) : property.getKey());
 				commentTextfield.setText(Utilities.isNotEmpty(property.getComment()) ? property.getComment() : "");
 				for (final Map.Entry<String, JTextArea> languageTextField : languageTextFields.entrySet()) {
 					final String value = property.getLanguageValue(languageTextField.getKey());
 					if (value == null) {
 						languageTextField.getValue().setText("");
 					} else if (showStorageTexts) {
-						languageTextField.getValue().setText(StringEscapeUtils.escapeJava(value));
+						languageTextField.getValue().setText(PropertiesWriter.escapeValue(value));
 					} else {
 						languageTextField.getValue().setText(value);
 					}
@@ -1723,12 +1725,21 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	}
 
 	/**
-	 * Converts a text field's current content back to its plain (unescaped) form.
+	 * Converts the key field's current content back to its plain (unescaped) form.
 	 * When showStorageTexts is active the fields display the escaped storage representation
 	 * (see changeDisplayMode), so it needs to be unescaped before it is written back into the model.
+	 * PropertiesReader is used, so the result is the same as after writing and reloading the file.
 	 */
-	private String getPlainFieldValue(final String fieldText) {
-		return showStorageTexts ? StringEscapeUtils.unescapeJava(fieldText) : fieldText;
+	private String getPlainKey(final String fieldText) throws Exception {
+		return showStorageTexts ? PropertiesReader.unescapeKey(fieldText) : fieldText;
+	}
+
+	/**
+	 * Converts a language value field's current content back to its plain (unescaped) form.
+	 * See getPlainKey().
+	 */
+	private String getPlainValue(final String fieldText) throws Exception {
+		return showStorageTexts ? PropertiesReader.unescapeValue(fieldText) : fieldText;
 	}
 
 	/**
@@ -1759,23 +1770,44 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		return textArea;
 	}
 
-	private void changeDisplayMode(final boolean changeToShowStorageTexts) {
-		technicalDataChange = true;
+	/**
+	 * Switches the detail fields between the plain display texts and their storage representation
+	 * (escaped like in the .properties file).
+	 * All conversions are done before any field is changed, so an invalid escape sequence entered in the
+	 * storage view leaves all fields unchanged.
+	 *
+	 * @return true if the display mode was changed, false if a field content could not be converted
+	 */
+	private boolean changeDisplayMode(final boolean changeToShowStorageTexts) {
+		final String convertedKey;
+		final Map<JTextArea, String> convertedValues = new LinkedHashMap<>();
 		try {
 			if (changeToShowStorageTexts) {
-				keyTextfield.setText(StringEscapeUtils.escapeJava(keyTextfield.getText()));
+				convertedKey = PropertiesWriter.escapeKey(keyTextfield.getText());
 				for (final JTextArea field : languageTextFields.values()) {
-					field.setText(StringEscapeUtils.escapeJava(field.getText()));
+					convertedValues.put(field, PropertiesWriter.escapeValue(field.getText()));
 				}
 			} else {
-				keyTextfield.setText(StringEscapeUtils.unescapeJava(keyTextfield.getText()));
+				convertedKey = PropertiesReader.unescapeKey(keyTextfield.getText());
 				for (final JTextArea field : languageTextFields.values()) {
-					field.setText(StringEscapeUtils.unescapeJava(field.getText()));
+					convertedValues.put(field, PropertiesReader.unescapeValue(field.getText()));
 				}
+			}
+		} catch (final Exception e) {
+			showErrorMessage(LanguagePropertiesManager.APPLICATION_NAME, e.getMessage());
+			return false;
+		}
+
+		technicalDataChange = true;
+		try {
+			keyTextfield.setText(convertedKey);
+			for (final Map.Entry<JTextArea, String> convertedValue : convertedValues.entrySet()) {
+				convertedValue.getKey().setText(convertedValue.getValue());
 			}
 		} finally {
 			technicalDataChange = false;
 		}
+		return true;
 	}
 
 	/**
