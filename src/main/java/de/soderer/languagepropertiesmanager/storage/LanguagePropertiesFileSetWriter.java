@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -15,10 +16,16 @@ import de.soderer.utilities.Utilities;
 
 public class LanguagePropertiesFileSetWriter {
 	public static final String LANGUAGE_SIGN_DEFAULT = "default";
-	public static final String DEFAULT_POPERTIES_FILE_EXTENSION = ".properties";
+	public static final String DEFAULT_PROPERTIES_FILE_EXTENSION = ".properties";
+
+	/**
+	 * @deprecated Misspelled, use DEFAULT_PROPERTIES_FILE_EXTENSION
+	 */
+	@Deprecated
+	public static final String DEFAULT_POPERTIES_FILE_EXTENSION = DEFAULT_PROPERTIES_FILE_EXTENSION;
 
 	public static void write(final List<LanguageProperty> languageProperties, final File directory, final String languagePropertySetName, final boolean extendAndKeepExistingProperties, final boolean readComments) throws Exception {
-		write(languageProperties, directory, languagePropertySetName, extendAndKeepExistingProperties, DEFAULT_POPERTIES_FILE_EXTENSION, readComments);
+		write(languageProperties, directory, languagePropertySetName, extendAndKeepExistingProperties, DEFAULT_PROPERTIES_FILE_EXTENSION, readComments);
 	}
 
 	public static void write(final List<LanguageProperty> languageProperties, final File directory, final String languagePropertySetName, final boolean extendAndKeepExistingProperties, final String propertiesFileExtension, final boolean readComments) throws Exception {
@@ -26,7 +33,8 @@ public class LanguagePropertiesFileSetWriter {
 		final Comparator<LanguageProperty> compareByPathAndIndex = Comparator.comparing(LanguageProperty::getPath).thenComparing(LanguageProperty::getOriginalIndex);
 		final List<LanguageProperty> sortedLanguageProperties = languageProperties.stream().sorted(compareByPathAndIndex).collect(Collectors.toList());
 		for (final String nextLanguagePropertiesPath : languagePropertiesPaths) {
-			final List<LanguageProperty> filteredLanguageProperties = sortedLanguageProperties.stream().filter(o -> o.getPath().equals(nextLanguagePropertiesPath)).collect(Collectors.toList());
+			// Must be a modifiable list, because existing properties may be added below
+			final List<LanguageProperty> filteredLanguageProperties = sortedLanguageProperties.stream().filter(o -> o.getPath().equals(nextLanguagePropertiesPath)).collect(Collectors.toCollection(ArrayList::new));
 
 			File propertiesDirectory;
 			String propertySetName;
@@ -46,7 +54,7 @@ public class LanguagePropertiesFileSetWriter {
 			}
 
 			if (propertiesDirectory == null) {
-				throw new Exception("Properties directory path '" + propertiesDirectory + "' is invalid (Path: " + nextLanguagePropertiesPath + ")");
+				throw new Exception("Properties directory path is invalid, no parent directory found (Path: " + nextLanguagePropertiesPath + ")");
 			}
 
 			if (!propertiesDirectory.exists()) {
@@ -59,16 +67,9 @@ public class LanguagePropertiesFileSetWriter {
 			if (extendAndKeepExistingProperties) {
 				final List<LanguageProperty> existingProperties = LanguagePropertiesFileSetReader.read(propertiesDirectory, propertySetName, propertiesFileExtension, false, readComments);
 				if (existingProperties != null) {
+					final Set<String> keysToStore = filteredLanguageProperties.stream().map(LanguageProperty::getKey).collect(Collectors.toSet());
 					for (final LanguageProperty existingProperty : existingProperties) {
-						boolean foundExistingProperty = false;
-						for (final LanguageProperty propertyToStore : filteredLanguageProperties) {
-							if (propertyToStore.getKey().equals(existingProperty.getKey())) {
-								foundExistingProperty = true;
-								break;
-							}
-						}
-
-						if (!foundExistingProperty) {
+						if (!keysToStore.contains(existingProperty.getKey())) {
 							filteredLanguageProperties.add(existingProperty);
 						}
 					}

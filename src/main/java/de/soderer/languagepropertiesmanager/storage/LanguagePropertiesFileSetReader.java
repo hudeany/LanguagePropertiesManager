@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -60,8 +61,17 @@ public class LanguagePropertiesFileSetReader {
 
 		final FilenameFilter fileFilter = (dir, name) -> isFileOfPropertySet(name, propertySetName, normalizedPropertiesFileExtension);
 
-		for (final File propertyFile : propertiesDirectory.listFiles(fileFilter)) {
-			final String languageSign = getLanguageSignOfFilename(propertyFile.getName());
+		final File[] propertyFiles = propertiesDirectory.listFiles(fileFilter);
+		if (propertyFiles == null) {
+			throw new Exception("Cannot list files of properties directory '" + propertiesDirectory + "'");
+		}
+		// Read the default file first, so its key order defines the original order of all properties
+		Arrays.sort(propertyFiles, Comparator
+				.comparing((final File file) -> !LANGUAGE_SIGN_DEFAULT.equals(getLanguageSignOfFilename(file.getName(), propertySetName, normalizedPropertiesFileExtension)))
+				.thenComparing(File::getName));
+
+		for (final File propertyFile : propertyFiles) {
+			final String languageSign = getLanguageSignOfFilename(propertyFile.getName(), propertySetName, normalizedPropertiesFileExtension);
 			if (languageSign != null) {
 				languageSignsOfFiles.add(languageSign);
 				try (PropertiesReader propertiesReader = new PropertiesReader(new FileInputStream(propertyFile))) {
@@ -136,6 +146,22 @@ public class LanguagePropertiesFileSetReader {
 			return ISO_LANGUAGES.contains(lang) && (country == null || ISO_COUNTRIES.contains(country));
 		} else {
 			return false;
+		}
+	}
+
+	/**
+	 * Get language sign of a filename that belongs to the given property set (checked by isFileOfPropertySet()).
+	 * Only the part after the property set name is evaluated, so set names ending with a locale-like suffix
+	 * (e.g. "texts_de") are handled correctly.
+	 */
+	public static String getLanguageSignOfFilename(final String fileName, final String propertySetName, final String propertiesFileExtension) {
+		final String normalizedPropertiesFileExtension = normalizePropertiesFileExtension(propertiesFileExtension);
+		final String baseName = fileName.substring(0, fileName.length() - normalizedPropertiesFileExtension.length());
+		if (baseName.equals(propertySetName)) {
+			return LANGUAGE_SIGN_DEFAULT;
+		} else {
+			// Suffix was already validated by isFileOfPropertySet(), strip the leading "_"
+			return baseName.substring(propertySetName.length() + 1);
 		}
 	}
 
