@@ -28,6 +28,7 @@ import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -38,6 +39,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
@@ -2003,6 +2005,12 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				}
 			}
 
+			// Offer to create missing target directories instead of letting the save fail
+			if (!ensureDirectoriesExist(languageProperties.stream().map(LanguageProperty::getPath).collect(Collectors.toSet()), null)) {
+				showErrorMessage(LangResources.get("save_file_dialog_text"), LangResources.get("canceledByUser"));
+				return;
+			}
+
 			final Integer returncode = new QuestionDialog(this, getTitle(), LangResources.get("question.keepExistingProperties"), LangResources.get("yes"), LangResources.get("no")).open();
 			final boolean extendAndKeepExistingProperties = returncode != null && returncode == 0;
 
@@ -2042,7 +2050,8 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				if (directory == null) {
 					showErrorMessage(LangResources.get("save_directory_dialog_text"), LangResources.get("canceledByUser"));
 					return;
-				} else if (!directory.exists() || !directory.isDirectory()) {
+				} else if (!ensureDirectoriesExist(null, directory)) {
+					showErrorMessage(LangResources.get("save_directory_dialog_text"), LangResources.get("canceledByUser"));
 					return;
 				}
 
@@ -2054,6 +2063,10 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					return;
 				}
 				newPropertiesSetName = enteredName;
+			} else if (!ensureDirectoriesExist(languageProperties.stream().map(LanguageProperty::getPath).collect(Collectors.toSet()), null)) {
+				// All properties are saved to their own paths, so their directories must exist
+				showErrorMessage(LangResources.get("save_directory_dialog_text"), LangResources.get("canceledByUser"));
+				return;
 			}
 
 			final Integer returncode = new QuestionDialog(this, getTitle(), LangResources.get("question.keepExistingProperties"), LangResources.get("yes"), LangResources.get("no")).open();
@@ -2078,6 +2091,49 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		} catch (final Exception e) {
 			showError(e);
 		}
+	}
+
+	/**
+	 * Checks whether the target directories exist and offers to create the missing ones.
+	 *
+	 * @param languagePropertiesSetPaths paths of language properties sets (without language sign and file extension), their parent directories are checked; may be null
+	 * @param directory additional directory, which is checked itself; may be null
+	 * @return true if all directories exist or were created, false if the user declined their creation
+	 * @throws Exception if a directory could not be created
+	 */
+	private boolean ensureDirectoriesExist(final Collection<String> languagePropertiesSetPaths, final File directory) throws Exception {
+		final Set<File> missingDirectories = new TreeSet<>();
+		if (directory != null && !directory.isDirectory()) {
+			missingDirectories.add(directory.getAbsoluteFile());
+		}
+		if (languagePropertiesSetPaths != null) {
+			for (final String languagePropertiesSetPath : languagePropertiesSetPaths) {
+				if (!Utilities.isBlank(languagePropertiesSetPath)) {
+					final File parentDirectory = new File(Utilities.replaceUsersHome(languagePropertiesSetPath)).getAbsoluteFile().getParentFile();
+					if (parentDirectory != null && !parentDirectory.isDirectory()) {
+						missingDirectories.add(parentDirectory);
+					}
+				}
+			}
+		}
+
+		if (missingDirectories.isEmpty()) {
+			return true;
+		}
+
+		final String directoryList = missingDirectories.stream().map(File::getAbsolutePath).collect(Collectors.joining("\n"));
+		final Integer returncode = new QuestionDialog(this, getTitle(), LangResources.get("question.createMissingDirectories", directoryList), LangResources.get("yes"), LangResources.get("no")).open();
+		if (returncode == null || returncode != 0) {
+			return false;
+		}
+
+		for (final File missingDirectory : missingDirectories) {
+			// mkdirs() also returns false if another entry already created this directory as parent
+			if (!missingDirectory.mkdirs() && !missingDirectory.isDirectory()) {
+				throw new Exception("Cannot create directory: " + missingDirectory.getAbsolutePath());
+			}
+		}
+		return true;
 	}
 
 	private void importFromExcel() {
