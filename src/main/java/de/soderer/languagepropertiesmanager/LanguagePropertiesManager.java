@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.IllformedLocaleException;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutionException;
@@ -165,11 +166,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 		try {
 			applicationConfiguration = new ConfigurationProperties(LanguagePropertiesManager.APPLICATION_NAME, true);
 			LanguagePropertiesManager.setupDefaultConfig(applicationConfiguration);
-			if ("de".equalsIgnoreCase(applicationConfiguration.get(ConfigurationProperties.CONFIG_KEY_LANGUAGE))) {
-				Locale.setDefault(Locale.GERMAN);
-			} else {
-				Locale.setDefault(Locale.ENGLISH);
-			}
+			Locale.setDefault(toLocale(applicationConfiguration.get(ConfigurationProperties.CONFIG_KEY_LANGUAGE), Locale.ENGLISH));
 		} catch (@SuppressWarnings("unused") final Exception e) {
 			System.err.println("Invalid application configuration");
 			return 1;
@@ -398,6 +395,26 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 		} catch (final Exception e) {
 			System.err.println(e.getMessage());
 			return 1;
+		}
+	}
+
+	public static Locale toLocale(final String languageCode, final Locale defaultLocale) {
+		if (languageCode == null || languageCode.isBlank()) {
+			return defaultLocale;
+		}
+
+		final String[] parts = languageCode.trim().split("[_-]", 3);
+		try {
+			final Locale.Builder builder = new Locale.Builder().setLanguage(parts[0]);
+			if (parts.length > 1) {
+				builder.setRegion(parts[1]);
+			}
+			if (parts.length > 2) {
+				builder.setVariant(parts[2]);
+			}
+			return builder.build();
+		} catch (@SuppressWarnings("unused") final IllformedLocaleException e) {
+			return defaultLocale;
 		}
 	}
 
