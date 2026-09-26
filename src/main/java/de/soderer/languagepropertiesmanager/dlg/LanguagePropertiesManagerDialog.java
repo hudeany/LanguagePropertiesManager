@@ -246,7 +246,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			setDailyUpdateCheckStatus(true);
 			try {
 				if (ApplicationUpdateUtilities.checkForNewVersionAvailable(LanguagePropertiesManager.VERSIONINFO_DOWNLOAD_URL, applicationConfiguration.getProxyConfiguration(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION) != null) {
-					ApplicationUpdateUtilities.executeUpdate(this, LanguagePropertiesManager.VERSIONINFO_DOWNLOAD_URL, applicationConfiguration.getProxyConfiguration(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION, LanguagePropertiesManager.TRUSTED_UPDATE_CA_CERTIFICATES, null, null, null, null, true, false);
+					ApplicationUpdateUtilities.executeUpdate(this, LanguagePropertiesManager.VERSIONINFO_DOWNLOAD_URL, applicationConfiguration.getProxyConfiguration(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION, LanguagePropertiesManager.TRUSTED_UPDATE_CA_CERTIFICATES, null, null, null, true, false);
 				}
 			} catch (final Exception e) {
 				showErrorMessage(LangResources.get("updateCheck"), LangResources.get("error.cannotCheckForUpdate", e.getMessage()));
@@ -1462,7 +1462,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				iconData = IoUtilities.toByteArray(inputStream);
 			}
 
-			final ApplicationConfigurationDialog dialog = new ApplicationConfigurationDialog(this, LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.APPLICATION_STARTUPCLASS_NAME, LanguagePropertiesManager.VERSION, LanguagePropertiesManager.VERSION_BUILDTIME, applicationConfiguration, iconData, ImageManager.getImage("LanguagePropertiesManager.png").getImage(), LanguagePropertiesManager.VERSIONINFO_DOWNLOAD_URL, LanguagePropertiesManager.TRUSTED_UPDATE_CA_CERTIFICATES, null, null);
+			final ApplicationConfigurationDialog dialog = new ApplicationConfigurationDialog(this, LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.APPLICATION_STARTUPCLASS_NAME, LanguagePropertiesManager.VERSION, LanguagePropertiesManager.VERSION_BUILDTIME, applicationConfiguration, iconData, ImageManager.getImage("LanguagePropertiesManager.png").getImage(), LanguagePropertiesManager.VERSIONINFO_DOWNLOAD_URL, LanguagePropertiesManager.TRUSTED_UPDATE_CA_CERTIFICATES, null);
 			if (dialog.open() == Result.OK) {
 				applicationConfiguration.save();
 
