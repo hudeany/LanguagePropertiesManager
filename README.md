@@ -22,8 +22,6 @@ All dependencies are downloaded by ANT build script: build.xml
  
 	JAVA jna: 5.6.0
 	JAVA jna-platform: 5.6.0
-	
-	ECLIPSE swt: 4.36
  
 	github.com/hudeany csv: 25.1.1
 	github.com/hudeany json: 25.1.2
