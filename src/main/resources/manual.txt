@@ -102,6 +102,34 @@ The properties are marked as changed and still need to be saved.
 A result report lists added keys, filled, overwritten and kept differing values, entries not added and skipped, as well as new language identifiers.
 In addition, it contains the result of an error check (see 4.9) of the imported entries, since the import source may, for example, use a different encoding.
 
+3.7 Comparison with a Base Set (Removing Identical Values)
+
+The "Compare with base set (remove identical values)" button compares the currently loaded properties with a base set and removes all values from the loaded properties that are already contained identically in the base set.
+Only the deviations from the base set remain. This is helpful, for example, for customer-specific or variant-specific properties sets that should only contain the texts overriding the texts of a base product.
+The button is only available if properties are loaded. It opens the same source selection menu as in 3.6. The selected source is only read as the basis for comparison and is not taken over into the tool.
+If an error occurs while reading the source or the process is canceled, the currently loaded properties remain unchanged.
+If rows are selected in the data table, only these are compared, otherwise all properties.
+
+Matching and comparison:
+Each loaded property is matched to its counterpart in the base set by the same rules as in 3.6 (same LanguagePropertiesSetPath, otherwise same Language Properties Set Name, otherwise the key alone if path information is missing).
+If a key matches several entries in the base set, the match is ambiguous. This entry is then skipped and listed in the result report.
+Comparison is done per key and language. Only values that are exactly equal to the value of the same language in the base set are removed.
+Values that differ from the base set or are missing there are kept. Likewise, properties without a counterpart in the base set remain unchanged.
+Comments are not compared and are kept.
+
+Prompt:
+Before any change, a prompt shows the number of checked entries, of identical values, of entries that would have no language value left afterwards, of entries without counterpart in the base set and of skipped entries.
+The following options are available:
+	"Delete empty entries" (identical values are removed; entries without a remaining language value are deleted completely, even if they still have a comment)
+	"Only clear values" (identical values are removed, all entries are kept)
+	"Cancel" (nothing is changed)
+If no identical values are found, only a corresponding notice is shown and no further action is taken.
+
+After the comparison:
+The remaining changed properties are selected in the data table. The properties are marked as changed and still need to be saved.
+A result report lists deleted entries, removed identical values, the remaining values differing from the base set, and skipped entries.
+Important: To remove deleted keys from the files as well, the question whether already existing properties should be kept must be answered with "No" when saving (see 6.1). Otherwise these keys remain in the files.
+
 
 4. Editing Individual Property Values
 

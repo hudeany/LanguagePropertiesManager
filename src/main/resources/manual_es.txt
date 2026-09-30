@@ -102,6 +102,34 @@ Las propiedades se consideran modificadas y todavía deben guardarse.
 Un informe de resultados enumera las claves añadidas, los valores rellenados, sobrescritos y los valores distintos conservados, las entradas no añadidas y omitidas, así como los identificadores de idioma nuevos.
 Además, contiene el resultado de una comprobación de errores (véase 4.9) de las entradas importadas, ya que el origen de la importación puede utilizar, por ejemplo, otra codificación.
 
+3.7 Comparación con un conjunto base (eliminar valores idénticos)
+
+El botón "Comparar con el conjunto base (eliminar valores idénticos)" compara las propiedades cargadas actualmente con un conjunto base y elimina de las propiedades cargadas todos los valores que ya están contenidos de forma idéntica en el conjunto base.
+Solo quedan las diferencias respecto al conjunto base. Esto resulta útil, por ejemplo, para conjuntos de propiedades específicos de un cliente o de una variante que solo deben contener los textos que sustituyen a los textos de un producto base.
+El botón solo está disponible si hay propiedades cargadas. Abre el mismo menú de selección de origen que en 3.6. El origen seleccionado solo se lee como base de comparación y no se incorpora a la herramienta.
+Si se produce un error al leer el origen o se cancela el proceso, las propiedades cargadas actualmente permanecen sin cambios.
+Si hay filas seleccionadas en la tabla de datos, solo se comparan estas; en caso contrario, todas las propiedades.
+
+Asignación y comparación:
+Cada propiedad cargada se asigna a su correspondiente en el conjunto base según las mismas reglas que en 3.6 (mismo LanguagePropertiesSetPath; si no, mismo nombre del conjunto de propiedades de idioma; si no, solo la clave cuando falta la información de ruta).
+Si una clave coincide con varias entradas del conjunto base, la asignación es ambigua. En ese caso, la entrada se omite y se indica en el informe de resultados.
+La comparación se realiza por clave e idioma. Solo se eliminan los valores que son exactamente iguales al valor del mismo idioma en el conjunto base.
+Los valores que difieren del conjunto base o que no existen en él se conservan. Del mismo modo, las propiedades sin correspondencia en el conjunto base permanecen sin cambios.
+Los comentarios no se comparan y se conservan.
+
+Consulta:
+Antes de cualquier cambio aparece una consulta con el número de entradas comprobadas, de valores idénticos, de entradas que después no tendrían ningún valor de idioma, de entradas sin correspondencia en el conjunto base y de entradas omitidas.
+Están disponibles las siguientes opciones:
+	"Eliminar entradas vacías" (se eliminan los valores idénticos; las entradas sin ningún valor de idioma restante se eliminan por completo, aunque todavía tengan un comentario)
+	"Solo vaciar valores" (se eliminan los valores idénticos; todas las entradas se conservan)
+	"Cancelar" (no se modifica nada)
+Si no se encuentran valores idénticos, solo se muestra el aviso correspondiente, sin ninguna otra acción.
+
+Después de la comparación:
+Las propiedades restantes modificadas quedan seleccionadas en la tabla de datos. Las propiedades se consideran modificadas y todavía deben guardarse.
+Un informe de resultados enumera las entradas eliminadas, los valores idénticos eliminados, los valores restantes que difieren del conjunto base y las entradas omitidas.
+Importante: para que las claves eliminadas también desaparezcan de los archivos, al guardar (véase 6.1) hay que responder "No" a la pregunta de si se deben conservar las propiedades ya existentes. De lo contrario, estas claves permanecen en los archivos.
+
 
 4. Edición de valores de propiedades individuales
 

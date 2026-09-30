@@ -103,6 +103,34 @@ Die Properties gelten als geändert und müssen noch gespeichert werden.
 Ein Ergebnisbericht listet hinzugefügte Keys, gefüllte, überschriebene und beibehaltene abweichende Werte, nicht hinzugefügte und übersprungene Einträge sowie neue Sprachenkennzeichen auf.
 Zusätzlich enthält er das Ergebnis einer Fehlerprüfung (siehe 4.9) der importierten Einträge, da die Importquelle z.B. ein anderes Encoding verwenden kann.
 
+3.7 Abgleich mit einem Basis-Set (identische Werte entfernen)
+
+Der Button "Mit Basis-Set abgleichen (identische Werte entfernen)" vergleicht die aktuell geladenen Properties mit einem Basis-Set und entfernt aus den geladenen Properties alle Werte, die im Basis-Set bereits identisch enthalten sind.
+Übrig bleiben nur die Abweichungen vom Basis-Set. Dies ist z.B. hilfreich für kunden- oder variantenspezifische Properties Sets, die nur die Texte enthalten sollen, welche die Texte eines Basisprodukts überschreiben.
+Der Button ist nur verfügbar, wenn Properties geladen sind. Er öffnet dasselbe Menü zur Auswahl der Quelle wie in 3.6. Die gewählte Quelle wird nur als Vergleichsbasis gelesen und nicht in das Tool übernommen.
+Tritt beim Lesen der Quelle ein Fehler auf oder wird der Vorgang abgebrochen, bleiben die aktuell geladenen Properties unverändert.
+Sind in der Datentabelle Zeilen ausgewählt, werden nur diese abgeglichen, andernfalls alle Properties.
+
+Zuordnung und Vergleich:
+Jedes geladene Property wird seinem Gegenstück im Basis-Set nach denselben Regeln wie in 3.6 zugeordnet (gleicher LanguagePropertiesSetPath, sonst gleicher Language Properties Set Name, sonst Key allein bei fehlender Pfadangabe).
+Passt ein Key zu mehreren Einträgen im Basis-Set, ist die Zuordnung nicht eindeutig. Dieser Eintrag wird dann übersprungen und im Ergebnisbericht aufgeführt.
+Verglichen wird jeweils pro Key und Sprache. Nur Werte, die exakt dem Wert derselben Sprache im Basis-Set entsprechen, werden entfernt.
+Werte, die vom Basis-Set abweichen oder dort fehlen, bleiben erhalten. Ebenso bleiben Properties ohne Gegenstück im Basis-Set unverändert.
+Kommentare werden nicht verglichen und bleiben erhalten.
+
+Abfrage:
+Vor der Änderung erfolgt eine Abfrage mit der Anzahl der geprüften Einträge, der identischen Werte, der Einträge, die danach keinen Sprachwert mehr hätten, der Einträge ohne Gegenstück im Basis-Set und der übersprungenen Einträge.
+Zur Auswahl stehen:
+	"Leere Einträge löschen" (Identische Werte werden entfernt. Einträge ohne verbleibenden Sprachwert werden komplett gelöscht, auch wenn sie noch einen Kommentar haben)
+	"Nur Werte leeren" (Identische Werte werden entfernt, alle Einträge bleiben erhalten)
+	"Abbrechen" (Es wird nichts verändert)
+Werden keine identischen Werte gefunden, erfolgt lediglich ein entsprechender Hinweis ohne weitere Aktion.
+
+Nach dem Abgleich:
+Die verbleibenden, veränderten Properties werden in der Datentabelle ausgewählt. Die Properties gelten als geändert und müssen noch gespeichert werden.
+Ein Ergebnisbericht listet gelöschte Einträge, entfernte identische Werte und die verbleibenden vom Basis-Set abweichenden Werte sowie übersprungene Einträge auf.
+Wichtig: Damit gelöschte Keys auch aus den Dateien entfernt werden, muss beim Speichern (siehe 6.1) die Frage, ob bereits vorhandene Properties erhalten bleiben sollen, mit "Nein" beantwortet werden. Andernfalls bleiben diese Keys in den Dateien bestehen.
+
 
 4. Bearbeiten von einzelnen Property Werten
 

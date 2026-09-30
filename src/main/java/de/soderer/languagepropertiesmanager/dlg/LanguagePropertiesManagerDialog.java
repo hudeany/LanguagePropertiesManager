@@ -205,6 +205,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private JButton cancelButton;
 	private JButton textConversionButton;
 	private JButton loadRecentButton;
+	private JButton reduceByBaseSetButton;
 	private final List<JComponent> searchComponents = new ArrayList<>();
 
 	private UniqueFifoQueuedList<String> recentlyOpenedDirectories;
@@ -309,7 +310,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		createIconButton(buttonSection1, "excelLoad.png", "tooltip_importExcel", e -> importFromExcel());
 		createIconButton(buttonSection1, "csvLoad.png", "tooltip_importCsv", e -> importFromCsv());
 		final JButton mergeImportButton = createIconButton(buttonSection1, "merge.png", "tooltip_mergeImport", null);
-		mergeImportButton.addActionListener(e -> showMergeImportMenu(mergeImportButton));
+		mergeImportButton.addActionListener(e -> showImportSourceMenu(mergeImportButton, "mergeImport_title", this::mergeLoadedLanguageProperties));
+		reduceByBaseSetButton = createIconButton(buttonSection1, "reduce.png", "tooltip_reduceByBaseSet", null);
+		reduceByBaseSetButton.addActionListener(e -> showImportSourceMenu(reduceByBaseSetButton, "reduceByBaseSet_title", this::reduceByBaseSet));
 		saveButton = createIconButton(buttonSection1, "save.png", "tooltip_save_files", e -> saveFiles());
 		folderSaveButton = createIconButton(buttonSection1, "folderSave.png", "tooltip_save_folder", e -> saveFolder());
 		exportToExcelButton = createIconButton(buttonSection1, "excelSave.png", "tooltip_exportExcel", e -> exportToExcel());
@@ -1931,6 +1934,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		if (showStatisticsButton != null) {
 			showStatisticsButton.setEnabled(hasProperties);
 		}
+		if (reduceByBaseSetButton != null) {
+			reduceByBaseSetButton.setEnabled(hasProperties);
+		}
 	}
 
 	private boolean askForDropProperties() {
@@ -2582,12 +2588,12 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	}
 
 	/**
-	 * Source of a merge import. Returns null if the user canceled, in which case
-	 * the source has already informed the user.
+	 * Source of an import (merge import or reduction by a base set). Returns null
+	 * if the user canceled, in which case the source has already informed the user.
 	 */
 	@FunctionalInterface
-	private interface MergeImportSource {
-		LoadedLanguageProperties read() throws Exception;
+	private interface ImportSource {
+		LoadedLanguageProperties read(String title) throws Exception;
 	}
 
 	/**
@@ -2668,31 +2674,33 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	}
 
 	/**
-	 * Shows the menu of sources for a merge import below the merge import button.
+	 * Shows the menu of import sources below the given button. The properties
+	 * read from the chosen source are handed to the given action.
 	 */
-	private void showMergeImportMenu(final JButton invoker) {
+	private void showImportSourceMenu(final JButton invoker, final String titleKey, final Consumer<LoadedLanguageProperties> action) {
 		try {
-			final JPopupMenu mergeImportMenu = new JPopupMenu();
-			addMergeImportMenuItem(mergeImportMenu, "clock.png", "mergeImport_fromRecent", recentlyOpenedDirectories != null && recentlyOpenedDirectories.size() > 0, () -> mergeImport(this::readMergeImportFromRecent));
-			addMergeImportMenuItem(mergeImportMenu, "load.png", "mergeImport_fromFile", true, () -> mergeImport(this::readMergeImportFromFile));
-			addMergeImportMenuItem(mergeImportMenu, "folderLoad.png", "mergeImport_fromFolder", true, () -> mergeImport(this::readMergeImportFromFolder));
-			addMergeImportMenuItem(mergeImportMenu, "excelLoad.png", "mergeImport_fromExcel", true, () -> mergeImport(() -> readMergeImportFromDataFile(this::readFromExcel, "xlsx")));
-			addMergeImportMenuItem(mergeImportMenu, "csvLoad.png", "mergeImport_fromCsv", true, () -> mergeImport(() -> readMergeImportFromDataFile(this::readFromCsv, "csv", "dsv")));
-			mergeImportMenu.show(invoker, 0, invoker.getHeight());
+			final String title = LangResources.get(titleKey);
+			final JPopupMenu importSourceMenu = new JPopupMenu();
+			addImportSourceMenuItem(importSourceMenu, "clock.png", "mergeImport_fromRecent", recentlyOpenedDirectories != null && recentlyOpenedDirectories.size() > 0, () -> runWithImportSource(title, this::readImportSourceFromRecent, action));
+			addImportSourceMenuItem(importSourceMenu, "load.png", "mergeImport_fromFile", true, () -> runWithImportSource(title, this::readImportSourceFromFile, action));
+			addImportSourceMenuItem(importSourceMenu, "folderLoad.png", "mergeImport_fromFolder", true, () -> runWithImportSource(title, this::readImportSourceFromFolder, action));
+			addImportSourceMenuItem(importSourceMenu, "excelLoad.png", "mergeImport_fromExcel", true, () -> runWithImportSource(title, sourceTitle -> readImportSourceFromDataFile(sourceTitle, this::readFromExcel, "xlsx"), action));
+			addImportSourceMenuItem(importSourceMenu, "csvLoad.png", "mergeImport_fromCsv", true, () -> runWithImportSource(title, sourceTitle -> readImportSourceFromDataFile(sourceTitle, this::readFromCsv, "csv", "dsv"), action));
+			importSourceMenu.show(invoker, 0, invoker.getHeight());
 		} catch (final Exception e) {
 			showError(e);
 		}
 	}
 
-	private static void addMergeImportMenuItem(final JPopupMenu menu, final String imageName, final String textKey, final boolean enabled, final Runnable action) throws Exception {
+	private static void addImportSourceMenuItem(final JPopupMenu menu, final String imageName, final String textKey, final boolean enabled, final Runnable action) throws Exception {
 		final JMenuItem menuItem = new JMenuItem(LangResources.get(textKey), ImageManager.getImage(imageName));
 		menuItem.setEnabled(enabled);
 		menuItem.addActionListener(e -> action.run());
 		menu.add(menuItem);
 	}
 
-	private LoadedLanguageProperties readMergeImportFromRecent() throws Exception {
-		final ComboSelectionDialog dialog = new ComboSelectionDialog(this, getTitle() + " " + LangResources.get("mergeImport_title"), LangResources.get("recent_directories_dialog_text"), recentlyOpenedDirectories, getLastEntryIndex(recentlyOpenedDirectories)).withSize(600, -1);
+	private LoadedLanguageProperties readImportSourceFromRecent(final String title) throws Exception {
+		final ComboSelectionDialog dialog = new ComboSelectionDialog(this, getTitle() + " " + title, LangResources.get("recent_directories_dialog_text"), recentlyOpenedDirectories, getLastEntryIndex(recentlyOpenedDirectories)).withSize(600, -1);
 		final String filePath = dialog.open();
 
 		// Take over a possible reordering (drag&drop) or deletion of the recent directories done in the dialog
@@ -2702,45 +2710,45 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		checkButtonStatus();
 
 		if (filePath == null) {
-			showErrorMessage(LangResources.get("mergeImport_title"), LangResources.get("canceledByUser"));
+			showErrorMessage(title, LangResources.get("canceledByUser"));
 			return null;
 		} else if (!new File(filePath).exists()) {
-			showErrorMessage(LangResources.get("mergeImport_title"), LangResources.get("error.recentPathDoesNotExistAnymore", filePath));
+			showErrorMessage(title, LangResources.get("error.recentPathDoesNotExistAnymore", filePath));
 			return null;
 		} else if (new File(filePath).isDirectory()) {
-			return readMergeImportResult(readAllLanguagePropertiesSets(filePath));
+			return readImportSourceResult(title, readAllLanguagePropertiesSets(filePath));
 		} else if (!hasLanguagePropertiesFileExtension(filePath)) {
-			showErrorMessage(LangResources.get("mergeImport_title"), LangResources.get("missingMandatoryFileExtension", applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION)));
+			showErrorMessage(title, LangResources.get("missingMandatoryFileExtension", applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION)));
 			return null;
 		} else {
-			return readMergeImportResult(readSingleLanguagePropertiesSet(filePath));
+			return readImportSourceResult(title, readSingleLanguagePropertiesSet(filePath));
 		}
 	}
 
-	private LoadedLanguageProperties readMergeImportFromFile() throws Exception {
-		final File file = chooseFileToOpen(getTitle() + " " + LangResources.get("mergeImport_title"), recentlyOpenedDirectories.getLatestAdded());
+	private LoadedLanguageProperties readImportSourceFromFile(final String title) throws Exception {
+		final File file = chooseFileToOpen(getTitle() + " " + title, recentlyOpenedDirectories.getLatestAdded());
 		if (file == null) {
-			showErrorMessage(LangResources.get("mergeImport_title"), LangResources.get("canceledByUser"));
+			showErrorMessage(title, LangResources.get("canceledByUser"));
 			return null;
 		} else if (!file.isFile()) {
 			throw new Exception("Selected language properties set path is not an existing file");
 		} else if (!hasLanguagePropertiesFileExtension(file.getAbsolutePath())) {
-			showErrorMessage(LangResources.get("mergeImport_title"), LangResources.get("missingMandatoryFileExtension", applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION)));
+			showErrorMessage(title, LangResources.get("missingMandatoryFileExtension", applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION)));
 			return null;
 		} else {
-			return readMergeImportResult(readSingleLanguagePropertiesSet(file.getAbsolutePath()));
+			return readImportSourceResult(title, readSingleLanguagePropertiesSet(file.getAbsolutePath()));
 		}
 	}
 
-	private LoadedLanguageProperties readMergeImportFromFolder() throws Exception {
-		final File directory = chooseDirectory(getTitle() + " " + LangResources.get("mergeImport_title"), recentlyOpenedDirectories.getLatestAdded());
+	private LoadedLanguageProperties readImportSourceFromFolder(final String title) throws Exception {
+		final File directory = chooseDirectory(getTitle() + " " + title, recentlyOpenedDirectories.getLatestAdded());
 		if (directory == null) {
-			showErrorMessage(LangResources.get("mergeImport_title"), LangResources.get("canceledByUser"));
+			showErrorMessage(title, LangResources.get("canceledByUser"));
 			return null;
 		} else if (!directory.isDirectory()) {
 			throw new Exception("Selected language properties directory is not an existing directory");
 		} else {
-			return readMergeImportResult(readAllLanguagePropertiesSets(directory.getAbsolutePath()));
+			return readImportSourceResult(title, readAllLanguagePropertiesSets(directory.getAbsolutePath()));
 		}
 	}
 
@@ -2752,40 +2760,41 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		LoadedLanguageProperties read(File file) throws Exception;
 	}
 
-	private LoadedLanguageProperties readMergeImportFromDataFile(final DataFileReader dataFileReader, final String... fileExtensions) throws Exception {
-		final File importFile = chooseFileToOpen(getTitle() + " " + LangResources.get("mergeImport_title"), Utilities.replaceUsersHome("~" + File.separator + "Downloads"), fileExtensions);
+	private LoadedLanguageProperties readImportSourceFromDataFile(final String title, final DataFileReader dataFileReader, final String... fileExtensions) throws Exception {
+		final File importFile = chooseFileToOpen(getTitle() + " " + title, Utilities.replaceUsersHome("~" + File.separator + "Downloads"), fileExtensions);
 		if (importFile == null) {
-			showErrorMessage(LangResources.get("mergeImport_title"), LangResources.get("canceledByUser"));
+			showErrorMessage(title, LangResources.get("canceledByUser"));
 			return null;
 		} else {
-			return readMergeImportResult(dataFileReader.read(importFile));
+			return readImportSourceResult(title, dataFileReader.read(importFile));
 		}
 	}
 
 	/**
 	 * Shows the cancel message, if reading was canceled in the progress dialog
 	 */
-	private LoadedLanguageProperties readMergeImportResult(final LoadedLanguageProperties loadedLanguageProperties) {
+	private LoadedLanguageProperties readImportSourceResult(final String title, final LoadedLanguageProperties loadedLanguageProperties) {
 		if (loadedLanguageProperties == null) {
-			showErrorMessage(LangResources.get("mergeImport_title"), LangResources.get("canceledByUser"));
+			showErrorMessage(title, LangResources.get("canceledByUser"));
 		}
 		return loadedLanguageProperties;
 	}
 
 	/**
-	 * Imports additional properties into the currently loaded properties without
-	 * discarding them. Errors while reading leave the loaded data unchanged.
+	 * Reads the properties of an import source and hands them to the given action
+	 * (merge import or reduction by a base set). Errors while reading leave the
+	 * loaded data unchanged.
 	 */
-	private void mergeImport(final MergeImportSource mergeImportSource) {
-		// Unapplied changes in the detail fields would get lost by the changed selection after the import
+	private void runWithImportSource(final String title, final ImportSource importSource, final Consumer<LoadedLanguageProperties> action) {
+		// Unapplied changes in the detail fields would get lost by the changed selection afterwards
 		if (dataWasModified && !askForDiscardChanges()) {
 			return;
 		}
 
 		try {
-			final LoadedLanguageProperties loadedLanguageProperties = mergeImportSource.read();
+			final LoadedLanguageProperties loadedLanguageProperties = importSource.read(title);
 			if (loadedLanguageProperties != null) {
-				mergeLoadedLanguageProperties(loadedLanguageProperties);
+				action.accept(loadedLanguageProperties);
 			}
 		} catch (final ExecutionException e) {
 			if (e.getCause() != null && e.getCause() instanceof LanguagePropertiesException) {
@@ -3170,6 +3179,186 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				reportText.append("  ").append(line).append("\n");
 			}
 		}
+	}
+
+	/**
+	 * Planned reduction of one loaded property by its counterpart in the base set
+	 */
+	private static class ReducePlanEntry {
+		private final LanguageProperty languageProperty;
+		/** Language signs whose values are identical to the base set */
+		private final List<String> identicalLanguageSigns;
+		/** Whether the property has no language value left after the reduction */
+		private final boolean becomesEmpty;
+
+		private ReducePlanEntry(final LanguageProperty languageProperty, final List<String> identicalLanguageSigns, final boolean becomesEmpty) {
+			this.languageProperty = languageProperty;
+			this.identicalLanguageSigns = identicalLanguageSigns;
+			this.becomesEmpty = becomesEmpty;
+		}
+	}
+
+	/**
+	 * Analysis of a reduction by a base set before anything is changed
+	 */
+	private static class ReducePlan {
+		private final List<ReducePlanEntry> entries = new ArrayList<>();
+		private final List<String> skippedEntries = new ArrayList<>();
+		/** Values that differ from the base set, they stay as they are */
+		private final List<String> differingValues = new ArrayList<>();
+		private int identicalValueCount = 0;
+		private int emptyPropertyCount = 0;
+		private int propertiesWithoutBaseCount = 0;
+	}
+
+	/**
+	 * Compares the loaded properties (the selected ones, or all if nothing is
+	 * selected) with a base set and removes the values that are identical in the
+	 * base set, so only the deviations from the base set remain.
+	 * Properties without any remaining value can be deleted completely.
+	 */
+	private void reduceByBaseSet(final LoadedLanguageProperties baseLanguageProperties) {
+		if (languageProperties == null || languageProperties.isEmpty()) {
+			return;
+		}
+
+		final String title = LangResources.get("reduceByBaseSet_title");
+		if (baseLanguageProperties.languageProperties.isEmpty()) {
+			showMessage(title, LangResources.get("mergeImport_nothingFound", baseLanguageProperties.sourceDescription));
+			return;
+		}
+
+		final List<LanguageProperty> propertiesToCheck = new ArrayList<>(getSelectedOrAllProperties());
+		final ReducePlan reducePlan = createReducePlan(propertiesToCheck, baseLanguageProperties.languageProperties);
+		if (reducePlan.entries.isEmpty()) {
+			String message = LangResources.get("reduceByBaseSet_nothingIdentical", baseLanguageProperties.sourceDescription, propertiesToCheck.size());
+			if (!reducePlan.skippedEntries.isEmpty()) {
+				message += "\n\n" + LangResources.get("mergeImport_section_skipped") + ":\n" + Utilities.join(reducePlan.skippedEntries, "\n");
+			}
+			showData(title, message);
+			return;
+		}
+
+		final Integer returncode = new QuestionDialog(this, title,
+				LangResources.get("reduceByBaseSet_question", baseLanguageProperties.sourceDescription, propertiesToCheck.size(), reducePlan.identicalValueCount, reducePlan.entries.size(), reducePlan.emptyPropertyCount, reducePlan.propertiesWithoutBaseCount, reducePlan.skippedEntries.size()),
+				LangResources.get("reduceByBaseSet_mode_removeEmpty"),
+				LangResources.get("reduceByBaseSet_mode_clearOnly"),
+				LangResources.get("cancel")).open();
+		final boolean removeEmptyProperties;
+		if (returncode != null && returncode == 0) {
+			removeEmptyProperties = true;
+		} else if (returncode != null && returncode == 1) {
+			removeEmptyProperties = false;
+		} else {
+			showErrorMessage(title, LangResources.get("canceledByUser"));
+			return;
+		}
+
+		final List<String> clearedValues = new ArrayList<>();
+		final List<String> removedProperties = new ArrayList<>();
+		final List<LanguageProperty> changedProperties = new ArrayList<>();
+		final Set<LanguageProperty> propertiesToRemove = Collections.newSetFromMap(new IdentityHashMap<>());
+		for (final ReducePlanEntry entry : reducePlan.entries) {
+			final LanguageProperty languageProperty = entry.languageProperty;
+			final String displayName = getPropertyDisplayName(languageProperty.getPath(), languageProperty.getKey());
+			for (final String languageSign : entry.identicalLanguageSigns) {
+				languageProperty.setLanguageValue(languageSign, null);
+				clearedValues.add(displayName + " [" + languageSign + "]");
+			}
+			if (removeEmptyProperties && entry.becomesEmpty) {
+				propertiesToRemove.add(languageProperty);
+				removedProperties.add(displayName);
+			} else {
+				changedProperties.add(languageProperty);
+			}
+		}
+		if (!propertiesToRemove.isEmpty()) {
+			languageProperties.removeIf(propertiesToRemove::contains);
+		}
+
+		hasUnsavedChanges = true;
+
+		// Select the reduced properties that still exist, so they can be reviewed directly
+		currentSelectedProperties = changedProperties;
+		setupTable();
+		refreshDetailView();
+		checkButtonStatus();
+
+		final StringBuilder reportText = new StringBuilder();
+		reportText.append(LangResources.get("reduceByBaseSet_resultSummary",
+				baseLanguageProperties.sourceDescription,
+				propertiesToCheck.size(),
+				clearedValues.size(),
+				removedProperties.size(),
+				reducePlan.differingValues.size(),
+				reducePlan.propertiesWithoutBaseCount,
+				reducePlan.skippedEntries.size()));
+		if (!removedProperties.isEmpty()) {
+			// Removed keys would survive in the files, if existing properties are kept when saving
+			reportText.append("\n\n").append(LangResources.get("reduceByBaseSet_saveHint"));
+		}
+		appendMergeReportSection(reportText, "reduceByBaseSet_section_removed", removedProperties);
+		appendMergeReportSection(reportText, "reduceByBaseSet_section_cleared", clearedValues);
+		appendMergeReportSection(reportText, "reduceByBaseSet_section_differing", reducePlan.differingValues);
+		appendMergeReportSection(reportText, "mergeImport_section_skipped", reducePlan.skippedEntries);
+		showData(LangResources.get("reduceByBaseSet_resultTitle"), reportText.toString());
+	}
+
+	/**
+	 * Determines for every property to check the identical values in the base set.
+	 * The properties are matched like in a merge import (see findMergeCandidates()).
+	 * Nothing is changed here.
+	 */
+	private static ReducePlan createReducePlan(final List<LanguageProperty> propertiesToCheck, final List<LanguageProperty> baseProperties) {
+		final ReducePlan reducePlan = new ReducePlan();
+
+		final Map<String, List<LanguageProperty>> basePropertiesByKey = new HashMap<>();
+		for (final LanguageProperty baseProperty : baseProperties) {
+			basePropertiesByKey.computeIfAbsent(getEmptyForNull(baseProperty.getKey()), k -> new ArrayList<>()).add(baseProperty);
+		}
+
+		for (final LanguageProperty languageProperty : propertiesToCheck) {
+			final String key = languageProperty.getKey();
+			if (Utilities.isBlank(key)) {
+				reducePlan.skippedEntries.add(LangResources.get("mergeImport_skippedEmptyKey", getEmptyForNull(languageProperty.getPath())));
+				continue;
+			}
+
+			final List<LanguageProperty> candidates = findMergeCandidates(languageProperty, basePropertiesByKey.get(key));
+			if (candidates.size() > 1) {
+				reducePlan.skippedEntries.add(getPropertyDisplayName(languageProperty.getPath(), key) + ": " + LangResources.get("reduceByBaseSet_skippedAmbiguous", candidates.size()));
+			} else if (candidates.isEmpty()) {
+				reducePlan.propertiesWithoutBaseCount++;
+			} else {
+				final LanguageProperty baseProperty = candidates.get(0);
+				final List<String> identicalLanguageSigns = new ArrayList<>();
+				boolean hasRemainingValue = false;
+				for (final String languageSign : new ArrayList<>(languageProperty.getAvailableLanguageSigns())) {
+					final String value = languageProperty.getLanguageValue(languageSign);
+					if (Utilities.isNotEmpty(value)) {
+						final String baseValue = baseProperty.getLanguageValue(languageSign);
+						if (value.equals(baseValue)) {
+							identicalLanguageSigns.add(languageSign);
+						} else {
+							hasRemainingValue = true;
+							if (Utilities.isNotEmpty(baseValue)) {
+								reducePlan.differingValues.add(getPropertyDisplayName(languageProperty.getPath(), key) + " [" + languageSign + "]");
+							}
+						}
+					}
+				}
+
+				if (!identicalLanguageSigns.isEmpty()) {
+					reducePlan.entries.add(new ReducePlanEntry(languageProperty, identicalLanguageSigns, !hasRemainingValue));
+					reducePlan.identicalValueCount += identicalLanguageSigns.size();
+					if (!hasRemainingValue) {
+						reducePlan.emptyPropertyCount++;
+					}
+				}
+			}
+		}
+
+		return reducePlan;
 	}
 
 	private void exportToExcel() {

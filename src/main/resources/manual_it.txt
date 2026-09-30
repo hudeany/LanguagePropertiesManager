@@ -102,6 +102,34 @@ Le proprietà risultano modificate e devono ancora essere salvate.
 Un rapporto dei risultati elenca le chiavi aggiunte, i valori compilati, sovrascritti e i valori diversi mantenuti, le voci non aggiunte e saltate, nonché i nuovi identificatori di lingua.
 Contiene inoltre il risultato di un controllo degli errori (vedere 4.9) delle voci importate, poiché la fonte di importazione può ad esempio utilizzare una codifica diversa.
 
+3.7 Confronto con un set di base (rimozione dei valori identici)
+
+Il pulsante "Confronta con il set di base (rimuovi i valori identici)" confronta le proprietà attualmente caricate con un set di base e rimuove dalle proprietà caricate tutti i valori già contenuti in modo identico nel set di base.
+Restano solo le differenze rispetto al set di base. Ciò è utile, ad esempio, per set di proprietà specifici di un cliente o di una variante, che devono contenere solo i testi che sostituiscono quelli di un prodotto di base.
+Il pulsante è disponibile solo se sono caricate delle proprietà. Apre lo stesso menu di selezione della fonte di 3.6. La fonte scelta viene letta solo come base di confronto e non viene acquisita nello strumento.
+Se durante la lettura della fonte si verifica un errore o l'operazione viene annullata, le proprietà attualmente caricate rimangono invariate.
+Se nella tabella dati sono selezionate delle righe, vengono confrontate solo queste; altrimenti tutte le proprietà.
+
+Associazione e confronto:
+Ogni proprietà caricata viene associata alla sua controparte nel set di base secondo le stesse regole di 3.6 (stesso LanguagePropertiesSetPath; altrimenti stesso nome del set di proprietà linguistiche; altrimenti la sola chiave se manca l'informazione sul percorso).
+Se una chiave corrisponde a più voci del set di base, l'associazione è ambigua. La voce viene quindi saltata e riportata nel rapporto dei risultati.
+Il confronto avviene per chiave e lingua. Vengono rimossi solo i valori esattamente uguali al valore della stessa lingua nel set di base.
+I valori che differiscono dal set di base o che vi mancano vengono mantenuti. Allo stesso modo, le proprietà senza controparte nel set di base restano invariate.
+I commenti non vengono confrontati e vengono mantenuti.
+
+Richiesta:
+Prima di qualsiasi modifica viene visualizzata una richiesta con il numero di voci controllate, di valori identici, di voci che in seguito non avrebbero più alcun valore di lingua, di voci senza controparte nel set di base e di voci saltate.
+Sono disponibili le seguenti opzioni:
+	"Elimina le voci vuote" (i valori identici vengono rimossi; le voci senza alcun valore di lingua rimanente vengono eliminate completamente, anche se hanno ancora un commento)
+	"Svuota solo i valori" (i valori identici vengono rimossi, tutte le voci vengono mantenute)
+	"Annulla" (non viene modificato nulla)
+Se non vengono trovati valori identici, viene visualizzato solo un messaggio corrispondente, senza ulteriori azioni.
+
+Dopo il confronto:
+Le proprietà rimanenti modificate vengono selezionate nella tabella dati. Le proprietà risultano modificate e devono ancora essere salvate.
+Un rapporto dei risultati elenca le voci eliminate, i valori identici rimossi, i valori rimanenti diversi dal set di base e le voci saltate.
+Importante: affinché le chiavi eliminate vengano rimosse anche dai file, al salvataggio (vedere 6.1) occorre rispondere "No" alla domanda se mantenere le proprietà già esistenti. In caso contrario, queste chiavi restano nei file.
+
 
 4. Modifica dei singoli valori delle proprietà
 

@@ -102,6 +102,34 @@ Les propriétés sont considérées comme modifiées et doivent encore être enr
 Un rapport de résultats liste les clés ajoutées, les valeurs remplies, écrasées et les valeurs différentes conservées, les entrées non ajoutées et ignorées, ainsi que les nouveaux identifiants de langue.
 Il contient en outre le résultat d'une vérification des erreurs (voir 4.9) des entrées importées, car la source d'importation peut par exemple utiliser un autre encodage.
 
+3.7 Comparaison avec un ensemble de base (suppression des valeurs identiques)
+
+Le bouton "Comparer avec l'ensemble de base (supprimer les valeurs identiques)" compare les propriétés actuellement chargées avec un ensemble de base et supprime des propriétés chargées toutes les valeurs déjà contenues à l'identique dans l'ensemble de base.
+Seuls les écarts par rapport à l'ensemble de base subsistent. C'est utile, par exemple, pour des ensembles de propriétés spécifiques à un client ou à une variante, qui ne doivent contenir que les textes remplaçant ceux d'un produit de base.
+Le bouton n'est disponible que si des propriétés sont chargées. Il ouvre le même menu de sélection de la source qu'en 3.6. La source choisie est uniquement lue comme base de comparaison et n'est pas reprise dans l'outil.
+Si une erreur survient lors de la lecture de la source ou si l'opération est annulée, les propriétés actuellement chargées restent inchangées.
+Si des lignes sont sélectionnées dans le tableau de données, seules celles-ci sont comparées ; sinon, toutes les propriétés.
+
+Correspondance et comparaison :
+Chaque propriété chargée est associée à son équivalent dans l'ensemble de base selon les mêmes règles qu'en 3.6 (même LanguagePropertiesSetPath ; sinon même nom d'ensemble de propriétés de langue ; sinon la clé seule en l'absence d'information de chemin).
+Si une clé correspond à plusieurs entrées de l'ensemble de base, la correspondance est ambiguë. Cette entrée est alors ignorée et mentionnée dans le rapport de résultats.
+La comparaison s'effectue par clé et par langue. Seules les valeurs exactement identiques à la valeur de la même langue dans l'ensemble de base sont supprimées.
+Les valeurs qui diffèrent de l'ensemble de base ou qui y sont absentes sont conservées. De même, les propriétés sans équivalent dans l'ensemble de base restent inchangées.
+Les commentaires ne sont pas comparés et sont conservés.
+
+Question :
+Avant toute modification, une question indique le nombre d'entrées vérifiées, de valeurs identiques, d'entrées qui n'auraient plus aucune valeur de langue ensuite, d'entrées sans équivalent dans l'ensemble de base et d'entrées ignorées.
+Les options suivantes sont proposées :
+	"Supprimer les entrées vides" (les valeurs identiques sont supprimées ; les entrées sans valeur de langue restante sont entièrement supprimées, même si elles ont encore un commentaire)
+	"Vider uniquement les valeurs" (les valeurs identiques sont supprimées, toutes les entrées sont conservées)
+	"Annuler" (rien n'est modifié)
+Si aucune valeur identique n'est trouvée, seul un message correspondant s'affiche, sans autre action.
+
+Après la comparaison :
+Les propriétés restantes modifiées sont sélectionnées dans le tableau de données. Les propriétés sont considérées comme modifiées et doivent encore être enregistrées.
+Un rapport de résultats liste les entrées supprimées, les valeurs identiques supprimées, les valeurs restantes différentes de l'ensemble de base ainsi que les entrées ignorées.
+Important : pour que les clés supprimées disparaissent aussi des fichiers, il faut répondre "Non" lors de l'enregistrement (voir 6.1) à la question de savoir si les propriétés déjà existantes doivent être conservées. Sinon, ces clés restent dans les fichiers.
+
 
 4. Modification de valeurs de propriétés individuelles
 
