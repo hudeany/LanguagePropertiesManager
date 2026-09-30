@@ -55,7 +55,9 @@ import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JSplitPane;
@@ -124,6 +126,8 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	/*
 	 * Fixed model columns of the properties table. The language columns follow
 	 * after COLUMN_FIRST_LANGUAGE in the order of "availableLanguageSigns".
+	 * An optional comment column (see "commentColumnShown") follows after the
+	 * last language column.
 	 * (The SWT variant needed an invisible dummy first column as a workaround
 	 * for a Windows alignment bug, which JTable does not have.)
 	 */
@@ -163,6 +167,12 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private JTable propertiesTable;
 	private LanguagePropertiesTableModel propertiesTableModel;
 	private int sortColumnModelIndex = COLUMN_NR;
+
+	/**
+	 * Whether the table currently shows the comment column (after the language
+	 * columns). Only changed in setupTable(), so the table model stays consistent.
+	 */
+	private boolean commentColumnShown = false;
 	private boolean sortAscending = true;
 
 	/**
@@ -313,7 +323,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		checkUsageButtonPrevious = createIconButton(buttonSection2, "puzzleClock.png", "checkusageprevious", e -> checkUsagePrevious());
 		checkUsageButtonPrevious.setEnabled(false);
 		addLanguageButton = createIconButton(buttonSection2, "plus.png", "tooltip_AddLanguage", e -> addLanguage());
-		deleteLanguageButton = createIconButton(buttonSection2, "minus.png", "tooltip_DeleteLanguage", e -> deleteLanguage());
+		deleteLanguageButton = createIconButton(buttonSection2, "minus.png", "tooltip_DeleteLanguage", e -> deleteLanguage(null));
 		translateButton = createIconButton(buttonSection2, "translate.png", "tooltip_Translate", e -> translate());
 		transferButton = createIconButton(buttonSection2, "transfer.png", "tooltip_Transfer", e -> transfer());
 		clearIdenticalButton = createIconButton(buttonSection2, "clearIdentical.png", "tooltip_ClearIdentical", e -> clearIdentical());
@@ -357,6 +367,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		});
 
 		installSortableHeader(propertiesTable.getTableHeader());
+		installLanguageColumnContextMenu();
 
 		final JScrollPane propertiesTableScrollPane = new JScrollPane(propertiesTable);
 		// Area right of the last column (AUTO_RESIZE_OFF) shows the viewport background
@@ -514,6 +525,62 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		});
 	}
 
+	/**
+	 * Opens a context menu on right click on a language column, both on its
+	 * header and on its cells.
+	 */
+	private void installLanguageColumnContextMenu() throws Exception {
+		// Loaded once here, because ImageManager.getImage() throws a checked exception
+		final Icon deleteIcon = ImageManager.getImage("minus.png");
+
+		final MouseAdapter contextMenuListener = new MouseAdapter() {
+			// The popup trigger is "pressed" on Linux/macOS and "released" on Windows
+			@Override
+			public void mousePressed(final MouseEvent event) {
+				showLanguageColumnContextMenu(event, deleteIcon);
+			}
+
+			@Override
+			public void mouseReleased(final MouseEvent event) {
+				showLanguageColumnContextMenu(event, deleteIcon);
+			}
+		};
+		propertiesTable.addMouseListener(contextMenuListener);
+		propertiesTable.getTableHeader().addMouseListener(contextMenuListener);
+	}
+
+	private void showLanguageColumnContextMenu(final MouseEvent event, final Icon deleteIcon) {
+		if (!event.isPopupTrigger() || languageProperties == null || availableLanguageSigns == null) {
+			return;
+		}
+
+		// Table and header share the same x coordinates, so this works for both components
+		final int viewColumn = propertiesTable.getColumnModel().getColumnIndexAtX(event.getX());
+		if (viewColumn < 0) {
+			return;
+		}
+		final int modelColumn = propertiesTable.convertColumnIndexToModel(viewColumn);
+		if (isCommentColumn(modelColumn)) {
+			final JPopupMenu contextMenu = new JPopupMenu();
+			final JMenuItem deleteCommentsItem = new JMenuItem(LangResources.get("contextmenu_deleteComments"), deleteIcon);
+			deleteCommentsItem.addActionListener(e -> deleteAllComments());
+			contextMenu.add(deleteCommentsItem);
+			contextMenu.show(event.getComponent(), event.getX(), event.getY());
+			return;
+		} else if (modelColumn < COLUMN_FIRST_LANGUAGE || modelColumn - COLUMN_FIRST_LANGUAGE >= availableLanguageSigns.size()) {
+			return;
+		}
+		final String languageSign = availableLanguageSigns.get(modelColumn - COLUMN_FIRST_LANGUAGE);
+
+		final JPopupMenu contextMenu = new JPopupMenu();
+		final JMenuItem deleteLanguageItem = new JMenuItem(LangResources.get("tooltip_DeleteLanguage") + ": " + propertiesTableModel.getColumnName(modelColumn), deleteIcon);
+		// Same rule as for the delete language button: The last language cannot be deleted
+		deleteLanguageItem.setEnabled(availableLanguageSigns.size() > 1);
+		deleteLanguageItem.addActionListener(e -> deleteLanguage(languageSign));
+		contextMenu.add(deleteLanguageItem);
+		contextMenu.show(event.getComponent(), event.getX(), event.getY());
+	}
+
 	private void sortByColumn(final int modelColumn) {
 		if (modelColumn == COLUMN_NR) {
 			// The row number is not sortable, it always shows the current display order
@@ -532,6 +599,8 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			comparator = Comparator.comparing(LanguageProperty::getPath).thenComparing(LanguageProperty::getKey);
 		} else if (modelColumn == COLUMN_ORIGINAL_INDEX || modelColumn == COLUMN_PATH) {
 			comparator = Comparator.comparing(LanguageProperty::getPath).thenComparing(LanguageProperty::getOriginalIndex);
+		} else if (isCommentColumn(modelColumn)) {
+			comparator = Comparator.comparing(languageProperty -> getEmptyForNull(languageProperty.getComment()));
 		} else {
 			final String languageSign = availableLanguageSigns.get(modelColumn - COLUMN_FIRST_LANGUAGE);
 			comparator = Comparator.comparing(languageProperty -> getEmptyForNull(languageProperty.getLanguageValue(languageSign)));
@@ -553,6 +622,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	public void setupTable() {
 		sortColumnModelIndex = COLUMN_NR;
 		sortAscending = true;
+		commentColumnShown = isCommentColumnWanted();
 
 		technicalSelectionChange = true;
 		try {
@@ -632,6 +702,13 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					column.setPreferredWidth(175);
 					break;
 				default:
+					if (isCommentColumn(modelIndex)) {
+						// Same layout as the language columns
+						final int commentHeaderTextWidth = propertiesTable.getFontMetrics(propertiesTable.getTableHeader().getFont()).stringWidth(propertiesTableModel.getColumnName(modelIndex)) + 16;
+						column.setPreferredWidth(Math.max(25, commentHeaderTextWidth));
+						column.setCellRenderer(centerRenderer);
+						break;
+					}
 					final String sign = availableLanguageSigns.get(modelIndex - COLUMN_FIRST_LANGUAGE);
 					final int headerTextWidth = propertiesTable.getFontMetrics(propertiesTable.getTableHeader().getFont()).stringWidth(propertiesTableModel.getColumnName(modelIndex)) + 16;
 					column.setPreferredWidth(Math.max(sign.length() > 3 ? 50 : 25, headerTextWidth));
@@ -880,14 +957,61 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		checkButtonStatus();
 	}
 
-	private void deleteLanguage() {
+	/**
+	 * The comment column is shown, if comments are not ignored by configuration
+	 */
+	private boolean isCommentColumnWanted() {
+		return languageProperties != null && !applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS);
+	}
+
+	/**
+	 * Model index of the comment column, which follows after the language columns
+	 */
+	private boolean isCommentColumn(final int modelColumn) {
+		return commentColumnShown && availableLanguageSigns != null && modelColumn == COLUMN_FIRST_LANGUAGE + availableLanguageSigns.size();
+	}
+
+	/**
+	 * Removes the comments of all properties (context menu of the comment column)
+	 */
+	private void deleteAllComments() {
 		try {
-			final List<String> availableLanguageSignsToDelete = new ArrayList<>(availableLanguageSigns);
-			final String languageSignToDelete = new ComboSelectionDialog(this, getTitle(), LangResources.get("selectLanguageSignToDelete"), availableLanguageSignsToDelete).open();
-			if (Utilities.isNotBlank(languageSignToDelete)) {
+			final long commentCount = languageProperties.stream().filter(languageProperty -> Utilities.isNotEmpty(languageProperty.getComment())).count();
+			if (commentCount > 0) {
+				// All comments are removed at once, so ask the user before doing it
+				final Integer returncode = new QuestionDialog(this, LangResources.get("question_title_delete_comments"), LangResources.get("question_content_delete_comments", commentCount), LangResources.get("yes"), LangResources.get("no")).open();
+				if (returncode != null && returncode == 0) {
+					for (final LanguageProperty languageProperty : languageProperties) {
+						languageProperty.setComment(null);
+					}
+					hasUnsavedChanges = true;
+					setupTable();
+				}
+			}
+		} catch (final Exception ex) {
+			showError(ex);
+		}
+		checkButtonStatus();
+	}
+
+	/**
+	 * Deletes a language from all properties.
+	 *
+	 * @param languageSign
+	 *            the language to delete, or null to let the user select it (delete language button)
+	 */
+	private void deleteLanguage(final String languageSign) {
+		try {
+			String languageSignToDelete = languageSign;
+			if (languageSignToDelete == null) {
+				final List<String> availableLanguageSignsToDelete = new ArrayList<>(availableLanguageSigns);
+				languageSignToDelete = new ComboSelectionDialog(this, getTitle(), LangResources.get("selectLanguageSignToDelete"), availableLanguageSignsToDelete).open();
+			}
+			if (Utilities.isNotBlank(languageSignToDelete) && availableLanguageSigns.size() > 1) {
 				for (final LanguageProperty languageProperty : languageProperties) {
 					languageProperty.removeLanguageValue(languageSignToDelete);
 				}
+				hasUnsavedChanges = true;
 				availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT);
 				setupTable();
 			}
@@ -1467,6 +1591,11 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				applicationConfiguration.save();
 
 				loadConfiguration();
+
+				// Show or hide the comment column according to the changed "ignore comments" option
+				if (languageProperties != null && commentColumnShown != isCommentColumnWanted()) {
+					setupTable();
+				}
 			}
 		} catch (final Exception ex) {
 			showError(ex);
@@ -2373,7 +2502,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			if (languageProperties == null || availableLanguageSigns == null) {
 				return COLUMN_FIRST_LANGUAGE;
 			} else {
-				return COLUMN_FIRST_LANGUAGE + availableLanguageSigns.size();
+				return COLUMN_FIRST_LANGUAGE + availableLanguageSigns.size() + (commentColumnShown ? 1 : 0);
 			}
 		}
 
@@ -2389,6 +2518,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				case COLUMN_KEY:
 					return LangResources.get("columnheader_key");
 				default:
+					if (isCommentColumn(column)) {
+						return LangResources.get("comment");
+					}
 					final String sign = availableLanguageSigns.get(column - COLUMN_FIRST_LANGUAGE);
 					return LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT.equals(sign) ? LangResources.get("columnheader_default") : sign;
 			}
@@ -2418,6 +2550,10 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				case COLUMN_KEY:
 					return languageProperty.getKey();
 				default:
+					if (isCommentColumn(column)) {
+						// Like the language columns, only show whether a comment exists
+						return Utilities.isEmpty(languageProperty.getComment()) ? LangResources.get("value_not_found_sign") : LangResources.get("value_found_sign");
+					}
 					final String value = languageProperty.getLanguageValue(availableLanguageSigns.get(column - COLUMN_FIRST_LANGUAGE));
 					return Utilities.isEmpty(value) ? LangResources.get("value_not_found_sign") : LangResources.get("value_found_sign");
 			}
