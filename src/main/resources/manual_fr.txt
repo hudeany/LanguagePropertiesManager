@@ -1,0 +1,297 @@
+Language Properties Manager Manuel d'utilisation
+
+1. Avertissement
+
+Language Properties Manager est un outil d'édition de fichiers de propriétés de langue doté de fonctions spéciales que d'autres programmes standard n'offrent pas ou ne rendent pas facilement accessibles.
+Cet éditeur est destiné exclusivement au traitement expérimental de textes.
+Toute utilisation se fait à vos propres risques.
+Le développeur n'assume AUCUNE GARANTIE, ni quant au bon fonctionnement, ni pour les dommages résultant de l'utilisation du programme.
+Veuillez envoyer vos suggestions d'amélioration ou signalements de bugs à : languagepropertiesmanager@soderer.de
+
+
+2. Définition des termes
+
+2.1 LanguagePropertiesSetPath
+
+Le chemin de stockage d'un ensemble de fichiers de langue d'une propriété de langue, avec son nom de base, est appelé ci-après LanguagePropertiesSetPath.
+Exemple : "C:\Project\I18N\ProjektLanguageProperty" sert d'espace réservé pour tous les fichiers de langue de la propriété de langue :
+	"C:\Project\I18N\ProjektLanguageProperty.properties",
+	"C:\Project\I18N\ProjektLanguageProperty_en.properties",
+	"C:\Project\I18N\ProjektLanguageProperty_*.properties"
+
+2.2 Nom de l'ensemble de propriétés de langue
+
+La dernière partie d'un LanguagePropertiesSetPath ("ProjektLanguageProperty" dans l'exemple ci-dessus) est appelée ci-après nom de l'ensemble de propriétés de langue.
+
+
+3. Chargement des propriétés de langue
+
+3.1 Charger un ensemble de propriétés unique à partir d'un ensemble de fichiers
+
+Ce bouton ouvre une fenêtre de sélection de fichier dans laquelle vous pouvez sélectionner l'un des fichiers de langue d'un LanguagePropertiesSetPath.
+Tous les fichiers de cette propriété de langue sont chargés ensemble et affichés dans le tableau de données situé à gauche de l'outil.
+
+3.2 Charger tous les ensembles de propriétés disponibles dans les sous-répertoires
+
+Ce bouton ouvre une fenêtre de sélection de dossier. Toutes les propriétés de langue disponibles dans tous les sous-répertoires de ce dossier sont alors chargées. L'outil recherche des fichiers portant l'un des identifiants de langue "_en" ou "_de" et l'extension ".properties".
+Pour tous les LanguagePropertiesSetPath trouvés, toutes les autres langues disponibles sont également chargées et affichées dans le tableau de données situé à gauche de l'outil.
+Selon le nombre de sous-répertoires et de fichiers et leur taille, cela peut prendre un moment.
+
+3.3 Importation Excel
+
+Le bouton "Importer depuis un seul fichier Excel" permet d'indiquer un seul fichier Excel afin de charger tous les ensembles de propriétés de langue qu'il contient.
+Ce fichier Excel doit comporter une seule feuille et peut contenir les colonnes suivantes :
+	"Path" ou "Pfad" (LanguagePropertiesSetPath exact de cet ensemble de propriétés de langue ; les espaces réservés ~ et $HOME sont autorisés ; facultatif)
+	"Key" ou "Schlüssel" (clé de la valeur de propriété ; obligatoire)
+	"Index", "Idx" ou "Org.Idx" (indexation au sein d'un ensemble de propriétés de langue afin de conserver l'ordre des différentes valeurs ; facultatif)
+	"Default" (valeur de langue par défaut de la clé ; facultatif)
+	"en", "de", "de_AT", "de_CH", "fr", ... (valeurs de langue des différents identifiants de langue ; les identifiants spécifiques à un pays avec un trait de soulignement sont également autorisés)
+
+3.4 Importation CSV
+
+Le bouton "Importer depuis un seul fichier CSV" permet d'indiquer un seul fichier CSV afin de charger tous les ensembles de propriétés de langue qu'il contient.
+Ce fichier CSV peut contenir les colonnes suivantes :
+	"Path" ou "Pfad" (LanguagePropertiesSetPath exact de cet ensemble de propriétés de langue ; les espaces réservés ~ et $HOME sont autorisés ; facultatif)
+	"Key" ou "Schlüssel" (clé de la valeur de propriété ; obligatoire)
+	"Index", "Idx" ou "Org.Idx" (indexation au sein d'un ensemble de propriétés de langue afin de conserver l'ordre des différentes valeurs ; facultatif)
+	"Default" (valeur de langue par défaut de la clé ; facultatif)
+	"en", "de", "de_AT", "de_CH", "fr", ... (valeurs de langue des différents identifiants de langue ; les identifiants spécifiques à un pays avec un trait de soulignement sont également autorisés)
+
+3.5 Chemins utilisés récemment
+
+Les chemins de fichiers ouverts via 3.1 et les chemins de répertoires via 3.2 sont enregistrés dans une liste pour une réutilisation rapide ultérieure.
+Ils sont accessibles rapidement via le bouton "Ouvrir les fichiers ouverts récemment" et s'ouvrent alors dans le même mode que précédemment.
+L'entrée utilisée le plus récemment est présélectionnée.
+Dans la boîte de dialogue de sélection, les entrées de la liste peuvent être réordonnées par glisser-déposer et supprimées avec la touche Suppr. Ces modifications sont conservées même si la sélection est annulée.
+
+3.6 Importation supplémentaire dans les propriétés existantes
+
+Tous les boutons de chargement et d'importation de 3.1 à 3.5 remplacent les propriétés actuellement chargées dans l'outil.
+En revanche, le bouton "Importer des propriétés supplémentaires (ajouter à l'ensemble actuel)" importe des propriétés supplémentaires dans les propriétés actuellement chargées sans les abandonner.
+C'est utile, par exemple, pour intégrer les traductions d'un traducteur externe, d'une autre branche de développement ou d'un autre module.
+Le bouton ouvre un menu permettant de choisir la source :
+	"Depuis les éléments récents ..." (comme en 3.5)
+	"Depuis un fichier de propriétés ..." (comme en 3.1)
+	"Depuis un répertoire ..." (comme en 3.2)
+	"Depuis un fichier Excel ..." (comme en 3.3)
+	"Depuis un fichier CSV ..." (comme en 3.4)
+Si une erreur survient lors de la lecture de la source ou si l'opération est annulée, les propriétés actuellement chargées restent inchangées.
+
+Correspondance des propriétés importées :
+Une propriété importée est associée à une propriété existante ayant la même clé si celle-ci possède le même LanguagePropertiesSetPath.
+En l'absence d'une telle correspondance, le même nom d'ensemble de propriétés de langue suffit (par ex. pour une copie de l'ensemble de propriétés dans un autre répertoire). Si l'un des côtés ne comporte pas d'information de chemin (par ex. fichiers Excel et CSV sans colonne "Path"), la clé seule suffit.
+Si une clé correspond à plusieurs ensembles de propriétés chargés, la correspondance est ambiguë. Cette entrée est alors ignorée et mentionnée dans le rapport de résultats.
+La comparaison s'effectue par clé et par langue. Une valeur de langue est considérée comme nouvelle si la propriété existante n'a pas de valeur pour cette langue. Les commentaires sont traités comme des valeurs de langue.
+Les nouvelles clés sont affectées à l'ensemble de propriétés chargé correspondant, dans la mesure où cela est possible sans ambiguïté. Ainsi, l'enregistrement n'écrit pas dans les fichiers de la source d'importation.
+Si ce n'est pas possible, les nouvelles clés conservent le LanguagePropertiesSetPath de la source d'importation et y seraient écrites lors de l'enregistrement. Le rapport de résultats le signale expressément.
+Les nouveaux identifiants de langue sont créés pour toutes les propriétés.
+
+Traitement des conflits :
+Une question n'apparaît que si des valeurs importées diffèrent de valeurs existantes non vides.
+Elle indique le nombre de nouvelles clés, de clés déjà existantes, de clés ayant des valeurs différentes, de valeurs vides pouvant être remplies et d'entrées ignorées.
+Les options suivantes sont proposées :
+	"Ajouter uniquement les nouveautés" (les nouvelles clés sont ajoutées et les valeurs vides sont remplies ; les valeurs existantes restent inchangées)
+	"Écraser l'existant" (en plus, les valeurs existantes différentes sont remplacées par les valeurs importées)
+	"Remplir uniquement les valeurs vides" (aucune nouvelle clé n'est ajoutée ; seules les valeurs vides des clés existantes sont remplies)
+	"Annuler" (rien n'est modifié)
+S'il n'y a aucune valeur différente, les nouvelles clés sont ajoutées et les valeurs vides remplies sans question.
+
+Après l'importation :
+Toutes les propriétés ajoutées et modifiées sont sélectionnées dans le tableau de données, de sorte qu'elles peuvent être vérifiées ou, par exemple, traduites directement (voir 4.5).
+Les propriétés sont considérées comme modifiées et doivent encore être enregistrées.
+Un rapport de résultats liste les clés ajoutées, les valeurs remplies, écrasées et les valeurs différentes conservées, les entrées non ajoutées et ignorées, ainsi que les nouveaux identifiants de langue.
+Il contient en outre le résultat d'une vérification des erreurs (voir 4.9) des entrées importées, car la source d'importation peut par exemple utiliser un autre encodage.
+
+
+4. Modification de valeurs de propriétés individuelles
+
+4.1 Création et modification de valeurs de propriétés
+
+La sélection d'une ligne du tableau de données à gauche de l'outil affiche, dans la zone de détails à droite, le LanguagePropertiesSetPath, la clé, le commentaire facultatif et la valeur Default, ainsi que toutes les autres valeurs de langue disponibles de la propriété.
+Toutes ces valeurs, à l'exception du LanguagePropertiesSetPath, peuvent être modifiées.
+Après la modification souhaitée, le nouvel état peut être appliqué avec le bouton "Modifier" en vue d'un enregistrement ultérieur de l'ensemble de propriétés.
+Pour ajouter une nouvelle clé avec des valeurs de langue, vous pouvez utiliser le bouton "Créer une nouvelle propriété" dans la deuxième barre de boutons de l'outil.
+Après la saisie souhaitée, la propriété peut être ajoutée à l'ensemble de propriétés avec le bouton "Ajouter".
+Dans les deux cas, toutes les modifications indésirables peuvent être abandonnées à tout moment avec le bouton "Annuler les modifications".
+Le bouton "Passer à l'affichage du texte de stockage" affiche la clé et les valeurs de langue dans leur codage technique JAVA encoding.
+Cela permet de saisir des caractères Unicode complexes si nécessaire.
+Le bouton "Passer à l'affichage du texte visible" permet de revenir à l'affichage normal.
+
+4.2 Suppression de valeurs de propriétés
+
+Le bouton "Supprimer les propriétés sélectionnées" ou la touche Suppr dans le tableau de données permet de supprimer en une seule fois toutes les lignes actuellement sélectionnées du tableau de données.
+Une demande de confirmation s'affiche.
+
+4.3 Ajout d'identifiants de langue
+
+Le bouton "Ajouter un nouvel identifiant de langue" permet d'ajouter un identifiant de langue supplémentaire pour toutes les lignes du tableau de données.
+
+4.4 Suppression d'identifiants de langue
+
+Le bouton "Supprimer un identifiant de langue existant" permet de supprimer complètement un identifiant de langue de toutes les lignes du tableau de données.
+Une boîte de dialogue s'affiche ensuite pour choisir l'un des identifiants de langue disponibles.
+Le dernier identifiant de langue restant ne peut pas être supprimé.
+Cette opération est également possible via le menu contextuel de la colonne de langue (voir 4.10).
+
+4.5 Traduction des valeurs de langue manquantes
+
+Le bouton "Translate" permet de créer les valeurs de langue manquantes en utilisant la valeur d'une autre langue et en la traduisant à l'aide des services de DeepL (https://www.deepl.com).
+Une clé API d'autorisation est nécessaire pour cela ; elle peut être obtenue sur "https://www.deepl.com/pro-api/".
+Les comptes d'essai limités sont gratuits, mais nécessitent l'enregistrement d'une carte de crédit.
+La clé API peut être saisie dans la boîte de dialogue de configuration de l'application ou lors de la première utilisation du bouton "Translate".
+La langue source est d'abord sélectionnée, puis la langue cible.
+Si la langue Default est utilisée, il est obligatoire de sélectionner la langue qui correspond à la langue par défaut.
+Si une seule autre langue est disponible, celle-ci est automatiquement sélectionnée comme langue cible.
+Si des lignes sont sélectionnées dans le tableau de données, seules celles-ci sont traduites ; sinon, toutes les propriétés.
+La traduction s'exécute avec un indicateur de progression et peut être annulée. Le nombre de traductions créées est ensuite affiché.
+La connexion à DeepL utilise les paramètres de proxy définis dans la configuration de l'application.
+
+4.6 Transfert de valeurs de langue
+
+Le bouton "Transférer" permet de copier des valeurs de langue d'un identifiant de langue vers un autre, sans les traduire.
+C'est utile, par exemple, pour des variantes de langue telles que "de" et "de_AT", ou pour reprendre des valeurs Default dans une langue concrète.
+La langue source est d'abord sélectionnée, puis la langue cible. Si une seule autre langue est disponible, elle est automatiquement utilisée comme langue cible.
+Seules les valeurs source non vides sont transférées. Les valeurs existantes de la langue cible sont écrasées.
+Si des lignes sont sélectionnées dans le tableau de données, seules celles-ci sont traitées ; sinon, toutes les propriétés.
+Le nombre de valeurs transférées est ensuite affiché.
+
+4.7 Vider les valeurs de langue identiques
+
+Le bouton "Vider les identiques" vide les valeurs d'une langue cible qui sont exactement identiques à la valeur d'une langue source.
+C'est utile, par exemple, pour trouver des valeurs non traduites qui ont seulement été copiées depuis une autre langue, ou pour supprimer les valeurs superflues d'une variante de langue qui ont de toute façon le même texte que la langue principale.
+Les langues source et cible sont sélectionnées comme en 4.6.
+Si des lignes sont sélectionnées dans le tableau de données, seules celles-ci sont traitées ; sinon, toutes les propriétés.
+Le nombre de valeurs vidées est ensuite affiché.
+
+4.8 Suppression des doublons
+
+Le bouton "Rechercher et supprimer les propriétés en double" permet de trouver et de nettoyer les propriétés qui apparaissent plusieurs fois, c'est-à-dire qui ont le même LanguagePropertiesSetPath et la même clé.
+La première occurrence (selon l'index d'origine) est conservée. S'il manque à cette entrée conservée une valeur de langue ou un commentaire présent dans l'une des autres occurrences (supprimées), cette valeur est automatiquement reprise avant la suppression.
+Avant la suppression proprement dite, une demande de confirmation s'affiche avec un aperçu des combinaisons LanguagePropertiesSetPath/clé concernées et de leur nombre.
+Si aucun doublon n'est trouvé, seul un message correspondant s'affiche, sans autre action.
+
+4.9 Vérification des erreurs
+
+Le bouton "Vérifier les erreurs" vérifie toutes les propriétés à la recherche d'erreurs typiques. Rien n'est modifié.
+Les clés, les commentaires et toutes les valeurs de langue sont vérifiés pour :
+	Caractère de remplacement "�" (indique des caractères qui n'ont pas pu être décodés lors de la lecture)
+	Mojibake (trémas et caractères spéciaux mal décodés, par ex. "Ã¤" au lieu de "ä", typique des fichiers UTF-8 lus en ISO-8859-1 ou Windows-1252)
+	Séquences d'échappement Unicode non résolues comme "\u00e4"
+	Caractères d'indicateur d'ordre des octets (BOM) à l'intérieur des textes
+	Substituts Unicode isolés
+	Caractères de contrôle (sauf tabulation et saut de ligne)
+Les clés sont en outre vérifiées : sont-elles vides, contiennent-elles des espaces ou les caractères non autorisés "=" ou ":" ?
+Les erreurs trouvées sont listées dans un rapport avec le LanguagePropertiesSetPath, la clé et le champ concerné. Si aucune erreur n'est trouvée, seul un message correspondant s'affiche.
+
+4.10 Menu contextuel des colonnes du tableau
+
+Un clic droit sur l'en-tête ou sur une cellule de certaines colonnes du tableau de données ouvre un menu contextuel :
+	Colonne "Chemin" : supprime le LanguagePropertiesSetPath de toutes les propriétés. Lors de l'enregistrement, ces propriétés sont traitées comme des propriétés nouvellement créées (voir 6.1 et 6.2).
+	Colonnes de langue : vide toutes les valeurs de cette langue (l'identifiant de langue lui-même est conservé) ou supprime complètement l'identifiant de langue (comme en 4.4).
+	Colonne "Commentaire" : supprime les commentaires de toutes les propriétés.
+Avant chacune de ces actions, une demande de confirmation s'affiche avec le nombre d'entrées concernées.
+La colonne des commentaires n'est affichée que si les commentaires ne sont pas ignorés dans la configuration de l'application.
+
+4.11 Tri du tableau de données
+
+Un clic sur l'en-tête d'une colonne trie le tableau de données selon cette colonne. Un nouveau clic inverse l'ordre de tri.
+La colonne et l'ordre de tri actuels sont indiqués par un symbole dans l'en-tête de colonne.
+Le tri par clé ou par index d'origine s'effectue à l'intérieur de chaque LanguagePropertiesSetPath.
+La colonne "N°" affiche toujours l'ordre d'affichage actuel et ne peut pas elle-même être triée.
+L'ordre des colonnes peut être modifié en faisant glisser les en-têtes de colonne.
+
+
+5. Recherche et analyse
+
+5.1 Recherche
+
+Pendant la saisie, le champ de recherche situé au-dessus du tableau de données recherche, à partir de la ligne actuellement sélectionnée, la prochaine propriété correspondante et la sélectionne.
+Les boutons fléchés à côté du champ de recherche permettent de passer à l'occurrence suivante ou précédente.
+Les cases à cocher à côté du champ de recherche déterminent comment et où la recherche est effectuée. Elles peuvent être combinées librement :
+	"Aa" (respecter la casse)
+	"Clé" (recherche dans les clés)
+	"Valeur" (recherche dans toutes les valeurs de langue)
+	"Chemin" (recherche dans le LanguagePropertiesSetPath)
+
+5.2 Statistiques
+
+Le bouton "Statistiques" affiche un aperçu des propriétés actuellement chargées. Rien n'est modifié.
+Il contient :
+	Le nombre de propriétés, d'ensembles de propriétés et d'identifiants de langue
+	Le nombre de propriétés avec un commentaire
+	Le nombre de doublons (voir 4.8)
+	Le nombre de propriétés par LanguagePropertiesSetPath
+	Pour chaque identifiant de langue, le nombre de valeurs présentes et manquantes, le taux de remplissage en pourcentage et la longueur moyenne du texte
+	La valeur de langue la plus longue avec sa langue, son LanguagePropertiesSetPath et sa clé
+
+5.3 Vérifier l'utilisation
+
+Le bouton "Vérifier l'utilisation" permet de vérifier quelles propriétés sont utilisées dans le code source d'un projet.
+Les éléments suivants sont demandés successivement :
+	Le répertoire à parcourir (y compris tous les sous-répertoires)
+	Une expression régulière pour les noms des fichiers à parcourir (prérempli avec ".*\.java")
+	Le modèle d'utilisation, dans lequel l'espace réservé "<property>" représente la clé (prérempli avec "LangResources.get("<property>"")
+Les fichiers trouvés sont lus en UTF-8 et parcourus à la recherche du modèle d'utilisation.
+Le rapport indique le nombre de fichiers vérifiés ainsi que le nombre de propriétés utilisées, inutilisées et manquantes.
+Il liste en outre les propriétés utilisées dans le code source mais absentes de la langue Default, avec les fichiers dans lesquels elles sont utilisées, ainsi que les propriétés qui ne sont utilisées nulle part dans le code source.
+Les paramètres d'une vérification sont enregistrés. Le bouton "Vérifier l'utilisation avec les paramètres précédents" permet de relancer l'une des vérifications utilisées le plus récemment.
+Cette liste peut être réordonnée et modifiée comme en 3.5.
+
+
+6. Enregistrement des ensembles de propriétés de langue
+
+6.1 Enregistrer les fichiers
+
+Dès que des modifications ont été apportées aux valeurs d'une propriété de langue, le bouton "Enregistrer les fichiers" devient disponible.
+Si un LanguagePropertiesSetPath a déjà été attribué aux valeurs de l'ensemble de propriétés, les données y sont (ré)enregistrées exactement.
+Pour les valeurs nouvellement créées, si un seul LanguagePropertiesSetPath est chargé, celui-ci est utilisé comme chemin par défaut pour les nouvelles valeurs.
+Si plusieurs LanguagePropertiesSetPath sont disponibles, vous êtes invité à indiquer une seule fois le LanguagePropertiesSetPath à utiliser pour toutes les nouvelles valeurs.
+Avant l'enregistrement, il vous est demandé si les propriétés déjà présentes dans les fichiers cibles, mais non chargées dans l'outil, doivent être conservées.
+Si des répertoires cibles n'existent pas encore, il vous est proposé de les créer.
+
+6.2 Enregistrer les ensembles de propriétés dans un répertoire selon le nom de l'ensemble
+
+Si toutes les propriétés actuellement disponibles dans l'outil possèdent déjà leur propre LanguagePropertiesSetPath, le bouton "Enregistrer les ensembles de propriétés dans un répertoire selon le nom de l'ensemble" les enregistre directement à ces chemins connus, sans poser de question.
+S'il existe en revanche des propriétés sans LanguagePropertiesSetPath, le bouton vous invite à indiquer un chemin de répertoire. Tous les LanguagePropertiesSetPath disponibles sont alors recherchés sous ce chemin.
+En outre, un nom est demandé (prérempli avec "Multiple"), sous lequel ces propriétés sans chemin sont traitées comme un ensemble de propriétés de langue distinct.
+Les LanguagePropertiesSetPath actuellement disponibles dans l'outil sont comparés à ceux-ci et, si le nom de l'ensemble de propriétés de langue correspond, le chemin du LanguagePropertiesSetPath trouvé est utilisé pour l'enregistrement.
+Cela ne fonctionne que si les noms des ensembles de propriétés de langue sont uniques. En cas de noms ambigus, l'opération est interrompue avec un message d'erreur.
+Si aucun chemin approprié n'est trouvé pour un LanguagePropertiesSetPath actuellement disponible dans l'outil, cet ensemble de propriétés de langue est enregistré dans le répertoire de base sélectionné.
+Comme en 6.1, il vous est demandé si les propriétés déjà existantes doivent être conservées, et la création des répertoires manquants est proposée.
+Pour finir, tous les ensembles de propriétés enregistrés sont listés.
+
+6.3 Exporter vers un seul fichier Excel
+
+Le bouton "Exporter vers un seul fichier Excel" enregistre tous les LanguagePropertiesSetPath actuellement disponibles dans l'outil dans un seul fichier Excel.
+Pour cela, un fichier Excel est créé avec une feuille et les colonnes de données suivantes :
+	"Path" (LanguagePropertiesSetPath exact de cet ensemble de propriétés de langue ; l'espace réservé ~ pour le répertoire utilisateur du système est utilisé dans la mesure du possible)
+	"Key" (clé de la valeur de propriété)
+	"Org.Idx" (indexation au sein d'un ensemble de propriétés de langue afin de conserver l'ordre des différentes valeurs)
+	"Default" (valeur de langue par défaut de la clé, si disponible)
+	"en", "de", "de_AT", "de_CH", "fr", ... (valeurs de langue des différents identifiants de langue ; les identifiants spécifiques à un pays avec un trait de soulignement sont également autorisés)
+Si le fichier sélectionné existe déjà, une confirmation est demandée avant de l'écraser.
+
+6.4 Exporter vers un seul fichier CSV
+
+Le bouton "Exporter vers un seul fichier CSV" enregistre tous les LanguagePropertiesSetPath actuellement disponibles dans l'outil dans un seul fichier CSV.
+Pour cela, un fichier CSV est créé avec les colonnes de données suivantes :
+	"Path" (LanguagePropertiesSetPath exact de cet ensemble de propriétés de langue ; l'espace réservé ~ pour le répertoire utilisateur du système est utilisé dans la mesure du possible)
+	"Key" (clé de la valeur de propriété)
+	"Org.Idx" (indexation au sein d'un ensemble de propriétés de langue afin de conserver l'ordre des différentes valeurs)
+	"Default" (valeur de langue par défaut de la clé, si disponible)
+	"en", "de", "de_AT", "de_CH", "fr", ... (valeurs de langue des différents identifiants de langue ; les identifiants spécifiques à un pays avec un trait de soulignement sont également autorisés)
+Si le fichier sélectionné existe déjà, une confirmation est demandée avant de l'écraser.
+
+6.5 Fermeture avec des modifications non enregistrées
+
+À la fermeture de l'outil ainsi qu'avant le chargement d'autres propriétés (3.1 à 3.5), il vous est demandé, en cas de modifications non enregistrées, si celles-ci doivent être abandonnées.
+
+
+7. Valeurs de configuration personnalisables
+
+7.1 Extension des fichiers de propriétés de langue
+
+Par défaut, cet outil utilise l'extension ".properties" pour tous les fichiers de propriétés de langue.
+Pour modifier ce comportement, vous pouvez définir la valeur de configuration "PropertiesFileExtension", disponible dans le menu de configuration via le bouton "Configuration" (symbole de clé à molette).
+Cela permet d'utiliser des extensions telles que "_mytext.properties", qui ne suivent pas la norme des propriétés de langue.
+Veuillez noter que cette modification est permanente et s'applique à toutes les opérations de chargement et d'enregistrement dans l'interface graphique.

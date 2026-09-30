@@ -1,0 +1,297 @@
+Language Properties Manager Manual de usuario
+
+1. Aviso legal
+
+Language Properties Manager es una herramienta para editar archivos de propiedades de idioma con funciones especiales que otros programas estándar no ofrecen o que no son fácilmente accesibles.
+Este editor está destinado exclusivamente al procesamiento experimental de textos.
+Todo uso se realiza bajo su propia responsabilidad.
+El desarrollador NO ASUME NINGUNA GARANTÍA, ni sobre el correcto funcionamiento ni por los daños derivados del uso del programa.
+Envíe sus sugerencias de mejora o avisos de errores a: languagepropertiesmanager@soderer.de
+
+
+2. Definición de términos
+
+2.1 LanguagePropertiesSetPath
+
+La ruta de almacenamiento de un conjunto de archivos de idioma de una propiedad de idioma, junto con su nombre base, se denomina a continuación LanguagePropertiesSetPath.
+Ejemplo: "C:\Project\I18N\ProjektLanguageProperty" sirve como marcador de posición para todos los archivos de idioma de la propiedad de idioma:
+	"C:\Project\I18N\ProjektLanguageProperty.properties",
+	"C:\Project\I18N\ProjektLanguageProperty_en.properties",
+	"C:\Project\I18N\ProjektLanguageProperty_*.properties"
+
+2.2 Nombre del conjunto de propiedades de idioma
+
+La última parte de un LanguagePropertiesSetPath ("ProjektLanguageProperty" en el ejemplo anterior) se denomina a continuación nombre del conjunto de propiedades de idioma.
+
+
+3. Carga de propiedades de idioma
+
+3.1 Cargar un único conjunto de propiedades desde un conjunto de archivos
+
+Este botón abre una ventana de selección de archivos en la que se puede seleccionar uno de los archivos de idioma de un LanguagePropertiesSetPath.
+Todos los archivos de esta propiedad de idioma se cargan conjuntamente y se muestran en la tabla de datos situada a la izquierda de la herramienta.
+
+3.2 Cargar todos los conjuntos de propiedades disponibles desde subdirectorios
+
+Este botón abre una ventana de selección de carpetas. A continuación se cargan todas las propiedades de idioma disponibles de todos los subdirectorios de esta carpeta. La herramienta busca archivos con uno de los identificadores de idioma "_en" o "_de" y la extensión ".properties".
+Para todos los LanguagePropertiesSetPath encontrados se cargan también todos los demás idiomas disponibles y se muestran en la tabla de datos situada a la izquierda de la herramienta.
+Según el número de subdirectorios y archivos y su tamaño, esto puede tardar un momento.
+
+3.3 Importación desde Excel
+
+El botón "Importar desde un único archivo Excel" permite indicar un único archivo Excel para cargar todos los conjuntos de propiedades de idioma almacenados en él.
+Este archivo Excel debe constar de una sola hoja y puede contener las siguientes columnas:
+	"Path" o "Pfad" (LanguagePropertiesSetPath exacto de este conjunto de propiedades de idioma; se permiten los marcadores ~ y $HOME; opcional)
+	"Key" o "Schlüssel" (clave del valor de la propiedad; obligatorio)
+	"Index", "Idx" o "Org.Idx" (indexación dentro de un conjunto de propiedades de idioma para mantener el orden de los distintos valores; opcional)
+	"Default" (valor de idioma por defecto de la clave; opcional)
+	"en", "de", "de_AT", "de_CH", "fr", ... (valores de idioma de cada identificador de idioma; también se permiten identificadores específicos de país con guion bajo)
+
+3.4 Importación desde CSV
+
+El botón "Importar desde un único archivo CSV" permite indicar un único archivo CSV para cargar todos los conjuntos de propiedades de idioma almacenados en él.
+Este archivo CSV puede contener las siguientes columnas:
+	"Path" o "Pfad" (LanguagePropertiesSetPath exacto de este conjunto de propiedades de idioma; se permiten los marcadores ~ y $HOME; opcional)
+	"Key" o "Schlüssel" (clave del valor de la propiedad; obligatorio)
+	"Index", "Idx" o "Org.Idx" (indexación dentro de un conjunto de propiedades de idioma para mantener el orden de los distintos valores; opcional)
+	"Default" (valor de idioma por defecto de la clave; opcional)
+	"en", "de", "de_AT", "de_CH", "fr", ... (valores de idioma de cada identificador de idioma; también se permiten identificadores específicos de país con guion bajo)
+
+3.5 Rutas usadas recientemente
+
+Las rutas de archivo abiertas en 3.1 y las rutas de directorio de 3.2 se guardan en una lista para reutilizarlas rápidamente más adelante.
+Se puede acceder a ellas rápidamente mediante el botón "Abrir archivos abiertos recientemente" y se abren en el mismo modo que la vez anterior.
+La entrada utilizada más recientemente aparece preseleccionada.
+En el diálogo de selección, las entradas de la lista se pueden reordenar arrastrando y soltando y eliminar con la tecla Supr. Estos cambios se conservan aunque se cancele la selección.
+
+3.6 Importación adicional en las propiedades existentes
+
+Todos los botones de carga e importación de 3.1 a 3.5 sustituyen las propiedades cargadas actualmente en la herramienta.
+En cambio, el botón "Importar propiedades adicionales (añadir al conjunto actual)" importa propiedades adicionales en las propiedades cargadas actualmente sin descartarlas.
+Esto resulta útil, por ejemplo, para incorporar traducciones de un traductor externo, de otra rama de desarrollo o de otro módulo.
+El botón abre un menú para seleccionar el origen:
+	"Desde usados recientemente ..." (como en 3.5)
+	"Desde archivo de propiedades ..." (como en 3.1)
+	"Desde directorio ..." (como en 3.2)
+	"Desde archivo Excel ..." (como en 3.3)
+	"Desde archivo CSV ..." (como en 3.4)
+Si se produce un error al leer el origen o se cancela el proceso, las propiedades cargadas actualmente permanecen sin cambios.
+
+Asignación de las propiedades importadas:
+Una propiedad importada se asigna a una propiedad existente con la misma clave si esta tiene el mismo LanguagePropertiesSetPath.
+Si no existe tal coincidencia, basta con el mismo nombre del conjunto de propiedades de idioma (p. ej., para una copia del conjunto de propiedades en otro directorio). Si una de las partes no tiene información de ruta (p. ej., archivos Excel y CSV sin columna "Path"), basta con la clave.
+Si una clave coincide con varios conjuntos de propiedades cargados, la asignación es ambigua. En ese caso, la entrada se omite y se indica en el informe de resultados.
+La comparación se realiza por clave e idioma. Un valor de idioma se considera nuevo si la propiedad existente no tiene valor para ese idioma. Los comentarios se tratan como valores de idioma.
+Las claves nuevas se asignan al conjunto de propiedades cargado correspondiente, siempre que sea posible de forma inequívoca. Así, al guardar no se escribe en los archivos del origen de la importación.
+Si no es posible, las claves nuevas conservan el LanguagePropertiesSetPath del origen de la importación y se escribirían allí al guardar. El informe de resultados lo indica expresamente.
+Los identificadores de idioma nuevos se crean para todas las propiedades.
+
+Tratamiento de conflictos:
+Solo aparece una consulta si los valores importados difieren de valores existentes no vacíos.
+Muestra el número de claves nuevas, de claves ya existentes, de claves con valores distintos, de valores vacíos que se pueden rellenar y de entradas omitidas.
+Están disponibles las siguientes opciones:
+	"Solo añadir lo nuevo" (se añaden las claves nuevas y se rellenan los valores vacíos; los valores existentes no cambian)
+	"Sobrescribir existentes" (además, los valores existentes distintos se sustituyen por los valores importados)
+	"Solo rellenar valores vacíos" (no se añaden claves nuevas; solo se rellenan los valores vacíos de las claves existentes)
+	"Cancelar" (no se modifica nada)
+Si no hay valores distintos, las claves nuevas se añaden y los valores vacíos se rellenan sin consulta.
+
+Después de la importación:
+Todas las propiedades añadidas y modificadas quedan seleccionadas en la tabla de datos, de modo que se pueden revisar o, por ejemplo, traducir directamente (véase 4.5).
+Las propiedades se consideran modificadas y todavía deben guardarse.
+Un informe de resultados enumera las claves añadidas, los valores rellenados, sobrescritos y los valores distintos conservados, las entradas no añadidas y omitidas, así como los identificadores de idioma nuevos.
+Además, contiene el resultado de una comprobación de errores (véase 4.9) de las entradas importadas, ya que el origen de la importación puede utilizar, por ejemplo, otra codificación.
+
+
+4. Edición de valores de propiedades individuales
+
+4.1 Creación y modificación de valores de propiedades
+
+Al seleccionar una fila de la tabla de datos a la izquierda de la herramienta, se muestran en el área de detalles de la derecha el LanguagePropertiesSetPath, la clave, el comentario opcional y el valor Default, así como todos los demás valores de idioma disponibles de la propiedad.
+Todos ellos, excepto el LanguagePropertiesSetPath, se pueden editar.
+Tras realizar el cambio deseado, el nuevo estado se puede aplicar con el botón "Modificar" para guardarlo posteriormente en el conjunto de propiedades.
+Para añadir una clave nueva con valores de idioma se puede utilizar el botón "Crear nueva propiedad" de la segunda barra de botones de la herramienta.
+Tras introducir los datos deseados, la propiedad se puede añadir al conjunto de propiedades con el botón "Añadir".
+En ambos casos, todos los cambios no deseados se pueden descartar en cualquier momento con el botón "Descartar".
+El botón "Cambiar a la vista de texto de almacenamiento" cambia la visualización de la clave y de los valores de idioma a la codificación técnica en JAVA encoding.
+Esto sirve para indicar caracteres Unicode complejos cuando sea necesario.
+Con el botón "Cambiar a la vista de texto de visualización" se puede volver a la visualización normal.
+
+4.2 Eliminación de valores de propiedades
+
+Con el botón "Eliminar las propiedades seleccionadas" o con la tecla Supr en la tabla de datos se pueden eliminar a la vez todas las filas seleccionadas actualmente en la tabla de datos.
+Para ello aparece una consulta de confirmación.
+
+4.3 Añadir identificadores de idioma
+
+Con el botón "Añadir un nuevo identificador de idioma" se puede añadir un identificador de idioma adicional para todas las filas de la tabla de datos.
+
+4.4 Eliminar identificadores de idioma
+
+Con el botón "Eliminar un identificador de idioma existente" se puede eliminar por completo un identificador de idioma de todas las filas de la tabla de datos.
+A continuación aparece un diálogo para seleccionar uno de los identificadores de idioma disponibles.
+El último identificador de idioma restante no se puede eliminar.
+Esto también es posible a través del menú contextual de la columna de idioma (véase 4.10).
+
+4.5 Traducción de valores de idioma que faltan
+
+Con el botón "Translate" se pueden crear los valores de idioma que faltan, tomando el valor en otro idioma y traduciéndolo mediante los servicios de DeepL (https://www.deepl.com).
+Para ello se necesita una clave API de autorización, que se puede obtener en "https://www.deepl.com/pro-api/".
+Las cuentas de prueba limitadas son gratuitas, pero requieren el registro de una tarjeta de crédito.
+La clave API se puede introducir en el diálogo de configuración de la aplicación o la primera vez que se utiliza el botón "Translate".
+Primero se selecciona el idioma de origen y después el idioma de destino.
+Si se utiliza el idioma Default, es obligatorio seleccionar el idioma que corresponde al idioma por defecto.
+Si solo hay otro idioma disponible, este se selecciona automáticamente como idioma de destino.
+Si hay filas seleccionadas en la tabla de datos, solo se traducen estas; en caso contrario, todas las propiedades.
+La traducción se ejecuta con un indicador de progreso y se puede cancelar. A continuación se muestra el número de traducciones creadas.
+La conexión con DeepL utiliza la configuración de proxy establecida en la configuración de la aplicación.
+
+4.6 Transferir valores de idioma
+
+Con el botón "Transferir" se pueden copiar valores de idioma de un identificador de idioma a otro sin traducirlos.
+Esto resulta útil, por ejemplo, para variantes de idioma como "de" y "de_AT", o para trasladar valores Default a un idioma concreto.
+Primero se selecciona el idioma de origen y después el idioma de destino. Si solo hay otro idioma disponible, este se utiliza automáticamente como idioma de destino.
+Solo se transfieren los valores de origen no vacíos. Los valores existentes del idioma de destino se sobrescriben.
+Si hay filas seleccionadas en la tabla de datos, solo se procesan estas; en caso contrario, todas las propiedades.
+A continuación se muestra el número de valores transferidos.
+
+4.7 Vaciar valores de idioma idénticos
+
+El botón "Vaciar idénticos" vacía los valores de un idioma de destino que son exactamente iguales al valor de un idioma de origen.
+Esto resulta útil, por ejemplo, para encontrar valores sin traducir que solo se copiaron de otro idioma, o para eliminar valores superfluos de una variante de idioma que, de todos modos, tienen el mismo texto que el idioma principal.
+Los idiomas de origen y de destino se seleccionan como en 4.6.
+Si hay filas seleccionadas en la tabla de datos, solo se procesan estas; en caso contrario, todas las propiedades.
+A continuación se muestra el número de valores vaciados.
+
+4.8 Eliminar duplicados
+
+Con el botón "Buscar y eliminar propiedades duplicadas" se pueden encontrar y depurar propiedades que aparecen más de una vez, es decir, que tienen el mismo LanguagePropertiesSetPath y la misma clave.
+Se conserva la primera aparición (según el índice original). Si a esta entrada conservada le falta un valor de idioma o un comentario que sí tiene alguna de las demás apariciones (descartadas), dicho valor se incorpora automáticamente antes de la eliminación.
+Antes de la eliminación propiamente dicha aparece una consulta de confirmación con un resumen de las combinaciones LanguagePropertiesSetPath/clave afectadas y su número.
+Si no se encuentran duplicados, solo se muestra el aviso correspondiente, sin ninguna otra acción.
+
+4.9 Comprobación de errores
+
+El botón "Comprobar errores" comprueba todas las propiedades en busca de errores típicos. No se modifica nada.
+Se comprueban las claves, los comentarios y todos los valores de idioma en busca de:
+	Carácter de sustitución "�" (indica caracteres que no se pudieron decodificar al leer)
+	Mojibake (diéresis y caracteres especiales mal decodificados, p. ej., "Ã¤" en lugar de "ä", típico de archivos UTF-8 leídos como ISO-8859-1 o Windows-1252)
+	Secuencias de escape Unicode sin resolver, como "\u00e4"
+	Caracteres de marca de orden de bytes (BOM) dentro de los textos
+	Sustitutos Unicode aislados
+	Caracteres de control (excepto tabulador y salto de línea)
+Además, se comprueba si las claves están vacías, contienen espacios o contienen los caracteres no permitidos "=" o ":".
+Los errores encontrados se enumeran en un informe con el LanguagePropertiesSetPath, la clave y el campo afectado. Si no se encuentran errores, solo se muestra el aviso correspondiente.
+
+4.10 Menú contextual de las columnas de la tabla
+
+Al hacer clic con el botón derecho en el encabezado o en una celda de determinadas columnas de la tabla de datos se abre un menú contextual:
+	Columna "Ruta": elimina el LanguagePropertiesSetPath de todas las propiedades. Al guardar, estas propiedades se tratan como propiedades recién creadas (véanse 6.1 y 6.2).
+	Columnas de idioma: vacía todos los valores de este idioma (el identificador de idioma se conserva) o elimina por completo el identificador de idioma (como en 4.4).
+	Columna "Comentario": elimina los comentarios de todas las propiedades.
+Antes de cada una de estas acciones aparece una consulta de confirmación con el número de entradas afectadas.
+La columna de comentarios solo se muestra si en la configuración de la aplicación no se ignoran los comentarios.
+
+4.11 Ordenar la tabla de datos
+
+Al hacer clic en el encabezado de una columna, la tabla de datos se ordena por esa columna. Otro clic invierte el sentido de la ordenación.
+La columna y el sentido de ordenación actuales se indican mediante un símbolo en el encabezado de la columna.
+La ordenación por clave o por índice original se realiza dentro de cada LanguagePropertiesSetPath.
+La columna "N.º" muestra siempre el orden de visualización actual y no se puede ordenar.
+El orden de las columnas se puede cambiar arrastrando y soltando los encabezados de columna.
+
+
+5. Búsqueda y análisis
+
+5.1 Búsqueda
+
+Mientras se escribe, el campo de búsqueda situado sobre la tabla de datos busca, a partir de la fila seleccionada actualmente, la siguiente propiedad coincidente y la selecciona.
+Los botones de flecha junto al campo de búsqueda saltan a la coincidencia siguiente o anterior.
+Las casillas junto al campo de búsqueda determinan cómo y dónde se busca. Se pueden combinar libremente:
+	"Aa" (distinguir mayúsculas y minúsculas)
+	"Clave" (buscar en las claves)
+	"Valor" (buscar en todos los valores de idioma)
+	"Ruta" (buscar en el LanguagePropertiesSetPath)
+
+5.2 Estadísticas
+
+El botón "Estadísticas" muestra un resumen de las propiedades cargadas actualmente. No se modifica nada.
+Contiene:
+	Número de propiedades, conjuntos de propiedades e identificadores de idioma
+	Número de propiedades con comentario
+	Número de duplicados (véase 4.8)
+	Número de propiedades por LanguagePropertiesSetPath
+	Por cada identificador de idioma, el número de valores existentes y que faltan, el grado de cumplimentación en porcentaje y la longitud media del texto
+	El valor de idioma más largo, con su idioma, LanguagePropertiesSetPath y clave
+
+5.3 Comprobar el uso
+
+Con el botón "Comprobar uso" se puede comprobar qué propiedades se utilizan en el código fuente de un proyecto.
+Para ello se solicitan sucesivamente:
+	El directorio en el que se va a buscar (incluidos todos los subdirectorios)
+	Una expresión regular para los nombres de los archivos en los que se va a buscar (valor predeterminado ".*\.java")
+	El patrón de uso, en el que el marcador "<property>" representa la clave (valor predeterminado "LangResources.get("<property>"")
+Los archivos encontrados se leen como UTF-8 y se buscan en ellos coincidencias con el patrón de uso.
+El informe muestra el número de archivos comprobados, así como el de propiedades utilizadas, no utilizadas y que faltan.
+Además, enumera las propiedades que se utilizan en el código fuente pero que faltan en el idioma Default, junto con los archivos en los que se utilizan, así como las propiedades que no se utilizan en ningún lugar del código fuente.
+Los datos de una comprobación se guardan. Con el botón "Comprobar uso con la configuración anterior" se puede volver a ejecutar una de las comprobaciones utilizadas más recientemente.
+Esta lista se puede reordenar y editar como en 3.5.
+
+
+6. Guardado de conjuntos de propiedades de idioma
+
+6.1 Guardar archivos
+
+En cuanto se modifican los valores de una propiedad de idioma, el botón "Guardar archivos" pasa a estar disponible.
+Si a los valores del conjunto de propiedades ya se les ha asignado un LanguagePropertiesSetPath, los datos se guardan (de nuevo) exactamente allí.
+Para valores recién creados, si solo hay un LanguagePropertiesSetPath cargado, este se utiliza como ruta predeterminada para los valores nuevos.
+Si hay varios LanguagePropertiesSetPath disponibles, se solicita una única vez el LanguagePropertiesSetPath que se debe utilizar para todos los valores nuevos.
+Antes de guardar se pregunta si se deben conservar las propiedades que ya existen en los archivos de destino pero que no están cargadas en la herramienta.
+Si los directorios de destino todavía no existen, se ofrece crearlos.
+
+6.2 Guardar conjuntos de propiedades en un directorio según el nombre del conjunto
+
+Si todas las propiedades disponibles actualmente en la herramienta ya tienen su propio LanguagePropertiesSetPath, el botón "Guardar conjuntos de propiedades en un directorio según el nombre del conjunto" las guarda directamente en esas rutas conocidas, sin preguntar.
+Sin embargo, si hay propiedades sin LanguagePropertiesSetPath, el botón solicita que se indique una ruta de directorio. Bajo esta ruta se buscan todos los LanguagePropertiesSetPath disponibles.
+Además, se solicita un nombre (con el valor predeterminado "Multiple") bajo el cual estas propiedades sin ruta se tratan como un conjunto de propiedades de idioma propio.
+Los LanguagePropertiesSetPath disponibles actualmente en la herramienta se comparan con estos y, si el nombre del conjunto de propiedades de idioma coincide, se utiliza para guardar la ruta del LanguagePropertiesSetPath encontrado.
+Esto solo funciona si los nombres de los conjuntos de propiedades de idioma son únicos. Si aparecen nombres ambiguos, el proceso se cancela con un mensaje de error.
+Si para un LanguagePropertiesSetPath disponible actualmente en la herramienta no se encuentra ninguna ruta adecuada, este conjunto de propiedades de idioma se guarda en el directorio base seleccionado.
+Como en 6.1, se pregunta si se deben conservar las propiedades ya existentes y se ofrece crear los directorios que falten.
+Por último, se enumeran todos los conjuntos de propiedades guardados.
+
+6.3 Exportar a un único archivo Excel
+
+El botón "Exportar a un único archivo Excel" guarda todos los LanguagePropertiesSetPath disponibles actualmente en la herramienta en un único archivo Excel.
+Para ello se crea un archivo Excel con una hoja y las siguientes columnas de datos:
+	"Path" (LanguagePropertiesSetPath exacto de este conjunto de propiedades de idioma; siempre que es posible se utiliza el marcador ~ para el directorio de usuario del sistema)
+	"Key" (clave del valor de la propiedad)
+	"Org.Idx" (indexación dentro de un conjunto de propiedades de idioma para mantener el orden de los distintos valores)
+	"Default" (valor de idioma por defecto de la clave, si existe)
+	"en", "de", "de_AT", "de_CH", "fr", ... (valores de idioma de cada identificador de idioma; también se permiten identificadores específicos de país con guion bajo)
+Si el archivo seleccionado ya existe, se pregunta antes de sobrescribirlo.
+
+6.4 Exportar a un único archivo CSV
+
+El botón "Exportar a un único archivo CSV" guarda todos los LanguagePropertiesSetPath disponibles actualmente en la herramienta en un único archivo CSV.
+Para ello se crea un archivo CSV con las siguientes columnas de datos:
+	"Path" (LanguagePropertiesSetPath exacto de este conjunto de propiedades de idioma; siempre que es posible se utiliza el marcador ~ para el directorio de usuario del sistema)
+	"Key" (clave del valor de la propiedad)
+	"Org.Idx" (indexación dentro de un conjunto de propiedades de idioma para mantener el orden de los distintos valores)
+	"Default" (valor de idioma por defecto de la clave, si existe)
+	"en", "de", "de_AT", "de_CH", "fr", ... (valores de idioma de cada identificador de idioma; también se permiten identificadores específicos de país con guion bajo)
+Si el archivo seleccionado ya existe, se pregunta antes de sobrescribirlo.
+
+6.5 Cerrar con cambios sin guardar
+
+Al cerrar la herramienta y antes de cargar otras propiedades (3.1 a 3.5), si hay cambios sin guardar se pregunta si se deben descartar.
+
+
+7. Valores de configuración personalizables
+
+7.1 Extensión de los archivos de propiedades de idioma
+
+De forma predeterminada, esta herramienta utiliza la extensión ".properties" para todos los archivos de propiedades de idioma.
+Para cambiar este comportamiento, puede establecer el valor de configuración "PropertiesFileExtension", disponible en el menú de configuración mediante el botón "Configuración" (símbolo de llave inglesa).
+Esto permite utilizar extensiones como "_mytext.properties", que no se ajustan al estándar de propiedades de idioma.
+Tenga en cuenta que este cambio es permanente y afecta a todas las operaciones de carga y guardado en la interfaz gráfica.

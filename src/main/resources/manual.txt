@@ -19,29 +19,29 @@ Example: "C:\Project\I18N\ProjektLanguageProperty" serves as a placeholder for a
 	"C:\Project\I18N\ProjektLanguageProperty_en.properties",
 	"C:\Project\I18N\ProjektLanguageProperty_*.properties"
 
+2.2 Language Properties Set Name
+
+The last part of a LanguagePropertiesSetPath ("ProjektLanguageProperty" in the example above) is referred to below as Language Properties Set Name.
+
 
 3. Loading Language Properties
 
 3.1 Loading a Single Property Set from a File Set
 
 This button opens a file selection window where you can select one of the language files in a LanguagePropertiesSetPath.
-
 All files of this language property are loaded together and displayed in the data table on the left side of the tool.
 
 3.2 Loading All Available Property Sets from Subdirectories
 
 This button opens a folder selection window. All available language properties from all subdirectories of this folder are then loaded. The tool searches for files with one of the language identifiers "_en" or "_de" and the file extension ".properties".
-
 For all LanguagePropertiesSetPaths found, all other available languages are loaded and displayed in the data table on the left side of the tool.
-
 Depending on the number of subdirectories and files and their size, this may take a moment.
 
 3.3 Excel Import
 
 The "Import from single Excel file" button allows you to specify a single Excel file to load all language property sets stored in it.
-
 This Excel file should consist of a single sheet and can contain the following columns:
-	"Path" or "Path" (more precisely, LanguagePropertiesSetPath for this language properties set; placeholders ~ and $HOME are allowed, optional)
+	"Path" or "Pfad" (more precisely, LanguagePropertiesSetPath for this language properties set; placeholders ~ and $HOME are allowed, optional)
 	"Key" or "Schlüssel" (key to the property value, required)
 	"Index", "Idx", or "Org.Idx" (indexing within a language properties set to maintain an order of the individual property values, optional)
 	"Default" (default language value for the key, optional)
@@ -50,9 +50,8 @@ This Excel file should consist of a single sheet and can contain the following c
 3.4 CSV Import
 
 The "Import from single CSV file" button allows you to specify a single CSV file to load all language property sets stored in it.
-
-This CSV file should contain the following columns:
-	"Path" or "Path" (more precisely, LanguagePropertiesSetPath for this language properties set; placeholders ~ and $HOME are allowed, optional)
+This CSV file can contain the following columns:
+	"Path" or "Pfad" (more precisely, LanguagePropertiesSetPath for this language properties set; placeholders ~ and $HOME are allowed, optional)
 	"Key" or "Schlüssel" (key to the property value, required)
 	"Index", "Idx", or "Org.Idx" (indexing within a language properties set to maintain an order of the individual property values, optional)
 	"Default" (default language value for the key, optional)
@@ -62,6 +61,46 @@ This CSV file should contain the following columns:
 
 Opened file paths from 3.1 and directory paths from 3.2 are saved in a list for quick reuse later.
 These can be used for quick access later using the "Open recently opened files" button and will then open in the same mode as before.
+The most recently used entry is preselected.
+The entries of the list can be reordered via drag and drop and deleted with the Delete key within the selection dialog. These changes are kept even if the selection is canceled.
+
+3.6 Additional Import into Existing Properties
+
+All load and import buttons from 3.1 to 3.5 replace the properties currently loaded in the tool.
+In contrast, the "Import additional properties (add to the current set)" button imports additional properties into the currently loaded properties without discarding them.
+This is helpful, for example, to bring in translations from an external translator, from another development branch or from another module.
+The button opens a menu for selecting the source:
+	"From recently used ..." (as in 3.5)
+	"From properties file ..." (as in 3.1)
+	"From directory ..." (as in 3.2)
+	"From Excel file ..." (as in 3.3)
+	"From CSV file ..." (as in 3.4)
+If an error occurs while reading the source or the process is canceled, the currently loaded properties remain unchanged.
+
+Matching of imported properties:
+An imported property is matched to an existing property with the same key if that property has the same LanguagePropertiesSetPath.
+If there is no such match, the same Language Properties Set Name is sufficient (e.g. for a copy of the properties set in another directory). If one side has no path information (e.g. Excel and CSV files without a "Path" column), the key alone is sufficient.
+If a key matches several loaded properties sets, the match is ambiguous. This entry is then skipped and listed in the result report.
+Comparison is done per key and language. A language value counts as new if the existing property has no value for this language. Comments are treated like language values.
+New keys are assigned to the matching loaded properties set, as far as this is unambiguously possible. This way, saving does not write into the files of the import source.
+If this is not possible, new keys keep the LanguagePropertiesSetPath of the import source and would be written there when saving. The result report explicitly points this out.
+Newly added language identifiers are created for all properties.
+
+Handling of conflicts:
+A prompt only appears if imported values differ from existing, non-empty values.
+It shows the number of new keys, of already existing keys, of keys with differing values, of empty values that can be filled and of skipped entries.
+The following options are available:
+	"Only add new" (new keys are added and empty values are filled, existing values remain unchanged)
+	"Overwrite existing" (in addition, differing existing values are replaced by the imported values)
+	"Only fill empty values" (no new keys are added, only empty values of existing keys are filled)
+	"Cancel" (nothing is changed)
+If there are no differing values, new keys are added and empty values are filled without a prompt.
+
+After the import:
+All added and changed properties are selected in the data table, so they can be reviewed or, for example, translated right away (see 4.5).
+The properties are marked as changed and still need to be saved.
+A result report lists added keys, filled, overwritten and kept differing values, entries not added and skipped, as well as new language identifiers.
+In addition, it contains the result of an error check (see 4.9) of the imported entries, since the import source may, for example, use a different encoding.
 
 
 4. Editing Individual Property Values
@@ -72,7 +111,7 @@ Selecting a row in the data table on the left side of the tool displays the deta
 These can then be edited, except for the LanguagePropertiesSetPath.
 After making a desired change, the new state can be applied for later saving of the property set using the "Change" button.
 To add a new key with language values, the "Create New Property" button in the tool's second button bar can be used.
-After making a desired change, the property set can be added using the "Add" button.
+After making a desired change, the property can be added to the property set using the "Add" button.
 In both cases, all unwanted changes can be discarded at any time using the "Discard" button.
 The "Switch to Saved Text View" button changes the display of key and language values for technical encoding in JAVA encoding.
 This is used to specify complex Unicode characters if necessary.
@@ -80,53 +119,148 @@ The "Switch to Displayed Text View" button can be used to return to the normal d
 
 4.2 Deleting Property Values
 
-The "Delete Selected Properties" button can be used to delete all currently selected rows in the left toolbar at once.
+The "Delete Selected Properties" button or the Delete key in the data table can be used to delete all currently selected rows of the data table at once.
 A confirmation prompt will appear.
 
 4.3 Adding Language Tags
 
-The "Add a New Language Tag" button can be used to add an additional language tag for all rows in the left toolbar.
+The "Add a New Language Tag" button can be used to add an additional language tag for all rows of the data table.
 
 4.4 Deleting Language Tags
 
-The "Delete an existing language tag" button can be used to completely remove a language tag from all rows in the left-hand toolbar.
+The "Delete an existing language tag" button can be used to completely remove a language tag from all rows of the data table.
 A selection dialog appears for specifying one of the available language tags.
+The last remaining language tag cannot be deleted.
+Alternatively, this is also possible via the context menu of the language column (see 4.10).
 
-4.5 Translating missing language values
+4.5 Translating Missing Language Values
 
-The "Translate" button can be used to create missing language values by using the value on a different language an translate it using the services of DeepL (https://www.deepl.com).
-Therefor an API key is needed for authorization, which can be obtained at "https://www.deepl.com/pro-api/".
-Limited test accounts are for free, but still need credit card registration.
-The API key may be entered in application configuration dialog or on first usage of the "Translate" button.
-Using the Default language sign makes it mandatory to select a language wich is associated as default language.
+The "Translate" button can be used to create missing language values by using the value of a different language and translating it using the services of DeepL (https://www.deepl.com).
+Therefore an API key is needed for authorization, which can be obtained at "https://www.deepl.com/pro-api/".
+Limited test accounts are free, but still require credit card registration.
+The API key may be entered in the application configuration dialog or on first usage of the "Translate" button.
+First the source language is selected, then the target language.
+Using the Default language sign makes it mandatory to select a language which is associated as default language.
 If there is only one other language sign available, that one will automatically be selected as target language sign.
+If rows are selected in the data table, only these are translated, otherwise all properties.
+The translation runs with a progress display and can be canceled. Afterwards the number of created translations is shown.
+The connection to DeepL uses the proxy settings configured in the application configuration.
 
-4.6 Removing Duplicates
+4.6 Transferring Language Values
+
+The "Transfer" button can be used to copy language values from one language tag to another without translating them.
+This is helpful, for example, for language variants such as "de" and "de_AT", or to take over default values into a specific language.
+First the source language is selected, then the target language. If only one other language is available, it is automatically used as target language.
+Only non-empty source values are transferred. Existing values of the target language are overwritten.
+If rows are selected in the data table, only these are processed, otherwise all properties.
+Afterwards the number of transferred values is shown.
+
+4.7 Clearing Identical Language Values
+
+The "Clear identical" button clears values of a target language that are exactly equal to the value of a source language.
+This is helpful, for example, to find untranslated values that were only copied from another language, or to remove superfluous values of a language variant that have the same text as the main language anyway.
+Source and target language are selected as in 4.6.
+If rows are selected in the data table, only these are processed, otherwise all properties.
+Afterwards the number of cleared values is shown.
+
+4.8 Removing Duplicates
 
 The "Find and remove duplicate properties" button can be used to find and clean up properties that occur more than once, i.e. share the same LanguagePropertiesSetPath and the same key.
 The first occurrence (by original index) is kept. If that kept entry is missing a language value or a comment that one of the other (discarded) occurrences does have, that value is automatically merged into it before removal.
 Before the actual removal, a confirmation prompt appears showing an overview of the affected LanguagePropertiesSetPath/key combinations and their count.
 If no duplicates are found, only a corresponding notice is shown and no further action is taken.
 
-5. Saving Language Property Sets
+4.9 Error Check
 
-5.1 Saving Files
+The "Check errors" button checks all properties for typical errors. Nothing is changed in the process.
+Keys, comments and all language values are checked for:
+	Replacement character "�" (indicates characters that could not be decoded while reading)
+	Mojibake (incorrectly decoded umlauts and special characters, e.g. "Ã¤" instead of "ä", typical for UTF-8 files read as ISO-8859-1 or Windows-1252)
+	Unresolved Unicode escapes such as "\u00e4"
+	Byte order mark characters (BOM) within texts
+	Isolated Unicode surrogates
+	Control characters (except tab and line break)
+In addition, keys are checked for being empty, containing spaces or containing the illegal characters "=" or ":".
+Errors found are listed in a report with LanguagePropertiesSetPath, key and affected field. If no errors are found, only a corresponding notice is shown.
+
+4.10 Context Menu of the Table Columns
+
+Right-clicking the header or a cell of certain columns of the data table opens a context menu:
+	Column "Path": Removes the LanguagePropertiesSetPath of all properties. These properties are treated like newly created properties when saving (see 6.1 and 6.2).
+	Language columns: Clears all values of this language (the language tag itself is kept) or deletes the language tag completely (as in 4.4).
+	Column "Comment": Removes the comments of all properties.
+Before each of these actions, a confirmation prompt appears showing the number of affected entries.
+The comment column is only shown if comments are not ignored in the application configuration.
+
+4.11 Sorting the Data Table
+
+Clicking the header of a column sorts the data table by this column. Another click reverses the sort order.
+The current sort column and sort order are indicated by a symbol in the column header.
+Sorting by key or original index is done within each LanguagePropertiesSetPath.
+The "No" column always shows the current display order and cannot be sorted itself.
+The order of the columns can be changed by dragging and dropping the column headers.
+
+
+5. Searching and Analyzing
+
+5.1 Search
+
+While typing, the search field above the data table searches from the currently selected row for the next matching property and selects it.
+The arrow buttons next to the search field jump to the next or previous match.
+The checkboxes next to the search field define how and where to search. They can be combined freely:
+	"Aa" (case-sensitive)
+	"Key" (search in the keys)
+	"Value" (search in all language values)
+	"Path" (search in the LanguagePropertiesSetPath)
+
+5.2 Statistics
+
+The "Statistics" button shows an overview of the currently loaded properties. Nothing is changed in the process.
+It contains:
+	Number of properties, properties sets and language tags
+	Number of properties with a comment
+	Number of duplicates (see 4.8)
+	Number of properties per LanguagePropertiesSetPath
+	Per language tag, the number of existing and missing values, the completion rate in percent and the average text length
+	The longest language value with its language, LanguagePropertiesSetPath and key
+
+5.3 Checking Usage
+
+The "Check usage" button can be used to check which properties are used in the source code of a project.
+For this, the following is requested one after another:
+	The directory to be searched (including all subdirectories)
+	A regular expression for the file names to be searched (pre-filled with ".*\.java")
+	The usage pattern, in which the placeholder "<property>" stands for the key (pre-filled with "LangResources.get("<property>"")
+The files found are read as UTF-8 and searched for the usage pattern.
+The report shows the number of checked files as well as of used, unused and missing properties.
+In addition, it lists the properties that are used in the source code but missing in the default language, together with the files in which they are used, as well as the properties that are not used anywhere in the source code.
+The settings of a check are saved. The "Check usage with previous settings" button can be used to run one of the most recently used checks again.
+This list can be reordered and edited as in 3.5.
+
+
+6. Saving Language Property Sets
+
+6.1 Saving Files
 
 As soon as changes have been made to the values of a language property, the "Save Files" button becomes available.
 If a LanguagePropertiesSetPath has already been assigned to the values in the properties set, the data will be (re)saved to that exact location.
 For newly created values and only one LanguagePropertiesSetPath is loaded, this LanguagePropertiesSetPath is used as the default path for new values.
 If multiple LanguagePropertiesSetPaths are available, you will be prompted to specify the LanguagePropertiesSetPath to be used for all new values.
+Before saving, you are asked whether properties already existing in the target files, but not loaded in the tool, should be kept.
+If target directories do not exist yet, you are offered to create them.
 
-5.2 Save Property Sets to a Directory Based on Set Name
+6.2 Save Property Sets to a Directory Based on Set Name
 
 If all properties currently available in the tool already have their own LanguagePropertiesSetPath, the "Save Property Sets to a Directory Based on Set Name" button saves them directly to those known paths without prompting.
 If, however, there are properties without a LanguagePropertiesSetPath, the button prompts you to specify a directory path. All available LanguagePropertiesSetPaths are then searched for under this path.
 In addition, you will be asked to enter a name (pre-filled with "Multiple") under which these path-less properties are treated as their own language properties set.
-The LanguagePropertiesSetPaths currently available in the tool are compared with these paths, and if a matching LanguagePropertiesSetPath name is found, the path of the LanguagePropertiesSetPath is used for saving.
-This only works if the LanguagePropertiesSetPath names are unique. If ambiguous names occur, the process is aborted with an error message.
-If no suitable path is found for a LanguagePropertiesSetPath currently available in the tool, the LanguagePropertiesSetPath is saved in the selected base directory.
+The LanguagePropertiesSetPaths currently available in the tool are compared with these paths, and if a matching Language Properties Set Name is found, the path of the found LanguagePropertiesSetPath is used for saving.
+This only works if the Language Properties Set Names are unique. If ambiguous names occur, the process is aborted with an error message.
+If no suitable path is found for a LanguagePropertiesSetPath currently available in the tool, this language properties set is saved in the selected base directory.
+As in 6.1, you are asked whether already existing properties should be kept, and the creation of missing directories is offered.
+Finally, all saved properties sets are listed.
 
-5.3 Export to single Excel file
+6.3 Export to Single Excel File
 
 The "Export to single Excel file" button saves all LanguagePropertiesSetPaths currently available in the tool to a single Excel file.
 For this purpose, an Excel file is created with a sheet and the following columns of data:
@@ -135,22 +269,29 @@ For this purpose, an Excel file is created with a sheet and the following column
 	"Org.Idx" (indexing within a language properties set to maintain a sequence of individual property values)
 	"Default" (default language value for the key, if available)
 	"en", "de", "de_AT", "de_CH", "fr", ... (language values of the individual language identifiers; country-specific identifiers with an underscore are also permitted)
+If the selected file already exists, you are asked before it is overwritten.
 
-5.4 Export to single CSV file
+6.4 Export to Single CSV File
 
 The "Export to single CSV file" button saves all LanguagePropertiesSetPaths currently available in the tool to a single CSV file.
-For this purpose, an CSV file is created the following columns of data:
+For this purpose, a CSV file is created with the following columns of data:
 	"Path" (more precisely, LanguagePropertiesSetPath for this language properties set; the placeholder ~ for the user directory in the system is used where possible)
 	"Key" (key to the property value)
 	"Org.Idx" (indexing within a language properties set to maintain a sequence of individual property values)
 	"Default" (default language value for the key, if available)
 	"en", "de", "de_AT", "de_CH", "fr", ... (language values of the individual language identifiers; country-specific identifiers with an underscore are also permitted)
+If the selected file already exists, you are asked before it is overwritten.
+
+6.5 Closing with Unsaved Changes
+
+When closing the tool, and before loading other properties (3.1 to 3.5), you are asked whether unsaved changes should be discarded.
 
 
-6. Individually customized configuration values
+7. Individually Customized Configuration Values
 
-6.1 Language Properties File Extension
+7.1 Language Properties File Extension
 
 By default, this tool uses the file extension ".properties" for any Language Properties files.
 To override this behaviour, you may set the configuration value "PropertiesFileExtension" which is available in the configuration menu via the button "configuration" (Wrench symbol).
+This allows the use of file extensions such as "_mytext.properties" that do not follow the language properties standard.
 Please notice that this change is permanent and affects any load or save action in the GUI.
