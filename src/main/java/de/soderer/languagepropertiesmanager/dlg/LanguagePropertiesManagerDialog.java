@@ -161,7 +161,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private JButton addButton;
 	private JTextField pathTextfield;
 	private JTextField keyTextfield;
-	private JTextField commentTextfield;
+	private JTextArea commentTextfield;
 	private JPanel detailFieldsPart;
 	private final Map<String, JTextArea> languageTextFields = new LinkedHashMap<>();
 	private JTable propertiesTable;
@@ -655,7 +655,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				final String labelText = LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT.equals(sign) ? LangResources.get("columnheader_default") : sign;
 				detailFieldsPart.add(new JLabel(labelText + ":"), labelConstraints);
 
-				final JTextArea languageTextfield = createLanguageValueTextArea();
+				final JTextArea languageTextfield = createMultiLineTextArea();
 				languageTextfield.getDocument().addDocumentListener(new DetailModifyListener());
 				detailFieldsPart.add(languageTextfield, fieldConstraints);
 				languageTextFields.put(sign, languageTextfield);
@@ -752,8 +752,14 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 		labelConstraints.gridy = 2;
 		fieldConstraints.gridy = 2;
+		// Align the label with the first line, because a multi-line comment makes the field higher
+		labelConstraints.anchor = GridBagConstraints.NORTHWEST;
+		labelConstraints.insets = new Insets(4, 2, 2, 4);
 		keyBereich.add(new JLabel(LangResources.get("comment") + ":"), labelConstraints);
-		commentTextfield = new JTextField();
+		labelConstraints.anchor = GridBagConstraints.WEST;
+		labelConstraints.insets = new Insets(2, 2, 2, 4);
+		// Text area instead of text field, so multi-line comments are shown with all their lines
+		commentTextfield = createMultiLineTextArea();
 		commentTextfield.getDocument().addDocumentListener(new DetailModifyListener());
 		keyBereich.add(commentTextfield, fieldConstraints);
 
@@ -1618,7 +1624,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					usagePatternDialog.setDefaultText("LangResources.get(\"<property>\"");
 					final String usagePattern = usagePatternDialog.open();
 					if (usagePattern != null) {
-						recentlyCheckUsages.add(CsvWriter.getCsvLine(createCheckUsageCsvFormat(), directory.getAbsolutePath(), filePattern, usagePattern));
+						moveToEnd(recentlyCheckUsages, CsvWriter.getCsvLine(createCheckUsageCsvFormat(), directory.getAbsolutePath(), filePattern, usagePattern));
 						applicationConfiguration.set(LanguagePropertiesManager.CONFIG_PREVIOUS_CHECK_USAGE, recentlyCheckUsages);
 						checkUsage(languageProperties, directory.getAbsolutePath(), filePattern, usagePattern);
 						checkButtonStatus();
@@ -1667,7 +1673,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 	private void checkUsagePrevious() {
 		try {
-			final ComboSelectionDialog dialog = new ComboSelectionDialog(this, getTitle() + " " + LangResources.get("recentsettingsdialogtitle"), LangResources.get("recent_settings_dialog_text"), recentlyCheckUsages);
+			final ComboSelectionDialog dialog = new ComboSelectionDialog(this, getTitle() + " " + LangResources.get("recentsettingsdialogtitle"), LangResources.get("recent_settings_dialog_text"), recentlyCheckUsages, getLastEntryIndex(recentlyCheckUsages));
 			final String setting = dialog.open();
 
 			// Take over a possible reordering (drag&drop) or deletion of the recent
@@ -1678,7 +1684,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			applicationConfiguration.set(LanguagePropertiesManager.CONFIG_PREVIOUS_CHECK_USAGE, recentlyCheckUsages);
 
 			if (setting != null) {
-				recentlyCheckUsages.add(setting); // put selected as latest used
+				moveToEnd(recentlyCheckUsages, setting); // put selected as latest used
 				applicationConfiguration.set(LanguagePropertiesManager.CONFIG_PREVIOUS_CHECK_USAGE, recentlyCheckUsages);
 				final List<String> settings = parseCheckUsageSetting(setting);
 				final String directory = settings.get(0);
@@ -1874,14 +1880,14 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	}
 
 	/**
-	 * Creates the input component for a language value.
+	 * Creates the input component for a language value or the comment.
 	 * A JTextField can not be used here, because its document silently replaces
 	 * line breaks by blanks ("filterNewlines"), so values like "a\nb" would lose
 	 * their line break in the plain text display mode and on writing back.
 	 * The text area grows in height with the number of lines, but is styled and
 	 * behaves (font, border, Tab focus traversal) like a single line text field.
 	 */
-	private static JTextArea createLanguageValueTextArea() {
+	private static JTextArea createMultiLineTextArea() {
 		final JTextArea textArea = new JTextArea();
 		// No line wrap: only real line breaks create new lines, like in the stored value
 		textArea.setLineWrap(false);
@@ -1970,7 +1976,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				showErrorMessage(LangResources.get("open_file_dialog_text"), LangResources.get("canceledByUser"));
 			} else if (file.exists() && file.isFile()) {
 				if (loadSingleLanguagePropertiesSet(file.getAbsolutePath())) {
-					recentlyOpenedDirectories.add(file.getAbsolutePath()); // put selected as latest used
+					moveToEnd(recentlyOpenedDirectories, file.getAbsolutePath()); // put selected as latest used
 					applicationConfiguration.set(LanguagePropertiesManager.CONFIG_RECENT_PROPERTIES, recentlyOpenedDirectories);
 				}
 			} else {
@@ -2026,7 +2032,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				showErrorMessage(LangResources.get("open_directory_dialog_text"), LangResources.get("canceledByUser"));
 			} else if (basicDirectory.exists()) {
 				if (openAllLanguagePropertiesSets(basicDirectory.getAbsolutePath())) {
-					recentlyOpenedDirectories.add(basicDirectory.getAbsolutePath()); // put selected as latest used
+					moveToEnd(recentlyOpenedDirectories, basicDirectory.getAbsolutePath()); // put selected as latest used
 					applicationConfiguration.set(LanguagePropertiesManager.CONFIG_RECENT_PROPERTIES, recentlyOpenedDirectories);
 				}
 			}
@@ -2074,13 +2080,39 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		propertiesLabel.revalidate();
 	}
 
+	/**
+	 * Index of the last entry of a recent list. The latest used entry is always
+	 * moved to the end (see moveToEnd()), so this entry is preselected in the
+	 * ComboSelectionDialog.
+	 *
+	 * @return index of the last entry, or -1 if the list is empty
+	 */
+	private static int getLastEntryIndex(final UniqueFifoQueuedList<String> recentEntries) {
+		return recentEntries == null ? -1 : recentEntries.size() - 1;
+	}
+
+	/**
+	 * Moves an entry of a recent list to its end (or appends it, if it is new),
+	 * so it counts as latest used and is preselected next time.
+	 * The list is rebuilt explicitly, because adding an already contained entry
+	 * to the unique list does not necessarily change its position. If the list
+	 * is full, a new entry pushes out the first (oldest) entry.
+	 */
+	private static void moveToEnd(final UniqueFifoQueuedList<String> recentEntries, final String entry) {
+		final List<String> entries = new ArrayList<>(recentEntries);
+		entries.remove(entry);
+		entries.add(entry);
+		recentEntries.clear();
+		recentEntries.addAll(entries);
+	}
+
 	private void openRecent() {
 		if (hasUnsavedChanges && !askForDiscardChanges()) {
 			return;
 		}
 
 		try {
-			final ComboSelectionDialog dialog = new ComboSelectionDialog(this, getTitle() + " " + LangResources.get("recent_directories_dialog_title"), LangResources.get("recent_directories_dialog_text"), recentlyOpenedDirectories).withSize(600, -1);
+			final ComboSelectionDialog dialog = new ComboSelectionDialog(this, getTitle() + " " + LangResources.get("recent_directories_dialog_title"), LangResources.get("recent_directories_dialog_text"), recentlyOpenedDirectories, getLastEntryIndex(recentlyOpenedDirectories)).withSize(600, -1);
 			final String filePath = dialog.open();
 
 			// Take over a possible reordering (drag&drop) or deletion of the recent directories done in the dialog,
@@ -2093,10 +2125,17 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				showErrorMessage(LangResources.get("recent_directories_dialog_title"), LangResources.get("canceledByUser"));
 			} else if (!new File(filePath).exists()) {
 				showErrorMessage(LangResources.get("recent_directories_dialog_title"), LangResources.get("error.recentPathDoesNotExistAnymore", filePath));
-			} else if (new File(filePath).isDirectory()) {
-				openAllLanguagePropertiesSets(filePath);
 			} else {
-				loadSingleLanguagePropertiesSet(filePath);
+				final boolean loaded;
+				if (new File(filePath).isDirectory()) {
+					loaded = openAllLanguagePropertiesSets(filePath);
+				} else {
+					loaded = loadSingleLanguagePropertiesSet(filePath);
+				}
+				if (loaded) {
+					moveToEnd(recentlyOpenedDirectories, filePath); // put selected as latest used
+					applicationConfiguration.set(LanguagePropertiesManager.CONFIG_RECENT_PROPERTIES, recentlyOpenedDirectories);
+				}
 			}
 		} catch (final Exception e) {
 			resetLoadedData();
