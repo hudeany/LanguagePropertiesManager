@@ -26,6 +26,7 @@ import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
+import java.text.MessageFormat;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -1513,6 +1514,290 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		return problems;
 	}
 
+	private static final Pattern MESSAGE_FORMAT_ARGUMENT_PATTERN = Pattern.compile("\\{\\s*\\d");
+
+	/**
+	 * java.util.Formatter conversions like %s, %d, %1$s, %.2f, %tY.
+	 * The space flag is deliberately not supported to avoid false positives in texts like "50% sure".
+	 */
+	private static final Pattern PRINTF_PLACEHOLDER_PATTERN = Pattern.compile("%(?:(\\d+)\\$)?[-#+0,(<]*\\d*(?:\\.\\d+)?([bBhHsScCdoxXeEfgGaA%n]|[tT][a-zA-Z])");
+
+	/**
+	 * Result of the analysis of a single text as java.text.MessageFormat pattern
+	 */
+	private static class MessageFormatAnalysis {
+		private final Set<Integer> argumentIndexes = new TreeSet<>();
+		private String syntaxError = null;
+	}
+
+	private static MessageFormatAnalysis analyzeMessageFormat(final String text) {
+		final MessageFormatAnalysis analysis = new MessageFormatAnalysis();
+
+		try {
+			@SuppressWarnings("unused")
+			final
+			MessageFormat test = new MessageFormat(text);
+		} catch (final IllegalArgumentException e) {
+			analysis.syntaxError = e.getMessage();
+		}
+
+		// Apostrophes are deliberately not treated as MessageFormat quotes, because they are regular characters in many languages (e.g. Italian, French)
+		for (int i = 0; i < text.length(); i++) {
+			if (text.charAt(i) == '{') {
+				int argumentEnd = i + 1;
+				while (argumentEnd < text.length() && text.charAt(argumentEnd) != ',' && text.charAt(argumentEnd) != '}') {
+					argumentEnd++;
+				}
+				final String argumentNumber = text.substring(i + 1, argumentEnd);
+				if (argumentNumber.length() > 0 && argumentNumber.length() <= 9 && argumentNumber.chars().allMatch(Character::isDigit)) {
+					analysis.argumentIndexes.add(Integer.parseInt(argumentNumber));
+				}
+			}
+		}
+
+		return analysis;
+	}
+
+	private static List<String> findPrintfPlaceholders(final String text) {
+		final List<String> placeholders = new ArrayList<>();
+		final Matcher matcher = PRINTF_PLACEHOLDER_PATTERN.matcher(text);
+		while (matcher.find()) {
+			final String conversion = matcher.group(2);
+			if ("%".equals(conversion) || "n".equals(conversion)) {
+				// "%%" and "%n" consume no argument
+				continue;
+			}
+			final String argumentIndex = matcher.group(1);
+			// Upper case variants (%S, %X, %T...) only change the output case, but date/time suffixes (%tY vs. %ty) are significant
+			final String normalizedConversion = conversion.substring(0, 1).toLowerCase(Locale.ROOT) + conversion.substring(1);
+			placeholders.add("%" + (argumentIndex != null ? argumentIndex + "$" : "") + normalizedConversion);
+		}
+		return placeholders;
+	}
+
+	/**
+	 * Returns the items of minuend that are not matched by an item of subtrahend, respecting duplicates
+	 */
+	private static List<String> subtractMultiset(final List<String> minuend, final List<String> subtrahend) {
+		final List<String> result = new ArrayList<>(minuend);
+		for (final String item : subtrahend) {
+			result.remove(item);
+		}
+		return result;
+	}
+
+	/**
+	 * Checks whether the placeholders of all language values of a property match the placeholders
+	 * of the reference value (default language, or else the first language with a value).
+	 * Supports java.text.MessageFormat arguments ({0}, {1,number}) and java.util.Formatter conversions (%s, %1$d).
+	 * Empty values are skipped, because a missing translation is not a placeholder error.
+	 */
+	private static List<String> findPlaceholderErrors(final LanguageProperty languageProperty) {
+		final List<String> problems = new ArrayList<>();
+
+		final Map<String, String> values = getNonBlankValuesReferenceFirst(languageProperty);
+		if (values.isEmpty()) {
+			return problems;
+		}
+
+		final String referenceLanguageSign = values.keySet().iterator().next();
+
+		// MessageFormat: If any language uses arguments, all languages of this key are expected to be formatted by MessageFormat
+		if (values.values().stream().anyMatch(value -> MESSAGE_FORMAT_ARGUMENT_PATTERN.matcher(value).find())) {
+			final Map<String, MessageFormatAnalysis> analyses = new LinkedHashMap<>();
+			for (final Map.Entry<String, String> entry : values.entrySet()) {
+				analyses.put(entry.getKey(), analyzeMessageFormat(entry.getValue()));
+			}
+			final Set<Integer> referenceIndexes = analyses.get(referenceLanguageSign).argumentIndexes;
+
+			for (final Map.Entry<String, MessageFormatAnalysis> entry : analyses.entrySet()) {
+				final String fieldPrefix = LangResources.get("field_value", entry.getKey()) + ": ";
+				final MessageFormatAnalysis analysis = entry.getValue();
+
+				if (analysis.syntaxError != null) {
+					problems.add(fieldPrefix + LangResources.get("error_messageformat_syntax", analysis.syntaxError));
+				}
+
+				if (!entry.getKey().equals(referenceLanguageSign)) {
+					final Set<Integer> missingIndexes = new TreeSet<>(referenceIndexes);
+					missingIndexes.removeAll(analysis.argumentIndexes);
+					final Set<Integer> additionalIndexes = new TreeSet<>(analysis.argumentIndexes);
+					additionalIndexes.removeAll(referenceIndexes);
+
+					if (!missingIndexes.isEmpty()) {
+						problems.add(fieldPrefix + LangResources.get("error_placeholder_missing", referenceLanguageSign, missingIndexes.stream().map(index -> "{" + index + "}").collect(Collectors.joining(", "))));
+					}
+					if (!additionalIndexes.isEmpty()) {
+						problems.add(fieldPrefix + LangResources.get("error_placeholder_additional", referenceLanguageSign, additionalIndexes.stream().map(index -> "{" + index + "}").collect(Collectors.joining(", "))));
+					}
+				}
+			}
+		}
+
+		// java.util.Formatter: If any language uses conversions, compare all languages of this key
+		final Map<String, List<String>> printfPlaceholders = new LinkedHashMap<>();
+		for (final Map.Entry<String, String> entry : values.entrySet()) {
+			printfPlaceholders.put(entry.getKey(), findPrintfPlaceholders(entry.getValue()));
+		}
+		if (printfPlaceholders.values().stream().anyMatch(placeholders -> !placeholders.isEmpty())) {
+			final List<String> referencePlaceholders = printfPlaceholders.get(referenceLanguageSign);
+			for (final Map.Entry<String, List<String>> entry : printfPlaceholders.entrySet()) {
+				if (entry.getKey().equals(referenceLanguageSign)) {
+					continue;
+				}
+				final String fieldPrefix = LangResources.get("field_value", entry.getKey()) + ": ";
+				final List<String> placeholders = entry.getValue();
+
+				final List<String> missingPlaceholders = subtractMultiset(referencePlaceholders, placeholders);
+				final List<String> additionalPlaceholders = subtractMultiset(placeholders, referencePlaceholders);
+
+				if (!missingPlaceholders.isEmpty()) {
+					problems.add(fieldPrefix + LangResources.get("error_placeholder_missing", referenceLanguageSign, String.join(", ", missingPlaceholders)));
+				}
+				if (!additionalPlaceholders.isEmpty()) {
+					problems.add(fieldPrefix + LangResources.get("error_placeholder_additional", referenceLanguageSign, String.join(", ", additionalPlaceholders)));
+				}
+				if (missingPlaceholders.isEmpty() && additionalPlaceholders.isEmpty() && !placeholders.equals(referencePlaceholders)) {
+					// Same placeholders in a different order only matter if they are not all explicitly indexed like %1$s
+					final boolean allExplicitlyIndexed = placeholders.stream().allMatch(placeholder -> placeholder.contains("$"));
+					if (!allExplicitlyIndexed) {
+						problems.add(fieldPrefix + LangResources.get("error_placeholder_order", referenceLanguageSign));
+					}
+				}
+			}
+		}
+
+		return problems;
+	}
+
+	/**
+	 * Returns all non blank language values of a property. The first entry is the reference value
+	 * for comparisons: the default language, or else the first language with a value.
+	 */
+	private static Map<String, String> getNonBlankValuesReferenceFirst(final LanguageProperty languageProperty) {
+		final Map<String, String> values = new LinkedHashMap<>();
+		final String defaultValue = languageProperty.getLanguageValue(LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT);
+		if (Utilities.isNotBlank(defaultValue)) {
+			values.put(LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT, defaultValue);
+		}
+		for (final String languageSign : languageProperty.getAvailableLanguageSigns()) {
+			final String value = languageProperty.getLanguageValue(languageSign);
+			if (Utilities.isNotBlank(value)) {
+				values.putIfAbsent(languageSign, value);
+			}
+		}
+		return values;
+	}
+
+	/**
+	 * Returns the normalized sentence end punctuation of a text or null if the last character is no punctuation.
+	 * Only the very last character is checked, so trailing whitespace, closing brackets or quotes mean "no end punctuation".
+	 * Language specific variants (full width CJK punctuation, Greek/Arabic question marks, Devanagari danda)
+	 * are mapped to their ASCII equivalent, "..." and "…" are both returned as "…".
+	 */
+	private static String getEndPunctuation(final String text) {
+		if (text.isEmpty()) {
+			return null;
+		}
+
+		if (text.endsWith("...") || text.endsWith("…")) {
+			return "…";
+		}
+
+		switch (text.charAt(text.length() - 1)) {
+			case '.':
+			case '。':
+			case '।':
+				return ".";
+			case ':':
+			case '：':
+				return ":";
+			case '!':
+			case '！':
+				return "!";
+			case '?':
+			case '？':
+			case '؟':
+			case '\u037E': // Greek question mark
+				return "?";
+			case ';':
+			case '；':
+				return ";";
+			case ',':
+			case '，':
+			case '、':
+				return ",";
+			default:
+				return null;
+		}
+	}
+
+	private static boolean startsWithWhitespace(final String text) {
+		return text.length() > 0 && (Character.isWhitespace(text.charAt(0)) || Character.isSpaceChar(text.charAt(0)));
+	}
+
+	private static boolean endsWithWhitespace(final String text) {
+		return text.length() > 0 && (Character.isWhitespace(text.charAt(text.length() - 1)) || Character.isSpaceChar(text.charAt(text.length() - 1)));
+	}
+
+	private static int countLineBreaks(final String text) {
+		return (int) text.chars().filter(character -> character == '\n').count();
+	}
+
+	/**
+	 * Checks the language values of a property for formal deviations from the reference value
+	 * (default language, or else the first language with a value): different sentence end punctuation,
+	 * leading or trailing whitespace only in one language and line breaks in translations of single line texts.
+	 * Empty values are skipped, because a missing translation is no formal deviation.
+	 */
+	private static List<String> findFormalDeviations(final LanguageProperty languageProperty) {
+		final List<String> problems = new ArrayList<>();
+
+		final Map<String, String> values = getNonBlankValuesReferenceFirst(languageProperty);
+		if (values.size() < 2) {
+			return problems;
+		}
+
+		final Map.Entry<String, String> referenceEntry = values.entrySet().iterator().next();
+		final String referenceLanguageSign = referenceEntry.getKey();
+		final String referenceValue = referenceEntry.getValue();
+		final String referenceEndPunctuation = getEndPunctuation(referenceValue);
+		final int referenceLineBreaks = countLineBreaks(referenceValue);
+
+		for (final Map.Entry<String, String> entry : values.entrySet()) {
+			if (entry.getKey().equals(referenceLanguageSign)) {
+				continue;
+			}
+			final String fieldPrefix = LangResources.get("field_value", entry.getKey()) + ": ";
+			final String value = entry.getValue();
+
+			final String endPunctuation = getEndPunctuation(value);
+			if (referenceEndPunctuation != null && endPunctuation == null) {
+				problems.add(fieldPrefix + LangResources.get("error_formal_end_punctuation_missing", referenceLanguageSign, referenceEndPunctuation));
+			} else if (referenceEndPunctuation == null && ":".equals(endPunctuation)) {
+				// Only an additional colon is reported, other additional end punctuation is often a legitimate language specific choice
+				problems.add(fieldPrefix + LangResources.get("error_formal_end_punctuation_additional", referenceLanguageSign, endPunctuation));
+			} else if (referenceEndPunctuation != null && !referenceEndPunctuation.equals(endPunctuation)) {
+				problems.add(fieldPrefix + LangResources.get("error_formal_end_punctuation_different", referenceLanguageSign, endPunctuation, referenceEndPunctuation));
+			}
+
+			if (startsWithWhitespace(referenceValue) != startsWithWhitespace(value)) {
+				problems.add(fieldPrefix + LangResources.get("error_formal_leading_whitespace", referenceLanguageSign));
+			}
+			if (endsWithWhitespace(referenceValue) != endsWithWhitespace(value)) {
+				problems.add(fieldPrefix + LangResources.get("error_formal_trailing_whitespace", referenceLanguageSign));
+			}
+
+			final int lineBreaks = countLineBreaks(value);
+			// Only reported for single line references, because multi line texts are often wrapped differently per language
+			if (referenceLineBreaks == 0 && lineBreaks > 0) {
+				problems.add(fieldPrefix + LangResources.get("error_formal_line_breaks", referenceLanguageSign, String.valueOf(lineBreaks), String.valueOf(referenceLineBreaks)));
+			}
+		}
+
+		return problems;
+	}
+
 	/**
 	 * Result of the error check of a set of properties
 	 */
@@ -1541,7 +1826,8 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	}
 
 	/**
-	 * Read-only check of the given properties for encoding errors and invalid keys.
+	 * Read-only check of the given properties for encoding errors, invalid keys, inconsistent placeholders
+	 * and formal deviations from the reference language.
 	 * Used by the "check errors" button and after a merge import for the imported properties.
 	 */
 	private static ErrorReport createErrorReport(final Collection<LanguageProperty> propertiesToCheck) {
@@ -1577,6 +1863,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 						entryProblems.add(LangResources.get("field_value", languageSign) + ": " + textProblem);
 					}
 				}
+
+				entryProblems.addAll(findPlaceholderErrors(languageProperty));
+				entryProblems.addAll(findFormalDeviations(languageProperty));
 
 				if (!entryProblems.isEmpty()) {
 					issueCount += entryProblems.size();
