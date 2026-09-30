@@ -526,8 +526,8 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	}
 
 	/**
-	 * Opens a context menu on right click on a language column, both on its
-	 * header and on its cells.
+	 * Opens a context menu on right click on the path column, a language column
+	 * or the comment column, both on its header and on its cells.
 	 */
 	private void installLanguageColumnContextMenu() throws Exception {
 		// Loaded once here, because ImageManager.getImage() throws a checked exception
@@ -562,22 +562,37 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		final int modelColumn = propertiesTable.convertColumnIndexToModel(viewColumn);
 		if (isCommentColumn(modelColumn)) {
 			final JPopupMenu contextMenu = new JPopupMenu();
-			final JMenuItem deleteCommentsItem = new JMenuItem(LangResources.get("contextmenu_deleteComments"), deleteIcon);
+			final JMenuItem deleteCommentsItem = new JMenuItem(LangResources.get("contextmenu_deleteComments"));
 			deleteCommentsItem.addActionListener(e -> deleteAllComments());
 			contextMenu.add(deleteCommentsItem);
+			contextMenu.show(event.getComponent(), event.getX(), event.getY());
+			return;
+		} else if (modelColumn == COLUMN_PATH) {
+			final JPopupMenu contextMenu = new JPopupMenu();
+			final JMenuItem deletePathsItem = new JMenuItem(LangResources.get("contextmenu_deletePaths"));
+			deletePathsItem.addActionListener(e -> deleteAllPaths());
+			contextMenu.add(deletePathsItem);
 			contextMenu.show(event.getComponent(), event.getX(), event.getY());
 			return;
 		} else if (modelColumn < COLUMN_FIRST_LANGUAGE || modelColumn - COLUMN_FIRST_LANGUAGE >= availableLanguageSigns.size()) {
 			return;
 		}
 		final String languageSign = availableLanguageSigns.get(modelColumn - COLUMN_FIRST_LANGUAGE);
+		final String languageColumnName = propertiesTableModel.getColumnName(modelColumn);
 
 		final JPopupMenu contextMenu = new JPopupMenu();
-		final JMenuItem deleteLanguageItem = new JMenuItem(LangResources.get("tooltip_DeleteLanguage") + ": " + propertiesTableModel.getColumnName(modelColumn), deleteIcon);
+
+		// Only clears the values, the language itself (and its column) stays available
+		final JMenuItem deleteLanguageValuesItem = new JMenuItem(LangResources.get("contextmenu_deleteLanguageValues") + ": " + languageColumnName);
+		deleteLanguageValuesItem.addActionListener(e -> deleteAllLanguageValues(languageSign, languageColumnName));
+		contextMenu.add(deleteLanguageValuesItem);
+
+		final JMenuItem deleteLanguageItem = new JMenuItem(LangResources.get("tooltip_DeleteLanguage") + ": " + languageColumnName, deleteIcon);
 		// Same rule as for the delete language button: The last language cannot be deleted
 		deleteLanguageItem.setEnabled(availableLanguageSigns.size() > 1);
 		deleteLanguageItem.addActionListener(e -> deleteLanguage(languageSign));
 		contextMenu.add(deleteLanguageItem);
+
 		contextMenu.show(event.getComponent(), event.getX(), event.getY());
 	}
 
@@ -989,6 +1004,61 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				if (returncode != null && returncode == 0) {
 					for (final LanguageProperty languageProperty : languageProperties) {
 						languageProperty.setComment(null);
+					}
+					hasUnsavedChanges = true;
+					setupTable();
+				}
+			}
+		} catch (final Exception ex) {
+			showError(ex);
+		}
+		checkButtonStatus();
+	}
+
+	/**
+	 * Removes the paths of all properties (context menu of the path column).
+	 * Properties without a path get a new path on the next save.
+	 */
+	private void deleteAllPaths() {
+		try {
+			final long pathCount = languageProperties.stream().filter(languageProperty -> Utilities.isNotEmpty(languageProperty.getPath())).count();
+			if (pathCount > 0) {
+				// All paths are removed at once, so ask the user before doing it
+				final Integer returncode = new QuestionDialog(this, LangResources.get("question_title_delete_paths"), LangResources.get("question_content_delete_paths", pathCount), LangResources.get("yes"), LangResources.get("no")).open();
+				if (returncode != null && returncode == 0) {
+					for (final LanguageProperty languageProperty : languageProperties) {
+						// Empty string (not null) is the representation of "no path", which saveFiles() relies on
+						languageProperty.setPath("");
+					}
+					hasUnsavedChanges = true;
+					setupTable();
+				}
+			}
+		} catch (final Exception ex) {
+			showError(ex);
+		}
+		checkButtonStatus();
+	}
+
+	/**
+	 * Removes the values of one language from all properties, but keeps the
+	 * language itself (context menu of a language column).
+	 *
+	 * @param languageSign
+	 *            the language whose values are removed
+	 * @param languageDisplayName
+	 *            the name of the language as shown in the column header
+	 */
+	private void deleteAllLanguageValues(final String languageSign, final String languageDisplayName) {
+		try {
+			final long valueCount = languageProperties.stream().filter(languageProperty -> Utilities.isNotEmpty(languageProperty.getLanguageValue(languageSign))).count();
+			if (valueCount > 0) {
+				// All values of this language are removed at once, so ask the user before doing it
+				final Integer returncode = new QuestionDialog(this, LangResources.get("question_title_delete_language_values"), LangResources.get("question_content_delete_language_values", valueCount, languageDisplayName), LangResources.get("yes"), LangResources.get("no")).open();
+				if (returncode != null && returncode == 0) {
+					for (final LanguageProperty languageProperty : languageProperties) {
+						// A null value keeps the language sign registered (same as in addLanguage()), so the column stays
+						languageProperty.setLanguageValue(languageSign, null);
 					}
 					hasUnsavedChanges = true;
 					setupTable();
