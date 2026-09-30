@@ -308,6 +308,8 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		createIconButton(buttonSection1, "folderLoad.png", "tooltip_load_folder", e -> openFolder());
 		createIconButton(buttonSection1, "excelLoad.png", "tooltip_importExcel", e -> importFromExcel());
 		createIconButton(buttonSection1, "csvLoad.png", "tooltip_importCsv", e -> importFromCsv());
+		final JButton mergeImportButton = createIconButton(buttonSection1, "merge.png", "tooltip_mergeImport", null);
+		mergeImportButton.addActionListener(e -> showMergeImportMenu(mergeImportButton));
 		saveButton = createIconButton(buttonSection1, "save.png", "tooltip_save_files", e -> saveFiles());
 		folderSaveButton = createIconButton(buttonSection1, "folderSave.png", "tooltip_save_folder", e -> saveFolder());
 		exportToExcelButton = createIconButton(buttonSection1, "excelSave.png", "tooltip_exportExcel", e -> exportToExcel());
@@ -1508,12 +1510,43 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		return problems;
 	}
 
+	/**
+	 * Result of the error check of a set of properties
+	 */
+	private static class ErrorReport {
+		private final int issueCount;
+		private final String reportText;
+
+		private ErrorReport(final int issueCount, final String reportText) {
+			this.issueCount = issueCount;
+			this.reportText = reportText;
+		}
+	}
+
 	private void checkErrors() {
 		try {
-			final StringBuilder reportText = new StringBuilder();
-			int issueCount = 0;
+			final ErrorReport errorReport = createErrorReport(languageProperties);
+			if (errorReport.issueCount == 0) {
+				showMessage(LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("noErrorsFound"));
+			} else {
+				showData(LangResources.get("checkErrorsReportTitle"), LangResources.get("checkErrorsFound", errorReport.issueCount) + "\n\n" + errorReport.reportText);
+			}
+		} catch (final Exception ex) {
+			showError(ex);
+		}
+		checkButtonStatus();
+	}
 
-			for (final LanguageProperty languageProperty : languageProperties) {
+	/**
+	 * Read-only check of the given properties for encoding errors and invalid keys.
+	 * Used by the "check errors" button and after a merge import for the imported properties.
+	 */
+	private static ErrorReport createErrorReport(final Collection<LanguageProperty> propertiesToCheck) {
+		final StringBuilder reportText = new StringBuilder();
+		int issueCount = 0;
+
+		if (propertiesToCheck != null) {
+			for (final LanguageProperty languageProperty : propertiesToCheck) {
 				final List<String> entryProblems = new ArrayList<>();
 
 				final String key = languageProperty.getKey();
@@ -1550,16 +1583,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					}
 				}
 			}
-
-			if (issueCount == 0) {
-				showMessage(LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("noErrorsFound"));
-			} else {
-				showData(LangResources.get("checkErrorsReportTitle"), LangResources.get("checkErrorsFound", issueCount) + "\n\n" + reportText.toString());
-			}
-		} catch (final Exception ex) {
-			showError(ex);
 		}
-		checkButtonStatus();
+
+		return new ErrorReport(issueCount, reportText.toString());
 	}
 
 	private void showStatistics() {
@@ -2060,34 +2086,43 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	}
 
 	private boolean loadSingleLanguagePropertiesSet(final String filePath) throws ExecutionException {
-		final File languagePropertiesFile = new File(filePath);
-		if (!languagePropertiesFile.getName().endsWith(applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION))) {
+		if (!hasLanguagePropertiesFileExtension(filePath)) {
 			showErrorMessage(LangResources.get("open_file_dialog_text"), LangResources.get("missingMandatoryFileExtension", applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION)));
 			return false;
+		}
+
+		final LoadedLanguageProperties loadedLanguageProperties = readSingleLanguagePropertiesSet(filePath);
+		if (loadedLanguageProperties == null) {
+			showErrorMessage(LangResources.get("open_file_dialog_text"), LangResources.get("canceledByUser"));
+			return false;
 		} else {
-			final LoadLanguagePropertiesWorker openFilesLanguagePropertiesWorker = new LoadLanguagePropertiesWorker(null, languagePropertiesFile, null, applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION));
-			openFilesLanguagePropertiesWorker.setReadComments(!applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS));
-			final ProgressDialog<LoadLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(this, LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("openFilesResult"), openFilesLanguagePropertiesWorker);
-			final Result dialogResult = progressDialog.open();
-			if (dialogResult == Result.CANCELED) {
-				showErrorMessage(LangResources.get("open_file_dialog_text"), LangResources.get("canceledByUser"));
-				return false;
-			} else {
-				// check for errors
-				openFilesLanguagePropertiesWorker.get();
+			takeOverLoadedLanguageProperties(loadedLanguageProperties);
+			showMessage(LangResources.get("directory_dialog_title"), LangResources.get("openFilesResult", filePath, languageProperties.size(), Utilities.join(availableLanguageSigns, ", ")));
+			return true;
+		}
+	}
 
-				languageProperties = openFilesLanguagePropertiesWorker.getLanguageProperties();
-				availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT);
-				final List<String> loadedLanguagePropertiesSetNames = openFilesLanguagePropertiesWorker.getLanguagePropertiesSetNames();
-				if (loadedLanguagePropertiesSetNames.size() == 1) {
-					setLanguagePropertiesSetName(loadedLanguagePropertiesSetNames.get(0));
-				} else {
-					setLanguagePropertiesSetName("Multiple");
-				}
+	private boolean hasLanguagePropertiesFileExtension(final String filePath) {
+		return new File(filePath).getName().endsWith(applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION));
+	}
 
-				showMessage(LangResources.get("directory_dialog_title"), LangResources.get("openFilesResult", filePath, languageProperties.size(), Utilities.join(availableLanguageSigns, ", ")));
-				return true;
-			}
+	/**
+	 * Reads a single language properties set without changing the currently loaded data.
+	 *
+	 * @return the read properties or null if canceled by the user
+	 */
+	private LoadedLanguageProperties readSingleLanguagePropertiesSet(final String filePath) throws ExecutionException {
+		final LoadLanguagePropertiesWorker openFilesLanguagePropertiesWorker = new LoadLanguagePropertiesWorker(null, new File(filePath), null, applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION));
+		openFilesLanguagePropertiesWorker.setReadComments(!applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS));
+		final ProgressDialog<LoadLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(this, LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("openFilesResult"), openFilesLanguagePropertiesWorker);
+		final Result dialogResult = progressDialog.open();
+		if (dialogResult == Result.CANCELED) {
+			return null;
+		} else {
+			// check for errors
+			openFilesLanguagePropertiesWorker.get();
+
+			return LoadedLanguageProperties.ofPropertiesSets(openFilesLanguagePropertiesWorker.getLanguageProperties(), openFilesLanguagePropertiesWorker.getLanguagePropertiesSetNames(), filePath);
 		}
 	}
 
@@ -2114,30 +2149,45 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	}
 
 	private boolean openAllLanguagePropertiesSets(final String basicDirectoryPath) throws ExecutionException {
+		final LoadedLanguageProperties loadedLanguageProperties = readAllLanguagePropertiesSets(basicDirectoryPath);
+		if (loadedLanguageProperties == null) {
+			showErrorMessage(LangResources.get("open_directory_dialog_text"), LangResources.get("canceledByUser"));
+			return false;
+		} else {
+			takeOverLoadedLanguageProperties(loadedLanguageProperties);
+			showMessage(LangResources.get("directory_dialog_title"), LangResources.get("openDirectoryResult", basicDirectoryPath, loadedLanguageProperties.languagePropertiesSetNames.size(), languageProperties.size(), Utilities.join(availableLanguageSigns, ", ")));
+			return true;
+		}
+	}
+
+	/**
+	 * Reads all language properties sets of a directory without changing the currently loaded data.
+	 *
+	 * @return the read properties or null if canceled by the user
+	 */
+	private LoadedLanguageProperties readAllLanguagePropertiesSets(final String basicDirectoryPath) throws ExecutionException {
 		final String[] excludeParts = applicationConfiguration.get(LanguagePropertiesManager.CONFIG_OPEN_DIR_EXCLUDES).split(";");
 		final LoadLanguagePropertiesWorker openFolderLanguagePropertiesWorker = new LoadLanguagePropertiesWorker(null, new File(basicDirectoryPath), excludeParts, applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION));
 		openFolderLanguagePropertiesWorker.setReadComments(!applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS));
 		final ProgressDialog<LoadLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(this, LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("load_folder"), openFolderLanguagePropertiesWorker);
 		final Result dialogResult = progressDialog.open();
 		if (dialogResult == Result.CANCELED) {
-			showErrorMessage(LangResources.get("open_directory_dialog_text"), LangResources.get("canceledByUser"));
-			return false;
+			return null;
 		} else {
 			// check for errors
 			openFolderLanguagePropertiesWorker.get();
 
-			languageProperties = openFolderLanguagePropertiesWorker.getLanguageProperties();
-			availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT);
-			final List<String> loadedLanguagePropertiesSetNames = openFolderLanguagePropertiesWorker.getLanguagePropertiesSetNames();
-			if (loadedLanguagePropertiesSetNames.size() == 1) {
-				setLanguagePropertiesSetName(loadedLanguagePropertiesSetNames.get(0));
-			} else {
-				setLanguagePropertiesSetName("Multiple");
-			}
-
-			showMessage(LangResources.get("directory_dialog_title"), LangResources.get("openDirectoryResult", basicDirectoryPath, loadedLanguagePropertiesSetNames.size(), languageProperties.size(), Utilities.join(availableLanguageSigns, ", ")));
-			return true;
+			return LoadedLanguageProperties.ofPropertiesSets(openFolderLanguagePropertiesWorker.getLanguageProperties(), openFolderLanguagePropertiesWorker.getLanguagePropertiesSetNames(), basicDirectoryPath);
 		}
+	}
+
+	/**
+	 * Replaces the currently loaded data by the given loaded data.
+	 */
+	private void takeOverLoadedLanguageProperties(final LoadedLanguageProperties loadedLanguageProperties) {
+		languageProperties = loadedLanguageProperties.languageProperties;
+		availableLanguageSigns = loadedLanguageProperties.availableLanguageSigns;
+		setLanguagePropertiesSetName(loadedLanguageProperties.getCombinedSetName());
 	}
 
 	private void setLanguagePropertiesSetName(final String newLanguagePropertySetName) {
@@ -2376,38 +2426,60 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 	private void importFromExcel() {
 		importFromFile(new String[] { "xlsx" }, file -> {
-			final ImportFromExcelWorker importFromExcelWorker = new ImportFromExcelWorker(null, file);
-			importFromExcelWorker.setIgnoreComments(applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS));
-			final Result dialogResult = new ProgressDialog<>(this, LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("import_file"), importFromExcelWorker).open();
-			if (dialogResult == Result.CANCELED) {
+			final LoadedLanguageProperties loadedLanguageProperties = readFromExcel(file);
+			if (loadedLanguageProperties == null) {
 				return false;
 			}
-			// check for errors
-			importFromExcelWorker.get();
-
-			setLanguagePropertiesSetName(importFromExcelWorker.getLanguagePropertiesSetName());
-			languageProperties = importFromExcelWorker.getLanguageProperties();
-			availableLanguageSigns = importFromExcelWorker.getAvailableLanguageSigns();
+			takeOverLoadedLanguageProperties(loadedLanguageProperties);
 			return true;
 		});
 	}
 
 	private void importFromCsv() {
 		importFromFile(new String[] { "csv", "dsv" }, file -> {
-			final ImportFromCsvWorker importFromCsvWorker = new ImportFromCsvWorker(null, file);
-			importFromCsvWorker.setIgnoreComments(applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS));
-			final Result dialogResult = new ProgressDialog<>(this, LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("import_file"), importFromCsvWorker).open();
-			if (dialogResult == Result.CANCELED) {
+			final LoadedLanguageProperties loadedLanguageProperties = readFromCsv(file);
+			if (loadedLanguageProperties == null) {
 				return false;
 			}
-			// check for errors
-			importFromCsvWorker.get();
-
-			setLanguagePropertiesSetName(importFromCsvWorker.getLanguagePropertiesSetName());
-			languageProperties = importFromCsvWorker.getLanguageProperties();
-			availableLanguageSigns = importFromCsvWorker.getAvailableLanguageSigns();
+			takeOverLoadedLanguageProperties(loadedLanguageProperties);
 			return true;
 		});
+	}
+
+	/**
+	 * Reads an Excel file without changing the currently loaded data.
+	 *
+	 * @return the read properties or null if canceled by the user
+	 */
+	private LoadedLanguageProperties readFromExcel(final File file) throws Exception {
+		final ImportFromExcelWorker importFromExcelWorker = new ImportFromExcelWorker(null, file);
+		importFromExcelWorker.setIgnoreComments(applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS));
+		final Result dialogResult = new ProgressDialog<>(this, LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("import_file"), importFromExcelWorker).open();
+		if (dialogResult == Result.CANCELED) {
+			return null;
+		}
+		// check for errors
+		importFromExcelWorker.get();
+
+		return LoadedLanguageProperties.ofSingleSet(importFromExcelWorker.getLanguageProperties(), importFromExcelWorker.getAvailableLanguageSigns(), importFromExcelWorker.getLanguagePropertiesSetName(), file.getAbsolutePath());
+	}
+
+	/**
+	 * Reads a CSV file without changing the currently loaded data.
+	 *
+	 * @return the read properties or null if canceled by the user
+	 */
+	private LoadedLanguageProperties readFromCsv(final File file) throws Exception {
+		final ImportFromCsvWorker importFromCsvWorker = new ImportFromCsvWorker(null, file);
+		importFromCsvWorker.setIgnoreComments(applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS));
+		final Result dialogResult = new ProgressDialog<>(this, LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("import_file"), importFromCsvWorker).open();
+		if (dialogResult == Result.CANCELED) {
+			return null;
+		}
+		// check for errors
+		importFromCsvWorker.get();
+
+		return LoadedLanguageProperties.ofSingleSet(importFromCsvWorker.getLanguageProperties(), importFromCsvWorker.getAvailableLanguageSigns(), importFromCsvWorker.getLanguagePropertiesSetName(), file.getAbsolutePath());
 	}
 
 	/**
@@ -2460,6 +2532,644 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			setupTable();
 		}
 		checkButtonStatus();
+	}
+
+	/**
+	 * Language properties read by one of the load/import sources, not yet taken
+	 * over into the currently loaded data.
+	 */
+	private static class LoadedLanguageProperties {
+		private final List<LanguageProperty> languageProperties;
+		private final List<String> availableLanguageSigns;
+		private final List<String> languagePropertiesSetNames;
+		/** File or directory the properties were read from, only for display */
+		private final String sourceDescription;
+
+		private LoadedLanguageProperties(final List<LanguageProperty> languageProperties, final List<String> availableLanguageSigns, final List<String> languagePropertiesSetNames, final String sourceDescription) {
+			this.languageProperties = languageProperties == null ? new ArrayList<>() : languageProperties;
+			this.availableLanguageSigns = availableLanguageSigns == null ? new ArrayList<>() : availableLanguageSigns;
+			this.languagePropertiesSetNames = languagePropertiesSetNames == null ? new ArrayList<>() : languagePropertiesSetNames;
+			this.sourceDescription = sourceDescription;
+		}
+
+		/**
+		 * For properties read from properties files, the language signs are determined from the properties
+		 */
+		private static LoadedLanguageProperties ofPropertiesSets(final List<LanguageProperty> languageProperties, final List<String> languagePropertiesSetNames, final String sourceDescription) {
+			final List<LanguageProperty> properties = languageProperties == null ? new ArrayList<>() : languageProperties;
+			final List<String> languageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(properties), LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT);
+			return new LoadedLanguageProperties(properties, languageSigns, languagePropertiesSetNames, sourceDescription);
+		}
+
+		/**
+		 * For properties read from an Excel or CSV file, which delivers its language signs and set name itself
+		 */
+		private static LoadedLanguageProperties ofSingleSet(final List<LanguageProperty> languageProperties, final List<String> availableLanguageSigns, final String languagePropertiesSetName, final String sourceDescription) {
+			final List<String> setNames = new ArrayList<>();
+			setNames.add(languagePropertiesSetName);
+			return new LoadedLanguageProperties(languageProperties, availableLanguageSigns, setNames, sourceDescription);
+		}
+
+		private String getCombinedSetName() {
+			if (languagePropertiesSetNames.isEmpty()) {
+				return null;
+			} else if (languagePropertiesSetNames.size() == 1) {
+				return languagePropertiesSetNames.get(0);
+			} else {
+				return "Multiple";
+			}
+		}
+	}
+
+	/**
+	 * Source of a merge import. Returns null if the user canceled, in which case
+	 * the source has already informed the user.
+	 */
+	@FunctionalInterface
+	private interface MergeImportSource {
+		LoadedLanguageProperties read() throws Exception;
+	}
+
+	/**
+	 * How conflicts between existing and imported values are resolved
+	 */
+	private enum MergeMode {
+		/** Add new keys and fill empty values, keep existing non-empty values */
+		ADD_NEW,
+		/** Add new keys, fill empty values and overwrite differing existing values */
+		OVERWRITE,
+		/** Do not add new keys, only fill empty values of existing keys */
+		FILL_EMPTY_ONLY
+	}
+
+	/**
+	 * Planned handling of one imported property
+	 */
+	private static class MergePlanEntry {
+		private final LanguageProperty importedProperty;
+		/** Existing property to merge the values into, or null if the imported property is added as new property */
+		private final LanguageProperty targetProperty;
+		/** Path a new property gets, only used if targetProperty is null */
+		private final String pathForNewProperty;
+		/** Whether a new property keeps a path that does not belong to the currently loaded properties sets */
+		private final boolean foreignPath;
+
+		private MergePlanEntry(final LanguageProperty importedProperty, final LanguageProperty targetProperty, final String pathForNewProperty, final boolean foreignPath) {
+			this.importedProperty = importedProperty;
+			this.targetProperty = targetProperty;
+			this.pathForNewProperty = pathForNewProperty;
+			this.foreignPath = foreignPath;
+		}
+	}
+
+	/**
+	 * Analysis of a merge import before anything is changed. The counts are shown
+	 * to the user to decide how conflicts are resolved.
+	 */
+	private static class MergePlan {
+		private final List<MergePlanEntry> entries = new ArrayList<>();
+		private final List<String> skippedEntries = new ArrayList<>();
+		private int newPropertyCount = 0;
+		private int matchedPropertyCount = 0;
+		private int propertiesWithDifferencesCount = 0;
+		private int differingValueCount = 0;
+		private int fillableValueCount = 0;
+
+		private boolean hasNothingToDo() {
+			return newPropertyCount == 0 && differingValueCount == 0 && fillableValueCount == 0;
+		}
+	}
+
+	/**
+	 * Changes done by a merge import, for the final report
+	 */
+	private static class MergeResult {
+		private final List<String> addedProperties = new ArrayList<>();
+		private final List<String> addedPropertiesWithForeignPath = new ArrayList<>();
+		private final List<String> notAddedProperties = new ArrayList<>();
+		private final List<String> filledValues = new ArrayList<>();
+		private final List<String> overwrittenValues = new ArrayList<>();
+		private final List<String> keptDifferingValues = new ArrayList<>();
+		private final List<String> newLanguageSigns = new ArrayList<>();
+
+		/** Added or changed properties in order of their change, tracked by identity */
+		private final List<LanguageProperty> changedProperties = new ArrayList<>();
+		private final Set<LanguageProperty> changedPropertiesSet = Collections.newSetFromMap(new IdentityHashMap<>());
+
+		private void markChanged(final LanguageProperty languageProperty) {
+			if (changedPropertiesSet.add(languageProperty)) {
+				changedProperties.add(languageProperty);
+			}
+		}
+
+		private boolean hasChanges() {
+			return !changedProperties.isEmpty();
+		}
+	}
+
+	/**
+	 * Shows the menu of sources for a merge import below the merge import button.
+	 */
+	private void showMergeImportMenu(final JButton invoker) {
+		try {
+			final JPopupMenu mergeImportMenu = new JPopupMenu();
+			addMergeImportMenuItem(mergeImportMenu, "clock.png", "mergeImport_fromRecent", recentlyOpenedDirectories != null && recentlyOpenedDirectories.size() > 0, () -> mergeImport(this::readMergeImportFromRecent));
+			addMergeImportMenuItem(mergeImportMenu, "load.png", "mergeImport_fromFile", true, () -> mergeImport(this::readMergeImportFromFile));
+			addMergeImportMenuItem(mergeImportMenu, "folderLoad.png", "mergeImport_fromFolder", true, () -> mergeImport(this::readMergeImportFromFolder));
+			addMergeImportMenuItem(mergeImportMenu, "excelLoad.png", "mergeImport_fromExcel", true, () -> mergeImport(() -> readMergeImportFromDataFile(this::readFromExcel, "xlsx")));
+			addMergeImportMenuItem(mergeImportMenu, "csvLoad.png", "mergeImport_fromCsv", true, () -> mergeImport(() -> readMergeImportFromDataFile(this::readFromCsv, "csv", "dsv")));
+			mergeImportMenu.show(invoker, 0, invoker.getHeight());
+		} catch (final Exception e) {
+			showError(e);
+		}
+	}
+
+	private static void addMergeImportMenuItem(final JPopupMenu menu, final String imageName, final String textKey, final boolean enabled, final Runnable action) throws Exception {
+		final JMenuItem menuItem = new JMenuItem(LangResources.get(textKey), ImageManager.getImage(imageName));
+		menuItem.setEnabled(enabled);
+		menuItem.addActionListener(e -> action.run());
+		menu.add(menuItem);
+	}
+
+	private LoadedLanguageProperties readMergeImportFromRecent() throws Exception {
+		final ComboSelectionDialog dialog = new ComboSelectionDialog(this, getTitle() + " " + LangResources.get("mergeImport_title"), LangResources.get("recent_directories_dialog_text"), recentlyOpenedDirectories, getLastEntryIndex(recentlyOpenedDirectories)).withSize(600, -1);
+		final String filePath = dialog.open();
+
+		// Take over a possible reordering (drag&drop) or deletion of the recent directories done in the dialog
+		recentlyOpenedDirectories.clear();
+		recentlyOpenedDirectories.addAll(dialog.getItems());
+		applicationConfiguration.set(LanguagePropertiesManager.CONFIG_RECENT_PROPERTIES, recentlyOpenedDirectories);
+		checkButtonStatus();
+
+		if (filePath == null) {
+			showErrorMessage(LangResources.get("mergeImport_title"), LangResources.get("canceledByUser"));
+			return null;
+		} else if (!new File(filePath).exists()) {
+			showErrorMessage(LangResources.get("mergeImport_title"), LangResources.get("error.recentPathDoesNotExistAnymore", filePath));
+			return null;
+		} else if (new File(filePath).isDirectory()) {
+			return readMergeImportResult(readAllLanguagePropertiesSets(filePath));
+		} else if (!hasLanguagePropertiesFileExtension(filePath)) {
+			showErrorMessage(LangResources.get("mergeImport_title"), LangResources.get("missingMandatoryFileExtension", applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION)));
+			return null;
+		} else {
+			return readMergeImportResult(readSingleLanguagePropertiesSet(filePath));
+		}
+	}
+
+	private LoadedLanguageProperties readMergeImportFromFile() throws Exception {
+		final File file = chooseFileToOpen(getTitle() + " " + LangResources.get("mergeImport_title"), recentlyOpenedDirectories.getLatestAdded());
+		if (file == null) {
+			showErrorMessage(LangResources.get("mergeImport_title"), LangResources.get("canceledByUser"));
+			return null;
+		} else if (!file.isFile()) {
+			throw new Exception("Selected language properties set path is not an existing file");
+		} else if (!hasLanguagePropertiesFileExtension(file.getAbsolutePath())) {
+			showErrorMessage(LangResources.get("mergeImport_title"), LangResources.get("missingMandatoryFileExtension", applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION)));
+			return null;
+		} else {
+			return readMergeImportResult(readSingleLanguagePropertiesSet(file.getAbsolutePath()));
+		}
+	}
+
+	private LoadedLanguageProperties readMergeImportFromFolder() throws Exception {
+		final File directory = chooseDirectory(getTitle() + " " + LangResources.get("mergeImport_title"), recentlyOpenedDirectories.getLatestAdded());
+		if (directory == null) {
+			showErrorMessage(LangResources.get("mergeImport_title"), LangResources.get("canceledByUser"));
+			return null;
+		} else if (!directory.isDirectory()) {
+			throw new Exception("Selected language properties directory is not an existing directory");
+		} else {
+			return readMergeImportResult(readAllLanguagePropertiesSets(directory.getAbsolutePath()));
+		}
+	}
+
+	/**
+	 * Reader of an Excel or CSV file
+	 */
+	@FunctionalInterface
+	private interface DataFileReader {
+		LoadedLanguageProperties read(File file) throws Exception;
+	}
+
+	private LoadedLanguageProperties readMergeImportFromDataFile(final DataFileReader dataFileReader, final String... fileExtensions) throws Exception {
+		final File importFile = chooseFileToOpen(getTitle() + " " + LangResources.get("mergeImport_title"), Utilities.replaceUsersHome("~" + File.separator + "Downloads"), fileExtensions);
+		if (importFile == null) {
+			showErrorMessage(LangResources.get("mergeImport_title"), LangResources.get("canceledByUser"));
+			return null;
+		} else {
+			return readMergeImportResult(dataFileReader.read(importFile));
+		}
+	}
+
+	/**
+	 * Shows the cancel message, if reading was canceled in the progress dialog
+	 */
+	private LoadedLanguageProperties readMergeImportResult(final LoadedLanguageProperties loadedLanguageProperties) {
+		if (loadedLanguageProperties == null) {
+			showErrorMessage(LangResources.get("mergeImport_title"), LangResources.get("canceledByUser"));
+		}
+		return loadedLanguageProperties;
+	}
+
+	/**
+	 * Imports additional properties into the currently loaded properties without
+	 * discarding them. Errors while reading leave the loaded data unchanged.
+	 */
+	private void mergeImport(final MergeImportSource mergeImportSource) {
+		// Unapplied changes in the detail fields would get lost by the changed selection after the import
+		if (dataWasModified && !askForDiscardChanges()) {
+			return;
+		}
+
+		try {
+			final LoadedLanguageProperties loadedLanguageProperties = mergeImportSource.read();
+			if (loadedLanguageProperties != null) {
+				mergeLoadedLanguageProperties(loadedLanguageProperties);
+			}
+		} catch (final ExecutionException e) {
+			if (e.getCause() != null && e.getCause() instanceof LanguagePropertiesException) {
+				showErrorMessage(LanguagePropertiesManager.APPLICATION_NAME, e.getCause().getMessage());
+			} else {
+				showError(e);
+			}
+		} catch (final Exception e) {
+			showError(e);
+		}
+		checkButtonStatus();
+	}
+
+	private void mergeLoadedLanguageProperties(final LoadedLanguageProperties loadedLanguageProperties) {
+		final List<LanguageProperty> importedProperties = loadedLanguageProperties.languageProperties;
+		if (importedProperties.isEmpty()) {
+			showMessage(LangResources.get("mergeImport_title"), LangResources.get("mergeImport_nothingFound", loadedLanguageProperties.sourceDescription));
+			return;
+		}
+
+		final boolean noDataLoadedYet = languageProperties == null;
+		final MergePlan mergePlan = createMergePlan(noDataLoadedYet ? new ArrayList<>() : languageProperties, importedProperties);
+		if (mergePlan.hasNothingToDo()) {
+			String message = LangResources.get("mergeImport_nothingToImport", loadedLanguageProperties.sourceDescription);
+			if (!mergePlan.skippedEntries.isEmpty()) {
+				message += "\n\n" + LangResources.get("mergeImport_section_skipped") + ":\n" + Utilities.join(mergePlan.skippedEntries, "\n");
+			}
+			showData(LangResources.get("mergeImport_title"), message);
+			return;
+		}
+
+		// Only ask, if there are real conflicts. Without conflicts, all modes except FILL_EMPTY_ONLY have the same result.
+		MergeMode mergeMode = MergeMode.ADD_NEW;
+		if (mergePlan.differingValueCount > 0) {
+			final Integer returncode = new QuestionDialog(this, LangResources.get("mergeImport_title"),
+					LangResources.get("mergeImport_question", loadedLanguageProperties.sourceDescription, mergePlan.newPropertyCount, mergePlan.matchedPropertyCount, mergePlan.propertiesWithDifferencesCount, mergePlan.differingValueCount, mergePlan.fillableValueCount, mergePlan.skippedEntries.size()),
+					LangResources.get("mergeImport_mode_addNew"),
+					LangResources.get("mergeImport_mode_overwrite"),
+					LangResources.get("mergeImport_mode_fillEmptyOnly"),
+					LangResources.get("cancel")).open();
+			if (returncode != null && returncode == 0) {
+				mergeMode = MergeMode.ADD_NEW;
+			} else if (returncode != null && returncode == 1) {
+				mergeMode = MergeMode.OVERWRITE;
+			} else if (returncode != null && returncode == 2) {
+				mergeMode = MergeMode.FILL_EMPTY_ONLY;
+			} else {
+				showErrorMessage(LangResources.get("mergeImport_title"), LangResources.get("canceledByUser"));
+				return;
+			}
+		}
+
+		if (noDataLoadedYet) {
+			languageProperties = new ArrayList<>();
+			availableLanguageSigns = new ArrayList<>();
+			setLanguagePropertiesSetName(loadedLanguageProperties.getCombinedSetName());
+		}
+		final Set<String> previousLanguageSigns = new HashSet<>(availableLanguageSigns);
+
+		final MergeResult mergeResult = applyMergePlan(mergePlan, mergeMode);
+
+		// Every property knows every language sign afterwards, like after addLanguage()
+		availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT);
+		for (final LanguageProperty languageProperty : languageProperties) {
+			for (final String languageSign : availableLanguageSigns) {
+				if (!languageProperty.getAvailableLanguageSigns().contains(languageSign)) {
+					languageProperty.setLanguageValue(languageSign, null);
+				}
+			}
+		}
+		if (!noDataLoadedYet) {
+			for (final String languageSign : availableLanguageSigns) {
+				if (!previousLanguageSigns.contains(languageSign)) {
+					mergeResult.newLanguageSigns.add(languageSign);
+				}
+			}
+		}
+
+		if (mergeResult.hasChanges()) {
+			hasUnsavedChanges = true;
+		}
+
+		// Select the added and changed properties, so they can be reviewed or translated directly
+		currentSelectedProperties = new ArrayList<>(mergeResult.changedProperties);
+		setupTable();
+		refreshDetailView();
+		checkButtonStatus();
+
+		// The imported file may use another encoding, so check the imported part right away
+		final ErrorReport errorReport = createErrorReport(importedProperties);
+
+		showData(LangResources.get("mergeImport_resultTitle"), createMergeReport(loadedLanguageProperties.sourceDescription, mergeMode, mergePlan, mergeResult, errorReport));
+	}
+
+	/**
+	 * Determines for every imported property, whether it matches an existing
+	 * property, and counts the conflicts. Nothing is changed here.
+	 */
+	private static MergePlan createMergePlan(final List<LanguageProperty> existingProperties, final List<LanguageProperty> importedProperties) {
+		final MergePlan mergePlan = new MergePlan();
+
+		final Map<String, List<LanguageProperty>> existingPropertiesByKey = new HashMap<>();
+		final Set<String> existingPaths = new HashSet<>();
+		for (final LanguageProperty existingProperty : existingProperties) {
+			existingPropertiesByKey.computeIfAbsent(getEmptyForNull(existingProperty.getKey()), k -> new ArrayList<>()).add(existingProperty);
+			existingPaths.add(getEmptyForNull(existingProperty.getPath()));
+		}
+
+		final Set<String> newPathsAndKeys = new HashSet<>();
+		for (final LanguageProperty importedProperty : importedProperties) {
+			final String key = importedProperty.getKey();
+			if (Utilities.isBlank(key)) {
+				mergePlan.skippedEntries.add(LangResources.get("mergeImport_skippedEmptyKey", getEmptyForNull(importedProperty.getPath())));
+				continue;
+			}
+
+			final List<LanguageProperty> candidates = findMergeCandidates(importedProperty, existingPropertiesByKey.get(key));
+			if (candidates.size() > 1) {
+				mergePlan.skippedEntries.add(getPropertyDisplayName(importedProperty.getPath(), key) + ": " + LangResources.get("mergeImport_skippedAmbiguous", candidates.size()));
+			} else if (candidates.size() == 1) {
+				final LanguageProperty targetProperty = candidates.get(0);
+				mergePlan.entries.add(new MergePlanEntry(importedProperty, targetProperty, null, false));
+				mergePlan.matchedPropertyCount++;
+
+				int differingValuesOfProperty = 0;
+				for (final String languageSign : importedProperty.getAvailableLanguageSigns()) {
+					final String importedValue = importedProperty.getLanguageValue(languageSign);
+					if (Utilities.isNotEmpty(importedValue)) {
+						final String existingValue = targetProperty.getLanguageValue(languageSign);
+						if (Utilities.isEmpty(existingValue)) {
+							mergePlan.fillableValueCount++;
+						} else if (!existingValue.equals(importedValue)) {
+							differingValuesOfProperty++;
+						}
+					}
+				}
+				if (Utilities.isNotEmpty(importedProperty.getComment())) {
+					if (Utilities.isEmpty(targetProperty.getComment())) {
+						mergePlan.fillableValueCount++;
+					} else if (!targetProperty.getComment().equals(importedProperty.getComment())) {
+						differingValuesOfProperty++;
+					}
+				}
+				if (differingValuesOfProperty > 0) {
+					mergePlan.propertiesWithDifferencesCount++;
+					mergePlan.differingValueCount += differingValuesOfProperty;
+				}
+			} else {
+				final String pathForNewProperty = determinePathForNewProperty(getEmptyForNull(importedProperty.getPath()), existingPaths);
+				final boolean foreignPath = !existingPaths.isEmpty() && !existingPaths.contains(pathForNewProperty);
+				mergePlan.entries.add(new MergePlanEntry(importedProperty, null, pathForNewProperty, foreignPath));
+				// Duplicates within the imported data are merged into the first occurrence later
+				if (newPathsAndKeys.add(pathForNewProperty + "\u0000" + key)) {
+					mergePlan.newPropertyCount++;
+				}
+			}
+		}
+
+		return mergePlan;
+	}
+
+	/**
+	 * Existing properties, an imported property with the same key is merged into.
+	 * An existing property with the same path wins. Otherwise properties of a set
+	 * with the same set name (e.g. a copy or export of the set in another
+	 * directory) match, as well as properties without path information on one
+	 * side. More than one returned candidate means the match is ambiguous.
+	 */
+	private static List<LanguageProperty> findMergeCandidates(final LanguageProperty importedProperty, final List<LanguageProperty> existingPropertiesWithSameKey) {
+		if (existingPropertiesWithSameKey == null || existingPropertiesWithSameKey.isEmpty()) {
+			return new ArrayList<>();
+		}
+
+		final String importedPath = getEmptyForNull(importedProperty.getPath());
+		final List<LanguageProperty> samePathCandidates = existingPropertiesWithSameKey.stream()
+				.filter(existingProperty -> importedPath.equals(getEmptyForNull(existingProperty.getPath())))
+				.collect(Collectors.toList());
+		if (!samePathCandidates.isEmpty()) {
+			return reduceToFirstOfSinglePath(samePathCandidates);
+		}
+
+		final String importedSetName = getLanguagePropertiesSetNameOfPath(importedPath);
+		final List<LanguageProperty> sameSetNameCandidates = existingPropertiesWithSameKey.stream()
+				.filter(existingProperty -> {
+					final String existingSetName = getLanguagePropertiesSetNameOfPath(getEmptyForNull(existingProperty.getPath()));
+					return importedSetName.isEmpty() || existingSetName.isEmpty() || importedSetName.equals(existingSetName);
+				})
+				.collect(Collectors.toList());
+		return reduceToFirstOfSinglePath(sameSetNameCandidates);
+	}
+
+	/**
+	 * Duplicates of a key within the same path are no ambiguity: like in
+	 * removeDuplicates(), the one with the lowest original index is used.
+	 */
+	private static List<LanguageProperty> reduceToFirstOfSinglePath(final List<LanguageProperty> candidates) {
+		final Set<String> candidatePaths = candidates.stream().map(candidate -> getEmptyForNull(candidate.getPath())).collect(Collectors.toSet());
+		if (candidatePaths.size() == 1) {
+			final List<LanguageProperty> result = new ArrayList<>();
+			result.add(candidates.stream().min(Comparator.comparing(LanguageProperty::getOriginalIndex)).get());
+			return result;
+		} else {
+			return candidates;
+		}
+	}
+
+	/**
+	 * A new property is put into the matching loaded properties set, so saving
+	 * does not write into the files of the import source. If no unique matching
+	 * set exists, the property keeps the path of the import source.
+	 */
+	private static String determinePathForNewProperty(final String importedPath, final Set<String> existingPaths) {
+		if (existingPaths.contains(importedPath)) {
+			return importedPath;
+		}
+
+		final String importedSetName = getLanguagePropertiesSetNameOfPath(importedPath);
+		final List<String> matchingPaths = existingPaths.stream()
+				.filter(existingPath -> importedSetName.isEmpty() || importedSetName.equals(getLanguagePropertiesSetNameOfPath(existingPath)))
+				.collect(Collectors.toList());
+		if (matchingPaths.size() == 1) {
+			return matchingPaths.get(0);
+		} else {
+			return importedPath;
+		}
+	}
+
+	/**
+	 * Name of a properties set, which is the last part of its path (the path has no language sign and no file extension)
+	 */
+	private static String getLanguagePropertiesSetNameOfPath(final String path) {
+		if (Utilities.isBlank(path)) {
+			return "";
+		}
+		final String normalizedPath = path.replace('\\', '/');
+		return normalizedPath.substring(normalizedPath.lastIndexOf('/') + 1);
+	}
+
+	private static String getPropertyDisplayName(final String path, final String key) {
+		return "\"" + getEmptyForNull(path) + "\" / \"" + getEmptyForNull(key) + "\"";
+	}
+
+	private MergeResult applyMergePlan(final MergePlan mergePlan, final MergeMode mergeMode) {
+		final MergeResult mergeResult = new MergeResult();
+		final Map<String, LanguageProperty> addedPropertiesByPathAndKey = new HashMap<>();
+
+		for (final MergePlanEntry entry : mergePlan.entries) {
+			final LanguageProperty importedProperty = entry.importedProperty;
+			if (entry.targetProperty != null) {
+				mergeValues(importedProperty, entry.targetProperty, mergeMode == MergeMode.OVERWRITE, mergeResult);
+			} else if (mergeMode == MergeMode.FILL_EMPTY_ONLY) {
+				mergeResult.notAddedProperties.add(getPropertyDisplayName(importedProperty.getPath(), importedProperty.getKey()));
+			} else {
+				final String pathAndKey = entry.pathForNewProperty + "\u0000" + importedProperty.getKey();
+				final LanguageProperty alreadyAddedProperty = addedPropertiesByPathAndKey.get(pathAndKey);
+				if (alreadyAddedProperty != null) {
+					// Duplicate within the imported data: only take over values the first occurrence is still missing
+					mergeValues(importedProperty, alreadyAddedProperty, false, mergeResult);
+				} else {
+					importedProperty.setPath(entry.pathForNewProperty);
+					importedProperty.setOriginalIndex(languageProperties.size() + 1);
+					languageProperties.add(importedProperty);
+					addedPropertiesByPathAndKey.put(pathAndKey, importedProperty);
+					mergeResult.markChanged(importedProperty);
+
+					final String displayName = getPropertyDisplayName(importedProperty.getPath(), importedProperty.getKey());
+					mergeResult.addedProperties.add(displayName);
+					if (entry.foreignPath) {
+						mergeResult.addedPropertiesWithForeignPath.add(displayName);
+					}
+				}
+			}
+		}
+
+		return mergeResult;
+	}
+
+	/**
+	 * Takes over the non-empty values and the comment of the source property into
+	 * the target property. Empty target values are always filled, differing
+	 * non-empty target values are only overwritten if requested.
+	 */
+	private static void mergeValues(final LanguageProperty sourceProperty, final LanguageProperty targetProperty, final boolean overwriteDifferingValues, final MergeResult mergeResult) {
+		final String displayName = getPropertyDisplayName(targetProperty.getPath(), targetProperty.getKey());
+		boolean changed = false;
+
+		for (final String languageSign : sourceProperty.getAvailableLanguageSigns()) {
+			final String importedValue = sourceProperty.getLanguageValue(languageSign);
+			if (Utilities.isNotEmpty(importedValue)) {
+				final String existingValue = targetProperty.getLanguageValue(languageSign);
+				if (Utilities.isEmpty(existingValue)) {
+					targetProperty.setLanguageValue(languageSign, importedValue);
+					mergeResult.filledValues.add(displayName + " [" + languageSign + "]");
+					changed = true;
+				} else if (!existingValue.equals(importedValue)) {
+					if (overwriteDifferingValues) {
+						targetProperty.setLanguageValue(languageSign, importedValue);
+						mergeResult.overwrittenValues.add(displayName + " [" + languageSign + "]");
+						changed = true;
+					} else {
+						mergeResult.keptDifferingValues.add(displayName + " [" + languageSign + "]");
+					}
+				}
+			}
+		}
+
+		final String importedComment = sourceProperty.getComment();
+		if (Utilities.isNotEmpty(importedComment)) {
+			final String existingComment = targetProperty.getComment();
+			final String commentLabel = " [" + LangResources.get("comment") + "]";
+			if (Utilities.isEmpty(existingComment)) {
+				targetProperty.setComment(importedComment);
+				mergeResult.filledValues.add(displayName + commentLabel);
+				changed = true;
+			} else if (!existingComment.equals(importedComment)) {
+				if (overwriteDifferingValues) {
+					targetProperty.setComment(importedComment);
+					mergeResult.overwrittenValues.add(displayName + commentLabel);
+					changed = true;
+				} else {
+					mergeResult.keptDifferingValues.add(displayName + commentLabel);
+				}
+			}
+		}
+
+		if (changed) {
+			mergeResult.markChanged(targetProperty);
+		}
+	}
+
+	private static String createMergeReport(final String sourceDescription, final MergeMode mergeMode, final MergePlan mergePlan, final MergeResult mergeResult, final ErrorReport errorReport) {
+		final StringBuilder reportText = new StringBuilder();
+		reportText.append(LangResources.get("mergeImport_resultSummary",
+				sourceDescription,
+				LangResources.get("mergeImport_mode_" + getMergeModeResourceSuffix(mergeMode)),
+				mergeResult.addedProperties.size(),
+				mergeResult.filledValues.size(),
+				mergeResult.overwrittenValues.size(),
+				mergeResult.keptDifferingValues.size(),
+				mergeResult.notAddedProperties.size(),
+				mergePlan.skippedEntries.size(),
+				mergeResult.newLanguageSigns.isEmpty() ? "-" : Utilities.join(mergeResult.newLanguageSigns, ", ")));
+
+		if (!mergeResult.addedPropertiesWithForeignPath.isEmpty()) {
+			reportText.append("\n\n").append(LangResources.get("mergeImport_warningForeignPath", mergeResult.addedPropertiesWithForeignPath.size()));
+		}
+
+		appendMergeReportSection(reportText, "mergeImport_section_added", mergeResult.addedProperties);
+		appendMergeReportSection(reportText, "mergeImport_section_filled", mergeResult.filledValues);
+		appendMergeReportSection(reportText, "mergeImport_section_overwritten", mergeResult.overwrittenValues);
+		appendMergeReportSection(reportText, "mergeImport_section_keptDiffering", mergeResult.keptDifferingValues);
+		appendMergeReportSection(reportText, "mergeImport_section_notAdded", mergeResult.notAddedProperties);
+		appendMergeReportSection(reportText, "mergeImport_section_skipped", mergePlan.skippedEntries);
+		appendMergeReportSection(reportText, "mergeImport_section_foreignPath", mergeResult.addedPropertiesWithForeignPath);
+
+		reportText.append("\n\n").append(LangResources.get("mergeImport_section_errorCheck")).append(":\n");
+		if (errorReport.issueCount == 0) {
+			reportText.append(LangResources.get("noErrorsFound"));
+		} else {
+			reportText.append(LangResources.get("checkErrorsFound", errorReport.issueCount)).append("\n\n").append(errorReport.reportText);
+		}
+
+		return reportText.toString();
+	}
+
+	private static String getMergeModeResourceSuffix(final MergeMode mergeMode) {
+		switch (mergeMode) {
+			case OVERWRITE:
+				return "overwrite";
+			case FILL_EMPTY_ONLY:
+				return "fillEmptyOnly";
+			case ADD_NEW:
+			default:
+				return "addNew";
+		}
+	}
+
+	private static void appendMergeReportSection(final StringBuilder reportText, final String titleKey, final List<String> lines) {
+		if (!lines.isEmpty()) {
+			reportText.append("\n\n").append(LangResources.get(titleKey)).append(" (").append(lines.size()).append("):\n");
+			for (final String line : lines) {
+				reportText.append("  ").append(line).append("\n");
+			}
+		}
 	}
 
 	private void exportToExcel() {
