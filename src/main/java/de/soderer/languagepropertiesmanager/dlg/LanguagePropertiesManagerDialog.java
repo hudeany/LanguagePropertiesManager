@@ -191,6 +191,12 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private boolean searchInKeysPreference = true;
 	private boolean searchInValuesPreference = false;
 	private boolean searchInPathPreference = false;
+	private boolean searchFilterPreference = false;
+	/**
+	 * Properties currently shown in the table: all "languageProperties", or only the search hits if the search filter is active.
+	 * Only changed in updateDisplayedProperties(), all table row indexes refer to this list.
+	 */
+	private List<LanguageProperty> displayedProperties = new ArrayList<>();
 	private JButton checkUsageButton;
 	private JButton checkUsageButtonPrevious;
 	private JButton addLanguageButton;
@@ -421,10 +427,13 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		});
 		searchTextField.getDocument().addDocumentListener(new SimpleDocumentListener(() -> {
 			final String text = searchTextField.getText();
-			if (Utilities.isNotEmpty(text) && !text.equals(LangResources.get("search")) && languageProperties != null) {
+			if (Utilities.isNotEmpty(text) && !text.equals(LangResources.get("search"))) {
 				searchText = text;
-				searchFromCurrentSelection();
+			} else {
+				// An empty search field must also remove the search filter
+				searchText = null;
 			}
+			searchParametersChanged();
 		}));
 		constraints.gridx = 0;
 		constraints.weightx = 1;
@@ -469,6 +478,8 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		searchBox.add(createSearchCheckBox(LangResources.get("value"), LangResources.get("value"), searchInValuesPreference, selected -> searchInValuesPreference = selected), constraints);
 		constraints.gridx++;
 		searchBox.add(createSearchCheckBox(LangResources.get("columnheader_path"), LangResources.get("columnheader_path"), searchInPathPreference, selected -> searchInPathPreference = selected), constraints);
+		constraints.gridx++;
+		searchBox.add(createSearchCheckBox(LangResources.get("search_filter"), LangResources.get("search_filter_tooltip"), searchFilterPreference, selected -> searchFilterPreference = selected), constraints);
 
 		return searchBox;
 	}
@@ -478,12 +489,72 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		checkBox.setToolTipText(toolTipText);
 		checkBox.addActionListener(e -> {
 			preferenceSetter.accept(checkBox.isSelected());
-			if (Utilities.isNotEmpty(searchText) && !searchText.equals(LangResources.get("search")) && languageProperties != null) {
-				searchFromCurrentSelection();
-			}
+			searchParametersChanged();
 		});
 		searchComponents.add(checkBox);
 		return checkBox;
+	}
+
+	/**
+	 * Called after the search text or one of the search options changed:
+	 * Updates the filtered table content (if the filter is or was active) and jumps to the next hit.
+	 */
+	private void searchParametersChanged() {
+		if (languageProperties == null) {
+			return;
+		}
+
+		// Refilter only if needed, so typing without active filter does not redraw the whole table
+		if (searchFilterPreference || displayedProperties != languageProperties) {
+			applySearchFilter();
+		}
+
+		if (Utilities.isNotEmpty(searchText)) {
+			searchFromCurrentSelection();
+		}
+	}
+
+	private boolean isSearchFilterActive() {
+		return searchFilterPreference && Utilities.isNotEmpty(searchText) && (searchInKeysPreference || searchInValuesPreference || searchInPathPreference);
+	}
+
+	/**
+	 * Recalculates the properties shown in the table.
+	 *
+	 * @param keepSelectedVisible
+	 *            Keep the currently selected properties visible even if they do not match the search anymore
+	 *            (e.g. after editing a value), so rows do not vanish while the user works on them
+	 */
+	private void updateDisplayedProperties(final boolean keepSelectedVisible) {
+		if (languageProperties == null) {
+			displayedProperties = new ArrayList<>();
+		} else if (!isSearchFilterActive()) {
+			displayedProperties = languageProperties;
+		} else {
+			final List<LanguageProperty> filteredProperties = new ArrayList<>();
+			for (final LanguageProperty languageProperty : languageProperties) {
+				if (matchesSearch(languageProperty, searchText, searchCaseInsensitivePreference, searchInKeysPreference, searchInValuesPreference, searchInPathPreference)
+						|| (keepSelectedVisible && indexOfIdentical(currentSelectedProperties, languageProperty) >= 0)) {
+					filteredProperties.add(languageProperty);
+				}
+			}
+			displayedProperties = filteredProperties;
+		}
+	}
+
+	/**
+	 * Filters the table by the current search parameters, previously selected rows that do not match are hidden
+	 */
+	private void applySearchFilter() {
+		updateDisplayedProperties(false);
+		technicalSelectionChange = true;
+		try {
+			propertiesTableModel.fireTableDataChanged();
+		} finally {
+			technicalSelectionChange = false;
+		}
+		restoreSelection(currentSelectedProperties);
+		checkButtonStatus();
 	}
 
 	/**
@@ -645,6 +716,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		sortAscending = true;
 		commentColumnShown = isCommentColumnWanted();
 
+		updateDisplayedProperties(true);
 		technicalSelectionChange = true;
 		try {
 			propertiesTableModel.fireTableStructureChanged();
@@ -1104,13 +1176,14 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	}
 
 	/**
-	 * The selected properties, or all properties if nothing is selected.
+	 * The selected properties, or all properties shown in the table if nothing is selected
+	 * (so with active search filter only the search hits).
 	 */
 	private List<LanguageProperty> getSelectedOrAllProperties() {
 		if (propertiesTable.getSelectedRowCount() > 0) {
 			return getSelectedProperties();
 		} else {
-			return languageProperties;
+			return displayedProperties;
 		}
 	}
 
@@ -3783,7 +3856,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	}
 
 	/**
-	 * Table model directly backed by "languageProperties". The language columns
+	 * Table model backed by "displayedProperties". The language columns
 	 * only show whether a value exists.
 	 */
 	private class LanguagePropertiesTableModel extends AbstractTableModel {
@@ -3791,7 +3864,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 		@Override
 		public int getRowCount() {
-			return languageProperties == null ? 0 : languageProperties.size();
+			return displayedProperties == null ? 0 : displayedProperties.size();
 		}
 
 		@Override
@@ -3836,7 +3909,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 		@Override
 		public Object getValueAt(final int row, final int column) {
-			final LanguageProperty languageProperty = languageProperties.get(row);
+			final LanguageProperty languageProperty = displayedProperties.get(row);
 			switch (column) {
 				case COLUMN_NR:
 					return row + 1;
@@ -3862,6 +3935,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	 * restores the selection of "currentSelectedProperties".
 	 */
 	private void refreshTable() {
+		updateDisplayedProperties(true);
 		technicalSelectionChange = true;
 		try {
 			propertiesTableModel.fireTableDataChanged();
@@ -3882,7 +3956,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			if (languageProperties != null && propertiesToSelect != null) {
 				int firstSelectedIndex = -1;
 				for (final LanguageProperty property : propertiesToSelect) {
-					final int index = indexOfIdentical(languageProperties, property);
+					final int index = indexOfIdentical(displayedProperties, property);
 					if (index >= 0) {
 						propertiesTable.addRowSelectionInterval(index, index);
 						if (firstSelectedIndex < 0 || index < firstSelectedIndex) {
@@ -3903,8 +3977,8 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		final List<LanguageProperty> returnList = new ArrayList<>();
 		if (languageProperties != null) {
 			for (final int selectedRow : propertiesTable.getSelectedRows()) {
-				if (selectedRow < languageProperties.size()) {
-					returnList.add(languageProperties.get(selectedRow));
+				if (selectedRow < displayedProperties.size()) {
+					returnList.add(displayedProperties.get(selectedRow));
 				}
 			}
 		}
@@ -3934,10 +4008,10 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 	private void selectSearch(final String text, int startIndex, final boolean searchUp, final boolean searchCaseInsensitive,
 			final boolean searchInKeys, final boolean searchInValues, final boolean searchInPath) {
-		if (Utilities.isNotEmpty(text) && languageProperties != null && !languageProperties.isEmpty() && (searchInKeys || searchInValues || searchInPath)) {
+		if (Utilities.isNotEmpty(text) && languageProperties != null && !displayedProperties.isEmpty() && (searchInKeys || searchInValues || searchInPath)) {
 			if (startIndex < 0) {
-				startIndex = languageProperties.size() - 1;
-			} else if (startIndex >= languageProperties.size()) {
+				startIndex = displayedProperties.size() - 1;
+			} else if (startIndex >= displayedProperties.size()) {
 				startIndex = 0;
 			}
 
@@ -3947,8 +4021,8 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					currentIndex = startIndex;
 				}
 
-				if (matchesSearch(languageProperties.get(currentIndex), text, searchCaseInsensitive, searchInKeys, searchInValues, searchInPath)) {
-					final LanguageProperty foundProperty = languageProperties.get(currentIndex);
+				if (matchesSearch(displayedProperties.get(currentIndex), text, searchCaseInsensitive, searchInKeys, searchInValues, searchInPath)) {
+					final LanguageProperty foundProperty = displayedProperties.get(currentIndex);
 					if (currentSelectedProperties.size() == 1 && currentSelectedProperties.get(0) == foundProperty) {
 						// Already selected, nothing to do
 						return;
@@ -3973,8 +4047,8 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				}
 
 				if (currentIndex < 0) {
-					currentIndex = languageProperties.size() - 1;
-				} else if (currentIndex >= languageProperties.size()) {
+					currentIndex = displayedProperties.size() - 1;
+				} else if (currentIndex >= displayedProperties.size()) {
 					currentIndex = 0;
 				}
 			}
