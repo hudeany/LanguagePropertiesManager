@@ -4,6 +4,8 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 import javax.swing.BorderFactory;
@@ -105,20 +107,28 @@ public class HelpDialog extends ModalDialog<Boolean> {
 	}
 
 	private static String readManualText() {
-		try (InputStream resourceStream = LanguagePropertiesManager.class.getResourceAsStream("/manual_" + Locale.getDefault().getLanguage().toLowerCase() + ".txt")) {
-			if (resourceStream != null) {
-				return IoUtilities.toString(resourceStream, StandardCharsets.UTF_8);
-			}
-		} catch (@SuppressWarnings("unused") final Exception e) {
-			// Fall back to the default manual
-		}
+		final Locale locale = Locale.getDefault();
+		final String language = locale.getLanguage().toLowerCase();
+		final String country = locale.getCountry().toUpperCase();
 
-		try (InputStream resourceStreamDefault = LanguagePropertiesManager.class.getResourceAsStream("/manual.txt")) {
-			if (resourceStreamDefault != null) {
-				return IoUtilities.toString(resourceStreamDefault, StandardCharsets.UTF_8);
+		// Most specific first: language with country (e.g. "de_BY"), then language only, then default manual
+		final List<String> resourceNames = new ArrayList<>();
+		if (!language.isEmpty() && !country.isEmpty()) {
+			resourceNames.add("/manual_" + language + "_" + country + ".txt");
+		}
+		if (!language.isEmpty()) {
+			resourceNames.add("/manual_" + language + ".txt");
+		}
+		resourceNames.add("/manual.txt");
+
+		for (final String resourceName : resourceNames) {
+			try (InputStream resourceStream = LanguagePropertiesManager.class.getResourceAsStream(resourceName)) {
+				if (resourceStream != null) {
+					return IoUtilities.toString(resourceStream, StandardCharsets.UTF_8);
+				}
+			} catch (@SuppressWarnings("unused") final Exception e) {
+				// Try the next, less specific manual
 			}
-		} catch (@SuppressWarnings("unused") final Exception e) {
-			// Handled below
 		}
 
 		return "Manual not available";
