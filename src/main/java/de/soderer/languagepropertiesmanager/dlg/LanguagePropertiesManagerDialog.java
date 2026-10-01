@@ -10,6 +10,8 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.KeyboardFocusManager;
+import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
@@ -379,7 +381,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		});
 
 		installSortableHeader(propertiesTable.getTableHeader());
-		installLanguageColumnContextMenu();
+		installTableContextMenu();
 
 		final JScrollPane propertiesTableScrollPane = new JScrollPane(propertiesTable);
 		// Area right of the last column (AUTO_RESIZE_OFF) shows the viewport background
@@ -603,10 +605,12 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	}
 
 	/**
-	 * Opens a context menu on right click on the path column, a language column
-	 * or the comment column, both on its header and on its cells.
+	 * Opens a context menu on right click on the table and its header:
+	 * on content rows it offers copying the selected rows as csv, additionally
+	 * the path column, a language column or the comment column offer their own
+	 * actions, both on the header and on the cells.
 	 */
-	private void installLanguageColumnContextMenu() throws Exception {
+	private void installTableContextMenu() throws Exception {
 		// Loaded once here, because ImageManager.getImage() throws a checked exception
 		final Icon deleteIcon = ImageManager.getImage("minus.png");
 
@@ -614,63 +618,142 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			// The popup trigger is "pressed" on Linux/macOS and "released" on Windows
 			@Override
 			public void mousePressed(final MouseEvent event) {
-				showLanguageColumnContextMenu(event, deleteIcon);
+				showTableContextMenu(event, deleteIcon);
 			}
 
 			@Override
 			public void mouseReleased(final MouseEvent event) {
-				showLanguageColumnContextMenu(event, deleteIcon);
+				showTableContextMenu(event, deleteIcon);
 			}
 		};
 		propertiesTable.addMouseListener(contextMenuListener);
 		propertiesTable.getTableHeader().addMouseListener(contextMenuListener);
 	}
 
-	private void showLanguageColumnContextMenu(final MouseEvent event, final Icon deleteIcon) {
+	private void showTableContextMenu(final MouseEvent event, final Icon deleteIcon) {
 		if (!event.isPopupTrigger() || languageProperties == null || availableLanguageSigns == null) {
 			return;
 		}
 
-		// Table and header share the same x coordinates, so this works for both components
-		final int viewColumn = propertiesTable.getColumnModel().getColumnIndexAtX(event.getX());
-		if (viewColumn < 0) {
-			return;
-		}
-		final int modelColumn = propertiesTable.convertColumnIndexToModel(viewColumn);
-		if (isCommentColumn(modelColumn)) {
-			final JPopupMenu contextMenu = new JPopupMenu();
-			final JMenuItem deleteCommentsItem = new JMenuItem(LangResources.get("contextmenu_deleteComments"));
-			deleteCommentsItem.addActionListener(e -> deleteAllComments());
-			contextMenu.add(deleteCommentsItem);
-			contextMenu.show(event.getComponent(), event.getX(), event.getY());
-			return;
-		} else if (modelColumn == COLUMN_PATH) {
-			final JPopupMenu contextMenu = new JPopupMenu();
-			final JMenuItem deletePathsItem = new JMenuItem(LangResources.get("contextmenu_deletePaths"));
-			deletePathsItem.addActionListener(e -> deleteAllPaths());
-			contextMenu.add(deletePathsItem);
-			contextMenu.show(event.getComponent(), event.getX(), event.getY());
-			return;
-		} else if (modelColumn < COLUMN_FIRST_LANGUAGE || modelColumn - COLUMN_FIRST_LANGUAGE >= availableLanguageSigns.size()) {
-			return;
-		}
-		final String languageSign = availableLanguageSigns.get(modelColumn - COLUMN_FIRST_LANGUAGE);
-		final String languageColumnName = propertiesTableModel.getColumnName(modelColumn);
-
 		final JPopupMenu contextMenu = new JPopupMenu();
 
-		// Only clears the values, the language itself (and its column) stays available
-		final JMenuItem deleteLanguageValuesItem = new JMenuItem(LangResources.get("contextmenu_deleteLanguageValues") + ": " + languageColumnName);
-		deleteLanguageValuesItem.addActionListener(e -> deleteAllLanguageValues(languageSign, languageColumnName));
-		contextMenu.add(deleteLanguageValuesItem);
+		// Content rows (not the header): copy the selected rows
+		if (event.getComponent() == propertiesTable) {
+			final int row = propertiesTable.rowAtPoint(event.getPoint());
+			if (row >= 0) {
+				// A right click outside of the current selection selects the clicked row, like in common table applications
+				if (!propertiesTable.isRowSelected(row)) {
+					propertiesTable.setRowSelectionInterval(row, row);
+				}
+				final JMenuItem copyAsCsvItem = new JMenuItem(LangResources.get("contextmenu_copySelectedRowsAsCsv", propertiesTable.getSelectedRowCount()));
+				copyAsCsvItem.addActionListener(e -> copySelectedPropertiesAsCsvToClipboard());
+				contextMenu.add(copyAsCsvItem);
+			}
+		}
 
-		final JMenuItem deleteLanguageItem = new JMenuItem(LangResources.get("tooltip_DeleteLanguage") + ": " + languageColumnName, deleteIcon);
-		// Same rule as for the delete language button: The last language cannot be deleted
-		deleteLanguageItem.setEnabled(availableLanguageSigns.size() > 1);
-		deleteLanguageItem.addActionListener(e -> deleteLanguage(languageSign));
-		contextMenu.add(deleteLanguageItem);
+		// Table and header share the same x coordinates, so this works for both components
+		final int viewColumn = propertiesTable.getColumnModel().getColumnIndexAtX(event.getX());
+		if (viewColumn >= 0) {
+			final int modelColumn = propertiesTable.convertColumnIndexToModel(viewColumn);
+			if (isCommentColumn(modelColumn)) {
+				addSeparatorIfNotEmpty(contextMenu);
+				final JMenuItem deleteCommentsItem = new JMenuItem(LangResources.get("contextmenu_deleteComments"));
+				deleteCommentsItem.addActionListener(e -> deleteAllComments());
+				contextMenu.add(deleteCommentsItem);
+			} else if (modelColumn == COLUMN_PATH) {
+				addSeparatorIfNotEmpty(contextMenu);
+				final JMenuItem deletePathsItem = new JMenuItem(LangResources.get("contextmenu_deletePaths"));
+				deletePathsItem.addActionListener(e -> deleteAllPaths());
+				contextMenu.add(deletePathsItem);
+			} else if (modelColumn >= COLUMN_FIRST_LANGUAGE && modelColumn - COLUMN_FIRST_LANGUAGE < availableLanguageSigns.size()) {
+				final String languageSign = availableLanguageSigns.get(modelColumn - COLUMN_FIRST_LANGUAGE);
+				final String languageColumnName = propertiesTableModel.getColumnName(modelColumn);
 
-		contextMenu.show(event.getComponent(), event.getX(), event.getY());
+				addSeparatorIfNotEmpty(contextMenu);
+
+				// Only clears the values, the language itself (and its column) stays available
+				final JMenuItem deleteLanguageValuesItem = new JMenuItem(LangResources.get("contextmenu_deleteLanguageValues") + ": " + languageColumnName);
+				deleteLanguageValuesItem.addActionListener(e -> deleteAllLanguageValues(languageSign, languageColumnName));
+				contextMenu.add(deleteLanguageValuesItem);
+
+				final JMenuItem deleteLanguageItem = new JMenuItem(LangResources.get("tooltip_DeleteLanguage") + ": " + languageColumnName, deleteIcon);
+				// Same rule as for the delete language button: The last language cannot be deleted
+				deleteLanguageItem.setEnabled(availableLanguageSigns.size() > 1);
+				deleteLanguageItem.addActionListener(e -> deleteLanguage(languageSign));
+				contextMenu.add(deleteLanguageItem);
+			}
+		}
+
+		if (contextMenu.getComponentCount() > 0) {
+			contextMenu.show(event.getComponent(), event.getX(), event.getY());
+		}
+	}
+
+	private static void addSeparatorIfNotEmpty(final JPopupMenu contextMenu) {
+		if (contextMenu.getComponentCount() > 0) {
+			contextMenu.addSeparator();
+		}
+	}
+
+	/**
+	 * Copies the selected rows in display order as csv into the system clipboard.
+	 * Unlike the table, the csv contains the full values of languages and comments,
+	 * with the same columns as currently shown (without the row number).
+	 */
+	private void copySelectedPropertiesAsCsvToClipboard() {
+		try {
+			final List<LanguageProperty> selectedProperties = getSelectedProperties();
+			if (selectedProperties.isEmpty()) {
+				return;
+			}
+
+			// Line breaks within values are kept and quoted (RFC 4180), so spreadsheet applications read them as one cell
+			final CsvFormat csvFormat = new CsvFormat()
+					.withSeparator(';')
+					.withStringQuote('"')
+					.withEscapeLineBreaks(false);
+
+			final int columnCount = propertiesTableModel.getColumnCount();
+			final StringBuilder csvText = new StringBuilder();
+
+			final List<String> headerValues = new ArrayList<>();
+			for (int modelColumn = COLUMN_PATH; modelColumn < columnCount; modelColumn++) {
+				headerValues.add(propertiesTableModel.getColumnName(modelColumn));
+			}
+			csvText.append(CsvWriter.getCsvLine(csvFormat, headerValues)).append("\n");
+
+			for (final LanguageProperty languageProperty : selectedProperties) {
+				final List<String> rowValues = new ArrayList<>();
+				for (int modelColumn = COLUMN_PATH; modelColumn < columnCount; modelColumn++) {
+					rowValues.add(getEmptyForNull(getCsvValue(languageProperty, modelColumn)));
+				}
+				csvText.append(CsvWriter.getCsvLine(csvFormat, rowValues)).append("\n");
+			}
+
+			Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(csvText.toString()), null);
+		} catch (final Exception e) {
+			showError(e);
+		}
+	}
+
+	/**
+	 * Full value of a property for a model column, in contrast to the table model, which only shows whether a value exists
+	 */
+	private String getCsvValue(final LanguageProperty languageProperty, final int modelColumn) {
+		switch (modelColumn) {
+			case COLUMN_PATH:
+				return languageProperty.getPath();
+			case COLUMN_ORIGINAL_INDEX:
+				return String.valueOf(languageProperty.getOriginalIndex());
+			case COLUMN_KEY:
+				return languageProperty.getKey();
+			default:
+				if (isCommentColumn(modelColumn)) {
+					return languageProperty.getComment();
+				} else {
+					return languageProperty.getLanguageValue(availableLanguageSigns.get(modelColumn - COLUMN_FIRST_LANGUAGE));
+				}
+		}
 	}
 
 	private void sortByColumn(final int modelColumn) {
@@ -2489,6 +2572,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		} else {
 			// check for errors
 			openFilesLanguagePropertiesWorker.get();
+			showDuplicateKeysWarning(openFilesLanguagePropertiesWorker.getDuplicateKeysByFile());
 
 			return LoadedLanguageProperties.ofPropertiesSets(openFilesLanguagePropertiesWorker.getLanguageProperties(), openFilesLanguagePropertiesWorker.getLanguagePropertiesSetNames(), filePath);
 		}
@@ -2544,9 +2628,33 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		} else {
 			// check for errors
 			openFolderLanguagePropertiesWorker.get();
+			showDuplicateKeysWarning(openFolderLanguagePropertiesWorker.getDuplicateKeysByFile());
 
 			return LoadedLanguageProperties.ofPropertiesSets(openFolderLanguagePropertiesWorker.getLanguageProperties(), openFolderLanguagePropertiesWorker.getLanguagePropertiesSetNames(), basicDirectoryPath);
 		}
+	}
+
+	/**
+	 * Informs the user about keys that occur more than once within a single properties file.
+	 * Only the first value of such a key was read, the later ones would be lost on the next save.
+	 */
+	private void showDuplicateKeysWarning(final Map<String, Set<String>> duplicateKeysByFile) {
+		if (duplicateKeysByFile == null || duplicateKeysByFile.isEmpty()) {
+			return;
+		}
+
+		int duplicateKeyCount = 0;
+		final StringBuilder reportText = new StringBuilder();
+		for (final Map.Entry<String, Set<String>> entry : duplicateKeysByFile.entrySet()) {
+			duplicateKeyCount += entry.getValue().size();
+			reportText.append(entry.getKey()).append("\n");
+			for (final String duplicateKey : entry.getValue()) {
+				reportText.append("    ").append(duplicateKey).append("\n");
+			}
+			reportText.append("\n");
+		}
+
+		showData(LangResources.get("duplicateKeysInFiles_title"), LangResources.get("duplicateKeysInFiles", duplicateKeysByFile.size(), duplicateKeyCount) + "\n\n" + reportText.toString().trim());
 	}
 
 	/**

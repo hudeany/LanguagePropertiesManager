@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -37,6 +38,11 @@ public class LoadLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 	private final String propertiesFileExtension;
 	private boolean readComments = true;
 
+	/**
+	 * Files with keys occurring more than once, collected over all read sets (display path of file -> duplicate keys)
+	 */
+	private final Map<String, Set<String>> duplicateKeysByFile = new LinkedHashMap<>();
+
 	public LoadLanguagePropertiesWorker(final WorkerParentSimple parent, final File languagePropertiesFileOrBasicDirectory, final String[] excludeParts, final String propertiesFileExtension) {
 		super(parent);
 
@@ -48,6 +54,7 @@ public class LoadLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 	@Override
 	public Boolean work() throws Exception {
 		languagePropertiesSetNames = new ArrayList<>();
+		duplicateKeysByFile.clear();
 
 		if (languagePropertiesFileOrBasicDirectory == null) {
 			throw new LanguagePropertiesException("Language properties file or basic directory parameter is empty");
@@ -67,7 +74,7 @@ public class LoadLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 				throw new Exception("Missing mandatory file extension '" + propertiesFileExtension + "'");
 			}
 
-			languageProperties = LanguagePropertiesFileSetReader.read(languagePropertiesFileOrBasicDirectory.getParentFile(), languagePropertiesSetName, propertiesFileExtension, false, readComments);
+			languageProperties = LanguagePropertiesFileSetReader.read(languagePropertiesFileOrBasicDirectory.getParentFile(), languagePropertiesSetName, propertiesFileExtension, false, readComments, duplicateKeysByFile);
 			languagePropertiesSetNames.add(languagePropertiesSetName);
 		} else {
 			parent.changeTitle(LangResources.get("searchingLanguageProperties"));
@@ -122,7 +129,7 @@ public class LoadLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 			languageProperties = new ArrayList<>();
 			for (final String propertiesPath : propertiesPaths) {
 				final String layoutPropertySetName = new File(propertiesPath).getName();
-				final List<LanguageProperty> nextLanguageProperties = LanguagePropertiesFileSetReader.read(new File(propertiesPath).getParentFile(), layoutPropertySetName, propertiesFileExtension, false, readComments);
+				final List<LanguageProperty> nextLanguageProperties = LanguagePropertiesFileSetReader.read(new File(propertiesPath).getParentFile(), layoutPropertySetName, propertiesFileExtension, false, readComments, duplicateKeysByFile);
 				languageProperties.addAll(nextLanguageProperties);
 				languagePropertiesSetNames.add(layoutPropertySetName);
 
@@ -160,6 +167,10 @@ public class LoadLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 
 	public List<String> getAvailableLanguageSigns() {
 		return availableLanguageSigns;
+	}
+
+	public Map<String, Set<String>> getDuplicateKeysByFile() {
+		return duplicateKeysByFile;
 	}
 
 	public boolean isCommentsFound() {

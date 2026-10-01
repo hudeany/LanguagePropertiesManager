@@ -46,6 +46,20 @@ public class LanguagePropertiesFileSetReader {
 	public static List<LanguageProperty> read(final File propertiesDirectory, final String propertySetName,
 			final String propertiesFileExtension, final boolean readKeysCaseInsensitive, final boolean readComments)
 			throws Exception {
+		return read(propertiesDirectory, propertySetName, propertiesFileExtension, readKeysCaseInsensitive, readComments, null);
+	}
+
+	/**
+	 * Reads a set of language properties files like read() above and additionally reports keys that occur more than once within a single file.
+	 * Of such duplicates the first value is kept, the later ones are dropped and would be lost on the next save.
+	 *
+	 * @param duplicateKeysByFile
+	 *            Optional (may be null): receives the display path of every file containing duplicate keys and its duplicate keys.
+	 *            Entries are added, so one map can collect the results of several sets.
+	 */
+	public static List<LanguageProperty> read(final File propertiesDirectory, final String propertySetName,
+			final String propertiesFileExtension, final boolean readKeysCaseInsensitive, final boolean readComments,
+			final Map<String, Set<String>> duplicateKeysByFile) throws Exception {
 		final String normalizedPropertiesFileExtension = normalizePropertiesFileExtension(propertiesFileExtension);
 		if (!propertiesDirectory.exists()) {
 			throw new Exception("Properties directory '" + propertiesDirectory + "' does not exist");
@@ -76,7 +90,12 @@ public class LanguagePropertiesFileSetReader {
 				languageSignsOfFiles.add(languageSign);
 				try (PropertiesReader propertiesReader = new PropertiesReader(new FileInputStream(propertyFile))) {
 					propertiesReader.setReadKeysCaseInsensitive(readKeysCaseInsensitive);
+					// Duplicate keys within one file: the first value wins, consistent with removeDuplicates() and the import
+					propertiesReader.setFirstDuplicateValueWins(true);
 					final Map<String, String> languageEntries = propertiesReader.read();
+					if (duplicateKeysByFile != null && !propertiesReader.getDuplicateKeys().isEmpty()) {
+						duplicateKeysByFile.put(Utilities.replaceUsersHomeByTilde(propertyFile.getAbsolutePath()), propertiesReader.getDuplicateKeys());
+					}
 					final String path = Utilities.replaceUsersHomeByTilde(new File(propertiesDirectory, propertySetName).getAbsolutePath());
 					final Map<String, LanguageProperty> keyIndex = propertyIndex.computeIfAbsent(path, p -> new HashMap<>());
 
