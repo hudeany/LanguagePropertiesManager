@@ -11,7 +11,6 @@ Language Properties Manager is a desktop tool (with an additional command line i
 ## ✨ Features
 
 | | |
-|---|---|
 | 📂 **Load whole property sets** | Open one file and all languages of that set are loaded together – or scan a complete directory tree for all property sets at once |
 | 🗂️ **One table for all languages** | Key, default value and every language (`en`, `de`, `de_AT`, `fr`, …) side by side |
 | 🔍 **Flexible search** | Search in keys, values and paths – freely combinable |
@@ -73,7 +72,7 @@ Opens a file selection dialog. Select any one language file of a set – all fil
 Opens a folder selection dialog. All subdirectories are scanned for files with the language identifier `_en` or `_de` and the extension `.properties`. For every set found, all other available languages are loaded as well. Depending on the size of the directory tree this may take a moment.
 
 #### Import from a single Excel or CSV file
-Loads all property sets stored in one spreadsheet. See [Spreadsheet format](#-spreadsheet-format-excel--csv) below.
+Loads all property sets stored in one spreadsheet. See [Spreadsheet format](#spreadsheet-format) below.
 
 #### Recently used paths
 Opened files and directories are remembered. Use **"Open recently opened files"** to reopen them in the same mode as before.
@@ -129,13 +128,13 @@ You choose a base directory, which is searched for existing property sets. Each 
 - Sets without a match are saved directly into the selected base directory.
 
 #### Export to a single Excel or CSV file
-Writes all loaded property sets into one spreadsheet. See [Spreadsheet format](#-spreadsheet-format-excel--csv) below.
+Writes all loaded property sets into one spreadsheet. See [Spreadsheet format](#spreadsheet-format) below.
 
 </details>
 
 ---
 
-## 📊 Spreadsheet Format (Excel / CSV)
+## Spreadsheet Format
 
 Excel files must consist of a single sheet. Both formats use these columns:
 
