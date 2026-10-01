@@ -1,231 +1,222 @@
-# Language Properties Manager
+# 🌍 Language Properties Manager
 
-![LanguagePropertiesManager.png](https://github.com/hudeany/LanguagePropertiesManager/blob/master/LanguagePropertiesManager.png?raw=true)
+**Edit, compare, translate and convert Java language `.properties` files – all languages of a set side by side in one table.**
+
+Language Properties Manager is a desktop tool (with an additional command line interface) for maintaining I18N resource bundles. Instead of juggling `Messages.properties`, `Messages_en.properties`, `Messages_de.properties`, … in separate editor tabs, you see every key with all its translations in a single view – and can round-trip everything through Excel or CSV for translators.
+
+![Language Properties Manager](https://github.com/hudeany/LanguagePropertiesManager/blob/master/LanguagePropertiesManager.png?raw=true)
+
+---
+
+## ✨ Features
+
+| | |
+|---|---|
+| 📂 **Load whole property sets** | Open one file and all languages of that set are loaded together – or scan a complete directory tree for all property sets at once |
+| 🗂️ **One table for all languages** | Key, default value and every language (`en`, `de`, `de_AT`, `fr`, …) side by side |
+| 🔍 **Flexible search** | Search in keys, values and paths – freely combinable |
+| 🤖 **Automatic translation** | Fill in missing values via the [DeepL API](https://www.deepl.com/pro-api/) |
+| 🔁 **Transfer & clean up** | Copy values between languages, clear values identical to their source, remove duplicates |
+| 🩺 **Error check** | Detect encoding problems (mojibake, replacement characters, unresolved Unicode escapes, control characters …) and invalid keys |
+| 🏷️ **Manage language tags** | Add or remove a language for all properties in one step |
+| 📊 **Excel & CSV import/export** | Hand all texts to translators in one spreadsheet and import them back |
+| 🔤 **Unicode-safe** | Switch between displayed text and the stored Java-escaped form |
+| 🕑 **Recently used paths** | Quick access to previously opened files and directories |
+| ⌨️ **Command line interface** | Automate Excel/CSV export and import in build scripts |
+| 🔄 **Built-in updater** | Checks for and installs new versions |
+
+---
+
+## 🚀 Quick Start
+
+**Run the GUI**
+
+```bash
+java -jar LanguagePropertiesManager.jar gui
+```
+
+**Build from source**
+
+All dependencies are downloaded automatically by the Ant build script:
+
+```bash
+ant -f build.xml
+```
+
+---
+
+## 📖 Concepts
+
+### LanguagePropertiesSetPath
+
+A *LanguagePropertiesSetPath* is the storage path of all language files of one property set, including its base name (without language suffix and extension).
+
+Example: `C:\Project\I18N\ProjectLanguageProperty` stands for
 
 ```
-All dependencies are downloaded by ANT build script: build.xml
-	APACHE commons-collections4: 4.4
-	APACHE commons-compress: 1.24.0
-	APACHE commons-io: 2.14.0
-	APACHE commons-lang3: 3.11
-	APACHE commons-text: 1.9
-	APACHE poi: 5.2.4
-	APACHE poi-ooxml: 5.2.4
-	APACHE poi-ooxml-full: 5.2.4
-	APACHE xmlbeans: 5.1.1
- 
-	LOG4J log4j-1.2-api: 2.20.0
-	LOG4J log4j-api: 2.20.0
-	LOG4J log4j-core: 2.20.0
- 
-	SUN mailapi: 2.0.1
- 
-	JAVA jna: 5.6.0
-	JAVA jna-platform: 5.6.0
- 
-	github.com/hudeany csv: 25.1.1
-	github.com/hudeany json: 25.1.2
-	github.com/hudeany proxyautoconfig: 25.1.8
-	github.com/hudeany network: 25.1.2
-	github.com/hudeany soderer-utilities: 25.1.13
+C:\Project\I18N\ProjectLanguageProperty.properties
+C:\Project\I18N\ProjectLanguageProperty_en.properties
+C:\Project\I18N\ProjectLanguageProperty_*.properties
+```
 
-Language Properties Manager User Manual
+---
 
-1. Disclaimer
+## 🧭 User Manual
 
-Language Properties Manager is a tool for editing language properties files with special features that other standard programs don't offer or that aren't readily available.
-This editor is intended solely for experimental text editing.
-Any use is at your own risk.
-The developer assumes NO WARRANTY, neither for correct functionality nor for damages resulting from the use of the program.
-Please send suggestions for improvements or bug reports to: languagepropertiesmanager@soderer.de
+<details>
+<summary><b>1. Loading language properties</b></summary>
 
+#### Load a single property set
+Opens a file selection dialog. Select any one language file of a set – all files of that set are loaded together and shown in the data table on the left.
 
-2. Definition of Terms
+#### Load all property sets from subdirectories
+Opens a folder selection dialog. All subdirectories are scanned for files with the language identifier `_en` or `_de` and the extension `.properties`. For every set found, all other available languages are loaded as well. Depending on the size of the directory tree this may take a moment.
 
-2.1 LanguagePropertiesSetPath
+#### Import from a single Excel or CSV file
+Loads all property sets stored in one spreadsheet. See [Spreadsheet format](#-spreadsheet-format-excel--csv) below.
 
-The storage path of a collection of language files for a language property, along with its base name, is referred to below as LanguagePropertiesSetPath.
-Example: "C:\Project\I18N\ProjektLanguageProperty" serves as a placeholder for all language files of the language property:
-	"C:\Project\I18N\ProjektLanguageProperty.properties",
-	"C:\Project\I18N\ProjektLanguageProperty_en.properties",
-	"C:\Project\I18N\ProjektLanguageProperty_*.properties"
+#### Recently used paths
+Opened files and directories are remembered. Use **"Open recently opened files"** to reopen them in the same mode as before.
 
+</details>
 
-3. Loading Language Properties
+<details>
+<summary><b>2. Editing property values</b></summary>
 
-3.1 Loading a Single Property Set from a File Set
+#### Create and change values
+Selecting a row in the data table shows its details on the right: LanguagePropertiesSetPath, key, optional comment, default value and all language values. Everything except the LanguagePropertiesSetPath can be edited.
 
-This button opens a file selection window where you can select one of the language files in a LanguagePropertiesSetPath.
+- **Change** – apply the edit (saved later with *Save Files*)
+- **Create New Property** – add a new key with its language values, then confirm with **Add**
+- **Discard** – revert all unsaved edits of the detail view
+- **Switch to Saved Text View / Displayed Text View** – toggle between the normal display and the Java-escaped storage form, e.g. to enter complex Unicode characters
 
-All files of this language property are loaded together and displayed in the data table on the left side of the tool.
+#### Delete properties
+**Delete Selected Properties** removes all selected rows after a confirmation prompt.
 
-3.2 Loading All Available Property Sets from Subdirectories
+#### Add or delete language tags
+- **Add a New Language Tag** adds a new language column for all properties.
+- **Delete an existing language tag** removes a language completely; a selection dialog lets you choose which one.
 
-This button opens a folder selection window. All available language properties from all subdirectories of this folder are then loaded. The tool searches for files with one of the language identifiers "_en" or "_de" and the file extension ".properties".
+</details>
 
-For all LanguagePropertiesSetPaths found, all other available languages are loaded and displayed in the data table on the left side of the tool.
+<details>
+<summary><b>3. Translating missing values (DeepL)</b></summary>
 
-Depending on the number of subdirectories and files and their size, this may take a moment.
+**Translate** creates missing language values by translating the value of another language via [DeepL](https://www.deepl.com).
 
-3.3 Excel Import
+- A DeepL API key is required – get one at <https://www.deepl.com/pro-api/>. Limited test accounts are free but require credit card registration.
+- Enter the key in the application configuration dialog or when using *Translate* for the first time.
+- When the *Default* language is used as source, you must select which language it represents.
+- If only one other language is available, it is selected as target automatically.
+- If rows are selected, only those are translated – otherwise all properties.
 
-The "Import from single Excel file" button allows you to specify a single Excel file to load all language property sets stored in it.
+</details>
 
-This Excel file should consist of a single sheet and can contain the following columns:
-	"Path" or "Path" (more precisely, LanguagePropertiesSetPath for this language properties set; placeholders ~ and $HOME are allowed, optional)
-	"Key" or "Schlüssel" (key to the property value, required)
-	"Index", "Idx", or "Org.Idx" (indexing within a language properties set to maintain an order of the individual property values, optional)
-	"Default" (default language value for the key, optional)
-	"en", "de", "de_AT", "de_CH", "fr", ... (language values of the individual language identifiers, even country-specific identifiers with an underscore are allowed)
+<details>
+<summary><b>4. Saving</b></summary>
 
-3.4 CSV Import
+#### Save files
+**Save Files** becomes available as soon as something has changed.
 
-The "Import from single CSV file" button allows you to specify a single CSV file to load all language property sets stored in it.
+- Values with an assigned LanguagePropertiesSetPath are saved to exactly that location.
+- New values are saved to the only loaded LanguagePropertiesSetPath – or, if several are loaded, you are asked which one to use.
 
-This CSV file should contain the following columns:
-	"Path" or "Path" (more precisely, LanguagePropertiesSetPath for this language properties set; placeholders ~ and $HOME are allowed, optional)
-	"Key" or "Schlüssel" (key to the property value, required)
-	"Index", "Idx", or "Org.Idx" (indexing within a language properties set to maintain an order of the individual property values, optional)
-	"Default" (default language value for the key, optional)
-	"en", "de", "de_AT", "de_CH", "fr", ... (language values of the individual language identifiers, even country-specific identifiers with an underscore are allowed)
+#### Save property sets to a directory based on set name
+You choose a base directory, which is searched for existing property sets. Each loaded set is saved to the location with the matching set name.
 
-3.5 Recently Used Paths
+- Set names must be unique – ambiguous names abort the process with an error message.
+- Sets without a match are saved directly into the selected base directory.
 
-Opened file paths from 3.1 and directory paths from 3.2 are saved in a list for quick reuse later.
-These can be used for quick access later using the "Open recently opened files" button and will then open in the same mode as before.
+#### Export to a single Excel or CSV file
+Writes all loaded property sets into one spreadsheet. See [Spreadsheet format](#-spreadsheet-format-excel--csv) below.
 
+</details>
 
-4. Editing Individual Property Values
+---
 
-4.1 Creating and Changing Existing Property Values
+## 📊 Spreadsheet Format (Excel / CSV)
 
-Selecting a row in the data table on the left side of the tool displays the detailed list of LanguagePropertiesSetPath, Key, Optional Comment, and Default, as well as all other available language values for the property, in the details area of the tool on the right.
-These can then be edited, except for the LanguagePropertiesSetPath.
-After making a desired change, the new state can be applied for later saving of the property set using the "Change" button.
-To add a new key with language values, the "Create New Property" button in the tool's second button bar can be used.
-After making a desired change, the property set can be added using the "Add" button.
-In both cases, all unwanted changes can be discarded at any time using the "Discard" button.
-The "Switch to Saved Text View" button changes the display of key and language values for technical encoding in JAVA encoding.
-This is used to specify complex Unicode characters if necessary.
-The "Switch to Displayed Text View" button can be used to return to the normal display view.
+Excel files must consist of a single sheet. Both formats use these columns:
 
-4.2 Deleting Property Values
+| Column | Alternative names | Required | Description |
+|---|---|:---:|---|
+| `Path` | `Pfad` | – | LanguagePropertiesSetPath of the set. Placeholders `~` and `$HOME` are allowed (export uses `~` where possible) |
+| `Key` | `Schlüssel` | ✔ | Key of the property |
+| `Org.Idx` | `Index`, `Idx` | – | Original position within the set, used to keep the order |
+| `Default` | | – | Value of the default (language-less) file |
+| `en`, `de`, `de_AT`, `fr`, … | | – | One column per language; country-specific tags with underscore are allowed |
 
-The "Delete Selected Properties" button can be used to delete all currently selected rows in the left toolbar at once.
-A confirmation prompt will appear.
+---
 
-4.3 Adding Language Tags
+## ⌨️ Command Line Interface
 
-The "Add a New Language Tag" button can be used to add an additional language tag for all rows in the left toolbar.
+```bash
+# Export properties to Excel / CSV
+java -jar LanguagePropertiesManager.jar -exportToExcel <properties file or directory> -excelFile <output.xlsx> [options]
+java -jar LanguagePropertiesManager.jar -exportToCsv   <properties file or directory> -csvFile   <output.csv>  [options]
 
-4.4 Deleting Language Tags
+# Import properties from Excel / CSV
+java -jar LanguagePropertiesManager.jar -importFromExcel <input.xlsx> [-outputDirectory <directory>] [options]
+java -jar LanguagePropertiesManager.jar -importFromCsv   <input.csv>  [-outputDirectory <directory>] [options]
+```
 
-The "Delete an existing language tag" button can be used to completely remove a language tag from all rows in the left-hand toolbar.
-A selection dialog appears for specifying one of the available language tags.
+### Parameters
 
-4.5 Translating missing language values
+| Parameter | Used with | Description |
+|---|---|---|
+| `-exportToExcel <path>` | Excel export | Properties file or directory to export (**mandatory**) |
+| `-excelFile <path>` | Excel export | Output Excel file (**mandatory**) |
+| `-exportToCsv <path>` | CSV export | Properties file or directory to export (**mandatory**) |
+| `-csvFile <path>` | CSV export | Output CSV file (**mandatory**) |
+| `-importFromExcel <path>` | Excel import | Input Excel file (**mandatory**) |
+| `-importFromCsv <path>` | CSV import | Input CSV file (**mandatory**) |
+| `-outputDirectory <path>` | Import | Without this option, sets are written to the original paths stored in the file. With it, existing sets in that directory are matched by set name; unmatched sets are created in the directory itself |
+| `-propertiesFileExtension <ext>` | all | Use a custom file extension instead of `.properties`, e.g. `_mytext.properties` |
+| `-v` | all | Verbose output with progress bar |
 
-The "Translate" button can be used to create missing language values by using the value on a different language an translate it using the services of DeepL (https://www.deepl.com).
-Therefor an API key is needed for authorization, which can be obtained at "https://www.deepl.com/pro-api/".
-Limited test accounts are for free, but still need credit card registration.
-The API key may be entered in application configuration dialog or on first usage of the "Translate" button.
-Using the Default language sign makes it mandatory to select a language wich is associated as default language.
-If there is only one other language sign available, that one will automatically be selected as target language sign.
+### Standalone commands
 
-5. Saving Language Property Sets
+| Command | Description |
+|---|---|
+| `help` | Show the help manual |
+| `gui` | Open the graphical user interface |
+| `version` | Show the installed version |
+| `update [username [password]]` | Check for an online update and ask whether to install it |
 
-5.1 Saving Files
+---
 
-As soon as changes have been made to the values of a language property, the "Save Files" button becomes available.
-If a LanguagePropertiesSetPath has already been assigned to the values in the properties set, the data will be (re)saved to that exact location.
-For newly created values and only one LanguagePropertiesSetPath is loaded, this LanguagePropertiesSetPath is used as the default path for new values.
-If multiple LanguagePropertiesSetPaths are available, you will be prompted to specify the LanguagePropertiesSetPath to be used for all new values.
+## 📦 Dependencies
 
-5.2 Save Property Sets to a Directory Based on Set Name
+<details>
+<summary>All dependencies are downloaded automatically by <code>build.xml</code></summary>
 
-The "Save Property Sets to a Directory Based on Set Name" button prompts you to specify a directory path. All available LanguagePropertiesSetPaths are then searched for under this path.
-The LanguagePropertiesSetPaths currently available in the tool are compared with these paths, and if a matching LanguagePropertiesSetPath name is found, the path of the LanguagePropertiesSetPath is used for saving.
-This only works if the LanguagePropertiesSetPath names are unique. If ambiguous names occur, the process is aborted with an error message.
-If no suitable path is found for a LanguagePropertiesSetPath currently available in the tool, the LanguagePropertiesSetPath is saved in the selected base directory.
+| Group | Library | Version |
+|---|---|---|
+| Apache | commons-collections4 | 4.4 |
+| Apache | commons-compress | 1.24.0 |
+| Apache | commons-io | 2.14.0 |
+| Apache | commons-lang3 | 3.11 |
+| Apache | commons-text | 1.9 |
+| Apache | poi / poi-ooxml / poi-ooxml-full | 5.2.4 |
+| Apache | xmlbeans | 5.1.1 |
+| Log4j | log4j-1.2-api / log4j-api / log4j-core | 2.20.0 |
+| Sun | mailapi | 2.0.1 |
+| Java | jna / jna-platform | 5.6.0 |
+| [hudeany](https://github.com/hudeany) | csv | 25.1.1 |
+| [hudeany](https://github.com/hudeany) | json | 25.1.2 |
+| [hudeany](https://github.com/hudeany) | proxyautoconfig | 25.1.8 |
+| [hudeany](https://github.com/hudeany) | network | 25.1.2 |
+| [hudeany](https://github.com/hudeany) | soderer-utilities | 25.1.13 |
 
-5.3 Export to single Excel file
+</details>
 
-The "Export to single Excel file" button saves all LanguagePropertiesSetPaths currently available in the tool to a single Excel file.
-For this purpose, an Excel file is created with a sheet and the following columns of data:
-	"Path" (more precisely, LanguagePropertiesSetPath for this language properties set; the placeholder ~ for the user directory in the system is used where possible)
-	"Key" (key to the property value)
-	"Org.Idx" (indexing within a language properties set to maintain a sequence of individual property values)
-	"Default" (default language value for the key, if available)
-	"en", "de", "de_AT", "de_CH", "fr", ... (language values of the individual language identifiers; country-specific identifiers with an underscore are also permitted)
+---
 
-5.4 Export to single CSV file
+## ⚠️ Disclaimer
 
-The "Export to single CSV file" button saves all LanguagePropertiesSetPaths currently available in the tool to a single CSV file.
-For this purpose, an CSV file is created the following columns of data:
-	"Path" (more precisely, LanguagePropertiesSetPath for this language properties set; the placeholder ~ for the user directory in the system is used where possible)
-	"Key" (key to the property value)
-	"Org.Idx" (indexing within a language properties set to maintain a sequence of individual property values)
-	"Default" (default language value for the key, if available)
-	"en", "de", "de_AT", "de_CH", "fr", ... (language values of the individual language identifiers; country-specific identifiers with an underscore are also permitted)
+Language Properties Manager is provided for experimental text editing. **Use at your own risk.** The developer assumes **no warranty**, neither for correct functionality nor for damages resulting from the use of this program.
 
-	
-Command Line Interface (CLI)
-	
-Usage:
-	java -jar LanguagePropertiesManager.jar -exportToExcel <language properties file or directory path> -excelFile <output Excel file path> [-v]
-	or
-	java -jar LanguagePropertiesManager.jar -exportToCsv <language properties file or directory path> -csvFile <output CSV file path> [-v]
-	or
-	java -jar LanguagePropertiesManager.jar -importFromExcel <input Excel file path> [-outputDirectory <language properties output directory>] [-v]
-	or
-	java -jar LanguagePropertiesManager.jar -importFromCsv <input CSV file path> [-outputDirectory <language properties output directory>] [-v]
+## 💬 Feedback
 
-Mandatory parameters for Excel file export
-	-exportToExcel <language properties file or directory path>
-	-excelFile <output Excel file path>
-
-Optional parameters for Excel file export
-	-propertiesFileExtension <extension>:
-		Do not use the default language file extension ".properties", but a differently defined customized extension like "_mytext.properties"
-	-v: verbose output with progress bar
-
-Mandatory parameters for Excel file import
-	-exportToExcel <language properties file or directory path>
-	-excelFile <output Excel file path>
-
-Optional parameters for Excel file import
-	-outputDirectory <language properties output directory>:
-		If outputDirectory is not defined, all language properties sets will be imported to the defined original file paths in the Excel file.
-		If outputDirectory is defined, the existing language properties sets file paths within that directory will be detected and used for matching set names.
-		Other language properties sets without matching file paths will be store as new language properties sets in the base directory itself.
-	-propertiesFileExtension <extension>:
-		Do not use the default language file extension ".properties", but a differently defined customized extension like "_mytext.properties"
-	-v: verbose output with progress bar
-
-Mandatory parameters for CSV file export
-	-exportToCsv <language properties file or directory path>
-	-csvFile <output CSV file path>
-
-Optional parameters for CSV file export
-	-propertiesFileExtension <extension>:
-		Do not use the default language file extension ".properties", but a differently defined customized extension like "_mytext.properties"
-	-v: verbose output with progress bar
-
-Mandatory parameters for CSV file import
-	-exportToCsv <language properties file or directory path>
-	-csvFile <output CSV file path>
-
-Optional parameters for CSV file import
-	-outputDirectory <language properties output directory>:
-		If outputDirectory is not defined, all language properties sets will be imported to the defined original file paths in the CSV file.
-		If outputDirectory is defined, the existing language properties sets file paths within that directory will be detected and used for matching set names.
-		Other language properties sets without matching file paths will be store as new language properties sets in the base directory itself.
-	-propertiesFileExtension <extension>:
-		Do not use the default language file extension ".properties", but a differently defined customized extension like "_mytext.properties"
-	-v: verbose output with progress bar
-
-Global standalone parameters
-	help: Show this help manual
-	gui: Open a GUI
-	version: Show current local version of this tool
-	update: Check for online update and ask, whether an available update shell be installed. [username [password]]
+Suggestions and bug reports are welcome – via [GitHub Issues](https://github.com/hudeany/LanguagePropertiesManager/issues) or by mail to **languagepropertiesmanager@soderer.de**.
