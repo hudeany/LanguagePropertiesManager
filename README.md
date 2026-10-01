@@ -10,7 +10,6 @@ Language Properties Manager is a desktop tool (with an additional command line i
 
 ## ✨ Features
 
-| | |
 |---|---|
 | 📂 **Load whole property sets** | Open one file and all languages of that set are loaded together – or scan a complete directory tree for all property sets at once |
 | 🗂️ **One table for all languages** | Key, default value and every language (`en`, `de`, `de_AT`, `fr`, …) side by side |
