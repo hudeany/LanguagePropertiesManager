@@ -684,9 +684,14 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 	private void openConfiguration() {
 		try {
-			byte[] iconData;
-			try (InputStream inputStream = ImageManager.class.getResourceAsStream("LanguagePropertiesManager.ico")) {
-				iconData = IoUtilities.toByteArray(inputStream);
+			byte[] iconData = null;
+			try (InputStream inputStream = ImageManager.class.getClassLoader().getResourceAsStream("images/icons/LanguagePropertiesManager.ico")) {
+				if (inputStream != null) {
+					iconData = IoUtilities.toByteArray(inputStream);
+				} else {
+					// Missing in the jar (e.g. not included by the build), the desktop link then gets a fallback icon
+					System.err.println("Resource images/icons/LanguagePropertiesManager.ico not found");
+				}
 			}
 
 			final ApplicationConfigurationDialog dialog = new ApplicationConfigurationDialog(this, LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.APPLICATION_STARTUPCLASS_NAME, LanguagePropertiesManager.VERSION, LanguagePropertiesManager.VERSION_BUILDTIME, applicationConfiguration, iconData, ImageManager.getImage("LanguagePropertiesManager.png").getImage(), LanguagePropertiesManager.VERSIONINFO_DOWNLOAD_URL, LanguagePropertiesManager.TRUSTED_UPDATE_CA_CERTIFICATES, null);
