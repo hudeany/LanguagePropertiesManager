@@ -1,8 +1,14 @@
 package de.soderer.languagepropertiesmanager.storage;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import de.soderer.utilities.Utilities;
@@ -12,6 +18,7 @@ public class LanguageProperty {
 	private String key;
 	private String comment;
 	private int originalIndex;
+	private int emptyLinesBefore = 0;
 	private final Map<String, String> languageValues = new HashMap<>();
 
 	public LanguageProperty(final String path, final String key) {
@@ -52,6 +59,18 @@ public class LanguageProperty {
 
 	public LanguageProperty setOriginalIndex(final int originalIndex) {
 		this.originalIndex = originalIndex;
+		return this;
+	}
+
+	public int getEmptyLinesBefore() {
+		return emptyLinesBefore;
+	}
+
+	/**
+	 * Number of empty lines written before this property (and its comment) to keep blocks of properties visually grouped.
+	 */
+	public LanguageProperty setEmptyLinesBefore(final int emptyLinesBefore) {
+		this.emptyLinesBefore = Math.max(0, emptyLinesBefore);
 		return this;
 	}
 
@@ -113,6 +132,57 @@ public class LanguageProperty {
 			return "";
 		} else {
 			return null;
+		}
+	}
+
+	/**
+	 * Next free original index for a property appended to the given properties.
+	 * The list size is not sufficient, because after removing properties a new index could collide with an existing one.
+	 */
+	public static int getNextOriginalIndex(final Collection<LanguageProperty> languageProperties) {
+		int maxOriginalIndex = 0;
+		if (languageProperties != null) {
+			for (final LanguageProperty languageProperty : languageProperties) {
+				maxOriginalIndex = Math.max(maxOriginalIndex, languageProperty.getOriginalIndex());
+			}
+		}
+		return maxOriginalIndex + 1;
+	}
+
+	/**
+	 * Before properties are removed, their empty lines are passed on to the next remaining property of the same path (by original index),
+	 * so the visual grouping of blocks in the properties files is kept, also if the first property of a block is removed.
+	 * Must be called while the properties to remove are still contained in allProperties (they are skipped as targets).
+	 */
+	public static void passOnEmptyLinesOfPropertiesToRemove(final Collection<LanguageProperty> allProperties, final Collection<LanguageProperty> propertiesToRemove) {
+		if (allProperties == null || propertiesToRemove == null || propertiesToRemove.isEmpty()) {
+			return;
+		}
+
+		final Set<LanguageProperty> propertiesToRemoveSet = Collections.newSetFromMap(new IdentityHashMap<>());
+		propertiesToRemoveSet.addAll(propertiesToRemove);
+
+		final List<LanguageProperty> remainingProperties = new ArrayList<>();
+		for (final LanguageProperty languageProperty : allProperties) {
+			if (!propertiesToRemoveSet.contains(languageProperty)) {
+				remainingProperties.add(languageProperty);
+			}
+		}
+
+		for (final LanguageProperty propertyToRemove : propertiesToRemoveSet) {
+			if (propertyToRemove.getEmptyLinesBefore() > 0) {
+				LanguageProperty nextProperty = null;
+				for (final LanguageProperty remainingProperty : remainingProperties) {
+					if (Objects.equals(remainingProperty.getPath(), propertyToRemove.getPath())
+							&& remainingProperty.getOriginalIndex() > propertyToRemove.getOriginalIndex()
+							&& (nextProperty == null || remainingProperty.getOriginalIndex() < nextProperty.getOriginalIndex())) {
+						nextProperty = remainingProperty;
+					}
+				}
+				if (nextProperty != null) {
+					nextProperty.setEmptyLinesBefore(Math.max(nextProperty.getEmptyLinesBefore(), propertyToRemove.getEmptyLinesBefore()));
+				}
+			}
 		}
 	}
 

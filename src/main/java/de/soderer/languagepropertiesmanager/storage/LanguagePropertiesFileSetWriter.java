@@ -85,8 +85,19 @@ public class LanguagePropertiesFileSetWriter {
 				}
 
 				try (PropertiesWriter propertiesWriter = new PropertiesWriter(new FileOutputStream(new File(propertiesDirectory, filename)))) {
+					// Empty lines of properties missing in this language are carried over, so block boundaries are kept
+					int pendingEmptyLines = 0;
 					for (final LanguageProperty languageProperty : filteredLanguageProperties) {
+						pendingEmptyLines = Math.max(pendingEmptyLines, languageProperty.getEmptyLinesBefore());
 						if (languageProperty.containsLanguage(languageSign) && languageProperty.getLanguageValue(languageSign) != null) {
+							// No empty lines at the beginning of the file
+							if (propertiesWriter.getWrittenProperties() > 0) {
+								for (int i = 0; i < pendingEmptyLines; i++) {
+									propertiesWriter.writeEmptyLine();
+								}
+							}
+							pendingEmptyLines = 0;
+
 							if (Utilities.isNotEmpty(languageProperty.getComment())) {
 								propertiesWriter.writeComment(languageProperty.getComment());
 							}

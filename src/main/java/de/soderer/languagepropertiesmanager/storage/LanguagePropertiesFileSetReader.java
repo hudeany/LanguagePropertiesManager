@@ -104,6 +104,8 @@ public class LanguagePropertiesFileSetReader {
 						if (property == null) {
 							property = new LanguageProperty(path, entry.getKey());
 							property.setOriginalIndex(languageProperties.size() + 1);
+							// Empty lines structuring blocks are taken from the file defining the position, which is the default file if it contains the key
+							property.setEmptyLinesBefore(propertiesReader.getEmptyLinesBefore().getOrDefault(entry.getKey(), 0));
 							languageProperties.add(property);
 							keyIndex.put(entry.getKey(), property);
 						}

@@ -171,6 +171,8 @@ public final class LanguagePropertiesMerger {
 	public static MergeResult applyMergePlan(final List<LanguageProperty> targetProperties, final MergePlan mergePlan, final MergeMode mergeMode) {
 		final MergeResult mergeResult = new MergeResult();
 		final Map<String, LanguageProperty> addedPropertiesByPathAndKey = new HashMap<>();
+		// The list size is not sufficient, because after removing properties a new index could collide with an existing one
+		int nextOriginalIndex = LanguageProperty.getNextOriginalIndex(targetProperties);
 
 		for (final MergePlanEntry entry : mergePlan.entries) {
 			final LanguageProperty importedProperty = entry.importedProperty;
@@ -190,7 +192,7 @@ public final class LanguagePropertiesMerger {
 					}
 				} else {
 					importedProperty.setPath(entry.pathForNewProperty);
-					importedProperty.setOriginalIndex(targetProperties.size() + 1);
+					importedProperty.setOriginalIndex(nextOriginalIndex++);
 					targetProperties.add(importedProperty);
 					addedPropertiesByPathAndKey.put(pathAndKey, importedProperty);
 					mergeResult.markChanged(importedProperty);

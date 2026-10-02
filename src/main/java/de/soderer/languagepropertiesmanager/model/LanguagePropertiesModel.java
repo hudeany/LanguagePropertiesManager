@@ -190,7 +190,7 @@ public final class LanguagePropertiesModel {
 	 * Appends a new property, selects it and marks the data as changed
 	 */
 	public void addProperty(final LanguageProperty newProperty) {
-		newProperty.setOriginalIndex(languageProperties.size() + 1);
+		newProperty.setOriginalIndex(LanguageProperty.getNextOriginalIndex(languageProperties));
 		languageProperties.add(newProperty);
 		setCurrentSelection(Collections.singletonList(newProperty));
 		setUnsavedChanges(true);
@@ -205,6 +205,8 @@ public final class LanguagePropertiesModel {
 	public int removeProperties(final Collection<LanguageProperty> propertiesToRemove) {
 		final Set<LanguageProperty> propertiesToRemoveSet = Collections.newSetFromMap(new IdentityHashMap<>());
 		propertiesToRemoveSet.addAll(propertiesToRemove);
+		// Keep the block structure (empty lines) of the properties files, also if the first property of a block is removed
+		LanguageProperty.passOnEmptyLinesOfPropertiesToRemove(languageProperties, propertiesToRemoveSet);
 		final int sizeBefore = languageProperties.size();
 		languageProperties.removeIf(propertiesToRemoveSet::contains);
 		final int removedCount = sizeBefore - languageProperties.size();

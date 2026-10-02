@@ -113,6 +113,8 @@ public final class BaseSetReducer {
 			}
 		}
 		if (!propertiesToRemove.isEmpty()) {
+			// Keep the block structure (empty lines) of the properties files, also if the first property of a block is removed
+			LanguageProperty.passOnEmptyLinesOfPropertiesToRemove(languageProperties, propertiesToRemove);
 			// Remove by identity, so also exactly the reduced one of several duplicates is removed
 			languageProperties.removeIf(propertiesToRemove::contains);
 		}
