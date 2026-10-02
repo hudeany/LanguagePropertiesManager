@@ -77,19 +77,19 @@ public class PropertyDetailPanel extends JPanel {
 	/** Whether the detail fields currently show an existing property ("change") or a new one ("add") */
 	private boolean detailShowsExistingProperty = false;
 
-	private JTextField pathTextfield;
-	private JTextField keyTextfield;
-	private JTextArea commentTextfield;
-	private JPanel detailFieldsPart;
+	private final JTextField pathTextfield;
+	private final JTextField keyTextfield;
+	private final JTextArea commentTextfield;
+	private final JPanel detailFieldsPart;
 	private final Map<String, JTextArea> languageTextFields = new LinkedHashMap<>();
 	/** Labels of the language fields, they show whether an empty field means "missing" or "explicitly empty" */
 	private final Map<String, JLabel> languageLabels = new LinkedHashMap<>();
 	/** Language signs whose empty field stands for an explicitly empty value ("key=") instead of a missing key */
 	private final Set<String> explicitlyEmptyLanguageSigns = new HashSet<>();
 
-	private JButton okButton;
-	private JButton cancelButton;
-	private JButton textConversionButton;
+	private final JButton okButton;
+	private final JButton cancelButton;
+	private final JButton textConversionButton;
 
 	public PropertyDetailPanel(final LanguagePropertiesModel model, final Callback callback) {
 		super(new BorderLayout(0, 3));
@@ -500,7 +500,11 @@ public class PropertyDetailPanel extends JPanel {
 			languageLabel.setText(labelText + ":");
 			languageLabel.setToolTipText(null);
 		} else if (explicitlyEmptyLanguageSigns.contains(languageSign)) {
-			languageLabel.setText(labelText + " " + LangResources.get("value_empty_sign") + ":");
+			if (Utilities.isBlank(LangResources.get("value_empty_sign"))) {
+				languageLabel.setText(labelText + ":");
+			} else {
+				languageLabel.setText(labelText + " " + LangResources.get("value_empty_sign") + ":");
+			}
 			languageLabel.setToolTipText(null);
 		} else {
 			languageLabel.setText(labelText + " " + LangResources.get("value_not_found_sign") + ":");

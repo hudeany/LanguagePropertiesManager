@@ -115,6 +115,7 @@ public class PropertiesTablePanel extends JPanel {
 
 	private final JTable propertiesTable;
 	private final LanguagePropertiesTableModel propertiesTableModel;
+	private final ActionScopeStatusBar actionScopeStatusBar;
 
 	/** Suppresses the user selection handling while the table selection is changed programmatically */
 	private boolean technicalSelectionChange = false;
@@ -178,6 +179,23 @@ public class PropertiesTablePanel extends JPanel {
 			}
 		});
 
+		// ESC clears the selection, so bulk actions apply to all displayed properties again.
+		// The cleared selection runs through handleUserSelectionChange(), which asks for unsaved detail changes.
+		propertiesTable.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "clearSelectionByUser");
+		propertiesTable.getActionMap().put("clearSelectionByUser", new AbstractAction() {
+			private static final long serialVersionUID = 2914563870215436178L;
+
+			@Override
+			public void actionPerformed(final ActionEvent event) {
+				if (propertiesTable.isEditing()) {
+					// Keep the standard behavior of ESC while a cell is edited
+					propertiesTable.getCellEditor().cancelCellEditing();
+				} else if (propertiesTable.getSelectedRowCount() > 0) {
+					propertiesTable.clearSelection();
+				}
+			}
+		});
+
 		installSortableHeader(propertiesTable.getTableHeader());
 		installTableContextMenu();
 
@@ -185,6 +203,12 @@ public class PropertiesTablePanel extends JPanel {
 		// Area right of the last column (AUTO_RESIZE_OFF) shows the viewport background
 		propertiesTableScrollPane.getViewport().setBackground(Color.WHITE);
 		add(propertiesTableScrollPane, BorderLayout.CENTER);
+
+		// Shows which properties the bulk actions affect (selection / search filter)
+		actionScopeStatusBar = new ActionScopeStatusBar(propertiesTable,
+				() -> model.isLoaded() ? model.getLanguageProperties().size() : 0,
+				this::isSearchFilterActive);
+		add(actionScopeStatusBar, BorderLayout.SOUTH);
 	}
 
 	/**
@@ -985,7 +1009,11 @@ public class PropertiesTablePanel extends JPanel {
 						return LangResources.get("value_not_found_sign");
 					} else if (value.isEmpty()) {
 						// Key exists with an explicitly empty value ("key=")
-						return LangResources.get("value_empty_sign");
+						if (Utilities.isBlank(LangResources.get("value_empty_sign"))) {
+							return "";
+						} else {
+							return LangResources.get("value_empty_sign");
+						}
 					} else {
 						return LangResources.get("value_found_sign");
 					}
