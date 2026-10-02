@@ -98,6 +98,8 @@ public class ImportFromExcelWorker extends WorkerSimple<Boolean> {
 				throw new LanguagePropertiesException("Excel file does not contain mandatory column for keys in sheet: " + sheet.getSheetName());
 			}
 
+			final boolean hasDefaultLanguageColumn = languageColumnHeaders.containsValue(LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT);
+
 			// Read data
 			languageProperties = new ArrayList<>();
 			int rowIndex = -1;
@@ -193,21 +195,28 @@ public class ImportFromExcelWorker extends WorkerSimple<Boolean> {
 
 						for (final Entry<Integer, String> entry : languageColumnHeaders.entrySet()) {
 							final Cell valueCell = row.getCell(entry.getKey());
-							if (valueCell == null) {
-								languageProperty.setLanguageValue(entry.getValue(), null);
+							final String cellValue;
+							if (valueCell == null || valueCell.getCellType() == CellType.BLANK) {
+								cellValue = null;
 							} else if (valueCell.getCellType() == CellType.STRING) {
-								languageProperty.setLanguageValue(entry.getValue(), valueCell.getStringCellValue());
+								cellValue = valueCell.getStringCellValue();
 							} else if (valueCell.getCellType() == CellType.NUMERIC) {
 								final Double value = Double.valueOf(valueCell.getNumericCellValue());
 								if ((value % 1) == 0) {
-									languageProperty.setLanguageValue(entry.getValue(), Integer.toString(value.intValue()));
+									cellValue = Integer.toString(value.intValue());
 								} else {
-									languageProperty.setLanguageValue(entry.getValue(), value.toString());
+									cellValue = value.toString();
 								}
-							} else if (valueCell.getCellType() == CellType.BLANK) {
-								languageProperty.setLanguageValue(entry.getValue(), null);
 							} else {
 								throw new LanguagePropertiesException("Excel file contains invalid data type '" + valueCell.getCellType().name() + "' in sheet '" + sheet.getSheetName() + "' at row " + (rowIndex + 1) + " and column " + (entry.getKey() + 1));
+							}
+							// Excel can not reliably distinguish between "empty" and "missing":
+							// With a default language column, empty cells are kept as "" in the default language and stored as missing (null) in all other languages.
+							// Without a default language column, empty cells are kept as "" in all languages, so no key is lost.
+							if (hasDefaultLanguageColumn) {
+								languageProperty.setLanguageValue(entry.getValue(), LanguageProperty.toStorageValue(entry.getValue(), cellValue));
+							} else {
+								languageProperty.setLanguageValue(entry.getValue(), cellValue == null ? "" : cellValue);
 							}
 						}
 

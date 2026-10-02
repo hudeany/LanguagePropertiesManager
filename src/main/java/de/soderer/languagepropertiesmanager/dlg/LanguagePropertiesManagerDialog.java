@@ -779,7 +779,8 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			comparator = Comparator.comparing(languageProperty -> getEmptyForNull(languageProperty.getComment()));
 		} else {
 			final String languageSign = availableLanguageSigns.get(modelColumn - COLUMN_FIRST_LANGUAGE);
-			comparator = Comparator.comparing(languageProperty -> getEmptyForNull(languageProperty.getLanguageValue(languageSign)));
+			comparator = Comparator.comparing((final LanguageProperty languageProperty) -> getValueStateSortOrder(languageProperty.getLanguageValue(languageSign)))
+					.thenComparing(languageProperty -> getEmptyForNull(languageProperty.getLanguageValue(languageSign)));
 		}
 		if (!sortAscending) {
 			comparator = comparator.reversed();
@@ -862,6 +863,21 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		final DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
 		centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
 
+		final String valueNotFoundSign = LangResources.get("value_not_found_sign");
+		final String valueNotFoundTooltip = LangResources.get("value_not_found_tooltip");
+		final DefaultTableCellRenderer languageValueRenderer = new DefaultTableCellRenderer() {
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public Component getTableCellRendererComponent(final JTable table, final Object value, final boolean isSelected, final boolean hasFocus, final int row, final int column) {
+				final Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+				// The renderer component is reused for all cells, so the tooltip must be reset for every cell
+				setToolTipText(valueNotFoundSign.equals(value) ? valueNotFoundTooltip : null);
+				return component;
+			}
+		};
+		languageValueRenderer.setHorizontalAlignment(SwingConstants.CENTER);
+
 		for (int viewIndex = 0; viewIndex < propertiesTable.getColumnCount(); viewIndex++) {
 			final TableColumn column = propertiesTable.getColumnModel().getColumn(viewIndex);
 			final int modelIndex = column.getModelIndex();
@@ -889,7 +905,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					final String sign = availableLanguageSigns.get(modelIndex - COLUMN_FIRST_LANGUAGE);
 					final int headerTextWidth = propertiesTable.getFontMetrics(propertiesTable.getTableHeader().getFont()).stringWidth(propertiesTableModel.getColumnName(modelIndex)) + 16;
 					column.setPreferredWidth(Math.max(sign.length() > 3 ? 50 : 25, headerTextWidth));
-					column.setCellRenderer(centerRenderer);
+					column.setCellRenderer(languageValueRenderer);
 					break;
 			}
 		}
@@ -1016,7 +1032,14 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				propertyToChange.setKey(getPlainKey(keyTextfield.getText()));
 				propertyToChange.setComment(Utilities.isNotEmpty(commentTextfield.getText()) ? commentTextfield.getText() : null);
 				for (final Map.Entry<String, JTextArea> languageTextField : languageTextFields.entrySet()) {
-					propertyToChange.setLanguageValue(languageTextField.getKey(), getPlainValue(languageTextField.getValue().getText()));
+					final String languageSign = languageTextField.getKey();
+					String newValue = LanguageProperty.toStorageValue(languageSign, getPlainValue(languageTextField.getValue().getText()));
+					if (newValue == null && "".equals(propertyToChange.getLanguageValue(languageSign))) {
+						// The field can not show the difference between "empty" and "missing",
+						// so an explicitly empty value (e.g. "key=" read from file) is kept as it is
+						newValue = "";
+					}
+					propertyToChange.setLanguageValue(languageSign, newValue);
 				}
 
 				refreshTable();
@@ -1025,7 +1048,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			} else {
 				final LanguageProperty newValues = new LanguageProperty(pathTextfield.getText(), getPlainKey(keyTextfield.getText()));
 				for (final Map.Entry<String, JTextArea> languageTextField : languageTextFields.entrySet()) {
-					newValues.setLanguageValue(languageTextField.getKey(), getPlainValue(languageTextField.getValue().getText()));
+					newValues.setLanguageValue(languageTextField.getKey(), LanguageProperty.toStorageValue(languageTextField.getKey(), getPlainValue(languageTextField.getValue().getText())));
 				}
 
 				if (Utilities.isNotEmpty(commentTextfield.getText())) {
@@ -4044,6 +4067,20 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		return fileChooser;
 	}
 
+	/**
+	 * Sort order of the state of a language value:
+	 * missing values (null) first, then explicitly empty values (""), then real values.
+	 */
+	private static int getValueStateSortOrder(final String value) {
+		if (value == null) {
+			return 0;
+		} else if (value.isEmpty()) {
+			return 1;
+		} else {
+			return 2;
+		}
+	}
+
 	private static String getEmptyForNull(final String string) {
 		return string == null ? "" : string;
 	}
@@ -4114,11 +4151,19 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					return languageProperty.getKey();
 				default:
 					if (isCommentColumn(column)) {
-						// Like the language columns, only show whether a comment exists
-						return Utilities.isEmpty(languageProperty.getComment()) ? LangResources.get("value_not_found_sign") : LangResources.get("value_found_sign");
+						// Only show whether a comment exists, a missing comment is shown as an empty cell
+						return Utilities.isEmpty(languageProperty.getComment()) ? "" : LangResources.get("value_found_sign");
 					}
 					final String value = languageProperty.getLanguageValue(availableLanguageSigns.get(column - COLUMN_FIRST_LANGUAGE));
-					return Utilities.isEmpty(value) ? LangResources.get("value_not_found_sign") : LangResources.get("value_found_sign");
+					if (value == null) {
+						// Key is missing in this language file, ResourceBundle falls back to the default value
+						return LangResources.get("value_not_found_sign");
+					} else if (value.isEmpty()) {
+						// Key exists with an explicitly empty value ("key=")
+						return LangResources.get("value_empty_sign");
+					} else {
+						return LangResources.get("value_found_sign");
+					}
 			}
 		}
 	}

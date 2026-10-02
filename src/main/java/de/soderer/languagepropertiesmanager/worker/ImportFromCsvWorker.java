@@ -94,6 +94,8 @@ public class ImportFromCsvWorker extends WorkerSimple<Boolean> {
 				throw new LanguagePropertiesException("Csv file does not contain mandatory column for keys");
 			}
 
+			final boolean hasDefaultLanguageColumn = languageColumnHeaders.containsValue(LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT);
+
 			// Read data
 			languageProperties = new ArrayList<>();
 			int rowIndex = -1;
@@ -148,9 +150,12 @@ public class ImportFromCsvWorker extends WorkerSimple<Boolean> {
 				}
 
 				for (final Entry<Integer, String> entry : languageColumnHeaders.entrySet()) {
-					// Missing trailing cells (short rows) are treated as empty values
+					// Missing trailing cells (short rows) are treated as empty values.
+					// CSV can not distinguish between "empty" and "missing":
+					// With a default language column, empty cells are kept as "" in the default language and stored as missing (null) in all other languages.
+					// Without a default language column, empty cells are kept as "" in all languages, so no key is lost.
 					final String valueCell = getCell(valuesRow, entry.getKey(), "");
-					languageProperty.setLanguageValue(entry.getValue(), valueCell);
+					languageProperty.setLanguageValue(entry.getValue(), hasDefaultLanguageColumn ? LanguageProperty.toStorageValue(entry.getValue(), valueCell) : valueCell);
 				}
 
 				languageProperties.add(languageProperty);

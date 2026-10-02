@@ -84,13 +84,36 @@ public class LanguageProperty {
 		return languageValues.containsKey(languageSign);
 	}
 
+	/**
+	 * Sets the value of a language. The value is stored as it is:
+	 * <ul>
+	 * <li>null: the key is missing in this language (it is omitted in that language file, so ResourceBundle falls back to the default value).
+	 * The language sign stays registered, so the language is still shown as a column.</li>
+	 * <li>"" (empty string): the key exists with an explicitly empty value (written as "key=").</li>
+	 * </ul>
+	 * For values entered by the user or read from import files use {@link #toStorageValue(String, String)} first.
+	 */
 	public LanguageProperty setLanguageValue(final String languageSign, final String value) {
-		if (Utilities.isEmpty(value)) {
-			languageValues.put(languageSign, null);
-		} else {
-			languageValues.put(languageSign, value);
-		}
+		languageValues.put(languageSign, value);
 		return this;
+	}
+
+	/**
+	 * Maps an input value (UI field, import cell), which can not distinguish between "empty" and "missing", to the stored value:
+	 * <ul>
+	 * <li>non-empty values are kept as they are</li>
+	 * <li>empty values become "" for the default language, so the key is not lost on saving</li>
+	 * <li>empty values become null for all other languages, so the key is omitted in that language file and ResourceBundle falls back to the default value</li>
+	 * </ul>
+	 */
+	public static String toStorageValue(final String languageSign, final String inputValue) {
+		if (Utilities.isNotEmpty(inputValue)) {
+			return inputValue;
+		} else if (LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT.equals(languageSign)) {
+			return "";
+		} else {
+			return null;
+		}
 	}
 
 	public static class EntryValueExistsComparator implements Comparator<Map.Entry<String, LanguageProperty>> {
