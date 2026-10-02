@@ -3509,13 +3509,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 						}
 					}
 				}
-				if (Utilities.isNotEmpty(importedProperty.getComment())) {
-					if (Utilities.isEmpty(targetProperty.getComment())) {
-						mergePlan.fillableValueCount++;
-					} else if (!targetProperty.getComment().equals(importedProperty.getComment())) {
-						differingValuesOfProperty++;
-					}
-				}
+				// Comments are not compared, only keys and values matter
 				if (differingValuesOfProperty > 0) {
 					mergePlan.propertiesWithDifferencesCount++;
 					mergePlan.differingValueCount += differingValuesOfProperty;
@@ -3536,14 +3530,20 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 	/**
 	 * Existing properties, an imported property with the same key is merged into.
-	 * An existing property with the same path wins. Otherwise properties of a set
-	 * with the same set name (e.g. a copy or export of the set in another
-	 * directory) match, as well as properties without path information on one
-	 * side. More than one returned candidate means the match is ambiguous.
+	 * Matching is done by key only, because the path of an import source (e.g. a
+	 * copy or export of the set in another directory) usually differs.
+	 * Only if the key exists in more than one loaded properties set, an existing
+	 * property with exactly the same path is used to resolve the ambiguity.
+	 * More than one returned candidate means the match is ambiguous.
 	 */
 	private static List<LanguageProperty> findMergeCandidates(final LanguageProperty importedProperty, final List<LanguageProperty> existingPropertiesWithSameKey) {
 		if (existingPropertiesWithSameKey == null || existingPropertiesWithSameKey.isEmpty()) {
 			return new ArrayList<>();
+		}
+
+		final List<LanguageProperty> candidates = reduceToFirstOfSinglePath(existingPropertiesWithSameKey);
+		if (candidates.size() <= 1) {
+			return candidates;
 		}
 
 		final String importedPath = getEmptyForNull(importedProperty.getPath());
@@ -3552,16 +3552,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				.collect(Collectors.toList());
 		if (!samePathCandidates.isEmpty()) {
 			return reduceToFirstOfSinglePath(samePathCandidates);
+		} else {
+			return candidates;
 		}
-
-		final String importedSetName = getLanguagePropertiesSetNameOfPath(importedPath);
-		final List<LanguageProperty> sameSetNameCandidates = existingPropertiesWithSameKey.stream()
-				.filter(existingProperty -> {
-					final String existingSetName = getLanguagePropertiesSetNameOfPath(getEmptyForNull(existingProperty.getPath()));
-					return importedSetName.isEmpty() || existingSetName.isEmpty() || importedSetName.equals(existingSetName);
-				})
-				.collect(Collectors.toList());
-		return reduceToFirstOfSinglePath(sameSetNameCandidates);
 	}
 
 	/**
@@ -3587,6 +3580,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private static String determinePathForNewProperty(final String importedPath, final Set<String> existingPaths) {
 		if (existingPaths.contains(importedPath)) {
 			return importedPath;
+		} else if (existingPaths.size() == 1) {
+			// Only one properties set is loaded, so the path of the import source does not matter
+			return existingPaths.iterator().next();
 		}
 
 		final String importedSetName = getLanguagePropertiesSetNameOfPath(importedPath);
@@ -3631,6 +3627,10 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				if (alreadyAddedProperty != null) {
 					// Duplicate within the imported data: only take over values the first occurrence is still missing
 					mergeValues(importedProperty, alreadyAddedProperty, false, mergeResult);
+					// The newly added property is completely taken from the import, so it also takes over a comment it is still missing
+					if (Utilities.isEmpty(alreadyAddedProperty.getComment()) && Utilities.isNotEmpty(importedProperty.getComment())) {
+						alreadyAddedProperty.setComment(importedProperty.getComment());
+					}
 				} else {
 					importedProperty.setPath(entry.pathForNewProperty);
 					importedProperty.setOriginalIndex(languageProperties.size() + 1);
@@ -3651,9 +3651,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	}
 
 	/**
-	 * Takes over the non-empty values and the comment of the source property into
-	 * the target property. Empty target values are always filled, differing
-	 * non-empty target values are only overwritten if requested.
+	 * Takes over the non-empty values of the source property into the target
+	 * property. Empty target values are always filled, differing non-empty target
+	 * values are only overwritten if requested. Comments are left untouched.
 	 */
 	private static void mergeValues(final LanguageProperty sourceProperty, final LanguageProperty targetProperty, final boolean overwriteDifferingValues, final MergeResult mergeResult) {
 		final String displayName = getPropertyDisplayName(targetProperty.getPath(), targetProperty.getKey());
@@ -3679,24 +3679,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			}
 		}
 
-		final String importedComment = sourceProperty.getComment();
-		if (Utilities.isNotEmpty(importedComment)) {
-			final String existingComment = targetProperty.getComment();
-			final String commentLabel = " [" + LangResources.get("comment") + "]";
-			if (Utilities.isEmpty(existingComment)) {
-				targetProperty.setComment(importedComment);
-				mergeResult.filledValues.add(displayName + commentLabel);
-				changed = true;
-			} else if (!existingComment.equals(importedComment)) {
-				if (overwriteDifferingValues) {
-					targetProperty.setComment(importedComment);
-					mergeResult.overwrittenValues.add(displayName + commentLabel);
-					changed = true;
-				} else {
-					mergeResult.keptDifferingValues.add(displayName + commentLabel);
-				}
-			}
-		}
+		// Comments are not compared or taken over, the comment of the target property stays as it is
 
 		if (changed) {
 			mergeResult.markChanged(targetProperty);
@@ -3884,7 +3867,10 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 	/**
 	 * Determines for every property to check the identical values in the base set.
-	 * The properties are matched like in a merge import (see findMergeCandidates()).
+	 * The properties are matched by key only, the path of the base set (which
+	 * usually differs) and the comments are not compared. If the base set
+	 * contains the key more than once, a value counts as identical if any of
+	 * these base properties has the same value for that language.
 	 * Nothing is changed here.
 	 */
 	private static ReducePlan createReducePlan(final List<LanguageProperty> propertiesToCheck, final List<LanguageProperty> baseProperties) {
@@ -3902,36 +3888,45 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				continue;
 			}
 
-			final List<LanguageProperty> candidates = findMergeCandidates(languageProperty, basePropertiesByKey.get(key));
-			if (candidates.size() > 1) {
-				reducePlan.skippedEntries.add(getPropertyDisplayName(languageProperty.getPath(), key) + ": " + LangResources.get("reduceByBaseSet_skippedAmbiguous", candidates.size()));
-			} else if (candidates.isEmpty()) {
+			final List<LanguageProperty> basePropertiesWithSameKey = basePropertiesByKey.get(key);
+			if (basePropertiesWithSameKey == null || basePropertiesWithSameKey.isEmpty()) {
 				reducePlan.propertiesWithoutBaseCount++;
-			} else {
-				final LanguageProperty baseProperty = candidates.get(0);
-				final List<String> identicalLanguageSigns = new ArrayList<>();
-				boolean hasRemainingValue = false;
-				for (final String languageSign : new ArrayList<>(languageProperty.getAvailableLanguageSigns())) {
-					final String value = languageProperty.getLanguageValue(languageSign);
-					if (Utilities.isNotEmpty(value)) {
+				continue;
+			}
+
+			final List<String> identicalLanguageSigns = new ArrayList<>();
+			boolean hasRemainingValue = false;
+			for (final String languageSign : new ArrayList<>(languageProperty.getAvailableLanguageSigns())) {
+				final String value = languageProperty.getLanguageValue(languageSign);
+				if (Utilities.isNotEmpty(value)) {
+					boolean identicalValueFound = false;
+					boolean baseValueFound = false;
+					for (final LanguageProperty baseProperty : basePropertiesWithSameKey) {
 						final String baseValue = baseProperty.getLanguageValue(languageSign);
 						if (value.equals(baseValue)) {
-							identicalLanguageSigns.add(languageSign);
-						} else {
-							hasRemainingValue = true;
-							if (Utilities.isNotEmpty(baseValue)) {
-								reducePlan.differingValues.add(getPropertyDisplayName(languageProperty.getPath(), key) + " [" + languageSign + "]");
-							}
+							identicalValueFound = true;
+							break;
+						} else if (Utilities.isNotEmpty(baseValue)) {
+							baseValueFound = true;
+						}
+					}
+
+					if (identicalValueFound) {
+						identicalLanguageSigns.add(languageSign);
+					} else {
+						hasRemainingValue = true;
+						if (baseValueFound) {
+							reducePlan.differingValues.add(getPropertyDisplayName(languageProperty.getPath(), key) + " [" + languageSign + "]");
 						}
 					}
 				}
+			}
 
-				if (!identicalLanguageSigns.isEmpty()) {
-					reducePlan.entries.add(new ReducePlanEntry(languageProperty, identicalLanguageSigns, !hasRemainingValue));
-					reducePlan.identicalValueCount += identicalLanguageSigns.size();
-					if (!hasRemainingValue) {
-						reducePlan.emptyPropertyCount++;
-					}
+			if (!identicalLanguageSigns.isEmpty()) {
+				reducePlan.entries.add(new ReducePlanEntry(languageProperty, identicalLanguageSigns, !hasRemainingValue));
+				reducePlan.identicalValueCount += identicalLanguageSigns.size();
+				if (!hasRemainingValue) {
+					reducePlan.emptyPropertyCount++;
 				}
 			}
 		}
