@@ -167,6 +167,10 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private JTextArea commentTextfield;
 	private JPanel detailFieldsPart;
 	private final Map<String, JTextArea> languageTextFields = new LinkedHashMap<>();
+	/** Labels of the language fields in the detail view, they show whether an empty field means "missing" or "explicitly empty" */
+	private final Map<String, JLabel> languageLabels = new LinkedHashMap<>();
+	/** Language signs whose empty field in the detail view stands for an explicitly empty value ("key=") instead of a missing key */
+	private final Set<String> explicitlyEmptyLanguageSigns = new HashSet<>();
 	private JTable propertiesTable;
 	private LanguagePropertiesTableModel propertiesTableModel;
 	private int sortColumnModelIndex = COLUMN_NR;
@@ -672,6 +676,21 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 				addSeparatorIfNotEmpty(contextMenu);
 
+				// Content rows only: the detail view cannot distinguish between "missing" and "explicitly empty", so it is set here
+				if (event.getComponent() == propertiesTable && propertiesTable.getSelectedRowCount() > 0) {
+					final int selectedRowCount = propertiesTable.getSelectedRowCount();
+
+					final JMenuItem setValuesEmptyItem = new JMenuItem(LangResources.get("contextmenu_setValuesEmpty", selectedRowCount) + ": " + languageColumnName);
+					setValuesEmptyItem.addActionListener(e -> setSelectedLanguageValues(languageSign, languageColumnName, ""));
+					contextMenu.add(setValuesEmptyItem);
+
+					final JMenuItem setValuesMissingItem = new JMenuItem(LangResources.get("contextmenu_setValuesMissing", selectedRowCount) + ": " + languageColumnName);
+					setValuesMissingItem.addActionListener(e -> setSelectedLanguageValues(languageSign, languageColumnName, null));
+					contextMenu.add(setValuesMissingItem);
+
+					contextMenu.addSeparator();
+				}
+
 				// Only clears the values, the language itself (and its column) stays available
 				final JMenuItem deleteLanguageValuesItem = new JMenuItem(LangResources.get("contextmenu_deleteLanguageValues") + ": " + languageColumnName);
 				deleteLanguageValuesItem.addActionListener(e -> deleteAllLanguageValues(languageSign, languageColumnName));
@@ -812,6 +831,8 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 		detailFieldsPart.removeAll();
 		languageTextFields.clear();
+		languageLabels.clear();
+		explicitlyEmptyLanguageSigns.clear();
 
 		if (languageProperties != null) {
 			final GridBagConstraints labelConstraints = new GridBagConstraints();
@@ -831,10 +852,31 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				fieldConstraints.gridy = row;
 
 				final String labelText = LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT.equals(sign) ? LangResources.get("columnheader_default") : sign;
-				detailFieldsPart.add(new JLabel(labelText + ":"), labelConstraints);
+				final JLabel languageLabel = new JLabel(labelText + ":");
+				detailFieldsPart.add(languageLabel, labelConstraints);
+				languageLabels.put(sign, languageLabel);
 
 				final JTextArea languageTextfield = createMultiLineTextArea();
 				languageTextfield.getDocument().addDocumentListener(new DetailModifyListener());
+				languageTextfield.getDocument().addDocumentListener(new DocumentListener() {
+					@Override
+					public void insertUpdate(final DocumentEvent event) {
+						// Entered text replaces the explicitly empty value
+						explicitlyEmptyLanguageSigns.remove(sign);
+						updateLanguageLabel(sign);
+					}
+
+					@Override
+					public void removeUpdate(final DocumentEvent event) {
+						updateLanguageLabel(sign);
+					}
+
+					@Override
+					public void changedUpdate(final DocumentEvent event) {
+						// Attribute changes only, no text change
+					}
+				});
+				languageTextfield.setComponentPopupMenu(createLanguageFieldContextMenu(sign, languageTextfield));
 				detailFieldsPart.add(languageTextfield, fieldConstraints);
 				languageTextFields.put(sign, languageTextfield);
 
@@ -1033,13 +1075,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				propertyToChange.setComment(Utilities.isNotEmpty(commentTextfield.getText()) ? commentTextfield.getText() : null);
 				for (final Map.Entry<String, JTextArea> languageTextField : languageTextFields.entrySet()) {
 					final String languageSign = languageTextField.getKey();
-					String newValue = LanguageProperty.toStorageValue(languageSign, getPlainValue(languageTextField.getValue().getText()));
-					if (newValue == null && "".equals(propertyToChange.getLanguageValue(languageSign))) {
-						// The field can not show the difference between "empty" and "missing",
-						// so an explicitly empty value (e.g. "key=" read from file) is kept as it is
-						newValue = "";
-					}
-					propertyToChange.setLanguageValue(languageSign, newValue);
+					propertyToChange.setLanguageValue(languageSign, getDetailLanguageValue(languageSign, languageTextField.getValue()));
 				}
 
 				refreshTable();
@@ -1048,7 +1084,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			} else {
 				final LanguageProperty newValues = new LanguageProperty(pathTextfield.getText(), getPlainKey(keyTextfield.getText()));
 				for (final Map.Entry<String, JTextArea> languageTextField : languageTextFields.entrySet()) {
-					newValues.setLanguageValue(languageTextField.getKey(), LanguageProperty.toStorageValue(languageTextField.getKey(), getPlainValue(languageTextField.getValue().getText())));
+					newValues.setLanguageValue(languageTextField.getKey(), getDetailLanguageValue(languageTextField.getKey(), languageTextField.getValue()));
 				}
 
 				if (Utilities.isNotEmpty(commentTextfield.getText())) {
@@ -1248,6 +1284,48 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					hasUnsavedChanges = true;
 					setupTable();
 				}
+			}
+		} catch (final Exception ex) {
+			showError(ex);
+		}
+		checkButtonStatus();
+	}
+
+	/**
+	 * Sets the value of one language of the selected properties to an explicitly
+	 * empty value ("" is written as "key=") or to a missing value (null, the key is
+	 * not written into this language file and ResourceBundle falls back to the
+	 * default value). Existing non-empty values are only overwritten after asking.
+	 */
+	private void setSelectedLanguageValues(final String languageSign, final String languageDisplayName, final String newValue) {
+		try {
+			final List<LanguageProperty> selectedProperties = getSelectedProperties();
+			if (selectedProperties.isEmpty()) {
+				return;
+			}
+
+			final long nonEmptyValueCount = selectedProperties.stream().filter(languageProperty -> Utilities.isNotEmpty(languageProperty.getLanguageValue(languageSign))).count();
+			if (nonEmptyValueCount > 0) {
+				final Integer returncode = new QuestionDialog(this, LangResources.get("question_title_delete_language_values"), LangResources.get("question_content_delete_language_values", nonEmptyValueCount, languageDisplayName), LangResources.get("yes"), LangResources.get("no")).open();
+				if (returncode == null || returncode != 0) {
+					return;
+				}
+			}
+
+			boolean changed = false;
+			for (final LanguageProperty languageProperty : selectedProperties) {
+				final String oldValue = languageProperty.getLanguageValue(languageSign);
+				if (oldValue == null ? newValue != null : !oldValue.equals(newValue)) {
+					languageProperty.setLanguageValue(languageSign, newValue);
+					changed = true;
+				}
+			}
+
+			if (changed) {
+				hasUnsavedChanges = true;
+				currentSelectedProperties = selectedProperties;
+				refreshTable();
+				refreshDetailView();
 			}
 		} catch (final Exception ex) {
 			showError(ex);
@@ -2392,6 +2470,13 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					} else {
 						languageTextField.getValue().setText(value);
 					}
+					// Set after the text, because entering text resets this state
+					if ("".equals(value)) {
+						explicitlyEmptyLanguageSigns.add(languageTextField.getKey());
+					} else {
+						explicitlyEmptyLanguageSigns.remove(languageTextField.getKey());
+					}
+					updateLanguageLabel(languageTextField.getKey());
 				}
 
 				detailShowsExistingProperty = true;
@@ -2403,6 +2488,10 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				commentTextfield.setText("");
 				for (final JTextArea languageTextfield : languageTextFields.values()) {
 					languageTextfield.setText("");
+				}
+				explicitlyEmptyLanguageSigns.clear();
+				for (final String languageSign : languageLabels.keySet()) {
+					updateLanguageLabel(languageSign);
 				}
 
 				detailShowsExistingProperty = false;
@@ -2542,6 +2631,81 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	 * The text area grows in height with the number of lines, but is styled and
 	 * behaves (font, border, Tab focus traversal) like a single line text field.
 	 */
+	/**
+	 * Value of a language field of the detail view for storing. An empty field is
+	 * a missing value (null), unless it was marked as explicitly empty ("").
+	 */
+	private String getDetailLanguageValue(final String languageSign, final JTextArea languageTextfield) throws Exception {
+		final String value = LanguageProperty.toStorageValue(languageSign, getPlainValue(languageTextfield.getText()));
+		if (value == null && explicitlyEmptyLanguageSigns.contains(languageSign)) {
+			return "";
+		} else {
+			return value;
+		}
+	}
+
+	/**
+	 * Context menu of a language field in the detail view to choose between an
+	 * explicitly empty value and a missing value. The change is applied with the
+	 * OK button like any other change of the detail view.
+	 */
+	private JPopupMenu createLanguageFieldContextMenu(final String languageSign, final JTextArea languageTextfield) {
+		final JPopupMenu contextMenu = new JPopupMenu();
+
+		final JMenuItem setValueEmptyItem = new JMenuItem(LangResources.get("contextmenu_setValueEmpty"));
+		setValueEmptyItem.addActionListener(e -> setDetailLanguageFieldEmpty(languageSign, languageTextfield, true));
+		contextMenu.add(setValueEmptyItem);
+
+		final JMenuItem setValueMissingItem = new JMenuItem(LangResources.get("contextmenu_setValueMissing"));
+		setValueMissingItem.addActionListener(e -> setDetailLanguageFieldEmpty(languageSign, languageTextfield, false));
+		contextMenu.add(setValueMissingItem);
+
+		return contextMenu;
+	}
+
+	private void setDetailLanguageFieldEmpty(final String languageSign, final JTextArea languageTextfield, final boolean explicitlyEmpty) {
+		final boolean wasExplicitlyEmpty = explicitlyEmptyLanguageSigns.contains(languageSign);
+		final boolean hadText = !languageTextfield.getText().isEmpty();
+
+		// Clearing the text first, because entering or removing text changes the state of the field
+		languageTextfield.setText("");
+		if (explicitlyEmpty) {
+			explicitlyEmptyLanguageSigns.add(languageSign);
+		} else {
+			explicitlyEmptyLanguageSigns.remove(languageSign);
+		}
+		updateLanguageLabel(languageSign);
+
+		if (hadText || wasExplicitlyEmpty != explicitlyEmpty) {
+			dataWasModified = true;
+		}
+		checkButtonStatus();
+	}
+
+	/**
+	 * Shows the state of an empty language field in its label: the same signs as
+	 * in the table for a missing value and for an explicitly empty value
+	 */
+	private void updateLanguageLabel(final String languageSign) {
+		final JLabel languageLabel = languageLabels.get(languageSign);
+		final JTextArea languageTextfield = languageTextFields.get(languageSign);
+		if (languageLabel == null) {
+			return;
+		}
+
+		final String labelText = LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT.equals(languageSign) ? LangResources.get("columnheader_default") : languageSign;
+		if (languageTextfield == null || !languageTextfield.getText().isEmpty() || languageProperties == null) {
+			languageLabel.setText(labelText + ":");
+			languageLabel.setToolTipText(null);
+		} else if (explicitlyEmptyLanguageSigns.contains(languageSign)) {
+			languageLabel.setText(labelText + " " + LangResources.get("value_empty_sign") + ":");
+			languageLabel.setToolTipText(null);
+		} else {
+			languageLabel.setText(labelText + " " + LangResources.get("value_not_found_sign") + ":");
+			languageLabel.setToolTipText(LangResources.get("value_not_found_tooltip"));
+		}
+	}
+
 	private static JTextArea createMultiLineTextArea() {
 		final JTextArea textArea = new JTextArea();
 		// No line wrap: only real line breaks create new lines, like in the stored value
