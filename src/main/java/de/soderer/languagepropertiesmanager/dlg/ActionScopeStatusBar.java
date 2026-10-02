@@ -79,6 +79,12 @@ public class ActionScopeStatusBar extends JPanel {
 		add(scopeLabel, BorderLayout.WEST);
 		add(filterLabel, BorderLayout.EAST);
 
+		// Child labels do not inherit the panel's tooltip, so each component gets its own
+		final String toolTipText = LangResources.get("actionScope_tooltip");
+		setToolTipText(toolTipText);
+		scopeLabel.setToolTipText(toolTipText);
+		filterLabel.setToolTipText(toolTipText);
+
 		attachListeners();
 
 		// Re-attach when the table gets a new model or selection model
