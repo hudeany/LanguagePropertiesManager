@@ -754,18 +754,37 @@ public class PropertiesTablePanel extends JPanel {
 				default:
 					if (isCommentColumn(modelIndex)) {
 						// Same layout as the language columns
-						final int commentHeaderTextWidth = propertiesTable.getFontMetrics(propertiesTable.getTableHeader().getFont()).stringWidth(propertiesTableModel.getColumnName(modelIndex)) + 16;
-						column.setPreferredWidth(Math.max(25, commentHeaderTextWidth));
+						column.setPreferredWidth(Math.max(25, getSortableHeaderWidth(modelIndex)));
 						column.setCellRenderer(centerRenderer);
 						break;
 					}
 					final String sign = model.getAvailableLanguageSigns().get(modelIndex - COLUMN_FIRST_LANGUAGE);
-					final int headerTextWidth = propertiesTable.getFontMetrics(propertiesTable.getTableHeader().getFont()).stringWidth(propertiesTableModel.getColumnName(modelIndex)) + 16;
-					column.setPreferredWidth(Math.max(sign.length() > 3 ? 50 : 25, headerTextWidth));
+					column.setPreferredWidth(Math.max(sign.length() > 3 ? 50 : 25, getSortableHeaderWidth(modelIndex)));
 					column.setCellRenderer(languageValueRenderer);
 					break;
 			}
 		}
+	}
+
+	/**
+	 * Header width needed so the column name stays fully visible even when the
+	 * column is the sort column and the header additionally shows the sort icon.
+	 */
+	private int getSortableHeaderWidth(final int modelIndex) {
+		final int textWidth = propertiesTable.getFontMetrics(propertiesTable.getTableHeader().getFont()).stringWidth(propertiesTableModel.getColumnName(modelIndex));
+		int sortIconWidth = 0;
+		for (final String iconKey : new String[] { "Table.ascendingSortIcon", "Table.descendingSortIcon" }) {
+			final Icon sortIcon = UIManager.getIcon(iconKey);
+			if (sortIcon != null) {
+				sortIconWidth = Math.max(sortIconWidth, sortIcon.getIconWidth());
+			}
+		}
+		if (sortIconWidth == 0) {
+			// Fallback for look and feels without sort icons
+			sortIconWidth = 8;
+		}
+		// Text + gap between text and icon (JLabel default iconTextGap) + icon + cell padding and header border
+		return textWidth + new JLabel().getIconTextGap() + sortIconWidth + 16;
 	}
 
 	/**
