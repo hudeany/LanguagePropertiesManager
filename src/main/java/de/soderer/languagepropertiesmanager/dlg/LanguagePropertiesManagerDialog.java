@@ -87,6 +87,10 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private PropertiesTablePanel tablePanel;
 	/** Detail view of the selected property (right part) */
 	private PropertyDetailPanel detailPanel;
+	/** Split pane between table (left) and detail view (right) */
+	private final JSplitPane mainSplitPane;
+	/** Divider location before the detail view was hidden, to restore it when shown again */
+	private int dividerLocationBeforeHidingDetail = -1;
 
 	private JButton checkUsageButton;
 	private JButton checkUsageButtonPrevious;
@@ -121,10 +125,10 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		setIconImage(ImageManager.getImage("LanguagePropertiesManager.png").getImage());
 		setTitle(LangResources.get("window_title"));
 
-		final JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, createLeftPart(), createRightPart());
-		splitPane.setResizeWeight(0.5);
-		splitPane.setContinuousLayout(true);
-		setContentPane(splitPane);
+		mainSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, createLeftPart(), createRightPart());
+		mainSplitPane.setResizeWeight(0.5);
+		mainSplitPane.setContinuousLayout(true);
+		setContentPane(mainSplitPane);
 
 		// The label above the table and the save button follow the model
 		model.addPropertyChangeListener(event -> {
@@ -303,7 +307,34 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	 */
 	private void refreshDetailView() {
 		detailPanel.refresh();
+		updateDetailViewVisibility();
 		checkButtonStatus();
+	}
+
+	/**
+	 * Hides the detail view while more than one property is selected, because it
+	 * can only show and edit a single property. The table then uses the full width.
+	 */
+	private void updateDetailViewVisibility() {
+		final boolean showDetailView = model.getCurrentSelection().size() <= 1;
+		if (detailPanel.isVisible() == showDetailView) {
+			return;
+		}
+
+		if (showDetailView) {
+			detailPanel.setVisible(true);
+			if (dividerLocationBeforeHidingDetail > 0) {
+				mainSplitPane.setDividerLocation(dividerLocationBeforeHidingDetail);
+			} else {
+				mainSplitPane.setDividerLocation(0.5);
+			}
+		} else {
+			// Remember the user's divider position, because hiding the right component moves the divider to the edge
+			dividerLocationBeforeHidingDetail = mainSplitPane.getDividerLocation();
+			detailPanel.setVisible(false);
+		}
+		mainSplitPane.revalidate();
+		mainSplitPane.repaint();
 	}
 
 	/**
