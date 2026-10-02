@@ -1,115 +1,60 @@
 package de.soderer.languagepropertiesmanager.dlg;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.KeyboardFocusManager;
-import java.awt.Toolkit;
-import java.awt.datatransfer.StringSelection;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
-import java.nio.charset.CharacterCodingException;
-import java.nio.charset.Charset;
-import java.nio.charset.CodingErrorAction;
-import java.nio.charset.StandardCharsets;
-import java.text.MessageFormat;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Consumer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
-import javax.swing.Icon;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComponent;
-import javax.swing.JFileChooser;
 import javax.swing.JLabel;
-import javax.swing.JMenuItem;
 import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.JScrollPane;
-import javax.swing.JSeparator;
 import javax.swing.JSplitPane;
-import javax.swing.JTable;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
-import javax.swing.KeyStroke;
-import javax.swing.ListSelectionModel;
-import javax.swing.SwingConstants;
-import javax.swing.UIManager;
 import javax.swing.WindowConstants;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.filechooser.FileNameExtensionFilter;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.JTableHeader;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableColumn;
 
 import de.soderer.languagepropertiesmanager.LanguagePropertiesException;
 import de.soderer.languagepropertiesmanager.LanguagePropertiesManager;
-import de.soderer.languagepropertiesmanager.TranslationConstants;
+import de.soderer.languagepropertiesmanager.check.ErrorReport;
+import de.soderer.languagepropertiesmanager.check.LanguagePropertiesChecker;
 import de.soderer.languagepropertiesmanager.image.ImageManager;
-import de.soderer.languagepropertiesmanager.storage.LanguagePropertiesFileSetReader;
+import de.soderer.languagepropertiesmanager.merge.BaseSetReducer;
+import de.soderer.languagepropertiesmanager.merge.LanguagePropertiesMerger;
+import de.soderer.languagepropertiesmanager.merge.MergeMode;
+import de.soderer.languagepropertiesmanager.merge.MergePlan;
+import de.soderer.languagepropertiesmanager.merge.MergeResult;
+import de.soderer.languagepropertiesmanager.merge.ReducePlan;
+import de.soderer.languagepropertiesmanager.merge.ReduceResult;
+import de.soderer.languagepropertiesmanager.model.DuplicatesPlan;
+import de.soderer.languagepropertiesmanager.model.LanguagePropertiesModel;
 import de.soderer.languagepropertiesmanager.storage.LanguageProperty;
+import de.soderer.languagepropertiesmanager.storage.LoadedLanguageProperties;
 import de.soderer.languagepropertiesmanager.worker.ExportToCsvWorker;
 import de.soderer.languagepropertiesmanager.worker.ExportToExcelWorker;
-import de.soderer.languagepropertiesmanager.worker.ImportFromCsvWorker;
-import de.soderer.languagepropertiesmanager.worker.ImportFromExcelWorker;
-import de.soderer.languagepropertiesmanager.worker.LoadLanguagePropertiesWorker;
-import de.soderer.languagepropertiesmanager.worker.TranslateLanguagePropertiesWorker;
 import de.soderer.languagepropertiesmanager.worker.WriteLanguagePropertiesWorker;
 import de.soderer.network.NetworkUtilities;
 import de.soderer.utilities.ConfigurationProperties;
 import de.soderer.utilities.DateUtilities;
-import de.soderer.utilities.DeepLHelper;
-import de.soderer.utilities.FileUtilities;
 import de.soderer.utilities.IoUtilities;
 import de.soderer.utilities.LangResources;
-import de.soderer.utilities.PropertiesReader;
-import de.soderer.utilities.PropertiesWriter;
 import de.soderer.utilities.Result;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.appupdate.ApplicationUpdateUtilities;
 import de.soderer.utilities.collection.UniqueFifoQueuedList;
-import de.soderer.utilities.csv.CsvFormat;
-import de.soderer.utilities.csv.CsvReader;
-import de.soderer.utilities.csv.CsvWriter;
 import de.soderer.utilities.swing.ApplicationConfigurationDialog;
 import de.soderer.utilities.swing.ComboSelectionDialog;
 import de.soderer.utilities.swing.ErrorDialog;
@@ -126,34 +71,7 @@ import de.soderer.utilities.swing.UpdateableGuiApplication;
 public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private static final long serialVersionUID = 3371684406925137014L;
 
-	/*
-	 * Fixed model columns of the properties table. The language columns follow
-	 * after COLUMN_FIRST_LANGUAGE in the order of "availableLanguageSigns".
-	 * An optional comment column (see "commentColumnShown") follows after the
-	 * last language column.
-	 * (The SWT variant needed an invisible dummy first column as a workaround
-	 * for a Windows alignment bug, which JTable does not have.)
-	 */
-	private static final int COLUMN_NR = 0;
-	private static final int COLUMN_PATH = 1;
-	private static final int COLUMN_ORIGINAL_INDEX = 2;
-	private static final int COLUMN_KEY = 3;
-	private static final int COLUMN_FIRST_LANGUAGE = 4;
-
 	private static final int ICON_BUTTON_SIZE = 28;
-
-	private boolean showStorageTexts = false;
-	private boolean dataWasModified = false;
-	private boolean hasUnsavedChanges = false;
-
-	/** Suppresses the "data was modified" tracking while the detail fields are filled programmatically */
-	private boolean technicalDataChange = false;
-
-	/** Suppresses the user selection handling while the table selection is changed programmatically */
-	private boolean technicalSelectionChange = false;
-
-	/** Whether the detail fields currently show an existing property ("change") or a new one ("add") */
-	private boolean detailShowsExistingProperty = false;
 
 	private JLabel propertiesLabel;
 	private JButton removeButton;
@@ -162,47 +80,14 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private JButton exportToExcelButton;
 	private JButton exportToCsvButton;
 	private JButton addButton;
-	private JTextField pathTextfield;
-	private JTextField keyTextfield;
-	private JTextArea commentTextfield;
-	private JPanel detailFieldsPart;
-	private final Map<String, JTextArea> languageTextFields = new LinkedHashMap<>();
-	/** Labels of the language fields in the detail view, they show whether an empty field means "missing" or "explicitly empty" */
-	private final Map<String, JLabel> languageLabels = new LinkedHashMap<>();
-	/** Language signs whose empty field in the detail view stands for an explicitly empty value ("key=") instead of a missing key */
-	private final Set<String> explicitlyEmptyLanguageSigns = new HashSet<>();
-	private JTable propertiesTable;
-	private LanguagePropertiesTableModel propertiesTableModel;
-	private int sortColumnModelIndex = COLUMN_NR;
+	/** Loaded data and the state shared by table and detail view (selection, unsaved changes, set name) */
+	private final LanguagePropertiesModel model = new LanguagePropertiesModel();
 
-	/**
-	 * Whether the table currently shows the comment column (after the language
-	 * columns). Only changed in setupTable(), so the table model stays consistent.
-	 */
-	private boolean commentColumnShown = false;
-	private boolean sortAscending = true;
+	/** Search box and properties table (left part below the buttons) */
+	private PropertiesTablePanel tablePanel;
+	/** Detail view of the selected property (right part) */
+	private PropertyDetailPanel detailPanel;
 
-	/**
-	 * Currently selected properties, tracked by object identity. This keeps the
-	 * selection stable across sorting and key renames and also works for
-	 * duplicate path/key combinations.
-	 */
-	private List<LanguageProperty> currentSelectedProperties = new ArrayList<>();
-
-	private List<LanguageProperty> languageProperties;
-	private List<String> availableLanguageSigns;
-	private String languagePropertySetName;
-	private String searchText;
-	private boolean searchCaseInsensitivePreference = true;
-	private boolean searchInKeysPreference = true;
-	private boolean searchInValuesPreference = false;
-	private boolean searchInPathPreference = false;
-	private boolean searchFilterPreference = false;
-	/**
-	 * Properties currently shown in the table: all "languageProperties", or only the search hits if the search filter is active.
-	 * Only changed in updateDisplayedProperties(), all table row indexes refer to this list.
-	 */
-	private List<LanguageProperty> displayedProperties = new ArrayList<>();
 	private JButton checkUsageButton;
 	private JButton checkUsageButtonPrevious;
 	private JButton addLanguageButton;
@@ -214,21 +99,23 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private JButton checkErrorsButton;
 	private JButton showStatisticsButton;
 
-	private JButton okButton;
-	private JButton cancelButton;
-	private JButton textConversionButton;
 	private JButton loadRecentButton;
 	private JButton reduceByBaseSetButton;
-	private final List<JComponent> searchComponents = new ArrayList<>();
 
 	private UniqueFifoQueuedList<String> recentlyOpenedDirectories;
-	private UniqueFifoQueuedList<String> recentlyCheckUsages;
 	private final ConfigurationProperties applicationConfiguration;
+
+	private final ImportSourceChooser importSourceChooser;
+	private final TranslationAction translationAction;
+	private final StatisticsAndUsage statisticsAndUsage;
 
 	public LanguagePropertiesManagerDialog(final ConfigurationProperties applicationConfiguration) throws Exception {
 		super(LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION, LanguagePropertiesManager.KEYSTORE_FILE);
 
 		this.applicationConfiguration = applicationConfiguration;
+		importSourceChooser = new ImportSourceChooser(this, applicationConfiguration);
+		translationAction = new TranslationAction(this, model, applicationConfiguration);
+		statisticsAndUsage = new StatisticsAndUsage(this, model, applicationConfiguration);
 		loadConfiguration();
 
 		setIconImage(ImageManager.getImage("LanguagePropertiesManager.png").getImage());
@@ -238,6 +125,15 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		splitPane.setResizeWeight(0.5);
 		splitPane.setContinuousLayout(true);
 		setContentPane(splitPane);
+
+		// The label above the table and the save button follow the model
+		model.addPropertyChangeListener(event -> {
+			if (LanguagePropertiesModel.PROPERTY_LANGUAGE_PROPERTIES_SET_NAME.equals(event.getPropertyName())) {
+				updatePropertiesLabel((String) event.getNewValue());
+			} else if (LanguagePropertiesModel.PROPERTY_UNSAVED_CHANGES.equals(event.getPropertyName())) {
+				checkButtonStatus();
+			}
+		});
 
 		setSize(1000, 450);
 		setMinimumSize(new Dimension(450, 300));
@@ -278,20 +174,25 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		}
 	}
 
+	/**
+	 * Recently opened files and directories, the latest used is the last entry
+	 */
+	UniqueFifoQueuedList<String> getRecentlyOpenedDirectories() {
+		return recentlyOpenedDirectories;
+	}
+
+	/**
+	 * Checks, which properties are used in the source files of a directory (kept for external callers)
+	 */
+	public void checkUsage(final List<LanguageProperty> storageToCheck, final String directory, final String filePattern, final String usagePatternString) throws Exception {
+		statisticsAndUsage.checkUsage(storageToCheck, directory, filePattern, usagePatternString);
+	}
+
 	private void loadConfiguration() {
 		recentlyOpenedDirectories = new UniqueFifoQueuedList<>(5);
 		recentlyOpenedDirectories.addAll(applicationConfiguration.getList(LanguagePropertiesManager.CONFIG_RECENT_PROPERTIES));
 
-		recentlyCheckUsages = new UniqueFifoQueuedList<>(5);
-		for (final String checkUsageSetting : applicationConfiguration.getList(LanguagePropertiesManager.CONFIG_PREVIOUS_CHECK_USAGE)) {
-			// Converts entries of older versions (with backslash escaping) into the plain format
-			try {
-				recentlyCheckUsages.add(CsvWriter.getCsvLine(createCheckUsageCsvFormat(), parseCheckUsageSetting(checkUsageSetting)));
-			} catch (final Exception e) {
-				System.err.println("Cannot read recent check usage setting '" + checkUsageSetting + "': " + e.getMessage());
-				recentlyCheckUsages.add(checkUsageSetting);
-			}
-		}
+		statisticsAndUsage.loadRecentCheckUsages();
 
 		checkButtonStatus();
 	}
@@ -323,9 +224,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		createIconButton(buttonSection1, "excelLoad.png", "tooltip_importExcel", e -> importFromExcel());
 		createIconButton(buttonSection1, "csvLoad.png", "tooltip_importCsv", e -> importFromCsv());
 		final JButton mergeImportButton = createIconButton(buttonSection1, "merge.png", "tooltip_mergeImport", null);
-		mergeImportButton.addActionListener(e -> showImportSourceMenu(mergeImportButton, "mergeImport_title", this::mergeLoadedLanguageProperties));
+		mergeImportButton.addActionListener(e -> importSourceChooser.showImportSourceMenu(mergeImportButton, "mergeImport_title", this::mergeLoadedLanguageProperties));
 		reduceByBaseSetButton = createIconButton(buttonSection1, "reduce.png", "tooltip_reduceByBaseSet", null);
-		reduceByBaseSetButton.addActionListener(e -> showImportSourceMenu(reduceByBaseSetButton, "reduceByBaseSet_title", this::reduceByBaseSet));
+		reduceByBaseSetButton.addActionListener(e -> importSourceChooser.showImportSourceMenu(reduceByBaseSetButton, "reduceByBaseSet_title", this::reduceByBaseSet));
 		saveButton = createIconButton(buttonSection1, "save.png", "tooltip_save_files", e -> saveFiles());
 		folderSaveButton = createIconButton(buttonSection1, "folderSave.png", "tooltip_save_folder", e -> saveFolder());
 		exportToExcelButton = createIconButton(buttonSection1, "excelSave.png", "tooltip_exportExcel", e -> exportToExcel());
@@ -336,62 +237,24 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		addButton = createIconButton(buttonSection2, "newProperty.png", "tooltip_create_new_property", e -> addNewProperty());
 		removeButton = createIconButton(buttonSection2, "trash.png", "tooltip_delete_properties", e -> removeSelectedProperties());
 		removeButton.setEnabled(false);
-		checkUsageButton = createIconButton(buttonSection2, "puzzle.png", "checkusage", e -> checkUsageNew());
+		checkUsageButton = createIconButton(buttonSection2, "puzzle.png", "checkusage", e -> statisticsAndUsage.checkUsageNew());
 		checkUsageButton.setEnabled(false);
-		checkUsageButtonPrevious = createIconButton(buttonSection2, "puzzleClock.png", "checkusageprevious", e -> checkUsagePrevious());
+		checkUsageButtonPrevious = createIconButton(buttonSection2, "puzzleClock.png", "checkusageprevious", e -> statisticsAndUsage.checkUsagePrevious());
 		checkUsageButtonPrevious.setEnabled(false);
 		addLanguageButton = createIconButton(buttonSection2, "plus.png", "tooltip_AddLanguage", e -> addLanguage());
 		deleteLanguageButton = createIconButton(buttonSection2, "minus.png", "tooltip_DeleteLanguage", e -> deleteLanguage(null));
 		translateButton = createIconButton(buttonSection2, "translate.png", "tooltip_Translate", null);
-		translateButton.addActionListener(e -> showTranslateMenu(translateButton));
+		translateButton.addActionListener(e -> translationAction.showTranslateMenu(translateButton));
 		transferButton = createIconButton(buttonSection2, "transfer.png", "tooltip_Transfer", e -> transfer());
 		clearIdenticalButton = createIconButton(buttonSection2, "clearIdentical.png", "tooltip_ClearIdentical", e -> clearIdentical());
 		removeDuplicatesButton = createIconButton(buttonSection2, "clean.png", "tooltip_removeDuplicates", e -> removeDuplicates());
 		checkErrorsButton = createIconButton(buttonSection2, "lightning.png", "tooltip_checkErrors", e -> checkErrors());
-		showStatisticsButton = createIconButton(buttonSection2, "info.png", "tooltip_showStatistics", e -> showStatistics());
-
-		final JPanel searchBox = createSearchBox();
-		searchBox.setAlignmentX(LEFT_ALIGNMENT);
-		topPart.add(searchBox);
+		showStatisticsButton = createIconButton(buttonSection2, "info.png", "tooltip_showStatistics", e -> statisticsAndUsage.showStatistics());
 
 		leftPart.add(topPart, BorderLayout.NORTH);
 
-		propertiesTableModel = new LanguagePropertiesTableModel();
-		propertiesTable = new JTable(propertiesTableModel);
-		propertiesTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-		propertiesTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-		propertiesTable.setShowGrid(true);
-		propertiesTable.setGridColor(new Color(220, 220, 220));
-		propertiesTable.setBackground(Color.WHITE);
-		propertiesTable.setFillsViewportHeight(true);
-		propertiesTable.getTableHeader().setReorderingAllowed(true);
-		propertiesTable.getSelectionModel().addListSelectionListener(event -> {
-			if (!event.getValueIsAdjusting() && !technicalSelectionChange) {
-				// Deferred, because the selection change may open a modal question dialog
-				javax.swing.SwingUtilities.invokeLater(this::handleUserSelectionChange);
-			}
-		});
-
-		// Same DEL-key deletion as the trash button
-		propertiesTable.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), "removeSelectedProperties");
-		propertiesTable.getActionMap().put("removeSelectedProperties", new AbstractAction() {
-			private static final long serialVersionUID = -4385407786618180237L;
-
-			@Override
-			public void actionPerformed(final ActionEvent event) {
-				if (propertiesTable.getSelectedRowCount() > 0) {
-					removeSelectedProperties();
-				}
-			}
-		});
-
-		installSortableHeader(propertiesTable.getTableHeader());
-		installTableContextMenu();
-
-		final JScrollPane propertiesTableScrollPane = new JScrollPane(propertiesTable);
-		// Area right of the last column (AUTO_RESIZE_OFF) shows the viewport background
-		propertiesTableScrollPane.getViewport().setBackground(Color.WHITE);
-		leftPart.add(propertiesTableScrollPane, BorderLayout.CENTER);
+		tablePanel = new PropertiesTablePanel(model, new TableCallback());
+		leftPart.add(tablePanel, BorderLayout.CENTER);
 
 		return leftPart;
 	}
@@ -406,409 +269,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		return button;
 	}
 
-	private JPanel createSearchBox() throws Exception {
-		final JPanel searchBox = new JPanel(new GridBagLayout());
-		searchBox.setBorder(BorderFactory.createEtchedBorder());
-
-		final GridBagConstraints constraints = new GridBagConstraints();
-		constraints.insets = new Insets(1, 2, 1, 2);
-		constraints.gridy = 0;
-
-		final JTextField searchTextField = new JTextField(LangResources.get("search"), 12);
-		// GridBagLayout shrinks components to their minimum size when space gets tight, keep the field usable
-		searchTextField.setMinimumSize(searchTextField.getPreferredSize());
-		searchTextField.addFocusListener(new FocusAdapter() {
-			@Override
-			public void focusGained(final FocusEvent e) {
-				if (searchTextField.getText().equals(LangResources.get("search"))) {
-					searchTextField.setText("");
-				}
-			}
-
-			@Override
-			public void focusLost(final FocusEvent e) {
-				if (Utilities.isEmpty(searchTextField.getText())) {
-					searchTextField.setText(LangResources.get("search"));
-				}
-			}
-		});
-		searchTextField.getDocument().addDocumentListener(new SimpleDocumentListener(() -> {
-			final String text = searchTextField.getText();
-			if (Utilities.isNotEmpty(text) && !text.equals(LangResources.get("search"))) {
-				searchText = text;
-			} else {
-				// An empty search field must also remove the search filter
-				searchText = null;
-			}
-			searchParametersChanged();
-		}));
-		constraints.gridx = 0;
-		constraints.weightx = 1;
-		constraints.fill = GridBagConstraints.HORIZONTAL;
-		searchBox.add(searchTextField, constraints);
-		searchComponents.add(searchTextField);
-
-		constraints.weightx = 0;
-		constraints.fill = GridBagConstraints.NONE;
-
-		final JButton searchDownButton = new JButton(ImageManager.getImage("down.png"));
-		searchDownButton.setToolTipText(LangResources.get("search_down"));
-		searchDownButton.setMargin(new Insets(1, 1, 1, 1));
-		searchDownButton.setPreferredSize(new Dimension(25, 25));
-		searchDownButton.addActionListener(e -> {
-			if (Utilities.isNotEmpty(searchText)) {
-				selectSearch(searchText, propertiesTable.getSelectedRow() + 1, true, searchCaseInsensitivePreference, searchInKeysPreference, searchInValuesPreference, searchInPathPreference);
-			}
-		});
-		constraints.gridx++;
-		searchBox.add(searchDownButton, constraints);
-		searchComponents.add(searchDownButton);
-
-		final JButton searchUpButton = new JButton(ImageManager.getImage("up.png"));
-		searchUpButton.setToolTipText(LangResources.get("search_up"));
-		searchUpButton.setMargin(new Insets(1, 1, 1, 1));
-		searchUpButton.setPreferredSize(new Dimension(25, 25));
-		searchUpButton.addActionListener(e -> {
-			if (Utilities.isNotEmpty(searchText)) {
-				selectSearch(searchText, propertiesTable.getSelectedRow() - 1, false, searchCaseInsensitivePreference, searchInKeysPreference, searchInValuesPreference, searchInPathPreference);
-			}
-		});
-		constraints.gridx++;
-		searchBox.add(searchUpButton, constraints);
-		searchComponents.add(searchUpButton);
-
-		constraints.gridx++;
-		searchBox.add(createSearchCheckBox("Aa", LangResources.get("case_sensitive"), !searchCaseInsensitivePreference, selected -> searchCaseInsensitivePreference = !selected), constraints);
-		constraints.gridx++;
-		searchBox.add(createSearchCheckBox(LangResources.get("columnheader_key"), LangResources.get("columnheader_key"), searchInKeysPreference, selected -> searchInKeysPreference = selected), constraints);
-		constraints.gridx++;
-		searchBox.add(createSearchCheckBox(LangResources.get("value"), LangResources.get("value"), searchInValuesPreference, selected -> searchInValuesPreference = selected), constraints);
-		constraints.gridx++;
-		searchBox.add(createSearchCheckBox(LangResources.get("columnheader_path"), LangResources.get("columnheader_path"), searchInPathPreference, selected -> searchInPathPreference = selected), constraints);
-		constraints.gridx++;
-		searchBox.add(createSearchCheckBox(LangResources.get("search_filter"), LangResources.get("search_filter_tooltip"), searchFilterPreference, selected -> searchFilterPreference = selected), constraints);
-
-		return searchBox;
-	}
-
-	private JCheckBox createSearchCheckBox(final String text, final String toolTipText, final boolean initialSelection, final Consumer<Boolean> preferenceSetter) {
-		final JCheckBox checkBox = new JCheckBox(text, initialSelection);
-		checkBox.setToolTipText(toolTipText);
-		checkBox.addActionListener(e -> {
-			preferenceSetter.accept(checkBox.isSelected());
-			searchParametersChanged();
-		});
-		searchComponents.add(checkBox);
-		return checkBox;
-	}
-
-	/**
-	 * Called after the search text or one of the search options changed:
-	 * Updates the filtered table content (if the filter is or was active) and jumps to the next hit.
-	 */
-	private void searchParametersChanged() {
-		if (languageProperties == null) {
-			return;
-		}
-
-		// Refilter only if needed, so typing without active filter does not redraw the whole table
-		if (searchFilterPreference || displayedProperties != languageProperties) {
-			applySearchFilter();
-		}
-
-		if (Utilities.isNotEmpty(searchText)) {
-			searchFromCurrentSelection();
-		}
-	}
-
-	private boolean isSearchFilterActive() {
-		return searchFilterPreference && Utilities.isNotEmpty(searchText) && (searchInKeysPreference || searchInValuesPreference || searchInPathPreference);
-	}
-
-	/**
-	 * Recalculates the properties shown in the table.
-	 *
-	 * @param keepSelectedVisible
-	 *            Keep the currently selected properties visible even if they do not match the search anymore
-	 *            (e.g. after editing a value), so rows do not vanish while the user works on them
-	 */
-	private void updateDisplayedProperties(final boolean keepSelectedVisible) {
-		if (languageProperties == null) {
-			displayedProperties = new ArrayList<>();
-		} else if (!isSearchFilterActive()) {
-			displayedProperties = languageProperties;
-		} else {
-			final List<LanguageProperty> filteredProperties = new ArrayList<>();
-			for (final LanguageProperty languageProperty : languageProperties) {
-				if (matchesSearch(languageProperty, searchText, searchCaseInsensitivePreference, searchInKeysPreference, searchInValuesPreference, searchInPathPreference)
-						|| (keepSelectedVisible && indexOfIdentical(currentSelectedProperties, languageProperty) >= 0)) {
-					filteredProperties.add(languageProperty);
-				}
-			}
-			displayedProperties = filteredProperties;
-		}
-	}
-
-	/**
-	 * Filters the table by the current search parameters, previously selected rows that do not match are hidden
-	 */
-	private void applySearchFilter() {
-		updateDisplayedProperties(false);
-		technicalSelectionChange = true;
-		try {
-			propertiesTableModel.fireTableDataChanged();
-		} finally {
-			technicalSelectionChange = false;
-		}
-		restoreSelection(currentSelectedProperties);
-		checkButtonStatus();
-	}
-
-	/**
-	 * Searches forward, starting at (and including) the currently selected row, or
-	 * at the first row if nothing is selected.
-	 */
-	private void searchFromCurrentSelection() {
-		final int startIndex = propertiesTable.getSelectedRow() >= 0 ? propertiesTable.getSelectedRow() : 0;
-		selectSearch(searchText, startIndex, true, searchCaseInsensitivePreference, searchInKeysPreference, searchInValuesPreference, searchInPathPreference);
-	}
-
-	/**
-	 * Makes the table header clickable for sorting and shows the look and feel's
-	 * sort icon on the current sort column.
-	 */
-	private void installSortableHeader(final JTableHeader header) {
-		header.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(final MouseEvent event) {
-				if (!javax.swing.SwingUtilities.isLeftMouseButton(event) || languageProperties == null) {
-					return;
-				}
-
-				final int viewColumn = header.columnAtPoint(event.getPoint());
-				if (viewColumn >= 0) {
-					sortByColumn(propertiesTable.convertColumnIndexToModel(viewColumn));
-				}
-			}
-		});
-
-		final TableCellRenderer defaultHeaderRenderer = header.getDefaultRenderer();
-		header.setDefaultRenderer((table, value, isSelected, hasFocus, row, column) -> {
-			final Component component = defaultHeaderRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-			if (component instanceof JLabel) {
-				final JLabel label = (JLabel) component;
-				// The default header renderer is a shared component, so the icon must be reset for every other column
-				Icon sortIcon = null;
-				if (table != null && table.convertColumnIndexToModel(column) == sortColumnModelIndex) {
-					sortIcon = UIManager.getIcon(sortAscending ? "Table.ascendingSortIcon" : "Table.descendingSortIcon");
-				}
-				label.setIcon(sortIcon);
-				label.setHorizontalTextPosition(SwingConstants.LEADING);
-			}
-			return component;
-		});
-	}
-
-	/**
-	 * Opens a context menu on right click on the table and its header:
-	 * on content rows it offers copying the selected rows as csv, additionally
-	 * the path column, a language column or the comment column offer their own
-	 * actions, both on the header and on the cells.
-	 */
-	private void installTableContextMenu() throws Exception {
-		// Loaded once here, because ImageManager.getImage() throws a checked exception
-		final Icon deleteIcon = ImageManager.getImage("minus.png");
-
-		final MouseAdapter contextMenuListener = new MouseAdapter() {
-			// The popup trigger is "pressed" on Linux/macOS and "released" on Windows
-			@Override
-			public void mousePressed(final MouseEvent event) {
-				showTableContextMenu(event, deleteIcon);
-			}
-
-			@Override
-			public void mouseReleased(final MouseEvent event) {
-				showTableContextMenu(event, deleteIcon);
-			}
-		};
-		propertiesTable.addMouseListener(contextMenuListener);
-		propertiesTable.getTableHeader().addMouseListener(contextMenuListener);
-	}
-
-	private void showTableContextMenu(final MouseEvent event, final Icon deleteIcon) {
-		if (!event.isPopupTrigger() || languageProperties == null || availableLanguageSigns == null) {
-			return;
-		}
-
-		final JPopupMenu contextMenu = new JPopupMenu();
-
-		// Content rows (not the header): copy the selected rows
-		if (event.getComponent() == propertiesTable) {
-			final int row = propertiesTable.rowAtPoint(event.getPoint());
-			if (row >= 0) {
-				// A right click outside of the current selection selects the clicked row, like in common table applications
-				if (!propertiesTable.isRowSelected(row)) {
-					propertiesTable.setRowSelectionInterval(row, row);
-				}
-				final JMenuItem copyAsCsvItem = new JMenuItem(LangResources.get("contextmenu_copySelectedRowsAsCsv", propertiesTable.getSelectedRowCount()));
-				copyAsCsvItem.addActionListener(e -> copySelectedPropertiesAsCsvToClipboard());
-				contextMenu.add(copyAsCsvItem);
-			}
-		}
-
-		// Table and header share the same x coordinates, so this works for both components
-		final int viewColumn = propertiesTable.getColumnModel().getColumnIndexAtX(event.getX());
-		if (viewColumn >= 0) {
-			final int modelColumn = propertiesTable.convertColumnIndexToModel(viewColumn);
-			if (isCommentColumn(modelColumn)) {
-				addSeparatorIfNotEmpty(contextMenu);
-				final JMenuItem deleteCommentsItem = new JMenuItem(LangResources.get("contextmenu_deleteComments"));
-				deleteCommentsItem.addActionListener(e -> deleteAllComments());
-				contextMenu.add(deleteCommentsItem);
-			} else if (modelColumn == COLUMN_PATH) {
-				addSeparatorIfNotEmpty(contextMenu);
-				final JMenuItem deletePathsItem = new JMenuItem(LangResources.get("contextmenu_deletePaths"));
-				deletePathsItem.addActionListener(e -> deleteAllPaths());
-				contextMenu.add(deletePathsItem);
-			} else if (modelColumn >= COLUMN_FIRST_LANGUAGE && modelColumn - COLUMN_FIRST_LANGUAGE < availableLanguageSigns.size()) {
-				final String languageSign = availableLanguageSigns.get(modelColumn - COLUMN_FIRST_LANGUAGE);
-				final String languageColumnName = propertiesTableModel.getColumnName(modelColumn);
-
-				addSeparatorIfNotEmpty(contextMenu);
-
-				// Content rows only: the detail view cannot distinguish between "missing" and "explicitly empty", so it is set here
-				if (event.getComponent() == propertiesTable && propertiesTable.getSelectedRowCount() > 0) {
-					final int selectedRowCount = propertiesTable.getSelectedRowCount();
-
-					final JMenuItem setValuesEmptyItem = new JMenuItem(LangResources.get("contextmenu_setValuesEmpty", selectedRowCount) + ": " + languageColumnName);
-					setValuesEmptyItem.addActionListener(e -> setSelectedLanguageValues(languageSign, languageColumnName, ""));
-					contextMenu.add(setValuesEmptyItem);
-
-					final JMenuItem setValuesMissingItem = new JMenuItem(LangResources.get("contextmenu_setValuesMissing", selectedRowCount) + ": " + languageColumnName);
-					setValuesMissingItem.addActionListener(e -> setSelectedLanguageValues(languageSign, languageColumnName, null));
-					contextMenu.add(setValuesMissingItem);
-
-					contextMenu.addSeparator();
-				}
-
-				// Only clears the values, the language itself (and its column) stays available
-				final JMenuItem deleteLanguageValuesItem = new JMenuItem(LangResources.get("contextmenu_deleteLanguageValues") + ": " + languageColumnName);
-				deleteLanguageValuesItem.addActionListener(e -> deleteAllLanguageValues(languageSign, languageColumnName));
-				contextMenu.add(deleteLanguageValuesItem);
-
-				final JMenuItem deleteLanguageItem = new JMenuItem(LangResources.get("tooltip_DeleteLanguage") + ": " + languageColumnName, deleteIcon);
-				// Same rule as for the delete language button: The last language cannot be deleted
-				deleteLanguageItem.setEnabled(availableLanguageSigns.size() > 1);
-				deleteLanguageItem.addActionListener(e -> deleteLanguage(languageSign));
-				contextMenu.add(deleteLanguageItem);
-			}
-		}
-
-		if (contextMenu.getComponentCount() > 0) {
-			contextMenu.show(event.getComponent(), event.getX(), event.getY());
-		}
-	}
-
-	private static void addSeparatorIfNotEmpty(final JPopupMenu contextMenu) {
-		if (contextMenu.getComponentCount() > 0) {
-			contextMenu.addSeparator();
-		}
-	}
-
-	/**
-	 * Copies the selected rows in display order as csv into the system clipboard.
-	 * Unlike the table, the csv contains the full values of languages and comments,
-	 * with the same columns as currently shown (without the row number).
-	 */
-	private void copySelectedPropertiesAsCsvToClipboard() {
-		try {
-			final List<LanguageProperty> selectedProperties = getSelectedProperties();
-			if (selectedProperties.isEmpty()) {
-				return;
-			}
-
-			// Line breaks within values are kept and quoted (RFC 4180), so spreadsheet applications read them as one cell
-			final CsvFormat csvFormat = new CsvFormat()
-					.withSeparator(';')
-					.withStringQuote('"')
-					.withEscapeLineBreaks(false);
-
-			final int columnCount = propertiesTableModel.getColumnCount();
-			final StringBuilder csvText = new StringBuilder();
-
-			final List<String> headerValues = new ArrayList<>();
-			for (int modelColumn = COLUMN_PATH; modelColumn < columnCount; modelColumn++) {
-				headerValues.add(propertiesTableModel.getColumnName(modelColumn));
-			}
-			csvText.append(CsvWriter.getCsvLine(csvFormat, headerValues)).append("\n");
-
-			for (final LanguageProperty languageProperty : selectedProperties) {
-				final List<String> rowValues = new ArrayList<>();
-				for (int modelColumn = COLUMN_PATH; modelColumn < columnCount; modelColumn++) {
-					rowValues.add(getEmptyForNull(getCsvValue(languageProperty, modelColumn)));
-				}
-				csvText.append(CsvWriter.getCsvLine(csvFormat, rowValues)).append("\n");
-			}
-
-			Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(csvText.toString()), null);
-		} catch (final Exception e) {
-			showError(e);
-		}
-	}
-
-	/**
-	 * Full value of a property for a model column, in contrast to the table model, which only shows whether a value exists
-	 */
-	private String getCsvValue(final LanguageProperty languageProperty, final int modelColumn) {
-		switch (modelColumn) {
-			case COLUMN_PATH:
-				return languageProperty.getPath();
-			case COLUMN_ORIGINAL_INDEX:
-				return String.valueOf(languageProperty.getOriginalIndex());
-			case COLUMN_KEY:
-				return languageProperty.getKey();
-			default:
-				if (isCommentColumn(modelColumn)) {
-					return languageProperty.getComment();
-				} else {
-					return languageProperty.getLanguageValue(availableLanguageSigns.get(modelColumn - COLUMN_FIRST_LANGUAGE));
-				}
-		}
-	}
-
-	private void sortByColumn(final int modelColumn) {
-		if (modelColumn == COLUMN_NR) {
-			// The row number is not sortable, it always shows the current display order
-			return;
-		}
-
-		if (modelColumn == sortColumnModelIndex) {
-			sortAscending = !sortAscending;
-		} else {
-			sortAscending = true;
-		}
-		sortColumnModelIndex = modelColumn;
-
-		Comparator<LanguageProperty> comparator;
-		if (modelColumn == COLUMN_KEY) {
-			comparator = Comparator.comparing(LanguageProperty::getPath).thenComparing(LanguageProperty::getKey);
-		} else if (modelColumn == COLUMN_ORIGINAL_INDEX || modelColumn == COLUMN_PATH) {
-			comparator = Comparator.comparing(LanguageProperty::getPath).thenComparing(LanguageProperty::getOriginalIndex);
-		} else if (isCommentColumn(modelColumn)) {
-			comparator = Comparator.comparing(languageProperty -> getEmptyForNull(languageProperty.getComment()));
-		} else {
-			final String languageSign = availableLanguageSigns.get(modelColumn - COLUMN_FIRST_LANGUAGE);
-			comparator = Comparator.comparing((final LanguageProperty languageProperty) -> getValueStateSortOrder(languageProperty.getLanguageValue(languageSign)))
-					.thenComparing(languageProperty -> getEmptyForNull(languageProperty.getLanguageValue(languageSign)));
-		}
-		if (!sortAscending) {
-			comparator = comparator.reversed();
-		}
-
-		languageProperties = languageProperties.stream().sorted(comparator).collect(Collectors.toList());
-
-		refreshTable();
-		propertiesTable.getTableHeader().repaint();
+	private PropertyDetailPanel createRightPart() {
+		detailPanel = new PropertyDetailPanel(model, new DetailCallback());
+		return detailPanel;
 	}
 
 	/**
@@ -816,347 +279,137 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	 * properties or languages changed.
 	 */
 	public void setupTable() {
-		sortColumnModelIndex = COLUMN_NR;
-		sortAscending = true;
-		commentColumnShown = isCommentColumnWanted();
-
-		updateDisplayedProperties(true);
-		technicalSelectionChange = true;
-		try {
-			propertiesTableModel.fireTableStructureChanged();
-			applyColumnLayout();
-		} finally {
-			technicalSelectionChange = false;
-		}
-
-		detailFieldsPart.removeAll();
-		languageTextFields.clear();
-		languageLabels.clear();
-		explicitlyEmptyLanguageSigns.clear();
-
-		if (languageProperties != null) {
-			final GridBagConstraints labelConstraints = new GridBagConstraints();
-			labelConstraints.gridx = 0;
-			labelConstraints.anchor = GridBagConstraints.WEST;
-			labelConstraints.insets = new Insets(2, 2, 2, 4);
-
-			final GridBagConstraints fieldConstraints = new GridBagConstraints();
-			fieldConstraints.gridx = 1;
-			fieldConstraints.weightx = 1;
-			fieldConstraints.fill = GridBagConstraints.HORIZONTAL;
-			fieldConstraints.insets = new Insets(2, 0, 2, 2);
-
-			int row = 0;
-			for (final String sign : availableLanguageSigns) {
-				labelConstraints.gridy = row;
-				fieldConstraints.gridy = row;
-
-				final String labelText = LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT.equals(sign) ? LangResources.get("columnheader_default") : sign;
-				final JLabel languageLabel = new JLabel(labelText + ":");
-				detailFieldsPart.add(languageLabel, labelConstraints);
-				languageLabels.put(sign, languageLabel);
-
-				final JTextArea languageTextfield = createMultiLineTextArea();
-				languageTextfield.getDocument().addDocumentListener(new DetailModifyListener());
-				languageTextfield.getDocument().addDocumentListener(new DocumentListener() {
-					@Override
-					public void insertUpdate(final DocumentEvent event) {
-						// Entered text replaces the explicitly empty value
-						explicitlyEmptyLanguageSigns.remove(sign);
-						updateLanguageLabel(sign);
-					}
-
-					@Override
-					public void removeUpdate(final DocumentEvent event) {
-						updateLanguageLabel(sign);
-					}
-
-					@Override
-					public void changedUpdate(final DocumentEvent event) {
-						// Attribute changes only, no text change
-					}
-				});
-				languageTextfield.setComponentPopupMenu(createLanguageFieldContextMenu(sign, languageTextfield));
-				detailFieldsPart.add(languageTextfield, fieldConstraints);
-				languageTextFields.put(sign, languageTextfield);
-
-				row++;
-			}
-
-			// Filler, keeps the fields at the top
-			final GridBagConstraints fillerConstraints = new GridBagConstraints();
-			fillerConstraints.gridy = row;
-			fillerConstraints.weighty = 1;
-			detailFieldsPart.add(new JPanel(), fillerConstraints);
-		}
-
-		detailFieldsPart.revalidate();
-		detailFieldsPart.repaint();
+		tablePanel.setupColumns(isCommentColumnWanted());
+		detailPanel.rebuildLanguageFields();
 
 		// Keep the selection (e.g. after translating selected rows) as far as those properties still exist
-		currentSelectedProperties.removeIf(property -> languageProperties == null || indexOfIdentical(languageProperties, property) < 0);
-		restoreSelection(currentSelectedProperties);
-		if (languageProperties != null) {
+		model.retainExistingSelection();
+		tablePanel.restoreSelection(model.getCurrentSelection());
+		if (model.isLoaded()) {
 			refreshDetailView();
 		}
 	}
 
-	private void applyColumnLayout() {
-		final DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
-		centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
-
-		final String valueNotFoundSign = LangResources.get("value_not_found_sign");
-		final String valueNotFoundTooltip = LangResources.get("value_not_found_tooltip");
-		final DefaultTableCellRenderer languageValueRenderer = new DefaultTableCellRenderer() {
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			public Component getTableCellRendererComponent(final JTable table, final Object value, final boolean isSelected, final boolean hasFocus, final int row, final int column) {
-				final Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-				// The renderer component is reused for all cells, so the tooltip must be reset for every cell
-				setToolTipText(valueNotFoundSign.equals(value) ? valueNotFoundTooltip : null);
-				return component;
-			}
-		};
-		languageValueRenderer.setHorizontalAlignment(SwingConstants.CENTER);
-
-		for (int viewIndex = 0; viewIndex < propertiesTable.getColumnCount(); viewIndex++) {
-			final TableColumn column = propertiesTable.getColumnModel().getColumn(viewIndex);
-			final int modelIndex = column.getModelIndex();
-			switch (modelIndex) {
-				case COLUMN_NR:
-					column.setPreferredWidth(50);
-					break;
-				case COLUMN_PATH:
-					column.setPreferredWidth(100);
-					break;
-				case COLUMN_ORIGINAL_INDEX:
-					column.setPreferredWidth(60);
-					break;
-				case COLUMN_KEY:
-					column.setPreferredWidth(175);
-					break;
-				default:
-					if (isCommentColumn(modelIndex)) {
-						// Same layout as the language columns
-						final int commentHeaderTextWidth = propertiesTable.getFontMetrics(propertiesTable.getTableHeader().getFont()).stringWidth(propertiesTableModel.getColumnName(modelIndex)) + 16;
-						column.setPreferredWidth(Math.max(25, commentHeaderTextWidth));
-						column.setCellRenderer(centerRenderer);
-						break;
-					}
-					final String sign = availableLanguageSigns.get(modelIndex - COLUMN_FIRST_LANGUAGE);
-					final int headerTextWidth = propertiesTable.getFontMetrics(propertiesTable.getTableHeader().getFont()).stringWidth(propertiesTableModel.getColumnName(modelIndex)) + 16;
-					column.setPreferredWidth(Math.max(sign.length() > 3 ? 50 : 25, headerTextWidth));
-					column.setCellRenderer(languageValueRenderer);
-					break;
-			}
-		}
-	}
-
-	private JPanel createRightPart() {
-		final JPanel rightPart = new JPanel(new BorderLayout(0, 3));
-		rightPart.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
-
-		final JPanel keyBereich = new JPanel(new GridBagLayout());
-
-		final GridBagConstraints labelConstraints = new GridBagConstraints();
-		labelConstraints.gridx = 0;
-		labelConstraints.anchor = GridBagConstraints.WEST;
-		labelConstraints.insets = new Insets(2, 2, 2, 4);
-
-		final GridBagConstraints fieldConstraints = new GridBagConstraints();
-		fieldConstraints.gridx = 1;
-		fieldConstraints.weightx = 1;
-		fieldConstraints.fill = GridBagConstraints.HORIZONTAL;
-		fieldConstraints.insets = new Insets(2, 0, 2, 2);
-
-		labelConstraints.gridy = 0;
-		fieldConstraints.gridy = 0;
-		keyBereich.add(new JLabel(LangResources.get("columnheader_path") + ":"), labelConstraints);
-		pathTextfield = new JTextField();
-		pathTextfield.setEditable(false);
-		pathTextfield.getDocument().addDocumentListener(new DetailModifyListener());
-		keyBereich.add(pathTextfield, fieldConstraints);
-
-		labelConstraints.gridy = 1;
-		fieldConstraints.gridy = 1;
-		keyBereich.add(new JLabel(LangResources.get("columnheader_key") + ":"), labelConstraints);
-		keyTextfield = new JTextField();
-		keyTextfield.getDocument().addDocumentListener(new DetailModifyListener());
-		keyBereich.add(keyTextfield, fieldConstraints);
-
-		labelConstraints.gridy = 2;
-		fieldConstraints.gridy = 2;
-		// Align the label with the first line, because a multi-line comment makes the field higher
-		labelConstraints.anchor = GridBagConstraints.NORTHWEST;
-		labelConstraints.insets = new Insets(4, 2, 2, 4);
-		keyBereich.add(new JLabel(LangResources.get("comment") + ":"), labelConstraints);
-		labelConstraints.anchor = GridBagConstraints.WEST;
-		labelConstraints.insets = new Insets(2, 2, 2, 4);
-		// Text area instead of text field, so multi-line comments are shown with all their lines
-		commentTextfield = createMultiLineTextArea();
-		commentTextfield.getDocument().addDocumentListener(new DetailModifyListener());
-		keyBereich.add(commentTextfield, fieldConstraints);
-
-		final GridBagConstraints separatorConstraints = new GridBagConstraints();
-		separatorConstraints.gridx = 0;
-		separatorConstraints.gridy = 3;
-		separatorConstraints.gridwidth = 2;
-		separatorConstraints.fill = GridBagConstraints.HORIZONTAL;
-		separatorConstraints.insets = new Insets(4, 0, 0, 0);
-		keyBereich.add(new JSeparator(SwingConstants.HORIZONTAL), separatorConstraints);
-
-		rightPart.add(keyBereich, BorderLayout.NORTH);
-
-		detailFieldsPart = new JPanel(new GridBagLayout());
-		final JScrollPane scrolledPart = new JScrollPane(detailFieldsPart);
-		scrolledPart.setBorder(BorderFactory.createEmptyBorder());
-		scrolledPart.setMinimumSize(new Dimension(200, 100));
-		scrolledPart.getVerticalScrollBar().setUnitIncrement(16);
-		rightPart.add(scrolledPart, BorderLayout.CENTER);
-
-		final JPanel buttonBereich = new JPanel(new GridBagLayout());
-
-		final GridBagConstraints buttonConstraints = new GridBagConstraints();
-		buttonConstraints.fill = GridBagConstraints.HORIZONTAL;
-		buttonConstraints.weightx = 1;
-		buttonConstraints.insets = new Insets(2, 2, 2, 2);
-
-		buttonConstraints.gridx = 0;
-		buttonConstraints.gridy = 0;
-		buttonConstraints.gridwidth = 2;
-		buttonBereich.add(new JSeparator(SwingConstants.HORIZONTAL), buttonConstraints);
-
-		textConversionButton = new JButton(showStorageTexts ? LangResources.get("change_to_show_visble_texts") : LangResources.get("change_to_show_storage_texts"));
-		textConversionButton.addActionListener(e -> {
-			// Only switch the mode, if all field contents could be converted
-			if (changeDisplayMode(!showStorageTexts)) {
-				showStorageTexts = !showStorageTexts;
-				textConversionButton.setText(showStorageTexts ? LangResources.get("change_to_show_visble_texts") : LangResources.get("change_to_show_storage_texts"));
-			}
-		});
-		buttonConstraints.gridy = 1;
-		buttonBereich.add(textConversionButton, buttonConstraints);
-
-		okButton = new JButton(LangResources.get("button_text_add"));
-		okButton.addActionListener(e -> applyDetailChanges());
-		buttonConstraints.gridy = 2;
-		buttonConstraints.gridwidth = 1;
-		buttonBereich.add(okButton, buttonConstraints);
-
-		cancelButton = new JButton(LangResources.get("button_text_discard"));
-		cancelButton.addActionListener(e -> refreshDetailView());
-		buttonConstraints.gridx = 1;
-		buttonBereich.add(cancelButton, buttonConstraints);
-
-		rightPart.add(buttonBereich, BorderLayout.SOUTH);
-
-		checkButtonStatus();
-
-		return rightPart;
+	/**
+	 * Redisplays the table content (e.g. after sorting or changing a property) and
+	 * restores the current selection of the model.
+	 */
+	private void refreshTable() {
+		tablePanel.refresh();
 	}
 
 	/**
-	 * OK button of the detail view: changes the selected property or adds a new
-	 * one.
+	 * Shows the current selection of the model in the detail view
 	 */
-	private void applyDetailChanges() {
-		try {
-			hasUnsavedChanges = true;
+	private void refreshDetailView() {
+		detailPanel.refresh();
+		checkButtonStatus();
+	}
 
-			if (detailShowsExistingProperty) {
-				// Change existing property
-				if (currentSelectedProperties.isEmpty()) {
-					throw new Exception("Cannot find property to change");
-				}
-				final LanguageProperty propertyToChange = currentSelectedProperties.get(0);
+	/**
+	 * @return true if the detail view has no unapplied changes or the user agreed to discard them
+	 */
+	boolean confirmDiscardDetailChanges() {
+		return !detailPanel.isModified() || askForDiscardChanges();
+	}
 
-				propertyToChange.setKey(getPlainKey(keyTextfield.getText()));
-				propertyToChange.setComment(Utilities.isNotEmpty(commentTextfield.getText()) ? commentTextfield.getText() : null);
-				for (final Map.Entry<String, JTextArea> languageTextField : languageTextFields.entrySet()) {
-					final String languageSign = languageTextField.getKey();
-					propertyToChange.setLanguageValue(languageSign, getDetailLanguageValue(languageSign, languageTextField.getValue()));
-				}
+	/**
+	 * Actions of the properties table, which need the main window
+	 */
+	private class TableCallback implements PropertiesTablePanel.Callback {
+		@Override
+		public boolean confirmDiscardDetailChanges() {
+			return LanguagePropertiesManagerDialog.this.confirmDiscardDetailChanges();
+		}
 
-				refreshTable();
-				dataWasModified = false;
-				checkButtonStatus();
-			} else {
-				final LanguageProperty newValues = new LanguageProperty(pathTextfield.getText(), getPlainKey(keyTextfield.getText()));
-				for (final Map.Entry<String, JTextArea> languageTextField : languageTextFields.entrySet()) {
-					newValues.setLanguageValue(languageTextField.getKey(), getDetailLanguageValue(languageTextField.getKey(), languageTextField.getValue()));
-				}
+		@Override
+		public void currentSelectionChanged() {
+			refreshDetailView();
+		}
 
-				if (Utilities.isNotEmpty(commentTextfield.getText())) {
-					newValues.setComment(commentTextfield.getText());
-				} else {
-					newValues.setComment(null);
-				}
+		@Override
+		public void tableStateChanged() {
+			checkButtonStatus();
+		}
 
-				if (languageProperties == null) {
-					languageProperties = new ArrayList<>();
-					setLanguagePropertiesSetName(new SimpleInputDialog(this, getTitle(), LangResources.get("enterNewLanguagePropertiesName")).open());
-					availableLanguageSigns = new ArrayList<>();
-					availableLanguageSigns.add(LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT);
+		@Override
+		public void removeSelectedProperties() {
+			LanguagePropertiesManagerDialog.this.removeSelectedProperties();
+		}
 
-					hasUnsavedChanges = false;
-					setupTable();
-					checkButtonStatus();
-				}
+		@Override
+		public void deleteAllComments() {
+			LanguagePropertiesManagerDialog.this.deleteAllComments();
+		}
 
-				// Add new property
-				newValues.setOriginalIndex(languageProperties.size() + 1);
-				languageProperties.add(newValues);
-				currentSelectedProperties = new ArrayList<>();
-				currentSelectedProperties.add(newValues);
-				refreshTable();
-				refreshDetailView();
-				removeButton.setEnabled(true);
-				dataWasModified = false;
-				checkButtonStatus();
-			}
-		} catch (final Exception ex) {
-			showError(ex);
+		@Override
+		public void deleteAllPaths() {
+			LanguagePropertiesManagerDialog.this.deleteAllPaths();
+		}
+
+		@Override
+		public void deleteAllLanguageValues(final String languageSign, final String languageDisplayName) {
+			LanguagePropertiesManagerDialog.this.deleteAllLanguageValues(languageSign, languageDisplayName);
+		}
+
+		@Override
+		public void setSelectedLanguageValues(final String languageSign, final String languageDisplayName, final String newValue) {
+			LanguagePropertiesManagerDialog.this.setSelectedLanguageValues(languageSign, languageDisplayName, newValue);
+		}
+
+		@Override
+		public void deleteLanguage(final String languageSign) {
+			LanguagePropertiesManagerDialog.this.deleteLanguage(languageSign);
+		}
+
+		@Override
+		public void showError(final Exception exception) {
+			LanguagePropertiesManagerDialog.this.showError(exception);
 		}
 	}
 
 	/**
-	 * Called (deferred) after the user changed the table selection.
+	 * Actions of the detail view, which need the main window
 	 */
-	private void handleUserSelectionChange() {
-		final List<LanguageProperty> newSelection = getSelectedProperties();
-		if (isSameSelection(newSelection, currentSelectedProperties)) {
-			// Nothing changed (e.g. a second event for the same user action)
-			return;
+	private class DetailCallback implements PropertyDetailPanel.Callback {
+		@Override
+		public String askForNewLanguagePropertiesSetName() {
+			return new SimpleInputDialog(LanguagePropertiesManagerDialog.this, getTitle(), LangResources.get("enterNewLanguagePropertiesName")).open();
 		}
 
-		technicalDataChange = true;
-		try {
-			if (!dataWasModified || askForDiscardChanges()) {
-				// Take over the new selection
-				currentSelectedProperties = newSelection;
-				removeButton.setEnabled(!newSelection.isEmpty());
-				refreshDetailView();
-			} else {
-				// Reselect the old entries
-				restoreSelection(currentSelectedProperties);
-			}
-		} finally {
-			technicalDataChange = false;
+		@Override
+		public void languagesChanged() {
+			setupTable();
+			checkButtonStatus();
 		}
 
-		checkButtonStatus();
+		@Override
+		public void propertyChanged() {
+			refreshTable();
+			checkButtonStatus();
+		}
+
+		@Override
+		public void propertyAdded() {
+			refreshTable();
+			refreshDetailView();
+		}
+
+		@Override
+		public void showError(final Exception exception) {
+			LanguagePropertiesManagerDialog.this.showError(exception);
+		}
+
+		@Override
+		public void showErrorMessage(final String title, final String text) {
+			LanguagePropertiesManagerDialog.this.showErrorMessage(title, text);
+		}
 	}
 
 	private void addNewProperty() {
-		if (!dataWasModified || askForDiscardChanges()) {
-			technicalSelectionChange = true;
-			try {
-				propertiesTable.clearSelection();
-			} finally {
-				technicalSelectionChange = false;
-			}
-			currentSelectedProperties = new ArrayList<>();
+		if (confirmDiscardDetailChanges()) {
+			tablePanel.clearSelection();
+			model.clearCurrentSelection();
 			refreshDetailView();
 		}
 	}
@@ -1164,16 +417,11 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	/** Shared by the trash button and the DEL key on the properties table */
 	private void removeSelectedProperties() {
 		try {
-			if (propertiesTable.getSelectedRowCount() > 0 && askForDropProperties()) {
-				// Remove by identity, so also exactly the selected one of several duplicates is removed
-				final Set<LanguageProperty> propertiesToRemove = Collections.newSetFromMap(new IdentityHashMap<>());
-				propertiesToRemove.addAll(getSelectedProperties());
-				languageProperties.removeIf(propertiesToRemove::contains);
-
-				currentSelectedProperties = new ArrayList<>();
+			if (tablePanel.getSelectedRowCount() > 0 && askForDropProperties()) {
+				// Removed by identity, so also exactly the selected one of several duplicates is removed
+				model.removeProperties(tablePanel.getSelectedProperties());
 				setupTable();
 				refreshDetailView();
-				hasUnsavedChanges = true;
 				checkButtonStatus();
 			}
 		} catch (final Exception ex) {
@@ -1185,12 +433,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		try {
 			final String newLanguageSign = new SimpleInputDialog(this, getTitle(), LangResources.get("enterLanguageSign")).open();
 			if (Utilities.isNotBlank(newLanguageSign)) {
-				for (final LanguageProperty languageProperty : languageProperties) {
-					if (!languageProperty.getAvailableLanguageSigns().contains(newLanguageSign)) {
-						languageProperty.setLanguageValue(newLanguageSign, null);
-					}
-				}
-				availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT);
+				model.addLanguage(newLanguageSign);
 				setupTable();
 			}
 		} catch (final Exception ex) {
@@ -1203,14 +446,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	 * The comment column is shown, if comments are not ignored by configuration
 	 */
 	private boolean isCommentColumnWanted() {
-		return languageProperties != null && !applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS);
-	}
-
-	/**
-	 * Model index of the comment column, which follows after the language columns
-	 */
-	private boolean isCommentColumn(final int modelColumn) {
-		return commentColumnShown && availableLanguageSigns != null && modelColumn == COLUMN_FIRST_LANGUAGE + availableLanguageSigns.size();
+		return model.isLoaded() && !applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS);
 	}
 
 	/**
@@ -1218,15 +454,12 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	 */
 	private void deleteAllComments() {
 		try {
-			final long commentCount = languageProperties.stream().filter(languageProperty -> Utilities.isNotEmpty(languageProperty.getComment())).count();
+			final long commentCount = model.countComments();
 			if (commentCount > 0) {
 				// All comments are removed at once, so ask the user before doing it
 				final Integer returncode = new QuestionDialog(this, LangResources.get("question_title_delete_comments"), LangResources.get("question_content_delete_comments", commentCount), LangResources.get("yes"), LangResources.get("no")).open();
 				if (returncode != null && returncode == 0) {
-					for (final LanguageProperty languageProperty : languageProperties) {
-						languageProperty.setComment(null);
-					}
-					hasUnsavedChanges = true;
+					model.deleteAllComments();
 					setupTable();
 				}
 			}
@@ -1242,16 +475,12 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	 */
 	private void deleteAllPaths() {
 		try {
-			final long pathCount = languageProperties.stream().filter(languageProperty -> Utilities.isNotEmpty(languageProperty.getPath())).count();
+			final long pathCount = model.countPaths();
 			if (pathCount > 0) {
 				// All paths are removed at once, so ask the user before doing it
 				final Integer returncode = new QuestionDialog(this, LangResources.get("question_title_delete_paths"), LangResources.get("question_content_delete_paths", pathCount), LangResources.get("yes"), LangResources.get("no")).open();
 				if (returncode != null && returncode == 0) {
-					for (final LanguageProperty languageProperty : languageProperties) {
-						// Empty string (not null) is the representation of "no path", which saveFiles() relies on
-						languageProperty.setPath("");
-					}
-					hasUnsavedChanges = true;
+					model.deleteAllPaths();
 					setupTable();
 				}
 			}
@@ -1272,16 +501,12 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	 */
 	private void deleteAllLanguageValues(final String languageSign, final String languageDisplayName) {
 		try {
-			final long valueCount = languageProperties.stream().filter(languageProperty -> Utilities.isNotEmpty(languageProperty.getLanguageValue(languageSign))).count();
+			final long valueCount = LanguagePropertiesModel.countNonEmptyValues(model.getLanguageProperties(), languageSign);
 			if (valueCount > 0) {
 				// All values of this language are removed at once, so ask the user before doing it
 				final Integer returncode = new QuestionDialog(this, LangResources.get("question_title_delete_language_values"), LangResources.get("question_content_delete_language_values", valueCount, languageDisplayName), LangResources.get("yes"), LangResources.get("no")).open();
 				if (returncode != null && returncode == 0) {
-					for (final LanguageProperty languageProperty : languageProperties) {
-						// A null value keeps the language sign registered (same as in addLanguage()), so the column stays
-						languageProperty.setLanguageValue(languageSign, null);
-					}
-					hasUnsavedChanges = true;
+					model.deleteAllLanguageValues(languageSign);
 					setupTable();
 				}
 			}
@@ -1299,12 +524,12 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	 */
 	private void setSelectedLanguageValues(final String languageSign, final String languageDisplayName, final String newValue) {
 		try {
-			final List<LanguageProperty> selectedProperties = getSelectedProperties();
+			final List<LanguageProperty> selectedProperties = tablePanel.getSelectedProperties();
 			if (selectedProperties.isEmpty()) {
 				return;
 			}
 
-			final long nonEmptyValueCount = selectedProperties.stream().filter(languageProperty -> Utilities.isNotEmpty(languageProperty.getLanguageValue(languageSign))).count();
+			final long nonEmptyValueCount = LanguagePropertiesModel.countNonEmptyValues(selectedProperties, languageSign);
 			if (nonEmptyValueCount > 0) {
 				final Integer returncode = new QuestionDialog(this, LangResources.get("question_title_delete_language_values"), LangResources.get("question_content_delete_language_values", nonEmptyValueCount, languageDisplayName), LangResources.get("yes"), LangResources.get("no")).open();
 				if (returncode == null || returncode != 0) {
@@ -1312,18 +537,8 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				}
 			}
 
-			boolean changed = false;
-			for (final LanguageProperty languageProperty : selectedProperties) {
-				final String oldValue = languageProperty.getLanguageValue(languageSign);
-				if (oldValue == null ? newValue != null : !oldValue.equals(newValue)) {
-					languageProperty.setLanguageValue(languageSign, newValue);
-					changed = true;
-				}
-			}
-
-			if (changed) {
-				hasUnsavedChanges = true;
-				currentSelectedProperties = selectedProperties;
+			if (model.setLanguageValues(selectedProperties, languageSign, newValue)) {
+				model.setCurrentSelection(selectedProperties);
 				refreshTable();
 				refreshDetailView();
 			}
@@ -1343,15 +558,10 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		try {
 			String languageSignToDelete = languageSign;
 			if (languageSignToDelete == null) {
-				final List<String> availableLanguageSignsToDelete = new ArrayList<>(availableLanguageSigns);
+				final List<String> availableLanguageSignsToDelete = new ArrayList<>(model.getAvailableLanguageSigns());
 				languageSignToDelete = new ComboSelectionDialog(this, getTitle(), LangResources.get("selectLanguageSignToDelete"), availableLanguageSignsToDelete).open();
 			}
-			if (Utilities.isNotBlank(languageSignToDelete) && availableLanguageSigns.size() > 1) {
-				for (final LanguageProperty languageProperty : languageProperties) {
-					languageProperty.removeLanguageValue(languageSignToDelete);
-				}
-				hasUnsavedChanges = true;
-				availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT);
+			if (model.deleteLanguage(languageSignToDelete)) {
 				setupTable();
 			}
 		} catch (final Exception ex) {
@@ -1364,199 +574,22 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	 * The selected properties, or all properties shown in the table if nothing is selected
 	 * (so with active search filter only the search hits).
 	 */
-	private List<LanguageProperty> getSelectedOrAllProperties() {
-		if (propertiesTable.getSelectedRowCount() > 0) {
-			return getSelectedProperties();
+	List<LanguageProperty> getSelectedOrAllProperties() {
+		if (tablePanel.getSelectedRowCount() > 0) {
+			return tablePanel.getSelectedProperties();
 		} else {
-			return displayedProperties;
+			return tablePanel.getDisplayedProperties();
 		}
-	}
-
-	/**
-	 * Shows the menu below the translate button to choose between translating
-	 * into one selected target language or into all other available languages.
-	 */
-	private void showTranslateMenu(final JButton invoker) {
-		try {
-			final JPopupMenu translateMenu = new JPopupMenu();
-			addImportSourceMenuItem(translateMenu, "translate.png", "translate_toOneTargetLanguage", true, () -> translate(false));
-			addImportSourceMenuItem(translateMenu, "translate.png", "translate_toAllTargetLanguages", true, () -> translate(true));
-			translateMenu.show(invoker, 0, invoker.getHeight());
-		} catch (final Exception e) {
-			showError(e);
-		}
-	}
-
-	private void translate(final boolean allTargetLanguages) {
-		try {
-			if (Utilities.isBlank(applicationConfiguration.get(LanguagePropertiesManager.CONFIG_DEEPL_APIKEY))) {
-				final String deeplApiKey = new SimpleInputDialog(this, getTitle(), LangResources.get("enterDeeplApiKey")).open();
-				if (deeplApiKey != null) {
-					applicationConfiguration.set(LanguagePropertiesManager.CONFIG_DEEPL_APIKEY, deeplApiKey);
-				}
-			}
-
-			if (Utilities.isBlank(applicationConfiguration.get(LanguagePropertiesManager.CONFIG_DEEPL_APIKEY))) {
-				showErrorMessage(LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("missingDeeplApiKey"));
-				return;
-			}
-
-			TranslationConstants translationConstants = null;
-			final String translationConstantsFilePath = applicationConfiguration.get(LanguagePropertiesManager.CONFIG_TRANSLATION_CONSTANTS_FILE);
-			if (Utilities.isNotBlank(translationConstantsFilePath)) {
-				try {
-					translationConstants = TranslationConstants.read(new File(translationConstantsFilePath.trim()));
-				} catch (final Exception e) {
-					showErrorMessage(LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("errorReadingTranslationConstantsFile", translationConstantsFilePath, e.getMessage()));
-					return;
-				}
-			}
-
-			final String deeplBaseUrl = applicationConfiguration.get(LanguagePropertiesManager.CONFIG_DEEPL_BASEURL);
-			final DeepLHelper deepLHelper = new DeepLHelper(deeplBaseUrl, applicationConfiguration.get(LanguagePropertiesManager.CONFIG_DEEPL_APIKEY), applicationConfiguration.getProxyConfiguration().getProxy(deeplBaseUrl));
-
-			// The source language is always required, also when translating into all target languages
-			final String languageSignTranslateSource = new ComboSelectionDialog(this, getTitle(), LangResources.get("selectSourceLanguageSignToTranslate"), availableLanguageSigns, 0).open();
-			if (Utilities.isBlank(languageSignTranslateSource)) {
-				return;
-			}
-			String sourceLanguage = languageSignTranslateSource;
-			if ("Default".equalsIgnoreCase(sourceLanguage)) {
-				sourceLanguage = new ComboSelectionDialog(this, getTitle(), LangResources.get("selectDefaultLanguageToTranslate"), deepLHelper.getSupportedLanguages(), deepLHelper.getSupportedLanguages().indexOf("EN")).open();
-				if (Utilities.isBlank(sourceLanguage)) {
-					return;
-				}
-			}
-			if (sourceLanguage.contains("_")) {
-				sourceLanguage = sourceLanguage.substring(0, sourceLanguage.indexOf("_"));
-			}
-
-			final List<String> availableOtherLanguageSigns = new ArrayList<>(availableLanguageSigns);
-			availableOtherLanguageSigns.remove(languageSignTranslateSource);
-
-			final List<String> languageSignsTranslateTarget = new ArrayList<>();
-			if (allTargetLanguages || availableOtherLanguageSigns.size() == 1) {
-				languageSignsTranslateTarget.addAll(availableOtherLanguageSigns);
-			} else {
-				final String languageSignTranslateTarget = new ComboSelectionDialog(this, getTitle(), LangResources.get("selectTargetLanguageSignToTranslate"), availableOtherLanguageSigns).open();
-				if (Utilities.isBlank(languageSignTranslateTarget)) {
-					return;
-				}
-				languageSignsTranslateTarget.add(languageSignTranslateTarget);
-			}
-
-			// Only fetched once and only when needed to filter the target languages not supported by DeepL
-			final List<String> supportedLanguages = allTargetLanguages ? deepLHelper.getSupportedLanguages() : null;
-
-			// Map of target language sign to the DeepL target language
-			final Map<String, String> targetLanguages = new LinkedHashMap<>();
-			final List<String> unsupportedLanguageSigns = new ArrayList<>();
-			for (final String languageSignTranslateTarget : languageSignsTranslateTarget) {
-				String targetLanguage = languageSignTranslateTarget;
-				if ("Default".equalsIgnoreCase(targetLanguage)) {
-					targetLanguage = new ComboSelectionDialog(this, getTitle(), LangResources.get("selectDefaultLanguageToTranslate"), deepLHelper.getSupportedLanguages(), deepLHelper.getSupportedLanguages().indexOf("EN")).open();
-					if (Utilities.isBlank(targetLanguage)) {
-						return;
-					}
-				}
-				if (targetLanguage.contains("_")) {
-					targetLanguage = targetLanguage.substring(0, targetLanguage.indexOf("_"));
-				}
-
-				if (supportedLanguages != null && !isSupportedLanguage(supportedLanguages, targetLanguage)) {
-					unsupportedLanguageSigns.add(languageSignTranslateTarget);
-				} else {
-					targetLanguages.put(languageSignTranslateTarget, targetLanguage);
-				}
-			}
-
-			if (targetLanguages.isEmpty()) {
-				showErrorMessage(LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("translate_skippedUnsupportedTargetLanguages", String.join(", ", unsupportedLanguageSigns)));
-				return;
-			}
-
-			// Only restrict to the selected rows if any are selected, otherwise translate all properties
-			final List<LanguageProperty> languagePropertiesToTranslate = getSelectedOrAllProperties();
-
-			int countTranslations = 0;
-			final List<String> translateErrorMessages = new ArrayList<>();
-			try {
-				for (final Map.Entry<String, String> targetLanguageEntry : targetLanguages.entrySet()) {
-					final TranslateLanguagePropertiesWorker translateLanguagePropertiesWorker = new TranslateLanguagePropertiesWorker(null, languagePropertiesToTranslate, deepLHelper, languageSignTranslateSource, targetLanguageEntry.getKey(), sourceLanguage, targetLanguageEntry.getValue(), translationConstants);
-					String progressText = LangResources.get("translatingLanguageProperties");
-					if (targetLanguages.size() > 1) {
-						progressText += " (" + targetLanguageEntry.getKey() + ")";
-					}
-					final ProgressDialog<TranslateLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(this, LanguagePropertiesManager.APPLICATION_NAME, progressText, translateLanguagePropertiesWorker);
-					final Result dialogResult = progressDialog.open();
-					try {
-						if (dialogResult != Result.CANCELED) {
-							// check for errors
-							translateLanguagePropertiesWorker.get();
-						}
-					} finally {
-						countTranslations += translateLanguagePropertiesWorker.getCountTranslations();
-					}
-
-					if (Utilities.isNotBlank(translateLanguagePropertiesWorker.getTranslateErrorMessage())) {
-						if (targetLanguages.size() > 1) {
-							translateErrorMessages.add(targetLanguageEntry.getKey() + ": " + translateLanguagePropertiesWorker.getTranslateErrorMessage());
-						} else {
-							translateErrorMessages.add(translateLanguagePropertiesWorker.getTranslateErrorMessage());
-						}
-					}
-
-					if (dialogResult == Result.CANCELED) {
-						// Canceling stops the translation into the remaining target languages too
-						break;
-					}
-				}
-			} finally {
-				// Keep the translations done so far, even if a later target language failed
-				setupTable();
-				if (countTranslations > 0) {
-					hasUnsavedChanges = true;
-				}
-			}
-
-			if (!translateErrorMessages.isEmpty()) {
-				showErrorMessage(LanguagePropertiesManager.APPLICATION_NAME, String.join("\n", translateErrorMessages));
-			}
-
-			String resultMessage = LangResources.get("addedTranslations", countTranslations);
-			if (!unsupportedLanguageSigns.isEmpty()) {
-				resultMessage += "\n" + LangResources.get("translate_skippedUnsupportedTargetLanguages", String.join(", ", unsupportedLanguageSigns));
-			}
-			showMessage(LanguagePropertiesManager.APPLICATION_NAME, resultMessage);
-		} catch (final Exception ex) {
-			showError(ex);
-		}
-		checkButtonStatus();
-	}
-
-	/**
-	 * Checks case-insensitively whether DeepL supports the language, also accepting regional
-	 * variants like "EN-GB" or "PT-BR" for a plain language code like "en" or "pt".
-	 */
-	private static boolean isSupportedLanguage(final List<String> supportedLanguages, final String language) {
-		final String languageUpperCase = language.toUpperCase(Locale.ROOT);
-		for (final String supportedLanguage : supportedLanguages) {
-			final String supportedLanguageUpperCase = supportedLanguage.toUpperCase(Locale.ROOT);
-			if (supportedLanguageUpperCase.equals(languageUpperCase) || supportedLanguageUpperCase.startsWith(languageUpperCase + "-")) {
-				return true;
-			}
-		}
-		return false;
 	}
 
 	private void transfer() {
 		try {
-			final String languageSignTransferSource = new ComboSelectionDialog(this, getTitle(), LangResources.get("selectSourceLanguageSignToTransfer"), availableLanguageSigns, 0).open();
+			final String languageSignTransferSource = new ComboSelectionDialog(this, getTitle(), LangResources.get("selectSourceLanguageSignToTransfer"), model.getAvailableLanguageSigns(), 0).open();
 			if (Utilities.isBlank(languageSignTransferSource)) {
 				return;
 			}
 
-			final List<String> availableOtherLanguageSigns = new ArrayList<>(availableLanguageSigns);
+			final List<String> availableOtherLanguageSigns = new ArrayList<>(model.getAvailableLanguageSigns());
 			availableOtherLanguageSigns.remove(languageSignTransferSource);
 			String languageSignTransferTarget;
 			if (availableOtherLanguageSigns.size() == 1) {
@@ -1569,20 +602,10 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			}
 
 			// Only restrict to the selected rows if any are selected, otherwise transfer all properties
-			int countTransfers = 0;
-			for (final LanguageProperty languageProperty : getSelectedOrAllProperties()) {
-				final String sourceValue = languageProperty.getLanguageValue(languageSignTransferSource);
-				if (Utilities.isNotBlank(sourceValue)) {
-					languageProperty.setLanguageValue(languageSignTransferTarget, sourceValue);
-					countTransfers++;
-				}
-			}
+			final int countTransfers = model.transferValues(getSelectedOrAllProperties(), languageSignTransferSource, languageSignTransferTarget);
 			setupTable();
 
 			showMessage(LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("addedTransfers", countTransfers));
-			if (countTransfers > 0) {
-				hasUnsavedChanges = true;
-			}
 		} catch (final Exception ex) {
 			showError(ex);
 		}
@@ -1591,12 +614,12 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 	private void clearIdentical() {
 		try {
-			final String languageSignClearSource = new ComboSelectionDialog(this, getTitle(), LangResources.get("selectSourceLanguageSignToClearIdentical"), availableLanguageSigns, 0).open();
+			final String languageSignClearSource = new ComboSelectionDialog(this, getTitle(), LangResources.get("selectSourceLanguageSignToClearIdentical"), model.getAvailableLanguageSigns(), 0).open();
 			if (Utilities.isBlank(languageSignClearSource)) {
 				return;
 			}
 
-			final List<String> availableOtherLanguageSigns = new ArrayList<>(availableLanguageSigns);
+			final List<String> availableOtherLanguageSigns = new ArrayList<>(model.getAvailableLanguageSigns());
 			availableOtherLanguageSigns.remove(languageSignClearSource);
 			String languageSignClearTarget;
 			if (availableOtherLanguageSigns.size() == 1) {
@@ -1609,710 +632,54 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			}
 
 			// Only restrict to the selected rows if any are selected, otherwise check all properties
-			int countCleared = 0;
-			for (final LanguageProperty languageProperty : getSelectedOrAllProperties()) {
-				final String sourceValue = languageProperty.getLanguageValue(languageSignClearSource);
-				final String targetValue = languageProperty.getLanguageValue(languageSignClearTarget);
-				if (Utilities.isNotBlank(targetValue) && targetValue.equals(sourceValue)) {
-					languageProperty.setLanguageValue(languageSignClearTarget, null);
-					countCleared++;
-				}
-			}
+			final int countCleared = model.clearIdenticalValues(getSelectedOrAllProperties(), languageSignClearSource, languageSignClearTarget);
 			setupTable();
 
 			showMessage(LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("clearedIdenticalValues", countCleared));
-			if (countCleared > 0) {
-				hasUnsavedChanges = true;
-			}
 		} catch (final Exception ex) {
 			showError(ex);
 		}
 		checkButtonStatus();
 	}
 
+	/**
+	 * Removes properties with the same combination of path and key. The values
+	 * and comments of the removed duplicates are only taken over into the kept
+	 * property after the user confirmed (see LanguagePropertiesModel.removeDuplicates()).
+	 */
 	private void removeDuplicates() {
 		try {
-			// Group properties by the combination of PropertiesSetPath and PropertyKey
-			final Map<String, List<LanguageProperty>> groupedByPathAndKey = new LinkedHashMap<>();
-			for (final LanguageProperty languageProperty : languageProperties) {
-				final String groupKey = languageProperty.getPath() + "\u0000" + languageProperty.getKey();
-				groupedByPathAndKey.computeIfAbsent(groupKey, k -> new ArrayList<>()).add(languageProperty);
-			}
-
-			// For every group with more than one entry, keep the one with the lowest original index.
-			// Before discarding the rest, adopt any language value (and comment) the winner is still missing
-			// from the duplicates, in order of original index, so the first available value wins.
-			final List<LanguageProperty> duplicatesToRemove = new ArrayList<>();
-			final StringBuilder reportText = new StringBuilder();
-			for (final List<LanguageProperty> group : groupedByPathAndKey.values()) {
-				if (group.size() > 1) {
-					final List<LanguageProperty> sortedGroup = group.stream()
-							.sorted(Comparator.comparing(LanguageProperty::getOriginalIndex))
-							.collect(Collectors.toList());
-					final LanguageProperty winner = sortedGroup.get(0);
-					final List<LanguageProperty> losers = sortedGroup.subList(1, sortedGroup.size());
-
-					for (final LanguageProperty loser : losers) {
-						for (final String languageSign : loser.getAvailableLanguageSigns()) {
-							final String loserValue = loser.getLanguageValue(languageSign);
-							if (Utilities.isNotEmpty(loserValue) && Utilities.isEmpty(winner.getLanguageValue(languageSign))) {
-								winner.setLanguageValue(languageSign, loserValue);
-							}
-						}
-						if (Utilities.isEmpty(winner.getComment()) && Utilities.isNotEmpty(loser.getComment())) {
-							winner.setComment(loser.getComment());
-						}
-					}
-
-					reportText.append("\"").append(winner.getPath()).append("\" / \"").append(winner.getKey()).append("\": ").append(group.size()).append("\n");
-					duplicatesToRemove.addAll(losers);
-				}
-			}
-
-			if (duplicatesToRemove.isEmpty()) {
+			final DuplicatesPlan duplicatesPlan = model.findDuplicates();
+			if (!duplicatesPlan.hasDuplicates()) {
 				showMessage(LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("noDuplicatesFound"));
 			} else {
-				final QuestionDialog dialog = new QuestionDialog(this, LangResources.get("question_title_remove_duplicates"), LangResources.get("question_content_remove_duplicates", duplicatesToRemove.size()) + "\n\n" + reportText.toString(), LangResources.get("yes"), LangResources.get("no"));
+				final QuestionDialog dialog = new QuestionDialog(this, LangResources.get("question_title_remove_duplicates"), LangResources.get("question_content_remove_duplicates", duplicatesPlan.getDuplicateCount()) + "\n\n" + duplicatesPlan.getReportText(), LangResources.get("yes"), LangResources.get("no"));
 				final Integer returncode = dialog.open();
 				if (returncode != null && returncode == 0) {
-					final Set<LanguageProperty> propertiesToRemove = Collections.newSetFromMap(new IdentityHashMap<>());
-					propertiesToRemove.addAll(duplicatesToRemove);
-					languageProperties.removeIf(propertiesToRemove::contains);
-
-					currentSelectedProperties = new ArrayList<>();
+					final int removedCount = model.removeDuplicates(duplicatesPlan);
 					setupTable();
 					refreshDetailView();
-					hasUnsavedChanges = true;
-					showMessage(LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("duplicatesRemoved", duplicatesToRemove.size()));
+					showMessage(LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("duplicatesRemoved", removedCount));
 				}
 			}
 		} catch (final Exception ex) {
 			showError(ex);
 		}
 		checkButtonStatus();
-	}
-
-	/**
-	 * Byte values of the Windows-1252 characters in the range 0x80-0x9F (e.g. '€' = 0x80, '“' = 0x93).
-	 * All other characters up to U+00FF have the same byte value as their code point (ISO-8859-1).
-	 */
-	private static final Map<Character, Integer> WINDOWS_1252_SPECIAL_CHARACTER_BYTES = createWindows1252SpecialCharacterBytes();
-
-	private static Map<Character, Integer> createWindows1252SpecialCharacterBytes() {
-		final Map<Character, Integer> characterBytes = new HashMap<>();
-		final Charset windows1252 = Charset.forName("windows-1252");
-		for (int byteValue = 0x80; byteValue <= 0x9F; byteValue++) {
-			final String decoded = new String(new byte[] { (byte) byteValue }, windows1252);
-			if (decoded.length() == 1 && decoded.charAt(0) != '\uFFFD') {
-				characterBytes.put(decoded.charAt(0), byteValue);
-			}
-		}
-		return characterBytes;
-	}
-
-	/**
-	 * Returns the single byte value of a character in ISO-8859-1 / Windows-1252, or -1 if the
-	 * character does not exist in these charsets (then it can not be part of a mojibake sequence).
-	 */
-	private static int getSingleByteValue(final char character) {
-		if (character <= 0xFF) {
-			return character;
-		} else {
-			final Integer byteValue = WINDOWS_1252_SPECIAL_CHARACTER_BYTES.get(character);
-			return byteValue == null ? -1 : byteValue;
-		}
-	}
-
-	/**
-	 * Returns the length of a valid UTF-8 byte sequence, which is represented by the characters
-	 * of the text starting at the given index when those are read as ISO-8859-1 / Windows-1252
-	 * (e.g. "Ã¤" for "ä", "â€ž" for "„"), or 0 if there is no such sequence at this index.
-	 */
-	private static int getMojibakeSequenceLength(final String text, final int index) {
-		final int leadByte = getSingleByteValue(text.charAt(index));
-		final int sequenceLength;
-		if (leadByte >= 0xC2 && leadByte <= 0xDF) {
-			sequenceLength = 2;
-		} else if (leadByte >= 0xE0 && leadByte <= 0xEF) {
-			sequenceLength = 3;
-		} else if (leadByte >= 0xF0 && leadByte <= 0xF4) {
-			sequenceLength = 4;
-		} else {
-			return 0;
-		}
-		if (index + sequenceLength > text.length()) {
-			return 0;
-		}
-
-		final byte[] sequenceBytes = new byte[sequenceLength];
-		sequenceBytes[0] = (byte) leadByte;
-		for (int i = 1; i < sequenceLength; i++) {
-			final int continuationByte = getSingleByteValue(text.charAt(index + i));
-			if (continuationByte < 0x80 || continuationByte > 0xBF) {
-				return 0;
-			}
-			sequenceBytes[i] = (byte) continuationByte;
-		}
-
-		// Strict decoding rejects overlong encodings and encoded surrogates
-		try {
-			StandardCharsets.UTF_8.newDecoder()
-					.onMalformedInput(CodingErrorAction.REPORT)
-					.onUnmappableCharacter(CodingErrorAction.REPORT)
-					.decode(ByteBuffer.wrap(sequenceBytes));
-			return sequenceLength;
-		} catch (@SuppressWarnings("unused") final CharacterCodingException e) {
-			return 0;
-		}
-	}
-
-	/**
-	 * Detects UTF-8 encoded text, which was mistakenly read as ISO-8859-1 / Windows-1252 ("Mojibake"),
-	 * e.g. "ä" becoming "Ã¤" or "„" becoming "â€ž".
-	 *
-	 * <p>
-	 * Instead of searching for single suspicious characters like "Â" (which is a valid letter,
-	 * e.g. in the French word "Âge"), only complete and valid UTF-8 byte sequences are reported:
-	 * <ul>
-	 * <li>3 and 4 byte sequences (e.g. "â€ž", "ðŸ˜€"), which practically never occur in real text</li>
-	 * <li>2 byte sequences starting with "Â" or "Ã" (U+0080 - U+00FF, e.g. "Ã¤", "Â°")</li>
-	 * <li>other 2 byte sequences (e.g. cyrillic "Ð¿Ñ€") only if directly followed by another sequence,
-	 * because a single one also occurs in real text (e.g. "Fuß“" or "ÉTÉ" followed by a no-break space)</li>
-	 * </ul>
-	 * </p>
-	 */
-	private static boolean containsMojibake(final String text) {
-		for (int i = 0; i < text.length(); i++) {
-			final int sequenceLength = getMojibakeSequenceLength(text, i);
-			if (sequenceLength >= 3) {
-				return true;
-			} else if (sequenceLength == 2) {
-				final char leadCharacter = text.charAt(i);
-				if (leadCharacter == '\u00C2' || leadCharacter == '\u00C3') {
-					return true;
-				} else if (i + 2 < text.length() && getMojibakeSequenceLength(text, i + 2) > 0) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-
-	private static final Pattern UNRESOLVED_UNICODE_ESCAPE_PATTERN = Pattern.compile("\\\\u[0-9A-Fa-f]{4}");
-
-	/**
-	 * Checks a single piece of text (key, value or comment) for signs of encoding corruption
-	 * or other structural problems and returns a list of human readable problem descriptions.
-	 * Returns an empty list if no problems were found.
-	 */
-	private static List<String> findTextErrors(final String text) {
-		final List<String> problems = new ArrayList<>();
-		if (text == null) {
-			return problems;
-		}
-
-		if (text.indexOf('\uFFFD') >= 0) {
-			problems.add(LangResources.get("error_replacement_char"));
-		}
-
-		if (containsMojibake(text)) {
-			problems.add(LangResources.get("error_mojibake"));
-		}
-
-		if (UNRESOLVED_UNICODE_ESCAPE_PATTERN.matcher(text).find()) {
-			problems.add(LangResources.get("error_unresolved_unicode_escape"));
-		}
-
-		if (text.indexOf('\uFEFF') >= 0) {
-			problems.add(LangResources.get("error_bom_char"));
-		}
-
-		boolean isolatedSurrogateFound = false;
-		boolean controlCharFound = false;
-		for (int i = 0; i < text.length() && !(isolatedSurrogateFound && controlCharFound); i++) {
-			final char currentChar = text.charAt(i);
-			if (!isolatedSurrogateFound) {
-				if (Character.isHighSurrogate(currentChar)) {
-					if (i + 1 >= text.length() || !Character.isLowSurrogate(text.charAt(i + 1))) {
-						isolatedSurrogateFound = true;
-					}
-				} else if (Character.isLowSurrogate(currentChar)) {
-					if (i == 0 || !Character.isHighSurrogate(text.charAt(i - 1))) {
-						isolatedSurrogateFound = true;
-					}
-				}
-			}
-			if (!controlCharFound && Character.isISOControl(currentChar) && currentChar != '\t' && currentChar != '\n' && currentChar != '\r') {
-				controlCharFound = true;
-			}
-		}
-		if (isolatedSurrogateFound) {
-			problems.add(LangResources.get("error_isolated_surrogate"));
-		}
-		if (controlCharFound) {
-			problems.add(LangResources.get("error_control_char"));
-		}
-
-		return problems;
-	}
-
-	private static final Pattern MESSAGE_FORMAT_ARGUMENT_PATTERN = Pattern.compile("\\{\\s*\\d");
-
-	/**
-	 * java.util.Formatter conversions like %s, %d, %1$s, %.2f, %tY.
-	 * The space flag is deliberately not supported to avoid false positives in texts like "50% sure".
-	 */
-	private static final Pattern PRINTF_PLACEHOLDER_PATTERN = Pattern.compile("%(?:(\\d+)\\$)?[-#+0,(<]*\\d*(?:\\.\\d+)?([bBhHsScCdoxXeEfgGaA%n]|[tT][a-zA-Z])");
-
-	/**
-	 * Result of the analysis of a single text as java.text.MessageFormat pattern
-	 */
-	private static class MessageFormatAnalysis {
-		private final Set<Integer> argumentIndexes = new TreeSet<>();
-		private String syntaxError = null;
-	}
-
-	private static MessageFormatAnalysis analyzeMessageFormat(final String text) {
-		final MessageFormatAnalysis analysis = new MessageFormatAnalysis();
-
-		try {
-			@SuppressWarnings("unused")
-			final
-			MessageFormat test = new MessageFormat(text);
-		} catch (final IllegalArgumentException e) {
-			analysis.syntaxError = e.getMessage();
-		}
-
-		// Apostrophes are deliberately not treated as MessageFormat quotes, because they are regular characters in many languages (e.g. Italian, French)
-		for (int i = 0; i < text.length(); i++) {
-			if (text.charAt(i) == '{') {
-				int argumentEnd = i + 1;
-				while (argumentEnd < text.length() && text.charAt(argumentEnd) != ',' && text.charAt(argumentEnd) != '}') {
-					argumentEnd++;
-				}
-				final String argumentNumber = text.substring(i + 1, argumentEnd);
-				if (argumentNumber.length() > 0 && argumentNumber.length() <= 9 && argumentNumber.chars().allMatch(Character::isDigit)) {
-					analysis.argumentIndexes.add(Integer.parseInt(argumentNumber));
-				}
-			}
-		}
-
-		return analysis;
-	}
-
-	private static List<String> findPrintfPlaceholders(final String text) {
-		final List<String> placeholders = new ArrayList<>();
-		final Matcher matcher = PRINTF_PLACEHOLDER_PATTERN.matcher(text);
-		while (matcher.find()) {
-			final String conversion = matcher.group(2);
-			if ("%".equals(conversion) || "n".equals(conversion)) {
-				// "%%" and "%n" consume no argument
-				continue;
-			}
-			final String argumentIndex = matcher.group(1);
-			// Upper case variants (%S, %X, %T...) only change the output case, but date/time suffixes (%tY vs. %ty) are significant
-			final String normalizedConversion = conversion.substring(0, 1).toLowerCase(Locale.ROOT) + conversion.substring(1);
-			placeholders.add("%" + (argumentIndex != null ? argumentIndex + "$" : "") + normalizedConversion);
-		}
-		return placeholders;
-	}
-
-	/**
-	 * Returns the items of minuend that are not matched by an item of subtrahend, respecting duplicates
-	 */
-	private static List<String> subtractMultiset(final List<String> minuend, final List<String> subtrahend) {
-		final List<String> result = new ArrayList<>(minuend);
-		for (final String item : subtrahend) {
-			result.remove(item);
-		}
-		return result;
-	}
-
-	/**
-	 * Checks whether the placeholders of all language values of a property match the placeholders
-	 * of the reference value (default language, or else the first language with a value).
-	 * Supports java.text.MessageFormat arguments ({0}, {1,number}) and java.util.Formatter conversions (%s, %1$d).
-	 * Empty values are skipped, because a missing translation is not a placeholder error.
-	 */
-	private static List<String> findPlaceholderErrors(final LanguageProperty languageProperty) {
-		final List<String> problems = new ArrayList<>();
-
-		final Map<String, String> values = getNonBlankValuesReferenceFirst(languageProperty);
-		if (values.isEmpty()) {
-			return problems;
-		}
-
-		final String referenceLanguageSign = values.keySet().iterator().next();
-
-		// MessageFormat: If any language uses arguments, all languages of this key are expected to be formatted by MessageFormat
-		if (values.values().stream().anyMatch(value -> MESSAGE_FORMAT_ARGUMENT_PATTERN.matcher(value).find())) {
-			final Map<String, MessageFormatAnalysis> analyses = new LinkedHashMap<>();
-			for (final Map.Entry<String, String> entry : values.entrySet()) {
-				analyses.put(entry.getKey(), analyzeMessageFormat(entry.getValue()));
-			}
-			final Set<Integer> referenceIndexes = analyses.get(referenceLanguageSign).argumentIndexes;
-
-			for (final Map.Entry<String, MessageFormatAnalysis> entry : analyses.entrySet()) {
-				final String fieldPrefix = LangResources.get("field_value", entry.getKey()) + ": ";
-				final MessageFormatAnalysis analysis = entry.getValue();
-
-				if (analysis.syntaxError != null) {
-					problems.add(fieldPrefix + LangResources.get("error_messageformat_syntax", analysis.syntaxError));
-				}
-
-				if (!entry.getKey().equals(referenceLanguageSign)) {
-					final Set<Integer> missingIndexes = new TreeSet<>(referenceIndexes);
-					missingIndexes.removeAll(analysis.argumentIndexes);
-					final Set<Integer> additionalIndexes = new TreeSet<>(analysis.argumentIndexes);
-					additionalIndexes.removeAll(referenceIndexes);
-
-					if (!missingIndexes.isEmpty()) {
-						problems.add(fieldPrefix + LangResources.get("error_placeholder_missing", referenceLanguageSign, missingIndexes.stream().map(index -> "{" + index + "}").collect(Collectors.joining(", "))));
-					}
-					if (!additionalIndexes.isEmpty()) {
-						problems.add(fieldPrefix + LangResources.get("error_placeholder_additional", referenceLanguageSign, additionalIndexes.stream().map(index -> "{" + index + "}").collect(Collectors.joining(", "))));
-					}
-				}
-			}
-		}
-
-		// java.util.Formatter: If any language uses conversions, compare all languages of this key
-		final Map<String, List<String>> printfPlaceholders = new LinkedHashMap<>();
-		for (final Map.Entry<String, String> entry : values.entrySet()) {
-			printfPlaceholders.put(entry.getKey(), findPrintfPlaceholders(entry.getValue()));
-		}
-		if (printfPlaceholders.values().stream().anyMatch(placeholders -> !placeholders.isEmpty())) {
-			final List<String> referencePlaceholders = printfPlaceholders.get(referenceLanguageSign);
-			for (final Map.Entry<String, List<String>> entry : printfPlaceholders.entrySet()) {
-				if (entry.getKey().equals(referenceLanguageSign)) {
-					continue;
-				}
-				final String fieldPrefix = LangResources.get("field_value", entry.getKey()) + ": ";
-				final List<String> placeholders = entry.getValue();
-
-				final List<String> missingPlaceholders = subtractMultiset(referencePlaceholders, placeholders);
-				final List<String> additionalPlaceholders = subtractMultiset(placeholders, referencePlaceholders);
-
-				if (!missingPlaceholders.isEmpty()) {
-					problems.add(fieldPrefix + LangResources.get("error_placeholder_missing", referenceLanguageSign, String.join(", ", missingPlaceholders)));
-				}
-				if (!additionalPlaceholders.isEmpty()) {
-					problems.add(fieldPrefix + LangResources.get("error_placeholder_additional", referenceLanguageSign, String.join(", ", additionalPlaceholders)));
-				}
-				if (missingPlaceholders.isEmpty() && additionalPlaceholders.isEmpty() && !placeholders.equals(referencePlaceholders)) {
-					// Same placeholders in a different order only matter if they are not all explicitly indexed like %1$s
-					final boolean allExplicitlyIndexed = placeholders.stream().allMatch(placeholder -> placeholder.contains("$"));
-					if (!allExplicitlyIndexed) {
-						problems.add(fieldPrefix + LangResources.get("error_placeholder_order", referenceLanguageSign));
-					}
-				}
-			}
-		}
-
-		return problems;
-	}
-
-	/**
-	 * Returns all non blank language values of a property. The first entry is the reference value
-	 * for comparisons: the default language, or else the first language with a value.
-	 */
-	private static Map<String, String> getNonBlankValuesReferenceFirst(final LanguageProperty languageProperty) {
-		final Map<String, String> values = new LinkedHashMap<>();
-		final String defaultValue = languageProperty.getLanguageValue(LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT);
-		if (Utilities.isNotBlank(defaultValue)) {
-			values.put(LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT, defaultValue);
-		}
-		for (final String languageSign : languageProperty.getAvailableLanguageSigns()) {
-			final String value = languageProperty.getLanguageValue(languageSign);
-			if (Utilities.isNotBlank(value)) {
-				values.putIfAbsent(languageSign, value);
-			}
-		}
-		return values;
-	}
-
-	/**
-	 * Returns the normalized sentence end punctuation of a text or null if the last character is no punctuation.
-	 * Only the very last character is checked, so trailing whitespace, closing brackets or quotes mean "no end punctuation".
-	 * Language specific variants (full width CJK punctuation, Greek/Arabic question marks, Devanagari danda)
-	 * are mapped to their ASCII equivalent, "..." and "…" are both returned as "…".
-	 */
-	private static String getEndPunctuation(final String text) {
-		if (text.isEmpty()) {
-			return null;
-		}
-
-		if (text.endsWith("...") || text.endsWith("…")) {
-			return "…";
-		}
-
-		switch (text.charAt(text.length() - 1)) {
-			case '.':
-			case '。':
-			case '।':
-				return ".";
-			case ':':
-			case '：':
-				return ":";
-			case '!':
-			case '！':
-				return "!";
-			case '?':
-			case '？':
-			case '؟':
-			case '\u037E': // Greek question mark
-				return "?";
-			case ';':
-			case '；':
-				return ";";
-			case ',':
-			case '，':
-			case '、':
-				return ",";
-			default:
-				return null;
-		}
-	}
-
-	private static boolean startsWithWhitespace(final String text) {
-		return text.length() > 0 && (Character.isWhitespace(text.charAt(0)) || Character.isSpaceChar(text.charAt(0)));
-	}
-
-	private static boolean endsWithWhitespace(final String text) {
-		return text.length() > 0 && (Character.isWhitespace(text.charAt(text.length() - 1)) || Character.isSpaceChar(text.charAt(text.length() - 1)));
-	}
-
-	private static int countLineBreaks(final String text) {
-		return (int) text.chars().filter(character -> character == '\n').count();
-	}
-
-	/**
-	 * Checks the language values of a property for formal deviations from the reference value
-	 * (default language, or else the first language with a value): different sentence end punctuation,
-	 * leading or trailing whitespace only in one language and line breaks in translations of single line texts.
-	 * Empty values are skipped, because a missing translation is no formal deviation.
-	 */
-	private static List<String> findFormalDeviations(final LanguageProperty languageProperty) {
-		final List<String> problems = new ArrayList<>();
-
-		final Map<String, String> values = getNonBlankValuesReferenceFirst(languageProperty);
-		if (values.size() < 2) {
-			return problems;
-		}
-
-		final Map.Entry<String, String> referenceEntry = values.entrySet().iterator().next();
-		final String referenceLanguageSign = referenceEntry.getKey();
-		final String referenceValue = referenceEntry.getValue();
-		final String referenceEndPunctuation = getEndPunctuation(referenceValue);
-		final int referenceLineBreaks = countLineBreaks(referenceValue);
-
-		for (final Map.Entry<String, String> entry : values.entrySet()) {
-			if (entry.getKey().equals(referenceLanguageSign)) {
-				continue;
-			}
-			final String fieldPrefix = LangResources.get("field_value", entry.getKey()) + ": ";
-			final String value = entry.getValue();
-
-			final String endPunctuation = getEndPunctuation(value);
-			if (referenceEndPunctuation != null && endPunctuation == null) {
-				problems.add(fieldPrefix + LangResources.get("error_formal_end_punctuation_missing", referenceLanguageSign, referenceEndPunctuation));
-			} else if (referenceEndPunctuation == null && ":".equals(endPunctuation)) {
-				// Only an additional colon is reported, other additional end punctuation is often a legitimate language specific choice
-				problems.add(fieldPrefix + LangResources.get("error_formal_end_punctuation_additional", referenceLanguageSign, endPunctuation));
-			} else if (referenceEndPunctuation != null && !referenceEndPunctuation.equals(endPunctuation)) {
-				problems.add(fieldPrefix + LangResources.get("error_formal_end_punctuation_different", referenceLanguageSign, endPunctuation, referenceEndPunctuation));
-			}
-
-			if (startsWithWhitespace(referenceValue) != startsWithWhitespace(value)) {
-				problems.add(fieldPrefix + LangResources.get("error_formal_leading_whitespace", referenceLanguageSign));
-			}
-			if (endsWithWhitespace(referenceValue) != endsWithWhitespace(value)) {
-				problems.add(fieldPrefix + LangResources.get("error_formal_trailing_whitespace", referenceLanguageSign));
-			}
-
-			final int lineBreaks = countLineBreaks(value);
-			// Only reported for single line references, because multi line texts are often wrapped differently per language
-			if (referenceLineBreaks == 0 && lineBreaks > 0) {
-				problems.add(fieldPrefix + LangResources.get("error_formal_line_breaks", referenceLanguageSign, String.valueOf(lineBreaks), String.valueOf(referenceLineBreaks)));
-			}
-		}
-
-		return problems;
-	}
-
-	/**
-	 * Result of the error check of a set of properties
-	 */
-	private static class ErrorReport {
-		private final int issueCount;
-		private final String reportText;
-
-		private ErrorReport(final int issueCount, final String reportText) {
-			this.issueCount = issueCount;
-			this.reportText = reportText;
-		}
 	}
 
 	private void checkErrors() {
 		try {
-			final ErrorReport errorReport = createErrorReport(languageProperties);
-			if (errorReport.issueCount == 0) {
+			final ErrorReport errorReport = LanguagePropertiesChecker.createErrorReport(model.getLanguageProperties());
+			if (errorReport.getIssueCount() == 0) {
 				showMessage(LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("noErrorsFound"));
 			} else {
-				showData(LangResources.get("checkErrorsReportTitle"), LangResources.get("checkErrorsFound", errorReport.issueCount) + "\n\n" + errorReport.reportText);
+				showData(LangResources.get("checkErrorsReportTitle"), LangResources.get("checkErrorsFound", errorReport.getIssueCount()) + "\n\n" + errorReport.getReportText());
 			}
 		} catch (final Exception ex) {
 			showError(ex);
 		}
 		checkButtonStatus();
-	}
-
-	/**
-	 * Read-only check of the given properties for encoding errors, invalid keys, inconsistent placeholders
-	 * and formal deviations from the reference language.
-	 * Used by the "check errors" button and after a merge import for the imported properties.
-	 */
-	private static ErrorReport createErrorReport(final Collection<LanguageProperty> propertiesToCheck) {
-		final StringBuilder reportText = new StringBuilder();
-		int issueCount = 0;
-
-		if (propertiesToCheck != null) {
-			for (final LanguageProperty languageProperty : propertiesToCheck) {
-				final List<String> entryProblems = new ArrayList<>();
-
-				final String key = languageProperty.getKey();
-				if (Utilities.isBlank(key)) {
-					entryProblems.add(LangResources.get("error_key_empty"));
-				} else {
-					for (final String textProblem : findTextErrors(key)) {
-						entryProblems.add(LangResources.get("field_key") + ": " + textProblem);
-					}
-					if (!key.equals(key.trim()) || key.contains(" ")) {
-						entryProblems.add(LangResources.get("field_key") + ": " + LangResources.get("error_key_whitespace"));
-					}
-					if (key.contains("=") || key.contains(":")) {
-						entryProblems.add(LangResources.get("field_key") + ": " + LangResources.get("error_key_illegal_char"));
-					}
-				}
-
-				for (final String textProblem : findTextErrors(languageProperty.getComment())) {
-					entryProblems.add(LangResources.get("field_comment") + ": " + textProblem);
-				}
-
-				for (final String languageSign : languageProperty.getAvailableLanguageSigns()) {
-					final String value = languageProperty.getLanguageValue(languageSign);
-					for (final String textProblem : findTextErrors(value)) {
-						entryProblems.add(LangResources.get("field_value", languageSign) + ": " + textProblem);
-					}
-				}
-
-				entryProblems.addAll(findPlaceholderErrors(languageProperty));
-				entryProblems.addAll(findFormalDeviations(languageProperty));
-
-				if (!entryProblems.isEmpty()) {
-					issueCount += entryProblems.size();
-					reportText.append("\"").append(languageProperty.getPath()).append("\" / \"").append(key).append("\":\n");
-					for (final String problem : entryProblems) {
-						reportText.append("  - ").append(problem).append("\n");
-					}
-				}
-			}
-		}
-
-		return new ErrorReport(issueCount, reportText.toString());
-	}
-
-	private void showStatistics() {
-		try {
-			final int totalProperties = languageProperties.size();
-
-			// Number of entries per properties path (i.e. per properties file / properties set)
-			final Map<String, Integer> countByPath = new LinkedHashMap<>();
-			for (final LanguageProperty languageProperty : languageProperties) {
-				countByPath.merge(languageProperty.getPath(), 1, Integer::sum);
-			}
-
-			// Duplicate groups (same path + key), without altering any data
-			final Map<String, Integer> countByPathAndKey = new LinkedHashMap<>();
-			for (final LanguageProperty languageProperty : languageProperties) {
-				final String groupKey = languageProperty.getPath() + "\u0000" + languageProperty.getKey();
-				countByPathAndKey.merge(groupKey, 1, Integer::sum);
-			}
-			int duplicateGroupCount = 0;
-			int duplicateEntryCount = 0;
-			for (final int count : countByPathAndKey.values()) {
-				if (count > 1) {
-					duplicateGroupCount++;
-					duplicateEntryCount += count - 1;
-				}
-			}
-
-			int propertiesWithCommentCount = 0;
-			for (final LanguageProperty languageProperty : languageProperties) {
-				if (Utilities.isNotEmpty(languageProperty.getComment())) {
-					propertiesWithCommentCount++;
-				}
-			}
-
-			// Per-language completeness and value length statistics
-			final Map<String, Integer> filledCountByLanguage = new LinkedHashMap<>();
-			final Map<String, Long> totalLengthByLanguage = new LinkedHashMap<>();
-			for (final String sign : availableLanguageSigns) {
-				filledCountByLanguage.put(sign, 0);
-				totalLengthByLanguage.put(sign, 0L);
-			}
-
-			String longestValuePath = null;
-			String longestValueKey = null;
-			String longestValueLanguage = null;
-			int longestValueLength = -1;
-
-			for (final LanguageProperty languageProperty : languageProperties) {
-				for (final String sign : availableLanguageSigns) {
-					final String value = languageProperty.getLanguageValue(sign);
-					if (Utilities.isNotEmpty(value)) {
-						filledCountByLanguage.merge(sign, 1, Integer::sum);
-						totalLengthByLanguage.merge(sign, (long) value.length(), Long::sum);
-						if (value.length() > longestValueLength) {
-							longestValueLength = value.length();
-							longestValuePath = languageProperty.getPath();
-							longestValueKey = languageProperty.getKey();
-							longestValueLanguage = sign;
-						}
-					}
-				}
-			}
-
-			final StringBuilder reportText = new StringBuilder();
-			reportText.append(LangResources.get("statistics_totalProperties", totalProperties)).append("\n");
-			reportText.append(LangResources.get("statistics_totalPropertySets", countByPath.size())).append("\n");
-			reportText.append(LangResources.get("statistics_totalLanguages", availableLanguageSigns.size(), Utilities.join(availableLanguageSigns, ", "))).append("\n");
-			reportText.append(LangResources.get("statistics_propertiesWithComment", propertiesWithCommentCount)).append("\n");
-			reportText.append(LangResources.get("statistics_duplicateGroups", duplicateGroupCount, duplicateEntryCount)).append("\n");
-
-			reportText.append("\n").append(LangResources.get("statistics_perSetHeader")).append("\n");
-			for (final Map.Entry<String, Integer> entry : countByPath.entrySet()) {
-				reportText.append("  \"").append(entry.getKey()).append("\": ").append(entry.getValue()).append("\n");
-			}
-
-			reportText.append("\n").append(LangResources.get("statistics_perLanguageHeader")).append("\n");
-			for (final String sign : availableLanguageSigns) {
-				final int filledCount = filledCountByLanguage.get(sign);
-				final int missingCount = totalProperties - filledCount;
-				final double filledPercent = totalProperties == 0 ? 0 : filledCount * 100.0 / totalProperties;
-				final double averageLength = filledCount == 0 ? 0 : (double) totalLengthByLanguage.get(sign) / filledCount;
-				reportText.append("  ").append(sign).append(": ").append(LangResources.get("statistics_languageLine",
-						filledCount, missingCount, String.format(Locale.US, "%.1f", filledPercent), String.format(Locale.US, "%.1f", averageLength))).append("\n");
-			}
-
-			if (longestValueLength >= 0) {
-				reportText.append("\n").append(LangResources.get("statistics_longestValue", longestValueLength, longestValueLanguage, longestValuePath, longestValueKey)).append("\n");
-			}
-
-			showData(LangResources.get("statisticsReportTitle"), reportText.toString());
-		} catch (final Exception ex) {
-			showError(ex);
-		}
 	}
 
 	private void openConfiguration() {
@@ -2329,7 +696,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				loadConfiguration();
 
 				// Show or hide the comment column according to the changed "ignore comments" option
-				if (languageProperties != null && commentColumnShown != isCommentColumnWanted()) {
+				if (model.isLoaded() && tablePanel.isCommentColumnShown() != isCommentColumnWanted()) {
 					setupTable();
 				}
 			}
@@ -2338,195 +705,19 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		}
 	}
 
-	private void checkUsageNew() {
-		try {
-			final File directory = chooseDirectory(getTitle() + " " + LangResources.get("directory_dialog_title"), null);
-			if (directory == null) {
-				showErrorMessage(LangResources.get("open_directory_dialog_text"), LangResources.get("canceledByUser"));
-			} else if (directory.exists() && directory.isDirectory()) {
-				final SimpleInputDialog filePatternDialog = new SimpleInputDialog(this, getTitle(), LangResources.get("enterfilepattern"));
-				filePatternDialog.setDefaultText(".*\\.java");
-				final String filePattern = filePatternDialog.open();
-				if (filePattern == null) {
-					showErrorMessage(LangResources.get("open_directory_dialog_text"), LangResources.get("canceledByUser"));
-				} else {
-					final SimpleInputDialog usagePatternDialog = new SimpleInputDialog(this, getTitle(), LangResources.get("enterusagepattern"));
-					usagePatternDialog.setDefaultText("LangResources.get(\"<property>\"");
-					final String usagePattern = usagePatternDialog.open();
-					if (usagePattern != null) {
-						moveToEnd(recentlyCheckUsages, CsvWriter.getCsvLine(createCheckUsageCsvFormat(), directory.getAbsolutePath(), filePattern, usagePattern));
-						applicationConfiguration.set(LanguagePropertiesManager.CONFIG_PREVIOUS_CHECK_USAGE, recentlyCheckUsages);
-						checkUsage(languageProperties, directory.getAbsolutePath(), filePattern, usagePattern);
-						checkButtonStatus();
-					}
-				}
-			}
-		} catch (final Exception ex) {
-			showError(ex);
-		}
-	}
-
-	/**
-	 * CSV format of a single recent check usage setting (directory, file pattern, usage pattern).
-	 * Plain RFC 4180 csv: backslashes in paths and regular expressions are stored as they are.
-	 */
-	private static CsvFormat createCheckUsageCsvFormat() {
-		return new CsvFormat()
-				.withSeparator(';')
-				.withStringQuote('"')
-				.withEscapeLineBreaks(false);
-	}
-
-	/**
-	 * Parses a recent check usage setting (directory, file pattern, usage pattern).
-	 * Settings of older versions were stored with backslash escaping. Such a setting is only
-	 * accepted as legacy setting, if it is readable with backslash escaping and its directory exists.
-	 * A plain setting with Windows paths is practically never readable with backslash escaping
-	 * (e.g. "\U" in "C:\Users" is no valid escape sequence).
-	 */
-	private static List<String> parseCheckUsageSetting(final String setting) throws Exception {
-		try {
-			final List<String> legacySettings = CsvReader.parseCsvLine(createCheckUsageCsvFormat().withEscapeLineBreaks(true), setting);
-			if (legacySettings.size() == 3 && new File(legacySettings.get(0)).isDirectory()) {
-				return legacySettings;
-			}
-		} catch (@SuppressWarnings("unused") final Exception e) {
-			// Not a legacy setting
-		}
-
-		final List<String> settings = CsvReader.parseCsvLine(createCheckUsageCsvFormat(), setting);
-		if (settings.size() != 3) {
-			throw new Exception("Invalid recent check usage setting: " + setting);
-		}
-		return settings;
-	}
-
-	private void checkUsagePrevious() {
-		try {
-			final ComboSelectionDialog dialog = new ComboSelectionDialog(this, getTitle() + " " + LangResources.get("recentsettingsdialogtitle"), LangResources.get("recent_settings_dialog_text"), recentlyCheckUsages, getLastEntryIndex(recentlyCheckUsages));
-			final String setting = dialog.open();
-
-			// Take over a possible reordering (drag&drop) or deletion of the recent
-			// settings done in the dialog, regardless of whether an entry was selected
-			// or the dialog was canceled
-			recentlyCheckUsages.clear();
-			recentlyCheckUsages.addAll(dialog.getItems());
-			applicationConfiguration.set(LanguagePropertiesManager.CONFIG_PREVIOUS_CHECK_USAGE, recentlyCheckUsages);
-
-			if (setting != null) {
-				moveToEnd(recentlyCheckUsages, setting); // put selected as latest used
-				applicationConfiguration.set(LanguagePropertiesManager.CONFIG_PREVIOUS_CHECK_USAGE, recentlyCheckUsages);
-				final List<String> settings = parseCheckUsageSetting(setting);
-				final String directory = settings.get(0);
-				final String filePattern = settings.get(1);
-				final String usagePattern = settings.get(2);
-				checkUsage(languageProperties, directory, filePattern, usagePattern);
-			}
-			checkButtonStatus();
-		} catch (final Exception ex) {
-			showError(ex);
-		}
-	}
-
-	private class DetailModifyListener implements DocumentListener {
-		@Override
-		public void insertUpdate(final DocumentEvent event) {
-			changed();
-		}
-
-		@Override
-		public void removeUpdate(final DocumentEvent event) {
-			changed();
-		}
-
-		@Override
-		public void changedUpdate(final DocumentEvent event) {
-			// Attribute changes only, no text change
-		}
-
-		private void changed() {
-			if (!technicalDataChange) {
-				dataWasModified = true;
-			}
-			checkButtonStatus();
-		}
-	}
-
-	private void refreshDetailView() {
-		final boolean previousTechnicalDataChange = technicalDataChange;
-		technicalDataChange = true;
-		try {
-			final LanguageProperty property = currentSelectedProperties.isEmpty() ? null : currentSelectedProperties.get(0);
-			if (property != null) {
-				pathTextfield.setText(property.getPath());
-				keyTextfield.setText(showStorageTexts ? PropertiesWriter.escapeKey(property.getKey()) : property.getKey());
-				commentTextfield.setText(Utilities.isNotEmpty(property.getComment()) ? property.getComment() : "");
-				for (final Map.Entry<String, JTextArea> languageTextField : languageTextFields.entrySet()) {
-					final String value = property.getLanguageValue(languageTextField.getKey());
-					if (value == null) {
-						languageTextField.getValue().setText("");
-					} else if (showStorageTexts) {
-						languageTextField.getValue().setText(PropertiesWriter.escapeValue(value));
-					} else {
-						languageTextField.getValue().setText(value);
-					}
-					// Set after the text, because entering text resets this state
-					if ("".equals(value)) {
-						explicitlyEmptyLanguageSigns.add(languageTextField.getKey());
-					} else {
-						explicitlyEmptyLanguageSigns.remove(languageTextField.getKey());
-					}
-					updateLanguageLabel(languageTextField.getKey());
-				}
-
-				detailShowsExistingProperty = true;
-				okButton.setText(LangResources.get("button_text_change"));
-				removeButton.setEnabled(true);
-			} else {
-				pathTextfield.setText("");
-				keyTextfield.setText("");
-				commentTextfield.setText("");
-				for (final JTextArea languageTextfield : languageTextFields.values()) {
-					languageTextfield.setText("");
-				}
-				explicitlyEmptyLanguageSigns.clear();
-				for (final String languageSign : languageLabels.keySet()) {
-					updateLanguageLabel(languageSign);
-				}
-
-				detailShowsExistingProperty = false;
-				okButton.setText(LangResources.get("button_text_add"));
-				removeButton.setEnabled(false);
-			}
-
-			dataWasModified = false;
-			checkButtonStatus();
-		} catch (final Exception e) {
-			showError(e);
-		} finally {
-			technicalDataChange = previousTechnicalDataChange;
-		}
-	}
-
 	public void checkButtonStatus() {
-		final int rowCount = propertiesTableModel == null ? 0 : propertiesTableModel.getRowCount();
-		final boolean hasProperties = languageProperties != null && languageProperties.size() > 0;
-		final boolean hasMultipleLanguages = hasProperties && availableLanguageSigns != null && availableLanguageSigns.size() > 1;
+		final int rowCount = tablePanel == null ? 0 : tablePanel.getRowCount();
+		final boolean hasProperties = model.hasProperties();
+		final boolean hasMultipleLanguages = hasProperties && model.hasMultipleLanguages();
 
-		if (okButton != null) {
-			okButton.setEnabled(dataWasModified);
-		}
-		if (cancelButton != null) {
-			cancelButton.setEnabled(dataWasModified);
-		}
 		if (saveButton != null) {
-			saveButton.setEnabled(hasUnsavedChanges);
+			saveButton.setEnabled(model.hasUnsavedChanges());
 		}
 		if (exportToExcelButton != null) {
-			exportToExcelButton.setEnabled(languageProperties != null);
+			exportToExcelButton.setEnabled(model.isLoaded());
 		}
 		if (exportToCsvButton != null) {
-			exportToCsvButton.setEnabled(languageProperties != null);
+			exportToCsvButton.setEnabled(model.isLoaded());
 		}
 		if (addButton != null) {
 			addButton.setEnabled(rowCount > 0);
@@ -2534,20 +725,17 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		if (loadRecentButton != null) {
 			loadRecentButton.setEnabled(recentlyOpenedDirectories != null && recentlyOpenedDirectories.size() > 0);
 		}
-		if (propertiesTable != null) {
-			propertiesTable.setEnabled(rowCount > 0);
+		if (tablePanel != null) {
+			tablePanel.setInteractionEnabled(rowCount > 0);
 		}
-		for (final JComponent searchComponent : searchComponents) {
-			searchComponent.setEnabled(rowCount > 0);
+		if (removeButton != null) {
+			removeButton.setEnabled(model.getFirstSelectedProperty() != null);
 		}
 		if (checkUsageButton != null) {
 			checkUsageButton.setEnabled(hasProperties);
 		}
 		if (checkUsageButtonPrevious != null) {
-			checkUsageButtonPrevious.setEnabled(hasProperties && recentlyCheckUsages != null && recentlyCheckUsages.size() > 0);
-		}
-		if (textConversionButton != null) {
-			textConversionButton.setEnabled(true);
+			checkUsageButtonPrevious.setEnabled(hasProperties && statisticsAndUsage.hasRecentCheckUsages());
 		}
 		if (addLanguageButton != null) {
 			addLanguageButton.setEnabled(hasProperties);
@@ -2596,174 +784,13 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	 * changes.
 	 */
 	public void closeApplication() {
-		if (!hasUnsavedChanges || askForDiscardChanges()) {
+		if (!model.hasUnsavedChanges() || askForDiscardChanges()) {
 			applicationConfiguration.set(LanguagePropertiesManager.CONFIG_RECENT_PROPERTIES, recentlyOpenedDirectories);
-			applicationConfiguration.set(LanguagePropertiesManager.CONFIG_PREVIOUS_CHECK_USAGE, recentlyCheckUsages);
+			applicationConfiguration.set(LanguagePropertiesManager.CONFIG_PREVIOUS_CHECK_USAGE, statisticsAndUsage.getRecentCheckUsages());
 			applicationConfiguration.save();
-			hasUnsavedChanges = false;
+			model.setUnsavedChanges(false);
 			dispose();
 		}
-	}
-
-	/**
-	 * Converts the key field's current content back to its plain (unescaped) form.
-	 * When showStorageTexts is active the fields display the escaped storage representation
-	 * (see changeDisplayMode), so it needs to be unescaped before it is written back into the model.
-	 * PropertiesReader is used, so the result is the same as after writing and reloading the file.
-	 */
-	private String getPlainKey(final String fieldText) throws Exception {
-		return showStorageTexts ? PropertiesReader.unescapeKey(fieldText) : fieldText;
-	}
-
-	/**
-	 * Converts a language value field's current content back to its plain (unescaped) form.
-	 * See getPlainKey().
-	 */
-	private String getPlainValue(final String fieldText) throws Exception {
-		return showStorageTexts ? PropertiesReader.unescapeValue(fieldText) : fieldText;
-	}
-
-	/**
-	 * Creates the input component for a language value or the comment.
-	 * A JTextField can not be used here, because its document silently replaces
-	 * line breaks by blanks ("filterNewlines"), so values like "a\nb" would lose
-	 * their line break in the plain text display mode and on writing back.
-	 * The text area grows in height with the number of lines, but is styled and
-	 * behaves (font, border, Tab focus traversal) like a single line text field.
-	 */
-	/**
-	 * Value of a language field of the detail view for storing. An empty field is
-	 * a missing value (null), unless it was marked as explicitly empty ("").
-	 */
-	private String getDetailLanguageValue(final String languageSign, final JTextArea languageTextfield) throws Exception {
-		final String value = LanguageProperty.toStorageValue(languageSign, getPlainValue(languageTextfield.getText()));
-		if (value == null && explicitlyEmptyLanguageSigns.contains(languageSign)) {
-			return "";
-		} else {
-			return value;
-		}
-	}
-
-	/**
-	 * Context menu of a language field in the detail view to choose between an
-	 * explicitly empty value and a missing value. The change is applied with the
-	 * OK button like any other change of the detail view.
-	 */
-	private JPopupMenu createLanguageFieldContextMenu(final String languageSign, final JTextArea languageTextfield) {
-		final JPopupMenu contextMenu = new JPopupMenu();
-
-		final JMenuItem setValueEmptyItem = new JMenuItem(LangResources.get("contextmenu_setValueEmpty"));
-		setValueEmptyItem.addActionListener(e -> setDetailLanguageFieldEmpty(languageSign, languageTextfield, true));
-		contextMenu.add(setValueEmptyItem);
-
-		final JMenuItem setValueMissingItem = new JMenuItem(LangResources.get("contextmenu_setValueMissing"));
-		setValueMissingItem.addActionListener(e -> setDetailLanguageFieldEmpty(languageSign, languageTextfield, false));
-		contextMenu.add(setValueMissingItem);
-
-		return contextMenu;
-	}
-
-	private void setDetailLanguageFieldEmpty(final String languageSign, final JTextArea languageTextfield, final boolean explicitlyEmpty) {
-		final boolean wasExplicitlyEmpty = explicitlyEmptyLanguageSigns.contains(languageSign);
-		final boolean hadText = !languageTextfield.getText().isEmpty();
-
-		// Clearing the text first, because entering or removing text changes the state of the field
-		languageTextfield.setText("");
-		if (explicitlyEmpty) {
-			explicitlyEmptyLanguageSigns.add(languageSign);
-		} else {
-			explicitlyEmptyLanguageSigns.remove(languageSign);
-		}
-		updateLanguageLabel(languageSign);
-
-		if (hadText || wasExplicitlyEmpty != explicitlyEmpty) {
-			dataWasModified = true;
-		}
-		checkButtonStatus();
-	}
-
-	/**
-	 * Shows the state of an empty language field in its label: the same signs as
-	 * in the table for a missing value and for an explicitly empty value
-	 */
-	private void updateLanguageLabel(final String languageSign) {
-		final JLabel languageLabel = languageLabels.get(languageSign);
-		final JTextArea languageTextfield = languageTextFields.get(languageSign);
-		if (languageLabel == null) {
-			return;
-		}
-
-		final String labelText = LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT.equals(languageSign) ? LangResources.get("columnheader_default") : languageSign;
-		if (languageTextfield == null || !languageTextfield.getText().isEmpty() || languageProperties == null) {
-			languageLabel.setText(labelText + ":");
-			languageLabel.setToolTipText(null);
-		} else if (explicitlyEmptyLanguageSigns.contains(languageSign)) {
-			languageLabel.setText(labelText + " " + LangResources.get("value_empty_sign") + ":");
-			languageLabel.setToolTipText(null);
-		} else {
-			languageLabel.setText(labelText + " " + LangResources.get("value_not_found_sign") + ":");
-			languageLabel.setToolTipText(LangResources.get("value_not_found_tooltip"));
-		}
-	}
-
-	private static JTextArea createMultiLineTextArea() {
-		final JTextArea textArea = new JTextArea();
-		// No line wrap: only real line breaks create new lines, like in the stored value
-		textArea.setLineWrap(false);
-		final Font textFieldFont = UIManager.getFont("TextField.font");
-		if (textFieldFont != null) {
-			textArea.setFont(textFieldFont);
-		}
-		final javax.swing.border.Border textFieldBorder = UIManager.getBorder("TextField.border");
-		if (textFieldBorder != null) {
-			textArea.setBorder(textFieldBorder);
-		} else {
-			textArea.setBorder(BorderFactory.createEtchedBorder());
-		}
-		// Let Tab / Shift+Tab move the focus instead of inserting a tab character
-		textArea.setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, null);
-		textArea.setFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, null);
-		return textArea;
-	}
-
-	/**
-	 * Switches the detail fields between the plain display texts and their storage representation
-	 * (escaped like in the .properties file).
-	 * All conversions are done before any field is changed, so an invalid escape sequence entered in the
-	 * storage view leaves all fields unchanged.
-	 *
-	 * @return true if the display mode was changed, false if a field content could not be converted
-	 */
-	private boolean changeDisplayMode(final boolean changeToShowStorageTexts) {
-		final String convertedKey;
-		final Map<JTextArea, String> convertedValues = new LinkedHashMap<>();
-		try {
-			if (changeToShowStorageTexts) {
-				convertedKey = PropertiesWriter.escapeKey(keyTextfield.getText());
-				for (final JTextArea field : languageTextFields.values()) {
-					convertedValues.put(field, PropertiesWriter.escapeValue(field.getText()));
-				}
-			} else {
-				convertedKey = PropertiesReader.unescapeKey(keyTextfield.getText());
-				for (final JTextArea field : languageTextFields.values()) {
-					convertedValues.put(field, PropertiesReader.unescapeValue(field.getText()));
-				}
-			}
-		} catch (final Exception e) {
-			showErrorMessage(LanguagePropertiesManager.APPLICATION_NAME, e.getMessage());
-			return false;
-		}
-
-		technicalDataChange = true;
-		try {
-			keyTextfield.setText(convertedKey);
-			for (final Map.Entry<JTextArea, String> convertedValue : convertedValues.entrySet()) {
-				convertedValue.getKey().setText(convertedValue.getValue());
-			}
-		} finally {
-			technicalDataChange = false;
-		}
-		return true;
 	}
 
 	/**
@@ -2771,31 +798,29 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	 * errors and refreshes the table.
 	 */
 	private void afterLoad() {
-		hasUnsavedChanges = false;
-		currentSelectedProperties = new ArrayList<>();
+		model.setUnsavedChanges(false);
+		model.clearCurrentSelection();
 		setupTable();
 		refreshDetailView();
 		checkButtonStatus();
 	}
 
 	private void resetLoadedData() {
-		languageProperties = null;
-		availableLanguageSigns = null;
-		setLanguagePropertiesSetName(null);
+		model.reset();
 	}
 
 	private void openFiles() {
-		if (hasUnsavedChanges && !askForDiscardChanges()) {
+		if (model.hasUnsavedChanges() && !askForDiscardChanges()) {
 			return;
 		}
 
 		try {
-			final File file = chooseFileToOpen(getTitle() + " " + LangResources.get("open_file_dialog_text"), null);
+			final File file = DialogUtilities.chooseFileToOpen(this, getTitle() + " " + LangResources.get("open_file_dialog_text"), null);
 			if (file == null) {
 				showErrorMessage(LangResources.get("open_file_dialog_text"), LangResources.get("canceledByUser"));
 			} else if (file.exists() && file.isFile()) {
 				if (loadSingleLanguagePropertiesSet(file.getAbsolutePath())) {
-					moveToEnd(recentlyOpenedDirectories, file.getAbsolutePath()); // put selected as latest used
+					DialogUtilities.moveToEnd(recentlyOpenedDirectories, file.getAbsolutePath()); // put selected as latest used
 					applicationConfiguration.set(LanguagePropertiesManager.CONFIG_RECENT_PROPERTIES, recentlyOpenedDirectories);
 				}
 			} else {
@@ -2809,59 +834,34 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	}
 
 	private boolean loadSingleLanguagePropertiesSet(final String filePath) throws ExecutionException {
-		if (!hasLanguagePropertiesFileExtension(filePath)) {
+		if (!importSourceChooser.hasLanguagePropertiesFileExtension(filePath)) {
 			showErrorMessage(LangResources.get("open_file_dialog_text"), LangResources.get("missingMandatoryFileExtension", applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION)));
 			return false;
 		}
 
-		final LoadedLanguageProperties loadedLanguageProperties = readSingleLanguagePropertiesSet(filePath);
+		final LoadedLanguageProperties loadedLanguageProperties = importSourceChooser.readSingleLanguagePropertiesSet(filePath);
 		if (loadedLanguageProperties == null) {
 			showErrorMessage(LangResources.get("open_file_dialog_text"), LangResources.get("canceledByUser"));
 			return false;
 		} else {
 			takeOverLoadedLanguageProperties(loadedLanguageProperties);
-			showMessage(LangResources.get("directory_dialog_title"), LangResources.get("openFilesResult", filePath, languageProperties.size(), Utilities.join(availableLanguageSigns, ", ")));
+			showMessage(LangResources.get("directory_dialog_title"), LangResources.get("openFilesResult", filePath, model.getLanguageProperties().size(), Utilities.join(model.getAvailableLanguageSigns(), ", ")));
 			return true;
 		}
 	}
 
-	private boolean hasLanguagePropertiesFileExtension(final String filePath) {
-		return new File(filePath).getName().endsWith(applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION));
-	}
-
-	/**
-	 * Reads a single language properties set without changing the currently loaded data.
-	 *
-	 * @return the read properties or null if canceled by the user
-	 */
-	private LoadedLanguageProperties readSingleLanguagePropertiesSet(final String filePath) throws ExecutionException {
-		final LoadLanguagePropertiesWorker openFilesLanguagePropertiesWorker = new LoadLanguagePropertiesWorker(null, new File(filePath), null, applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION));
-		openFilesLanguagePropertiesWorker.setReadComments(!applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS));
-		final ProgressDialog<LoadLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(this, LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("openFilesResult"), openFilesLanguagePropertiesWorker);
-		final Result dialogResult = progressDialog.open();
-		if (dialogResult == Result.CANCELED) {
-			return null;
-		} else {
-			// check for errors
-			openFilesLanguagePropertiesWorker.get();
-			showDuplicateKeysWarning(openFilesLanguagePropertiesWorker.getDuplicateKeysByFile());
-
-			return LoadedLanguageProperties.ofPropertiesSets(openFilesLanguagePropertiesWorker.getLanguageProperties(), openFilesLanguagePropertiesWorker.getLanguagePropertiesSetNames(), filePath);
-		}
-	}
-
 	private void openFolder() {
-		if (hasUnsavedChanges && !askForDiscardChanges()) {
+		if (model.hasUnsavedChanges() && !askForDiscardChanges()) {
 			return;
 		}
 
 		try {
-			final File basicDirectory = chooseDirectory(LangResources.get("open_directory_dialog_text"), null);
+			final File basicDirectory = DialogUtilities.chooseDirectory(this, LangResources.get("open_directory_dialog_text"), null);
 			if (basicDirectory == null) {
 				showErrorMessage(LangResources.get("open_directory_dialog_text"), LangResources.get("canceledByUser"));
 			} else if (basicDirectory.exists()) {
 				if (openAllLanguagePropertiesSets(basicDirectory.getAbsolutePath())) {
-					moveToEnd(recentlyOpenedDirectories, basicDirectory.getAbsolutePath()); // put selected as latest used
+					DialogUtilities.moveToEnd(recentlyOpenedDirectories, basicDirectory.getAbsolutePath()); // put selected as latest used
 					applicationConfiguration.set(LanguagePropertiesManager.CONFIG_RECENT_PROPERTIES, recentlyOpenedDirectories);
 				}
 			}
@@ -2873,73 +873,28 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	}
 
 	private boolean openAllLanguagePropertiesSets(final String basicDirectoryPath) throws ExecutionException {
-		final LoadedLanguageProperties loadedLanguageProperties = readAllLanguagePropertiesSets(basicDirectoryPath);
+		final LoadedLanguageProperties loadedLanguageProperties = importSourceChooser.readAllLanguagePropertiesSets(basicDirectoryPath);
 		if (loadedLanguageProperties == null) {
 			showErrorMessage(LangResources.get("open_directory_dialog_text"), LangResources.get("canceledByUser"));
 			return false;
 		} else {
 			takeOverLoadedLanguageProperties(loadedLanguageProperties);
-			showMessage(LangResources.get("directory_dialog_title"), LangResources.get("openDirectoryResult", basicDirectoryPath, loadedLanguageProperties.languagePropertiesSetNames.size(), languageProperties.size(), Utilities.join(availableLanguageSigns, ", ")));
+			showMessage(LangResources.get("directory_dialog_title"), LangResources.get("openDirectoryResult", basicDirectoryPath, loadedLanguageProperties.getLanguagePropertiesSetNames().size(), model.getLanguageProperties().size(), Utilities.join(model.getAvailableLanguageSigns(), ", ")));
 			return true;
 		}
-	}
-
-	/**
-	 * Reads all language properties sets of a directory without changing the currently loaded data.
-	 *
-	 * @return the read properties or null if canceled by the user
-	 */
-	private LoadedLanguageProperties readAllLanguagePropertiesSets(final String basicDirectoryPath) throws ExecutionException {
-		final String[] excludeParts = applicationConfiguration.get(LanguagePropertiesManager.CONFIG_OPEN_DIR_EXCLUDES).split(";");
-		final LoadLanguagePropertiesWorker openFolderLanguagePropertiesWorker = new LoadLanguagePropertiesWorker(null, new File(basicDirectoryPath), excludeParts, applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION));
-		openFolderLanguagePropertiesWorker.setReadComments(!applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS));
-		final ProgressDialog<LoadLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(this, LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("load_folder"), openFolderLanguagePropertiesWorker);
-		final Result dialogResult = progressDialog.open();
-		if (dialogResult == Result.CANCELED) {
-			return null;
-		} else {
-			// check for errors
-			openFolderLanguagePropertiesWorker.get();
-			showDuplicateKeysWarning(openFolderLanguagePropertiesWorker.getDuplicateKeysByFile());
-
-			return LoadedLanguageProperties.ofPropertiesSets(openFolderLanguagePropertiesWorker.getLanguageProperties(), openFolderLanguagePropertiesWorker.getLanguagePropertiesSetNames(), basicDirectoryPath);
-		}
-	}
-
-	/**
-	 * Informs the user about keys that occur more than once within a single properties file.
-	 * Only the first value of such a key was read, the later ones would be lost on the next save.
-	 */
-	private void showDuplicateKeysWarning(final Map<String, Set<String>> duplicateKeysByFile) {
-		if (duplicateKeysByFile == null || duplicateKeysByFile.isEmpty()) {
-			return;
-		}
-
-		int duplicateKeyCount = 0;
-		final StringBuilder reportText = new StringBuilder();
-		for (final Map.Entry<String, Set<String>> entry : duplicateKeysByFile.entrySet()) {
-			duplicateKeyCount += entry.getValue().size();
-			reportText.append(entry.getKey()).append("\n");
-			for (final String duplicateKey : entry.getValue()) {
-				reportText.append("    ").append(duplicateKey).append("\n");
-			}
-			reportText.append("\n");
-		}
-
-		showData(LangResources.get("duplicateKeysInFiles_title"), LangResources.get("duplicateKeysInFiles", duplicateKeysByFile.size(), duplicateKeyCount) + "\n\n" + reportText.toString().trim());
 	}
 
 	/**
 	 * Replaces the currently loaded data by the given loaded data.
 	 */
 	private void takeOverLoadedLanguageProperties(final LoadedLanguageProperties loadedLanguageProperties) {
-		languageProperties = loadedLanguageProperties.languageProperties;
-		availableLanguageSigns = loadedLanguageProperties.availableLanguageSigns;
-		setLanguagePropertiesSetName(loadedLanguageProperties.getCombinedSetName());
+		model.load(loadedLanguageProperties);
 	}
 
-	private void setLanguagePropertiesSetName(final String newLanguagePropertySetName) {
-		languagePropertySetName = newLanguagePropertySetName;
+	/**
+	 * Shows the name of the loaded properties set above the table (listener of the model)
+	 */
+	private void updatePropertiesLabel(final String newLanguagePropertySetName) {
 		if (Utilities.isNotEmpty(newLanguagePropertySetName)) {
 			propertiesLabel.setText(LangResources.get("table_title") + " \"" + newLanguagePropertySetName + "\"");
 		} else {
@@ -2948,39 +903,13 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		propertiesLabel.revalidate();
 	}
 
-	/**
-	 * Index of the last entry of a recent list. The latest used entry is always
-	 * moved to the end (see moveToEnd()), so this entry is preselected in the
-	 * ComboSelectionDialog.
-	 *
-	 * @return index of the last entry, or -1 if the list is empty
-	 */
-	private static int getLastEntryIndex(final UniqueFifoQueuedList<String> recentEntries) {
-		return recentEntries == null ? -1 : recentEntries.size() - 1;
-	}
-
-	/**
-	 * Moves an entry of a recent list to its end (or appends it, if it is new),
-	 * so it counts as latest used and is preselected next time.
-	 * The list is rebuilt explicitly, because adding an already contained entry
-	 * to the unique list does not necessarily change its position. If the list
-	 * is full, a new entry pushes out the first (oldest) entry.
-	 */
-	private static void moveToEnd(final UniqueFifoQueuedList<String> recentEntries, final String entry) {
-		final List<String> entries = new ArrayList<>(recentEntries);
-		entries.remove(entry);
-		entries.add(entry);
-		recentEntries.clear();
-		recentEntries.addAll(entries);
-	}
-
 	private void openRecent() {
-		if (hasUnsavedChanges && !askForDiscardChanges()) {
+		if (model.hasUnsavedChanges() && !askForDiscardChanges()) {
 			return;
 		}
 
 		try {
-			final ComboSelectionDialog dialog = new ComboSelectionDialog(this, getTitle() + " " + LangResources.get("recent_directories_dialog_title"), LangResources.get("recent_directories_dialog_text"), recentlyOpenedDirectories, getLastEntryIndex(recentlyOpenedDirectories)).withSize(600, -1);
+			final ComboSelectionDialog dialog = new ComboSelectionDialog(this, getTitle() + " " + LangResources.get("recent_directories_dialog_title"), LangResources.get("recent_directories_dialog_text"), recentlyOpenedDirectories, DialogUtilities.getLastEntryIndex(recentlyOpenedDirectories)).withSize(600, -1);
 			final String filePath = dialog.open();
 
 			// Take over a possible reordering (drag&drop) or deletion of the recent directories done in the dialog,
@@ -3001,7 +930,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					loaded = loadSingleLanguagePropertiesSet(filePath);
 				}
 				if (loaded) {
-					moveToEnd(recentlyOpenedDirectories, filePath); // put selected as latest used
+					DialogUtilities.moveToEnd(recentlyOpenedDirectories, filePath); // put selected as latest used
 					applicationConfiguration.set(LanguagePropertiesManager.CONFIG_RECENT_PROPERTIES, recentlyOpenedDirectories);
 				}
 			}
@@ -3015,14 +944,14 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private void saveFiles() {
 		try {
 			String defaultLanguagePropertiesPath = null;
-			final Set<String> languagePropertiesPaths = languageProperties.stream().map(o -> o.getPath()).collect(Collectors.toSet());
+			final Set<String> languagePropertiesPaths = model.getLanguageProperties().stream().map(o -> o.getPath()).collect(Collectors.toSet());
 			if (languagePropertiesPaths.contains("")) {
 				if (languagePropertiesPaths.size() == 2) {
 					languagePropertiesPaths.remove("");
 					defaultLanguagePropertiesPath = Utilities.replaceUsersHome(new ArrayList<>(languagePropertiesPaths).get(0));
 				} else {
 					final String propertiesFileExtension = applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION);
-					final File file = chooseFileToSave(getTitle() + " " + LangResources.get("save_file_dialog_text"), recentlyOpenedDirectories.getLatestAdded(), "MyLanguageProperties" + propertiesFileExtension);
+					final File file = DialogUtilities.chooseFileToSave(this, getTitle() + " " + LangResources.get("save_file_dialog_text"), recentlyOpenedDirectories.getLatestAdded(), "MyLanguageProperties" + propertiesFileExtension);
 					if (file == null) {
 						showErrorMessage(LangResources.get("save_file_dialog_text"), LangResources.get("canceledByUser"));
 						return;
@@ -3034,7 +963,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 				// Assign the determined path to all properties that don't have one yet,
 				// so the worker can treat every property by its own (now always non-blank) path.
-				for (final LanguageProperty languageProperty : languageProperties) {
+				for (final LanguageProperty languageProperty : model.getLanguageProperties()) {
 					if (Utilities.isBlank(languageProperty.getPath())) {
 						languageProperty.setPath(defaultLanguagePropertiesPath);
 					}
@@ -3042,7 +971,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			}
 
 			// Offer to create missing target directories instead of letting the save fail
-			if (!ensureDirectoriesExist(languageProperties.stream().map(LanguageProperty::getPath).collect(Collectors.toSet()), null)) {
+			if (!ensureDirectoriesExist(model.getLanguageProperties().stream().map(LanguageProperty::getPath).collect(Collectors.toSet()), null)) {
 				showErrorMessage(LangResources.get("save_file_dialog_text"), LangResources.get("canceledByUser"));
 				return;
 			}
@@ -3050,7 +979,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			final Integer returncode = new QuestionDialog(this, getTitle(), LangResources.get("question.keepExistingProperties"), LangResources.get("yes"), LangResources.get("no")).open();
 			final boolean extendAndKeepExistingProperties = returncode != null && returncode == 0;
 
-			final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(null, languageProperties, languagePropertySetName, null, null, extendAndKeepExistingProperties, applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION));
+			final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(null, model.getLanguageProperties(), model.getLanguagePropertiesSetName(), null, null, extendAndKeepExistingProperties, applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION));
 			writeLanguagePropertiesWorker.setReadComments(!applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS));
 			final ProgressDialog<WriteLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(this, LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("save_files"), writeLanguagePropertiesWorker);
 			final Result dialogResult = progressDialog.open();
@@ -3063,7 +992,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				showMessage(LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("saveSuccess"));
 			}
 
-			hasUnsavedChanges = false;
+			model.setUnsavedChanges(false);
 			setupTable();
 			checkButtonStatus();
 		} catch (final Exception e) {
@@ -3077,12 +1006,12 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 			// A directory selection is only needed to place properties that don't have a path of their own yet.
 			// If every property already has a path, it can be saved directly to those paths without asking.
-			final boolean hasPropertiesWithoutPath = languageProperties.stream().anyMatch(o -> Utilities.isBlank(o.getPath()));
+			final boolean hasPropertiesWithoutPath = model.getLanguageProperties().stream().anyMatch(o -> Utilities.isBlank(o.getPath()));
 
 			File directory = null;
 			String newPropertiesSetName = "Multiple";
 			if (hasPropertiesWithoutPath) {
-				directory = chooseDirectory(LangResources.get("save_directory_dialog_text"), null);
+				directory = DialogUtilities.chooseDirectory(this, LangResources.get("save_directory_dialog_text"), null);
 				if (directory == null) {
 					showErrorMessage(LangResources.get("save_directory_dialog_text"), LangResources.get("canceledByUser"));
 					return;
@@ -3099,7 +1028,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					return;
 				}
 				newPropertiesSetName = enteredName;
-			} else if (!ensureDirectoriesExist(languageProperties.stream().map(LanguageProperty::getPath).collect(Collectors.toSet()), null)) {
+			} else if (!ensureDirectoriesExist(model.getLanguageProperties().stream().map(LanguageProperty::getPath).collect(Collectors.toSet()), null)) {
 				// All properties are saved to their own paths, so their directories must exist
 				showErrorMessage(LangResources.get("save_directory_dialog_text"), LangResources.get("canceledByUser"));
 				return;
@@ -3108,7 +1037,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			final Integer returncode = new QuestionDialog(this, getTitle(), LangResources.get("question.keepExistingProperties"), LangResources.get("yes"), LangResources.get("no")).open();
 			final boolean extendAndKeepExistingProperties = returncode != null && returncode == 0;
 
-			final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(null, languageProperties, newPropertiesSetName, directory, excludeParts, extendAndKeepExistingProperties, applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION));
+			final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(null, model.getLanguageProperties(), newPropertiesSetName, directory, excludeParts, extendAndKeepExistingProperties, applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION));
 			writeLanguagePropertiesWorker.setReadComments(!applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS));
 			final ProgressDialog<WriteLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(this, LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("save_files"), writeLanguagePropertiesWorker);
 			final Result dialogResult = progressDialog.open();
@@ -3121,7 +1050,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				showData(LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("saveDirectoryResult", Utilities.join(writeLanguagePropertiesWorker.getListOfStoredProperties(), "\n")));
 			}
 
-			hasUnsavedChanges = false;
+			model.setUnsavedChanges(false);
 			setupTable();
 			checkButtonStatus();
 		} catch (final Exception e) {
@@ -3174,7 +1103,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 	private void importFromExcel() {
 		importFromFile(new String[] { "xlsx" }, file -> {
-			final LoadedLanguageProperties loadedLanguageProperties = readFromExcel(file);
+			final LoadedLanguageProperties loadedLanguageProperties = importSourceChooser.readFromExcel(file);
 			if (loadedLanguageProperties == null) {
 				return false;
 			}
@@ -3185,49 +1114,13 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 	private void importFromCsv() {
 		importFromFile(new String[] { "csv", "dsv" }, file -> {
-			final LoadedLanguageProperties loadedLanguageProperties = readFromCsv(file);
+			final LoadedLanguageProperties loadedLanguageProperties = importSourceChooser.readFromCsv(file);
 			if (loadedLanguageProperties == null) {
 				return false;
 			}
 			takeOverLoadedLanguageProperties(loadedLanguageProperties);
 			return true;
 		});
-	}
-
-	/**
-	 * Reads an Excel file without changing the currently loaded data.
-	 *
-	 * @return the read properties or null if canceled by the user
-	 */
-	private LoadedLanguageProperties readFromExcel(final File file) throws Exception {
-		final ImportFromExcelWorker importFromExcelWorker = new ImportFromExcelWorker(null, file);
-		importFromExcelWorker.setIgnoreComments(applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS));
-		final Result dialogResult = new ProgressDialog<>(this, LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("import_file"), importFromExcelWorker).open();
-		if (dialogResult == Result.CANCELED) {
-			return null;
-		}
-		// check for errors
-		importFromExcelWorker.get();
-
-		return LoadedLanguageProperties.ofSingleSet(importFromExcelWorker.getLanguageProperties(), importFromExcelWorker.getAvailableLanguageSigns(), importFromExcelWorker.getLanguagePropertiesSetName(), file.getAbsolutePath());
-	}
-
-	/**
-	 * Reads a CSV file without changing the currently loaded data.
-	 *
-	 * @return the read properties or null if canceled by the user
-	 */
-	private LoadedLanguageProperties readFromCsv(final File file) throws Exception {
-		final ImportFromCsvWorker importFromCsvWorker = new ImportFromCsvWorker(null, file);
-		importFromCsvWorker.setIgnoreComments(applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS));
-		final Result dialogResult = new ProgressDialog<>(this, LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("import_file"), importFromCsvWorker).open();
-		if (dialogResult == Result.CANCELED) {
-			return null;
-		}
-		// check for errors
-		importFromCsvWorker.get();
-
-		return LoadedLanguageProperties.ofSingleSet(importFromCsvWorker.getLanguageProperties(), importFromCsvWorker.getAvailableLanguageSigns(), importFromCsvWorker.getLanguagePropertiesSetName(), file.getAbsolutePath());
 	}
 
 	/**
@@ -3244,11 +1137,11 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	 * and table refresh.
 	 */
 	private void importFromFile(final String[] fileExtensions, final FileAction importAction) {
-		if (hasUnsavedChanges && !askForDiscardChanges()) {
+		if (model.hasUnsavedChanges() && !askForDiscardChanges()) {
 			return;
 		}
 
-		final File importFile = chooseFileToOpen(getTitle() + " " + LangResources.get("import_file"), Utilities.replaceUsersHome("~" + File.separator + "Downloads"), fileExtensions);
+		final File importFile = DialogUtilities.chooseFileToOpen(this, getTitle() + " " + LangResources.get("import_file"), Utilities.replaceUsersHome("~" + File.separator + "Downloads"), fileExtensions);
 		if (importFile == null) {
 			showErrorMessage(LangResources.get("import_file"), LangResources.get("canceledByUser"));
 			return;
@@ -3256,8 +1149,8 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 		try {
 			if (importAction.process(importFile)) {
-				hasUnsavedChanges = true;
-				currentSelectedProperties = new ArrayList<>();
+				// Imported data is not saved as properties files yet
+				model.setUnsavedChanges(true);
 				setupTable();
 				refreshDetailView();
 				showMessage(LangResources.get("import_file"), LangResources.get("actionSuccessfullyCompleted"));
@@ -3266,7 +1159,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			}
 		} catch (final ExecutionException e) {
 			resetLoadedData();
-			hasUnsavedChanges = false;
+			model.setUnsavedChanges(false);
 			if (e.getCause() != null && e.getCause() instanceof LanguagePropertiesException) {
 				showErrorMessage(LanguagePropertiesManager.APPLICATION_NAME, e.getCause().getMessage());
 			} else {
@@ -3275,294 +1168,25 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			setupTable();
 		} catch (final Exception e) {
 			resetLoadedData();
-			hasUnsavedChanges = false;
+			model.setUnsavedChanges(false);
 			showError(e);
 			setupTable();
 		}
 		checkButtonStatus();
 	}
 
-	/**
-	 * Language properties read by one of the load/import sources, not yet taken
-	 * over into the currently loaded data.
-	 */
-	private static class LoadedLanguageProperties {
-		private final List<LanguageProperty> languageProperties;
-		private final List<String> availableLanguageSigns;
-		private final List<String> languagePropertiesSetNames;
-		/** File or directory the properties were read from, only for display */
-		private final String sourceDescription;
-
-		private LoadedLanguageProperties(final List<LanguageProperty> languageProperties, final List<String> availableLanguageSigns, final List<String> languagePropertiesSetNames, final String sourceDescription) {
-			this.languageProperties = languageProperties == null ? new ArrayList<>() : languageProperties;
-			this.availableLanguageSigns = availableLanguageSigns == null ? new ArrayList<>() : availableLanguageSigns;
-			this.languagePropertiesSetNames = languagePropertiesSetNames == null ? new ArrayList<>() : languagePropertiesSetNames;
-			this.sourceDescription = sourceDescription;
-		}
-
-		/**
-		 * For properties read from properties files, the language signs are determined from the properties
-		 */
-		private static LoadedLanguageProperties ofPropertiesSets(final List<LanguageProperty> languageProperties, final List<String> languagePropertiesSetNames, final String sourceDescription) {
-			final List<LanguageProperty> properties = languageProperties == null ? new ArrayList<>() : languageProperties;
-			final List<String> languageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(properties), LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT);
-			return new LoadedLanguageProperties(properties, languageSigns, languagePropertiesSetNames, sourceDescription);
-		}
-
-		/**
-		 * For properties read from an Excel or CSV file, which delivers its language signs and set name itself
-		 */
-		private static LoadedLanguageProperties ofSingleSet(final List<LanguageProperty> languageProperties, final List<String> availableLanguageSigns, final String languagePropertiesSetName, final String sourceDescription) {
-			final List<String> setNames = new ArrayList<>();
-			setNames.add(languagePropertiesSetName);
-			return new LoadedLanguageProperties(languageProperties, availableLanguageSigns, setNames, sourceDescription);
-		}
-
-		private String getCombinedSetName() {
-			if (languagePropertiesSetNames.isEmpty()) {
-				return null;
-			} else if (languagePropertiesSetNames.size() == 1) {
-				return languagePropertiesSetNames.get(0);
-			} else {
-				return "Multiple";
-			}
-		}
-	}
-
-	/**
-	 * Source of an import (merge import or reduction by a base set). Returns null
-	 * if the user canceled, in which case the source has already informed the user.
-	 */
-	@FunctionalInterface
-	private interface ImportSource {
-		LoadedLanguageProperties read(String title) throws Exception;
-	}
-
-	/**
-	 * How conflicts between existing and imported values are resolved
-	 */
-	private enum MergeMode {
-		/** Add new keys and fill empty values, keep existing non-empty values */
-		ADD_NEW,
-		/** Add new keys, fill empty values and overwrite differing existing values */
-		OVERWRITE,
-		/** Do not add new keys, only fill empty values of existing keys */
-		FILL_EMPTY_ONLY
-	}
-
-	/**
-	 * Planned handling of one imported property
-	 */
-	private static class MergePlanEntry {
-		private final LanguageProperty importedProperty;
-		/** Existing property to merge the values into, or null if the imported property is added as new property */
-		private final LanguageProperty targetProperty;
-		/** Path a new property gets, only used if targetProperty is null */
-		private final String pathForNewProperty;
-		/** Whether a new property keeps a path that does not belong to the currently loaded properties sets */
-		private final boolean foreignPath;
-
-		private MergePlanEntry(final LanguageProperty importedProperty, final LanguageProperty targetProperty, final String pathForNewProperty, final boolean foreignPath) {
-			this.importedProperty = importedProperty;
-			this.targetProperty = targetProperty;
-			this.pathForNewProperty = pathForNewProperty;
-			this.foreignPath = foreignPath;
-		}
-	}
-
-	/**
-	 * Analysis of a merge import before anything is changed. The counts are shown
-	 * to the user to decide how conflicts are resolved.
-	 */
-	private static class MergePlan {
-		private final List<MergePlanEntry> entries = new ArrayList<>();
-		private final List<String> skippedEntries = new ArrayList<>();
-		private int newPropertyCount = 0;
-		private int matchedPropertyCount = 0;
-		private int propertiesWithDifferencesCount = 0;
-		private int differingValueCount = 0;
-		private int fillableValueCount = 0;
-
-		private boolean hasNothingToDo() {
-			return newPropertyCount == 0 && differingValueCount == 0 && fillableValueCount == 0;
-		}
-	}
-
-	/**
-	 * Changes done by a merge import, for the final report
-	 */
-	private static class MergeResult {
-		private final List<String> addedProperties = new ArrayList<>();
-		private final List<String> addedPropertiesWithForeignPath = new ArrayList<>();
-		private final List<String> notAddedProperties = new ArrayList<>();
-		private final List<String> filledValues = new ArrayList<>();
-		private final List<String> overwrittenValues = new ArrayList<>();
-		private final List<String> keptDifferingValues = new ArrayList<>();
-		private final List<String> newLanguageSigns = new ArrayList<>();
-
-		/** Added or changed properties in order of their change, tracked by identity */
-		private final List<LanguageProperty> changedProperties = new ArrayList<>();
-		private final Set<LanguageProperty> changedPropertiesSet = Collections.newSetFromMap(new IdentityHashMap<>());
-
-		private void markChanged(final LanguageProperty languageProperty) {
-			if (changedPropertiesSet.add(languageProperty)) {
-				changedProperties.add(languageProperty);
-			}
-		}
-
-		private boolean hasChanges() {
-			return !changedProperties.isEmpty();
-		}
-	}
-
-	/**
-	 * Shows the menu of import sources below the given button. The properties
-	 * read from the chosen source are handed to the given action.
-	 */
-	private void showImportSourceMenu(final JButton invoker, final String titleKey, final Consumer<LoadedLanguageProperties> action) {
-		try {
-			final String title = LangResources.get(titleKey);
-			final JPopupMenu importSourceMenu = new JPopupMenu();
-			addImportSourceMenuItem(importSourceMenu, "clock.png", "mergeImport_fromRecent", recentlyOpenedDirectories != null && recentlyOpenedDirectories.size() > 0, () -> runWithImportSource(title, this::readImportSourceFromRecent, action));
-			addImportSourceMenuItem(importSourceMenu, "load.png", "mergeImport_fromFile", true, () -> runWithImportSource(title, this::readImportSourceFromFile, action));
-			addImportSourceMenuItem(importSourceMenu, "folderLoad.png", "mergeImport_fromFolder", true, () -> runWithImportSource(title, this::readImportSourceFromFolder, action));
-			addImportSourceMenuItem(importSourceMenu, "excelLoad.png", "mergeImport_fromExcel", true, () -> runWithImportSource(title, sourceTitle -> readImportSourceFromDataFile(sourceTitle, this::readFromExcel, "xlsx"), action));
-			addImportSourceMenuItem(importSourceMenu, "csvLoad.png", "mergeImport_fromCsv", true, () -> runWithImportSource(title, sourceTitle -> readImportSourceFromDataFile(sourceTitle, this::readFromCsv, "csv", "dsv"), action));
-			importSourceMenu.show(invoker, 0, invoker.getHeight());
-		} catch (final Exception e) {
-			showError(e);
-		}
-	}
-
-	private static void addImportSourceMenuItem(final JPopupMenu menu, final String imageName, final String textKey, final boolean enabled, final Runnable action) throws Exception {
-		final JMenuItem menuItem = new JMenuItem(LangResources.get(textKey), ImageManager.getImage(imageName));
-		menuItem.setEnabled(enabled);
-		menuItem.addActionListener(e -> action.run());
-		menu.add(menuItem);
-	}
-
-	private LoadedLanguageProperties readImportSourceFromRecent(final String title) throws Exception {
-		final ComboSelectionDialog dialog = new ComboSelectionDialog(this, getTitle() + " " + title, LangResources.get("recent_directories_dialog_text"), recentlyOpenedDirectories, getLastEntryIndex(recentlyOpenedDirectories)).withSize(600, -1);
-		final String filePath = dialog.open();
-
-		// Take over a possible reordering (drag&drop) or deletion of the recent directories done in the dialog
-		recentlyOpenedDirectories.clear();
-		recentlyOpenedDirectories.addAll(dialog.getItems());
-		applicationConfiguration.set(LanguagePropertiesManager.CONFIG_RECENT_PROPERTIES, recentlyOpenedDirectories);
-		checkButtonStatus();
-
-		if (filePath == null) {
-			showErrorMessage(title, LangResources.get("canceledByUser"));
-			return null;
-		} else if (!new File(filePath).exists()) {
-			showErrorMessage(title, LangResources.get("error.recentPathDoesNotExistAnymore", filePath));
-			return null;
-		} else if (new File(filePath).isDirectory()) {
-			return readImportSourceResult(title, readAllLanguagePropertiesSets(filePath));
-		} else if (!hasLanguagePropertiesFileExtension(filePath)) {
-			showErrorMessage(title, LangResources.get("missingMandatoryFileExtension", applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION)));
-			return null;
-		} else {
-			return readImportSourceResult(title, readSingleLanguagePropertiesSet(filePath));
-		}
-	}
-
-	private LoadedLanguageProperties readImportSourceFromFile(final String title) throws Exception {
-		final File file = chooseFileToOpen(getTitle() + " " + title, recentlyOpenedDirectories.getLatestAdded());
-		if (file == null) {
-			showErrorMessage(title, LangResources.get("canceledByUser"));
-			return null;
-		} else if (!file.isFile()) {
-			throw new Exception("Selected language properties set path is not an existing file");
-		} else if (!hasLanguagePropertiesFileExtension(file.getAbsolutePath())) {
-			showErrorMessage(title, LangResources.get("missingMandatoryFileExtension", applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION)));
-			return null;
-		} else {
-			return readImportSourceResult(title, readSingleLanguagePropertiesSet(file.getAbsolutePath()));
-		}
-	}
-
-	private LoadedLanguageProperties readImportSourceFromFolder(final String title) throws Exception {
-		final File directory = chooseDirectory(getTitle() + " " + title, recentlyOpenedDirectories.getLatestAdded());
-		if (directory == null) {
-			showErrorMessage(title, LangResources.get("canceledByUser"));
-			return null;
-		} else if (!directory.isDirectory()) {
-			throw new Exception("Selected language properties directory is not an existing directory");
-		} else {
-			return readImportSourceResult(title, readAllLanguagePropertiesSets(directory.getAbsolutePath()));
-		}
-	}
-
-	/**
-	 * Reader of an Excel or CSV file
-	 */
-	@FunctionalInterface
-	private interface DataFileReader {
-		LoadedLanguageProperties read(File file) throws Exception;
-	}
-
-	private LoadedLanguageProperties readImportSourceFromDataFile(final String title, final DataFileReader dataFileReader, final String... fileExtensions) throws Exception {
-		final File importFile = chooseFileToOpen(getTitle() + " " + title, Utilities.replaceUsersHome("~" + File.separator + "Downloads"), fileExtensions);
-		if (importFile == null) {
-			showErrorMessage(title, LangResources.get("canceledByUser"));
-			return null;
-		} else {
-			return readImportSourceResult(title, dataFileReader.read(importFile));
-		}
-	}
-
-	/**
-	 * Shows the cancel message, if reading was canceled in the progress dialog
-	 */
-	private LoadedLanguageProperties readImportSourceResult(final String title, final LoadedLanguageProperties loadedLanguageProperties) {
-		if (loadedLanguageProperties == null) {
-			showErrorMessage(title, LangResources.get("canceledByUser"));
-		}
-		return loadedLanguageProperties;
-	}
-
-	/**
-	 * Reads the properties of an import source and hands them to the given action
-	 * (merge import or reduction by a base set). Errors while reading leave the
-	 * loaded data unchanged.
-	 */
-	private void runWithImportSource(final String title, final ImportSource importSource, final Consumer<LoadedLanguageProperties> action) {
-		// Unapplied changes in the detail fields would get lost by the changed selection afterwards
-		if (dataWasModified && !askForDiscardChanges()) {
-			return;
-		}
-
-		try {
-			final LoadedLanguageProperties loadedLanguageProperties = importSource.read(title);
-			if (loadedLanguageProperties != null) {
-				action.accept(loadedLanguageProperties);
-			}
-		} catch (final ExecutionException e) {
-			if (e.getCause() != null && e.getCause() instanceof LanguagePropertiesException) {
-				showErrorMessage(LanguagePropertiesManager.APPLICATION_NAME, e.getCause().getMessage());
-			} else {
-				showError(e);
-			}
-		} catch (final Exception e) {
-			showError(e);
-		}
-		checkButtonStatus();
-	}
-
 	private void mergeLoadedLanguageProperties(final LoadedLanguageProperties loadedLanguageProperties) {
-		final List<LanguageProperty> importedProperties = loadedLanguageProperties.languageProperties;
+		final List<LanguageProperty> importedProperties = loadedLanguageProperties.getLanguageProperties();
 		if (importedProperties.isEmpty()) {
-			showMessage(LangResources.get("mergeImport_title"), LangResources.get("mergeImport_nothingFound", loadedLanguageProperties.sourceDescription));
+			showMessage(LangResources.get("mergeImport_title"), LangResources.get("mergeImport_nothingFound", loadedLanguageProperties.getSourceDescription()));
 			return;
 		}
 
-		final boolean noDataLoadedYet = languageProperties == null;
-		final MergePlan mergePlan = createMergePlan(noDataLoadedYet ? new ArrayList<>() : languageProperties, importedProperties);
+		final MergePlan mergePlan = LanguagePropertiesMerger.createMergePlan(model.isLoaded() ? model.getLanguageProperties() : new ArrayList<>(), importedProperties);
 		if (mergePlan.hasNothingToDo()) {
-			String message = LangResources.get("mergeImport_nothingToImport", loadedLanguageProperties.sourceDescription);
-			if (!mergePlan.skippedEntries.isEmpty()) {
-				message += "\n\n" + LangResources.get("mergeImport_section_skipped") + ":\n" + Utilities.join(mergePlan.skippedEntries, "\n");
+			String message = LangResources.get("mergeImport_nothingToImport", loadedLanguageProperties.getSourceDescription());
+			if (!mergePlan.getSkippedEntries().isEmpty()) {
+				message += "\n\n" + LangResources.get("mergeImport_section_skipped") + ":\n" + Utilities.join(mergePlan.getSkippedEntries(), "\n");
 			}
 			showData(LangResources.get("mergeImport_title"), message);
 			return;
@@ -3570,9 +1194,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 		// Only ask, if there are real conflicts. Without conflicts, all modes except FILL_EMPTY_ONLY have the same result.
 		MergeMode mergeMode = MergeMode.ADD_NEW;
-		if (mergePlan.differingValueCount > 0) {
+		if (mergePlan.getDifferingValueCount() > 0) {
 			final Integer returncode = new QuestionDialog(this, LangResources.get("mergeImport_title"),
-					LangResources.get("mergeImport_question", loadedLanguageProperties.sourceDescription, mergePlan.newPropertyCount, mergePlan.matchedPropertyCount, mergePlan.propertiesWithDifferencesCount, mergePlan.differingValueCount, mergePlan.fillableValueCount, mergePlan.skippedEntries.size()),
+					LangResources.get("mergeImport_question", loadedLanguageProperties.getSourceDescription(), mergePlan.getNewPropertyCount(), mergePlan.getMatchedPropertyCount(), mergePlan.getPropertiesWithDifferencesCount(), mergePlan.getDifferingValueCount(), mergePlan.getFillableValueCount(), mergePlan.getSkippedEntries().size()),
 					LangResources.get("mergeImport_mode_addNew"),
 					LangResources.get("mergeImport_mode_overwrite"),
 					LangResources.get("mergeImport_mode_fillEmptyOnly"),
@@ -3589,351 +1213,16 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			}
 		}
 
-		if (noDataLoadedYet) {
-			languageProperties = new ArrayList<>();
-			availableLanguageSigns = new ArrayList<>();
-			setLanguagePropertiesSetName(loadedLanguageProperties.getCombinedSetName());
-		}
-		final Set<String> previousLanguageSigns = new HashSet<>(availableLanguageSigns);
-
-		final MergeResult mergeResult = applyMergePlan(mergePlan, mergeMode);
-
-		// Every property knows every language sign afterwards, like after addLanguage()
-		availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT);
-		for (final LanguageProperty languageProperty : languageProperties) {
-			for (final String languageSign : availableLanguageSigns) {
-				if (!languageProperty.getAvailableLanguageSigns().contains(languageSign)) {
-					languageProperty.setLanguageValue(languageSign, null);
-				}
-			}
-		}
-		if (!noDataLoadedYet) {
-			for (final String languageSign : availableLanguageSigns) {
-				if (!previousLanguageSigns.contains(languageSign)) {
-					mergeResult.newLanguageSigns.add(languageSign);
-				}
-			}
-		}
-
-		if (mergeResult.hasChanges()) {
-			hasUnsavedChanges = true;
-		}
-
-		// Select the added and changed properties, so they can be reviewed or translated directly
-		currentSelectedProperties = new ArrayList<>(mergeResult.changedProperties);
+		// Every property knows every language sign afterwards and the added or changed properties are selected
+		final MergeResult mergeResult = model.applyMerge(loadedLanguageProperties, mergePlan, mergeMode);
 		setupTable();
 		refreshDetailView();
 		checkButtonStatus();
 
 		// The imported file may use another encoding, so check the imported part right away
-		final ErrorReport errorReport = createErrorReport(importedProperties);
+		final ErrorReport errorReport = LanguagePropertiesChecker.createErrorReport(importedProperties);
 
-		showData(LangResources.get("mergeImport_resultTitle"), createMergeReport(loadedLanguageProperties.sourceDescription, mergeMode, mergePlan, mergeResult, errorReport));
-	}
-
-	/**
-	 * Determines for every imported property, whether it matches an existing
-	 * property, and counts the conflicts. Nothing is changed here.
-	 */
-	private static MergePlan createMergePlan(final List<LanguageProperty> existingProperties, final List<LanguageProperty> importedProperties) {
-		final MergePlan mergePlan = new MergePlan();
-
-		final Map<String, List<LanguageProperty>> existingPropertiesByKey = new HashMap<>();
-		final Set<String> existingPaths = new HashSet<>();
-		for (final LanguageProperty existingProperty : existingProperties) {
-			existingPropertiesByKey.computeIfAbsent(getEmptyForNull(existingProperty.getKey()), k -> new ArrayList<>()).add(existingProperty);
-			existingPaths.add(getEmptyForNull(existingProperty.getPath()));
-		}
-
-		final Set<String> newPathsAndKeys = new HashSet<>();
-		for (final LanguageProperty importedProperty : importedProperties) {
-			final String key = importedProperty.getKey();
-			if (Utilities.isBlank(key)) {
-				mergePlan.skippedEntries.add(LangResources.get("mergeImport_skippedEmptyKey", getEmptyForNull(importedProperty.getPath())));
-				continue;
-			}
-
-			final List<LanguageProperty> candidates = findMergeCandidates(importedProperty, existingPropertiesByKey.get(key));
-			if (candidates.size() > 1) {
-				mergePlan.skippedEntries.add(getPropertyDisplayName(importedProperty.getPath(), key) + ": " + LangResources.get("mergeImport_skippedAmbiguous", candidates.size()));
-			} else if (candidates.size() == 1) {
-				final LanguageProperty targetProperty = candidates.get(0);
-				mergePlan.entries.add(new MergePlanEntry(importedProperty, targetProperty, null, false));
-				mergePlan.matchedPropertyCount++;
-
-				int differingValuesOfProperty = 0;
-				for (final String languageSign : importedProperty.getAvailableLanguageSigns()) {
-					final String importedValue = importedProperty.getLanguageValue(languageSign);
-					if (Utilities.isNotEmpty(importedValue)) {
-						final String existingValue = targetProperty.getLanguageValue(languageSign);
-						if (Utilities.isEmpty(existingValue)) {
-							mergePlan.fillableValueCount++;
-						} else if (!existingValue.equals(importedValue)) {
-							differingValuesOfProperty++;
-						}
-					}
-				}
-				// Comments are not compared, only keys and values matter
-				if (differingValuesOfProperty > 0) {
-					mergePlan.propertiesWithDifferencesCount++;
-					mergePlan.differingValueCount += differingValuesOfProperty;
-				}
-			} else {
-				final String pathForNewProperty = determinePathForNewProperty(getEmptyForNull(importedProperty.getPath()), existingPaths);
-				final boolean foreignPath = !existingPaths.isEmpty() && !existingPaths.contains(pathForNewProperty);
-				mergePlan.entries.add(new MergePlanEntry(importedProperty, null, pathForNewProperty, foreignPath));
-				// Duplicates within the imported data are merged into the first occurrence later
-				if (newPathsAndKeys.add(pathForNewProperty + "\u0000" + key)) {
-					mergePlan.newPropertyCount++;
-				}
-			}
-		}
-
-		return mergePlan;
-	}
-
-	/**
-	 * Existing properties, an imported property with the same key is merged into.
-	 * Matching is done by key only, because the path of an import source (e.g. a
-	 * copy or export of the set in another directory) usually differs.
-	 * Only if the key exists in more than one loaded properties set, an existing
-	 * property with exactly the same path is used to resolve the ambiguity.
-	 * More than one returned candidate means the match is ambiguous.
-	 */
-	private static List<LanguageProperty> findMergeCandidates(final LanguageProperty importedProperty, final List<LanguageProperty> existingPropertiesWithSameKey) {
-		if (existingPropertiesWithSameKey == null || existingPropertiesWithSameKey.isEmpty()) {
-			return new ArrayList<>();
-		}
-
-		final List<LanguageProperty> candidates = reduceToFirstOfSinglePath(existingPropertiesWithSameKey);
-		if (candidates.size() <= 1) {
-			return candidates;
-		}
-
-		final String importedPath = getEmptyForNull(importedProperty.getPath());
-		final List<LanguageProperty> samePathCandidates = existingPropertiesWithSameKey.stream()
-				.filter(existingProperty -> importedPath.equals(getEmptyForNull(existingProperty.getPath())))
-				.collect(Collectors.toList());
-		if (!samePathCandidates.isEmpty()) {
-			return reduceToFirstOfSinglePath(samePathCandidates);
-		} else {
-			return candidates;
-		}
-	}
-
-	/**
-	 * Duplicates of a key within the same path are no ambiguity: like in
-	 * removeDuplicates(), the one with the lowest original index is used.
-	 */
-	private static List<LanguageProperty> reduceToFirstOfSinglePath(final List<LanguageProperty> candidates) {
-		final Set<String> candidatePaths = candidates.stream().map(candidate -> getEmptyForNull(candidate.getPath())).collect(Collectors.toSet());
-		if (candidatePaths.size() == 1) {
-			final List<LanguageProperty> result = new ArrayList<>();
-			result.add(candidates.stream().min(Comparator.comparing(LanguageProperty::getOriginalIndex)).get());
-			return result;
-		} else {
-			return candidates;
-		}
-	}
-
-	/**
-	 * A new property is put into the matching loaded properties set, so saving
-	 * does not write into the files of the import source. If no unique matching
-	 * set exists, the property keeps the path of the import source.
-	 */
-	private static String determinePathForNewProperty(final String importedPath, final Set<String> existingPaths) {
-		if (existingPaths.contains(importedPath)) {
-			return importedPath;
-		} else if (existingPaths.size() == 1) {
-			// Only one properties set is loaded, so the path of the import source does not matter
-			return existingPaths.iterator().next();
-		}
-
-		final String importedSetName = getLanguagePropertiesSetNameOfPath(importedPath);
-		final List<String> matchingPaths = existingPaths.stream()
-				.filter(existingPath -> importedSetName.isEmpty() || importedSetName.equals(getLanguagePropertiesSetNameOfPath(existingPath)))
-				.collect(Collectors.toList());
-		if (matchingPaths.size() == 1) {
-			return matchingPaths.get(0);
-		} else {
-			return importedPath;
-		}
-	}
-
-	/**
-	 * Name of a properties set, which is the last part of its path (the path has no language sign and no file extension)
-	 */
-	private static String getLanguagePropertiesSetNameOfPath(final String path) {
-		if (Utilities.isBlank(path)) {
-			return "";
-		}
-		final String normalizedPath = path.replace('\\', '/');
-		return normalizedPath.substring(normalizedPath.lastIndexOf('/') + 1);
-	}
-
-	private static String getPropertyDisplayName(final String path, final String key) {
-		return "\"" + getEmptyForNull(path) + "\" / \"" + getEmptyForNull(key) + "\"";
-	}
-
-	private MergeResult applyMergePlan(final MergePlan mergePlan, final MergeMode mergeMode) {
-		final MergeResult mergeResult = new MergeResult();
-		final Map<String, LanguageProperty> addedPropertiesByPathAndKey = new HashMap<>();
-
-		for (final MergePlanEntry entry : mergePlan.entries) {
-			final LanguageProperty importedProperty = entry.importedProperty;
-			if (entry.targetProperty != null) {
-				mergeValues(importedProperty, entry.targetProperty, mergeMode == MergeMode.OVERWRITE, mergeResult);
-			} else if (mergeMode == MergeMode.FILL_EMPTY_ONLY) {
-				mergeResult.notAddedProperties.add(getPropertyDisplayName(importedProperty.getPath(), importedProperty.getKey()));
-			} else {
-				final String pathAndKey = entry.pathForNewProperty + "\u0000" + importedProperty.getKey();
-				final LanguageProperty alreadyAddedProperty = addedPropertiesByPathAndKey.get(pathAndKey);
-				if (alreadyAddedProperty != null) {
-					// Duplicate within the imported data: only take over values the first occurrence is still missing
-					mergeValues(importedProperty, alreadyAddedProperty, false, mergeResult);
-					// The newly added property is completely taken from the import, so it also takes over a comment it is still missing
-					if (Utilities.isEmpty(alreadyAddedProperty.getComment()) && Utilities.isNotEmpty(importedProperty.getComment())) {
-						alreadyAddedProperty.setComment(importedProperty.getComment());
-					}
-				} else {
-					importedProperty.setPath(entry.pathForNewProperty);
-					importedProperty.setOriginalIndex(languageProperties.size() + 1);
-					languageProperties.add(importedProperty);
-					addedPropertiesByPathAndKey.put(pathAndKey, importedProperty);
-					mergeResult.markChanged(importedProperty);
-
-					final String displayName = getPropertyDisplayName(importedProperty.getPath(), importedProperty.getKey());
-					mergeResult.addedProperties.add(displayName);
-					if (entry.foreignPath) {
-						mergeResult.addedPropertiesWithForeignPath.add(displayName);
-					}
-				}
-			}
-		}
-
-		return mergeResult;
-	}
-
-	/**
-	 * Takes over the non-empty values of the source property into the target
-	 * property. Empty target values are always filled, differing non-empty target
-	 * values are only overwritten if requested. Comments are left untouched.
-	 */
-	private static void mergeValues(final LanguageProperty sourceProperty, final LanguageProperty targetProperty, final boolean overwriteDifferingValues, final MergeResult mergeResult) {
-		final String displayName = getPropertyDisplayName(targetProperty.getPath(), targetProperty.getKey());
-		boolean changed = false;
-
-		for (final String languageSign : sourceProperty.getAvailableLanguageSigns()) {
-			final String importedValue = sourceProperty.getLanguageValue(languageSign);
-			if (Utilities.isNotEmpty(importedValue)) {
-				final String existingValue = targetProperty.getLanguageValue(languageSign);
-				if (Utilities.isEmpty(existingValue)) {
-					targetProperty.setLanguageValue(languageSign, importedValue);
-					mergeResult.filledValues.add(displayName + " [" + languageSign + "]");
-					changed = true;
-				} else if (!existingValue.equals(importedValue)) {
-					if (overwriteDifferingValues) {
-						targetProperty.setLanguageValue(languageSign, importedValue);
-						mergeResult.overwrittenValues.add(displayName + " [" + languageSign + "]");
-						changed = true;
-					} else {
-						mergeResult.keptDifferingValues.add(displayName + " [" + languageSign + "]");
-					}
-				}
-			}
-		}
-
-		// Comments are not compared or taken over, the comment of the target property stays as it is
-
-		if (changed) {
-			mergeResult.markChanged(targetProperty);
-		}
-	}
-
-	private static String createMergeReport(final String sourceDescription, final MergeMode mergeMode, final MergePlan mergePlan, final MergeResult mergeResult, final ErrorReport errorReport) {
-		final StringBuilder reportText = new StringBuilder();
-		reportText.append(LangResources.get("mergeImport_resultSummary",
-				sourceDescription,
-				LangResources.get("mergeImport_mode_" + getMergeModeResourceSuffix(mergeMode)),
-				mergeResult.addedProperties.size(),
-				mergeResult.filledValues.size(),
-				mergeResult.overwrittenValues.size(),
-				mergeResult.keptDifferingValues.size(),
-				mergeResult.notAddedProperties.size(),
-				mergePlan.skippedEntries.size(),
-				mergeResult.newLanguageSigns.isEmpty() ? "-" : Utilities.join(mergeResult.newLanguageSigns, ", ")));
-
-		if (!mergeResult.addedPropertiesWithForeignPath.isEmpty()) {
-			reportText.append("\n\n").append(LangResources.get("mergeImport_warningForeignPath", mergeResult.addedPropertiesWithForeignPath.size()));
-		}
-
-		appendMergeReportSection(reportText, "mergeImport_section_added", mergeResult.addedProperties);
-		appendMergeReportSection(reportText, "mergeImport_section_filled", mergeResult.filledValues);
-		appendMergeReportSection(reportText, "mergeImport_section_overwritten", mergeResult.overwrittenValues);
-		appendMergeReportSection(reportText, "mergeImport_section_keptDiffering", mergeResult.keptDifferingValues);
-		appendMergeReportSection(reportText, "mergeImport_section_notAdded", mergeResult.notAddedProperties);
-		appendMergeReportSection(reportText, "mergeImport_section_skipped", mergePlan.skippedEntries);
-		appendMergeReportSection(reportText, "mergeImport_section_foreignPath", mergeResult.addedPropertiesWithForeignPath);
-
-		reportText.append("\n\n").append(LangResources.get("mergeImport_section_errorCheck")).append(":\n");
-		if (errorReport.issueCount == 0) {
-			reportText.append(LangResources.get("noErrorsFound"));
-		} else {
-			reportText.append(LangResources.get("checkErrorsFound", errorReport.issueCount)).append("\n\n").append(errorReport.reportText);
-		}
-
-		return reportText.toString();
-	}
-
-	private static String getMergeModeResourceSuffix(final MergeMode mergeMode) {
-		switch (mergeMode) {
-			case OVERWRITE:
-				return "overwrite";
-			case FILL_EMPTY_ONLY:
-				return "fillEmptyOnly";
-			case ADD_NEW:
-			default:
-				return "addNew";
-		}
-	}
-
-	private static void appendMergeReportSection(final StringBuilder reportText, final String titleKey, final List<String> lines) {
-		if (!lines.isEmpty()) {
-			reportText.append("\n\n").append(LangResources.get(titleKey)).append(" (").append(lines.size()).append("):\n");
-			for (final String line : lines) {
-				reportText.append("  ").append(line).append("\n");
-			}
-		}
-	}
-
-	/**
-	 * Planned reduction of one loaded property by its counterpart in the base set
-	 */
-	private static class ReducePlanEntry {
-		private final LanguageProperty languageProperty;
-		/** Language signs whose values are identical to the base set */
-		private final List<String> identicalLanguageSigns;
-		/** Whether the property has no language value left after the reduction */
-		private final boolean becomesEmpty;
-
-		private ReducePlanEntry(final LanguageProperty languageProperty, final List<String> identicalLanguageSigns, final boolean becomesEmpty) {
-			this.languageProperty = languageProperty;
-			this.identicalLanguageSigns = identicalLanguageSigns;
-			this.becomesEmpty = becomesEmpty;
-		}
-	}
-
-	/**
-	 * Analysis of a reduction by a base set before anything is changed
-	 */
-	private static class ReducePlan {
-		private final List<ReducePlanEntry> entries = new ArrayList<>();
-		private final List<String> skippedEntries = new ArrayList<>();
-		/** Values that differ from the base set, they stay as they are */
-		private final List<String> differingValues = new ArrayList<>();
-		private int identicalValueCount = 0;
-		private int emptyPropertyCount = 0;
-		private int propertiesWithoutBaseCount = 0;
+		showData(LangResources.get("mergeImport_resultTitle"), LanguagePropertiesMerger.createMergeReport(loadedLanguageProperties.getSourceDescription(), mergeMode, mergePlan, mergeResult, errorReport));
 	}
 
 	/**
@@ -3943,29 +1232,29 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	 * Properties without any remaining value can be deleted completely.
 	 */
 	private void reduceByBaseSet(final LoadedLanguageProperties baseLanguageProperties) {
-		if (languageProperties == null || languageProperties.isEmpty()) {
+		if (!model.hasProperties()) {
 			return;
 		}
 
 		final String title = LangResources.get("reduceByBaseSet_title");
-		if (baseLanguageProperties.languageProperties.isEmpty()) {
-			showMessage(title, LangResources.get("mergeImport_nothingFound", baseLanguageProperties.sourceDescription));
+		if (baseLanguageProperties.getLanguageProperties().isEmpty()) {
+			showMessage(title, LangResources.get("mergeImport_nothingFound", baseLanguageProperties.getSourceDescription()));
 			return;
 		}
 
 		final List<LanguageProperty> propertiesToCheck = new ArrayList<>(getSelectedOrAllProperties());
-		final ReducePlan reducePlan = createReducePlan(propertiesToCheck, baseLanguageProperties.languageProperties);
-		if (reducePlan.entries.isEmpty()) {
-			String message = LangResources.get("reduceByBaseSet_nothingIdentical", baseLanguageProperties.sourceDescription, propertiesToCheck.size());
-			if (!reducePlan.skippedEntries.isEmpty()) {
-				message += "\n\n" + LangResources.get("mergeImport_section_skipped") + ":\n" + Utilities.join(reducePlan.skippedEntries, "\n");
+		final ReducePlan reducePlan = BaseSetReducer.createReducePlan(propertiesToCheck, baseLanguageProperties.getLanguageProperties());
+		if (reducePlan.hasNothingToReduce()) {
+			String message = LangResources.get("reduceByBaseSet_nothingIdentical", baseLanguageProperties.getSourceDescription(), propertiesToCheck.size());
+			if (!reducePlan.getSkippedEntries().isEmpty()) {
+				message += "\n\n" + LangResources.get("mergeImport_section_skipped") + ":\n" + Utilities.join(reducePlan.getSkippedEntries(), "\n");
 			}
 			showData(title, message);
 			return;
 		}
 
 		final Integer returncode = new QuestionDialog(this, title,
-				LangResources.get("reduceByBaseSet_question", baseLanguageProperties.sourceDescription, propertiesToCheck.size(), reducePlan.identicalValueCount, reducePlan.entries.size(), reducePlan.emptyPropertyCount, reducePlan.propertiesWithoutBaseCount, reducePlan.skippedEntries.size()),
+				LangResources.get("reduceByBaseSet_question", baseLanguageProperties.getSourceDescription(), propertiesToCheck.size(), reducePlan.getIdenticalValueCount(), reducePlan.getReduciblePropertyCount(), reducePlan.getEmptyPropertyCount(), reducePlan.getPropertiesWithoutBaseCount(), reducePlan.getSkippedEntries().size()),
 				LangResources.get("reduceByBaseSet_mode_removeEmpty"),
 				LangResources.get("reduceByBaseSet_mode_clearOnly"),
 				LangResources.get("cancel")).open();
@@ -3979,130 +1268,20 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			return;
 		}
 
-		final List<String> clearedValues = new ArrayList<>();
-		final List<String> removedProperties = new ArrayList<>();
-		final List<LanguageProperty> changedProperties = new ArrayList<>();
-		final Set<LanguageProperty> propertiesToRemove = Collections.newSetFromMap(new IdentityHashMap<>());
-		for (final ReducePlanEntry entry : reducePlan.entries) {
-			final LanguageProperty languageProperty = entry.languageProperty;
-			final String displayName = getPropertyDisplayName(languageProperty.getPath(), languageProperty.getKey());
-			for (final String languageSign : entry.identicalLanguageSigns) {
-				languageProperty.setLanguageValue(languageSign, null);
-				clearedValues.add(displayName + " [" + languageSign + "]");
-			}
-			if (removeEmptyProperties && entry.becomesEmpty) {
-				propertiesToRemove.add(languageProperty);
-				removedProperties.add(displayName);
-			} else {
-				changedProperties.add(languageProperty);
-			}
-		}
-		if (!propertiesToRemove.isEmpty()) {
-			languageProperties.removeIf(propertiesToRemove::contains);
-		}
-
-		hasUnsavedChanges = true;
-
-		// Select the reduced properties that still exist, so they can be reviewed directly
-		currentSelectedProperties = changedProperties;
+		// The reduced properties that still exist are selected afterwards, so they can be reviewed directly
+		final ReduceResult reduceResult = model.applyReduction(reducePlan, removeEmptyProperties);
 		setupTable();
 		refreshDetailView();
 		checkButtonStatus();
 
-		final StringBuilder reportText = new StringBuilder();
-		reportText.append(LangResources.get("reduceByBaseSet_resultSummary",
-				baseLanguageProperties.sourceDescription,
-				propertiesToCheck.size(),
-				clearedValues.size(),
-				removedProperties.size(),
-				reducePlan.differingValues.size(),
-				reducePlan.propertiesWithoutBaseCount,
-				reducePlan.skippedEntries.size()));
-		if (!removedProperties.isEmpty()) {
-			// Removed keys would survive in the files, if existing properties are kept when saving
-			reportText.append("\n\n").append(LangResources.get("reduceByBaseSet_saveHint"));
-		}
-		appendMergeReportSection(reportText, "reduceByBaseSet_section_removed", removedProperties);
-		appendMergeReportSection(reportText, "reduceByBaseSet_section_cleared", clearedValues);
-		appendMergeReportSection(reportText, "reduceByBaseSet_section_differing", reducePlan.differingValues);
-		appendMergeReportSection(reportText, "mergeImport_section_skipped", reducePlan.skippedEntries);
-		showData(LangResources.get("reduceByBaseSet_resultTitle"), reportText.toString());
-	}
-
-	/**
-	 * Determines for every property to check the identical values in the base set.
-	 * The properties are matched by key only, the path of the base set (which
-	 * usually differs) and the comments are not compared. If the base set
-	 * contains the key more than once, a value counts as identical if any of
-	 * these base properties has the same value for that language.
-	 * Nothing is changed here.
-	 */
-	private static ReducePlan createReducePlan(final List<LanguageProperty> propertiesToCheck, final List<LanguageProperty> baseProperties) {
-		final ReducePlan reducePlan = new ReducePlan();
-
-		final Map<String, List<LanguageProperty>> basePropertiesByKey = new HashMap<>();
-		for (final LanguageProperty baseProperty : baseProperties) {
-			basePropertiesByKey.computeIfAbsent(getEmptyForNull(baseProperty.getKey()), k -> new ArrayList<>()).add(baseProperty);
-		}
-
-		for (final LanguageProperty languageProperty : propertiesToCheck) {
-			final String key = languageProperty.getKey();
-			if (Utilities.isBlank(key)) {
-				reducePlan.skippedEntries.add(LangResources.get("mergeImport_skippedEmptyKey", getEmptyForNull(languageProperty.getPath())));
-				continue;
-			}
-
-			final List<LanguageProperty> basePropertiesWithSameKey = basePropertiesByKey.get(key);
-			if (basePropertiesWithSameKey == null || basePropertiesWithSameKey.isEmpty()) {
-				reducePlan.propertiesWithoutBaseCount++;
-				continue;
-			}
-
-			final List<String> identicalLanguageSigns = new ArrayList<>();
-			boolean hasRemainingValue = false;
-			for (final String languageSign : new ArrayList<>(languageProperty.getAvailableLanguageSigns())) {
-				final String value = languageProperty.getLanguageValue(languageSign);
-				if (Utilities.isNotEmpty(value)) {
-					boolean identicalValueFound = false;
-					boolean baseValueFound = false;
-					for (final LanguageProperty baseProperty : basePropertiesWithSameKey) {
-						final String baseValue = baseProperty.getLanguageValue(languageSign);
-						if (value.equals(baseValue)) {
-							identicalValueFound = true;
-							break;
-						} else if (Utilities.isNotEmpty(baseValue)) {
-							baseValueFound = true;
-						}
-					}
-
-					if (identicalValueFound) {
-						identicalLanguageSigns.add(languageSign);
-					} else {
-						hasRemainingValue = true;
-						if (baseValueFound) {
-							reducePlan.differingValues.add(getPropertyDisplayName(languageProperty.getPath(), key) + " [" + languageSign + "]");
-						}
-					}
-				}
-			}
-
-			if (!identicalLanguageSigns.isEmpty()) {
-				reducePlan.entries.add(new ReducePlanEntry(languageProperty, identicalLanguageSigns, !hasRemainingValue));
-				reducePlan.identicalValueCount += identicalLanguageSigns.size();
-				if (!hasRemainingValue) {
-					reducePlan.emptyPropertyCount++;
-				}
-			}
-		}
-
-		return reducePlan;
+		showData(LangResources.get("reduceByBaseSet_resultTitle"), BaseSetReducer.createReduceReport(baseLanguageProperties.getSourceDescription(), propertiesToCheck.size(), reducePlan, reduceResult));
 	}
 
 	private void exportToExcel() {
 		exportToFile("xlsx", exportFile -> {
 			final List<String> languagePropertySetNames = new ArrayList<>();
-			languagePropertySetNames.add(languagePropertySetName);
-			final ExportToExcelWorker exportToExcelWorker = new ExportToExcelWorker(null, languageProperties, languagePropertySetNames, exportFile, false);
+			languagePropertySetNames.add(model.getLanguagePropertiesSetName());
+			final ExportToExcelWorker exportToExcelWorker = new ExportToExcelWorker(null, model.getLanguageProperties(), languagePropertySetNames, exportFile, false);
 			final Result dialogResult = new ProgressDialog<>(this, LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("export_file"), exportToExcelWorker).open();
 			if (dialogResult == Result.CANCELED) {
 				return false;
@@ -4116,8 +1295,8 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private void exportToCsv() {
 		exportToFile("csv", exportFile -> {
 			final List<String> languagePropertySetNames = new ArrayList<>();
-			languagePropertySetNames.add(languagePropertySetName);
-			final ExportToCsvWorker exportToCsvWorker = new ExportToCsvWorker(null, languageProperties, languagePropertySetNames, exportFile, false);
+			languagePropertySetNames.add(model.getLanguagePropertiesSetName());
+			final ExportToCsvWorker exportToCsvWorker = new ExportToCsvWorker(null, model.getLanguageProperties(), languagePropertySetNames, exportFile, false);
 			final Result dialogResult = new ProgressDialog<>(this, LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("export_file"), exportToCsvWorker).open();
 			if (dialogResult == Result.CANCELED) {
 				return false;
@@ -4135,7 +1314,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	 */
 	private void exportToFile(final String fileExtension, final FileAction exportAction) {
 		try {
-			final File exportFile = chooseFileToSave(getTitle() + " " + LangResources.get("export_file"), Utilities.replaceUsersHome("~" + File.separator + "Downloads"), languagePropertySetName + "_Export_" + DateUtilities.formatDate("yyyy-MM-dd_HH-mm", LocalDateTime.now()) + "." + fileExtension, fileExtension);
+			final File exportFile = DialogUtilities.chooseFileToSave(this, getTitle() + " " + LangResources.get("export_file"), Utilities.replaceUsersHome("~" + File.separator + "Downloads"), model.getLanguagePropertiesSetName() + "_Export_" + DateUtilities.formatDate("yyyy-MM-dd_HH-mm", LocalDateTime.now()) + "." + fileExtension, fileExtension);
 			if (exportFile == null) {
 				showErrorMessage(LangResources.get("export_file"), LangResources.get("canceledByUser"));
 				return;
@@ -4151,7 +1330,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 			try {
 				if (exportAction.process(exportFile)) {
-					hasUnsavedChanges = false;
+					model.setUnsavedChanges(false);
 					showMessage(LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("exportSuccess"));
 				} else {
 					showErrorMessage(LangResources.get("export_file"), LangResources.get("canceledByUser"));
@@ -4163,405 +1342,6 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		} catch (final Exception e) {
 			showError(e);
 		}
-	}
-
-	/**
-	 * Shows a file chooser to open a file.
-	 *
-	 * @param fileExtensions optional extension filters (without dot), e.g. "xlsx"
-	 * @return the selected file or null if canceled
-	 */
-	private File chooseFileToOpen(final String title, final String initialDirectory, final String... fileExtensions) {
-		final JFileChooser fileChooser = createFileChooser(title, initialDirectory, fileExtensions);
-		fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-		return fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION ? fileChooser.getSelectedFile() : null;
-	}
-
-	/**
-	 * Shows a file chooser to select a file to save to.
-	 *
-	 * @return the selected file or null if canceled
-	 */
-	private File chooseFileToSave(final String title, final String initialDirectory, final String proposedFileName, final String... fileExtensions) {
-		final JFileChooser fileChooser = createFileChooser(title, initialDirectory, fileExtensions);
-		fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-		if (Utilities.isNotBlank(proposedFileName)) {
-			fileChooser.setSelectedFile(new File(fileChooser.getCurrentDirectory(), proposedFileName));
-		}
-		return fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION ? fileChooser.getSelectedFile() : null;
-	}
-
-	/**
-	 * Shows a file chooser to select a directory.
-	 *
-	 * @return the selected directory or null if canceled
-	 */
-	private File chooseDirectory(final String title, final String initialDirectory) {
-		final JFileChooser fileChooser = createFileChooser(title, initialDirectory);
-		fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-		return fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION ? fileChooser.getSelectedFile() : null;
-	}
-
-	private static JFileChooser createFileChooser(final String title, final String initialDirectory, final String... fileExtensions) {
-		final JFileChooser fileChooser = new JFileChooser();
-		fileChooser.setDialogTitle(title);
-
-		if (Utilities.isNotBlank(initialDirectory)) {
-			File directory = new File(initialDirectory);
-			// Recent entries may also be files, start in their directory then
-			if (directory.isFile()) {
-				directory = directory.getParentFile();
-			}
-			if (directory != null && directory.isDirectory()) {
-				fileChooser.setCurrentDirectory(directory);
-			}
-		}
-
-		if (fileExtensions != null && fileExtensions.length > 0) {
-			final FileNameExtensionFilter filter = new FileNameExtensionFilter("*." + String.join(", *.", fileExtensions), fileExtensions);
-			fileChooser.addChoosableFileFilter(filter);
-			fileChooser.setFileFilter(filter);
-		}
-
-		return fileChooser;
-	}
-
-	/**
-	 * Sort order of the state of a language value:
-	 * missing values (null) first, then explicitly empty values (""), then real values.
-	 */
-	private static int getValueStateSortOrder(final String value) {
-		if (value == null) {
-			return 0;
-		} else if (value.isEmpty()) {
-			return 1;
-		} else {
-			return 2;
-		}
-	}
-
-	private static String getEmptyForNull(final String string) {
-		return string == null ? "" : string;
-	}
-
-	/**
-	 * Table model backed by "displayedProperties". The language columns
-	 * only show whether a value exists.
-	 */
-	private class LanguagePropertiesTableModel extends AbstractTableModel {
-		private static final long serialVersionUID = 1418240627893557421L;
-
-		@Override
-		public int getRowCount() {
-			return displayedProperties == null ? 0 : displayedProperties.size();
-		}
-
-		@Override
-		public int getColumnCount() {
-			if (languageProperties == null || availableLanguageSigns == null) {
-				return COLUMN_FIRST_LANGUAGE;
-			} else {
-				return COLUMN_FIRST_LANGUAGE + availableLanguageSigns.size() + (commentColumnShown ? 1 : 0);
-			}
-		}
-
-		@Override
-		public String getColumnName(final int column) {
-			switch (column) {
-				case COLUMN_NR:
-					return LangResources.get("columnheader_nr");
-				case COLUMN_PATH:
-					return LangResources.get("columnheader_path");
-				case COLUMN_ORIGINAL_INDEX:
-					return LangResources.get("columnheader_original_index");
-				case COLUMN_KEY:
-					return LangResources.get("columnheader_key");
-				default:
-					if (isCommentColumn(column)) {
-						return LangResources.get("comment");
-					}
-					final String sign = availableLanguageSigns.get(column - COLUMN_FIRST_LANGUAGE);
-					return LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT.equals(sign) ? LangResources.get("columnheader_default") : sign;
-			}
-		}
-
-		@Override
-		public Class<?> getColumnClass(final int column) {
-			// Integer columns are right aligned by JTable's default renderer
-			return column == COLUMN_NR || column == COLUMN_ORIGINAL_INDEX ? Integer.class : String.class;
-		}
-
-		@Override
-		public boolean isCellEditable(final int row, final int column) {
-			return false;
-		}
-
-		@Override
-		public Object getValueAt(final int row, final int column) {
-			final LanguageProperty languageProperty = displayedProperties.get(row);
-			switch (column) {
-				case COLUMN_NR:
-					return row + 1;
-				case COLUMN_PATH:
-					return languageProperty.getPath();
-				case COLUMN_ORIGINAL_INDEX:
-					return languageProperty.getOriginalIndex();
-				case COLUMN_KEY:
-					return languageProperty.getKey();
-				default:
-					if (isCommentColumn(column)) {
-						// Only show whether a comment exists, a missing comment is shown as an empty cell
-						return Utilities.isEmpty(languageProperty.getComment()) ? "" : LangResources.get("value_found_sign");
-					}
-					final String value = languageProperty.getLanguageValue(availableLanguageSigns.get(column - COLUMN_FIRST_LANGUAGE));
-					if (value == null) {
-						// Key is missing in this language file, ResourceBundle falls back to the default value
-						return LangResources.get("value_not_found_sign");
-					} else if (value.isEmpty()) {
-						// Key exists with an explicitly empty value ("key=")
-						return LangResources.get("value_empty_sign");
-					} else {
-						return LangResources.get("value_found_sign");
-					}
-			}
-		}
-	}
-
-	/**
-	 * Redisplays the table content (e.g. after sorting or changing a property) and
-	 * restores the selection of "currentSelectedProperties".
-	 */
-	private void refreshTable() {
-		updateDisplayedProperties(true);
-		technicalSelectionChange = true;
-		try {
-			propertiesTableModel.fireTableDataChanged();
-		} finally {
-			technicalSelectionChange = false;
-		}
-		restoreSelection(currentSelectedProperties);
-	}
-
-	/**
-	 * Selects the given properties (by identity) in the table and scrolls to the
-	 * first one, without triggering the user selection handling.
-	 */
-	private void restoreSelection(final List<LanguageProperty> propertiesToSelect) {
-		technicalSelectionChange = true;
-		try {
-			propertiesTable.clearSelection();
-			if (languageProperties != null && propertiesToSelect != null) {
-				int firstSelectedIndex = -1;
-				for (final LanguageProperty property : propertiesToSelect) {
-					final int index = indexOfIdentical(displayedProperties, property);
-					if (index >= 0) {
-						propertiesTable.addRowSelectionInterval(index, index);
-						if (firstSelectedIndex < 0 || index < firstSelectedIndex) {
-							firstSelectedIndex = index;
-						}
-					}
-				}
-				if (firstSelectedIndex >= 0) {
-					propertiesTable.scrollRectToVisible(propertiesTable.getCellRect(firstSelectedIndex, 0, true));
-				}
-			}
-		} finally {
-			technicalSelectionChange = false;
-		}
-	}
-
-	private List<LanguageProperty> getSelectedProperties() {
-		final List<LanguageProperty> returnList = new ArrayList<>();
-		if (languageProperties != null) {
-			for (final int selectedRow : propertiesTable.getSelectedRows()) {
-				if (selectedRow < displayedProperties.size()) {
-					returnList.add(displayedProperties.get(selectedRow));
-				}
-			}
-		}
-		return returnList;
-	}
-
-	private static int indexOfIdentical(final List<LanguageProperty> list, final LanguageProperty property) {
-		for (int i = 0; i < list.size(); i++) {
-			if (list.get(i) == property) {
-				return i;
-			}
-		}
-		return -1;
-	}
-
-	private static boolean isSameSelection(final List<LanguageProperty> selection1, final List<LanguageProperty> selection2) {
-		if (selection1.size() != selection2.size()) {
-			return false;
-		}
-		for (int i = 0; i < selection1.size(); i++) {
-			if (selection1.get(i) != selection2.get(i)) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	private void selectSearch(final String text, int startIndex, final boolean searchUp, final boolean searchCaseInsensitive,
-			final boolean searchInKeys, final boolean searchInValues, final boolean searchInPath) {
-		if (Utilities.isNotEmpty(text) && languageProperties != null && !displayedProperties.isEmpty() && (searchInKeys || searchInValues || searchInPath)) {
-			if (startIndex < 0) {
-				startIndex = displayedProperties.size() - 1;
-			} else if (startIndex >= displayedProperties.size()) {
-				startIndex = 0;
-			}
-
-			int currentIndex = -1;
-			while (currentIndex != startIndex) {
-				if (currentIndex == -1) {
-					currentIndex = startIndex;
-				}
-
-				if (matchesSearch(displayedProperties.get(currentIndex), text, searchCaseInsensitive, searchInKeys, searchInValues, searchInPath)) {
-					final LanguageProperty foundProperty = displayedProperties.get(currentIndex);
-					if (currentSelectedProperties.size() == 1 && currentSelectedProperties.get(0) == foundProperty) {
-						// Already selected, nothing to do
-						return;
-					}
-
-					// Jumping to the search result must not silently drop unsaved edits of the detail view
-					if (dataWasModified && !askForDiscardChanges()) {
-						return;
-					}
-
-					currentSelectedProperties = new ArrayList<>();
-					currentSelectedProperties.add(foundProperty);
-					restoreSelection(currentSelectedProperties);
-					refreshDetailView();
-					return;
-				}
-
-				if (searchUp) {
-					currentIndex++;
-				} else {
-					currentIndex--;
-				}
-
-				if (currentIndex < 0) {
-					currentIndex = displayedProperties.size() - 1;
-				} else if (currentIndex >= displayedProperties.size()) {
-					currentIndex = 0;
-				}
-			}
-		}
-	}
-
-	private static boolean matchesSearch(final LanguageProperty languageProperty, final String searchText, final boolean searchCaseInsensitive,
-			final boolean searchInKeys, final boolean searchInValues, final boolean searchInPath) {
-		if (searchInKeys && containsIgnoringCase(languageProperty.getKey(), searchText, searchCaseInsensitive)) {
-			return true;
-		} else if (searchInPath && containsIgnoringCase(languageProperty.getPath(), searchText, searchCaseInsensitive)) {
-			return true;
-		} else if (searchInValues && containsLanguageValuePart(languageProperty, searchText, searchCaseInsensitive)) {
-			return true;
-		} else {
-			return false;
-		}
-	}
-
-	private static boolean containsIgnoringCase(final String haystack, final String needle, final boolean searchCaseInsensitive) {
-		if (haystack == null) {
-			return false;
-		} else if (searchCaseInsensitive) {
-			return haystack.toLowerCase().contains(needle.toLowerCase());
-		} else {
-			return haystack.contains(needle);
-		}
-	}
-
-	private static boolean containsLanguageValuePart(final LanguageProperty languageProperty, final String searchText, final boolean searchCaseInsensitive) {
-		for (final String languageSign : languageProperty.getAvailableLanguageSigns()) {
-			if (containsIgnoringCase(languageProperty.getLanguageValue(languageSign), searchText, searchCaseInsensitive)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	@SuppressWarnings("unused")
-	public void checkUsage(final List<LanguageProperty> storageToCheck, final String directory, final String filePattern, final String usagePatternString) throws Exception {
-		final Set<String> existingDefaultProperties = new HashSet<>();
-		final Set<String> existingOverallProperties = new HashSet<>();
-		final Set<String> missingDefaultProperties = new HashSet<>();
-		final Set<String> missingOverallProperties = new HashSet<>();
-		final Set<String> usedProperties = new HashSet<>();
-		final Set<String> unusedProperties = new HashSet<>();
-		final Set<File> filesWithMissingValues = new HashSet<>();
-
-		for (final LanguageProperty languageProperty : languageProperties) {
-			if (Utilities.isNotEmpty(languageProperty.getLanguageValue(LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT))) {
-				existingDefaultProperties.add(languageProperty.getKey());
-			}
-			existingOverallProperties.add(languageProperty.getKey());
-		}
-
-		final Pattern usagePattern = Pattern.compile(
-				"("
-						+ usagePatternString
-						.replace("\\", "\\\\")
-						.replace("(", "\\(")
-						.replace(")", "\\)")
-						.replace("<property>", ")([a-zA-Z0-9._]+)(")
-						+ ")");
-		final List<File> fileList = FileUtilities.getFilesByPattern(new File(directory), filePattern, true);
-		for (final File file : fileList) {
-			final String fileDataString = FileUtilities.readFileToString(file, StandardCharsets.UTF_8);
-			final Matcher matcher = usagePattern.matcher(fileDataString);
-			while (matcher.find()) {
-				final String propertyName = matcher.group(2);
-
-				if (existingDefaultProperties.contains(propertyName)) {
-					usedProperties.add(propertyName);
-				} else {
-					filesWithMissingValues.add(file);
-					missingDefaultProperties.add(propertyName);
-				}
-
-				if (existingOverallProperties.contains(propertyName)) {
-					usedProperties.add(propertyName);
-				} else {
-					missingOverallProperties.add(propertyName);
-				}
-			}
-		}
-		for (final String propertyName : existingOverallProperties) {
-			if (!usedProperties.contains(propertyName)) {
-				unusedProperties.add(propertyName);
-			}
-		}
-
-		String reportText = "";
-		reportText += LangResources.get("reportresults") + "\n";
-		reportText += "Checked directory: " + directory + "\n";
-		reportText += "Checked filePattern: " + filePattern + "\n";
-		reportText += "Checked usagePattern: " + usagePatternString + "\n";
-		reportText += "Properties in default language: " + existingDefaultProperties.size() + "\n";
-		reportText += "Properties in all languages: " + existingOverallProperties.size() + "\n";
-		reportText += "Missing properties in default language: " + missingDefaultProperties.size() + "\n";
-		reportText += "Missing properties in all languages: " + missingOverallProperties.size() + "\n";
-		reportText += "Unused properties in all languages: " + unusedProperties.size() + "\n";
-		reportText += "Used properties in all languages: " + usedProperties.size() + "\n";
-		reportText += "Checked files: " + fileList.size() + "\n";
-		if (filesWithMissingValues.size() > 0) {
-			reportText += "\nFiles with missing properties missing in default languages:\n";
-			reportText += Utilities.join(filesWithMissingValues, "\n") + "\n";
-		}
-		if (missingDefaultProperties.size() > 0) {
-			reportText += "\nProperties missing in default languages:\n";
-			reportText += Utilities.join(missingDefaultProperties, "\n") + "\n";
-		}
-		if (unusedProperties.size() > 0) {
-			reportText += "\nProperties unused in all languages:\n";
-			reportText += Utilities.join(unusedProperties, "\n");
-		}
-
-		showData(LangResources.get("usagereport"), reportText);
 	}
 
 	public boolean askForOverwriteFile(final String filePath) {
@@ -4587,7 +1367,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				&& NetworkUtilities.checkForNetworkConnection();
 	}
 
-	private void showError(final Exception exception) {
+	void showError(final Exception exception) {
 		new ErrorDialog(this, LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION.toString(), LanguagePropertiesManager.APPLICATION_ERROR_EMAIL_ADRESS, exception).open();
 	}
 
@@ -4601,31 +1381,5 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 	public void showErrorMessage(final String title, final String text) {
 		new QuestionDialog(this, title, text, LangResources.get("ok")).setBackgroundColor(SwingColor.LightRed).open();
-	}
-
-	/**
-	 * DocumentListener that runs the same action for every text change.
-	 */
-	private static class SimpleDocumentListener implements DocumentListener {
-		private final Runnable action;
-
-		SimpleDocumentListener(final Runnable action) {
-			this.action = action;
-		}
-
-		@Override
-		public void insertUpdate(final DocumentEvent event) {
-			action.run();
-		}
-
-		@Override
-		public void removeUpdate(final DocumentEvent event) {
-			action.run();
-		}
-
-		@Override
-		public void changedUpdate(final DocumentEvent event) {
-			// Attribute changes only, no text change
-		}
 	}
 }
