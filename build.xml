@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <project default="build_jar" name="Create all Jars for Project LanguagePropertiesManager">
-	<property name="antbuildhelp.version" value="26.0.5" />
+	<property name="antbuildhelp.version" value="26.0.6" />
 	<property name="commons-collections4.version" value="4.4" />
 	<property name="commons-compress.version" value="1.24.0" />
 	<property name="commons-io.version" value="2.14.0" />
@@ -15,7 +15,7 @@
 	<property name="json.version" value="26.2.6" />
 	<property name="proxyautoconfig.version" value="26.1.2" />
 	<property name="network.version" value="26.0.33" />
-	<property name="soderer-utilities.version" value="26.2.90" />
+	<property name="soderer-utilities.version" value="26.2.91" />
 
 	<target name="build_jar" depends="build_setup, cleanup_before, create_jar, cleanup_after" />
 
