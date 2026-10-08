@@ -33,29 +33,37 @@ Tutti i file di questa proprietà linguistica vengono caricati insieme e visuali
 
 3.2 Caricare tutti i set di proprietà disponibili dalle sottodirectory
 
-Questo pulsante apre una finestra di selezione cartella. Vengono quindi caricate tutte le proprietà linguistiche disponibili in tutte le sottodirectory di questa cartella. Lo strumento cerca file con uno degli identificatori di lingua "_en" o "_de" e l'estensione ".properties".
+Questo pulsante apre una finestra di selezione cartella. Vengono quindi caricate tutte le proprietà linguistiche disponibili in tutte le sottodirectory di questa cartella. Lo strumento cerca set di proprietà, cioè file con l'estensione configurata (predefinita ".properties"), di cui almeno uno ha un identificatore di lingua valido come "_en", "_de" o "_it_CH".
+I singoli file di proprietà senza alcun file di lingua accanto (ad es. file di configurazione) vengono ignorati, così come i percorsi che contengono una delle parti di esclusione del valore di configurazione "OpenDirExcludes" (vedere 7.2).
 Per tutti i LanguagePropertiesSetPath trovati vengono caricate anche tutte le altre lingue disponibili e visualizzate nella tabella dati a sinistra dello strumento.
 A seconda del numero di sottodirectory e di file e delle loro dimensioni, l'operazione può richiedere qualche istante.
+Se un file contiene una chiave più volte, viene caricato solo il suo primo valore. Un avviso elenca quindi i file e le chiavi interessati, poiché gli altri valori andrebbero persi al salvataggio successivo.
 
 3.3 Importazione da Excel
 
 Il pulsante "Importa da un singolo file Excel" consente di indicare un singolo file Excel per caricare tutti i set di proprietà linguistiche in esso contenuti.
 Questo file Excel deve essere composto da un unico foglio e può contenere le seguenti colonne:
-	"Path" o "Pfad" (LanguagePropertiesSetPath esatto di questo set di proprietà linguistiche; sono ammessi i segnaposto ~ e $HOME; facoltativo)
-	"Key" o "Schlüssel" (chiave del valore della proprietà; obbligatorio)
+	"Path", "Pfad", "File" o "Datei" (LanguagePropertiesSetPath esatto di questo set di proprietà linguistiche; sono ammessi i segnaposto ~ e $HOME; facoltativo; senza percorsi viene utilizzato il nome del file importato come nome del set di proprietà linguistiche)
+	"Key", "Keys", "Schlüssel", "Schluessel" o "Bezeichner" (chiave del valore della proprietà; obbligatorio)
 	"Index", "Idx" o "Org.Idx" (indicizzazione all'interno di un set di proprietà linguistiche per mantenere l'ordine dei singoli valori; facoltativo)
+	"Comment" o "Kommentar" (commento della proprietà; facoltativo; ignorato se i commenti vengono ignorati nella configurazione)
 	"Default" (valore di lingua predefinito della chiave; facoltativo)
 	"en", "de", "de_AT", "de_CH", "fr", ... (valori di lingua dei singoli identificatori di lingua; sono ammessi anche identificatori specifici per paese con trattino basso)
+Le intestazioni delle colonne non distinguono tra maiuscole e minuscole.
+Se esiste una colonna "Default", una cella vuota indica un valore mancante nelle colonne delle lingue (la chiave non viene scritta in quel file di lingua) e un valore esplicitamente vuoto nella colonna "Default". Senza colonna "Default", le celle vuote vengono importate come valori esplicitamente vuoti.
 
 3.4 Importazione da CSV
 
 Il pulsante "Importa da un singolo file CSV" consente di indicare un singolo file CSV per caricare tutti i set di proprietà linguistiche in esso contenuti.
-Questo file CSV può contenere le seguenti colonne:
-	"Path" o "Pfad" (LanguagePropertiesSetPath esatto di questo set di proprietà linguistiche; sono ammessi i segnaposto ~ e $HOME; facoltativo)
-	"Key" o "Schlüssel" (chiave del valore della proprietà; obbligatorio)
+Questo file CSV utilizza il separatore ";" e le virgolette '"' (i valori con interruzioni di riga sono ammessi tra virgolette) e può contenere le seguenti colonne:
+	"Path", "Pfad", "File" o "Datei" (LanguagePropertiesSetPath esatto di questo set di proprietà linguistiche; sono ammessi i segnaposto ~ e $HOME; facoltativo; senza percorsi viene utilizzato il nome del file importato come nome del set di proprietà linguistiche)
+	"Key", "Keys", "Schlüssel", "Schluessel" o "Bezeichner" (chiave del valore della proprietà; obbligatorio)
 	"Index", "Idx" o "Org.Idx" (indicizzazione all'interno di un set di proprietà linguistiche per mantenere l'ordine dei singoli valori; facoltativo)
+	"Comment" o "Kommentar" (commento della proprietà; facoltativo; ignorato se i commenti vengono ignorati nella configurazione)
 	"Default" (valore di lingua predefinito della chiave; facoltativo)
 	"en", "de", "de_AT", "de_CH", "fr", ... (valori di lingua dei singoli identificatori di lingua; sono ammessi anche identificatori specifici per paese con trattino basso)
+Le intestazioni delle colonne non distinguono tra maiuscole e minuscole.
+Se esiste una colonna "Default", una cella vuota indica un valore mancante nelle colonne delle lingue (la chiave non viene scritta in quel file di lingua) e un valore esplicitamente vuoto nella colonna "Default". Senza colonna "Default", le celle vuote vengono importate come valori esplicitamente vuoti.
 
 3.5 Percorsi usati di recente
 
@@ -78,10 +86,10 @@ Il pulsante apre un menu per la scelta della fonte:
 Se durante la lettura della fonte si verifica un errore o l'operazione viene annullata, le proprietà attualmente caricate rimangono invariate.
 
 Associazione delle proprietà importate:
-Una proprietà importata viene associata a una proprietà esistente con la stessa chiave se questa ha lo stesso LanguagePropertiesSetPath.
-In assenza di tale corrispondenza, è sufficiente lo stesso nome del set di proprietà linguistiche (ad es. per una copia del set di proprietà in un'altra directory). Se una delle due parti non ha informazioni sul percorso (ad es. file Excel e CSV senza colonna "Path"), è sufficiente la sola chiave.
-Se una chiave corrisponde a più set di proprietà caricati, l'associazione è ambigua. La voce viene quindi saltata e riportata nel rapporto dei risultati.
-Il confronto avviene per chiave e lingua. Un valore di lingua è considerato nuovo se la proprietà esistente non ha alcun valore per quella lingua. I commenti vengono trattati come valori di lingua.
+Una proprietà importata viene associata a una proprietà esistente con la stessa chiave. Il percorso della fonte di importazione non viene confrontato, poiché di solito è diverso (ad es. per una copia o un'esportazione del set di proprietà in un'altra directory).
+Solo se la chiave esiste in più set di proprietà caricati, viene utilizzato quello con lo stesso LanguagePropertiesSetPath. Se non esiste, l'associazione è ambigua. La voce viene quindi saltata e riportata nel rapporto dei risultati.
+Se una chiave compare più volte nello stesso set di proprietà caricato, non si tratta di un'ambiguità: viene utilizzata la prima occorrenza (in base all'indice originale).
+Il confronto avviene per chiave e lingua. Un valore di lingua è considerato nuovo se la proprietà esistente non ha alcun valore per quella lingua. I commenti delle proprietà esistenti non vengono confrontati e restano invariati; le nuove chiavi riprendono il proprio commento dalla fonte di importazione.
 Le nuove chiavi vengono assegnate al set di proprietà caricato corrispondente, per quanto possibile in modo univoco. In questo modo, al salvataggio non si scrive nei file della fonte di importazione.
 Se ciò non è possibile, le nuove chiavi mantengono il LanguagePropertiesSetPath della fonte di importazione e verrebbero scritte lì al salvataggio. Il rapporto dei risultati lo segnala espressamente.
 I nuovi identificatori di lingua vengono creati per tutte le proprietà.
@@ -108,11 +116,12 @@ Il pulsante "Confronta con il set di base (rimuovi i valori identici)" confronta
 Restano solo le differenze rispetto al set di base. Ciò è utile, ad esempio, per set di proprietà specifici di un cliente o di una variante, che devono contenere solo i testi che sostituiscono quelli di un prodotto di base.
 Il pulsante è disponibile solo se sono caricate delle proprietà. Apre lo stesso menu di selezione della fonte di 3.6. La fonte scelta viene letta solo come base di confronto e non viene acquisita nello strumento.
 Se durante la lettura della fonte si verifica un errore o l'operazione viene annullata, le proprietà attualmente caricate rimangono invariate.
-Se nella tabella dati sono selezionate delle righe, vengono confrontate solo queste; altrimenti tutte le proprietà.
+Se nella tabella dati sono selezionate delle righe, vengono confrontate solo queste; altrimenti tutte le proprietà visualizzate nella tabella dati (con un filtro di ricerca attivo solo i risultati; vedere 5.1).
 
 Associazione e confronto:
-Ogni proprietà caricata viene associata alla sua controparte nel set di base secondo le stesse regole di 3.6 (stesso LanguagePropertiesSetPath; altrimenti stesso nome del set di proprietà linguistiche; altrimenti la sola chiave se manca l'informazione sul percorso).
-Se una chiave corrisponde a più voci del set di base, l'associazione è ambigua. La voce viene quindi saltata e riportata nel rapporto dei risultati.
+Ogni proprietà caricata viene associata alle voci del set di base con la stessa chiave. Il percorso non viene confrontato, poiché il set di base si trova di solito in un'altra posizione.
+Se la chiave compare più volte nel set di base, un valore è considerato identico se corrisponde al valore di una qualsiasi di queste voci.
+Le voci con chiave vuota vengono saltate e riportate nel rapporto dei risultati.
 Il confronto avviene per chiave e lingua. Vengono rimossi solo i valori esattamente uguali al valore della stessa lingua nel set di base.
 I valori che differiscono dal set di base o che vi mancano vengono mantenuti. Allo stesso modo, le proprietà senza controparte nel set di base restano invariate.
 I commenti non vengono confrontati e vengono mantenuti.
@@ -144,6 +153,9 @@ In entrambi i casi è possibile scartare in qualsiasi momento tutte le modifiche
 Il pulsante "Passa alla visualizzazione del testo di archiviazione" mostra la chiave e i valori di lingua nella codifica tecnica JAVA encoding.
 Ciò serve a indicare caratteri Unicode complessi, se necessario.
 Con il pulsante "Passa alla visualizzazione del testo visibile" è possibile tornare alla visualizzazione normale.
+Un campo di lingua vuoto rappresenta un valore mancante (la chiave non viene scritta in quel file di lingua, quindi vale il valore Default). Ciò viene indicato con "∅" accanto alla lingua.
+Il menu contestuale di un campo di lingua (clic destro) offre "Impostare un valore vuoto" (la chiave viene scritta con un valore vuoto come "key=") e "Contrassegnare come mancante".
+La chiave non può essere vuota. Se non sono ancora caricate proprietà, all'aggiunta della prima proprietà viene richiesto il nome del nuovo set di proprietà linguistiche.
 
 4.2 Eliminazione dei valori delle proprietà
 
@@ -167,10 +179,13 @@ Con il pulsante "Translate" è possibile creare i valori di lingua mancanti util
 A tale scopo è necessaria una chiave API per l'autorizzazione, ottenibile su "https://www.deepl.com/pro-api/".
 Gli account di prova limitati sono gratuiti, ma richiedono la registrazione di una carta di credito.
 La chiave API può essere inserita nella finestra di configurazione dell'applicazione o al primo utilizzo del pulsante "Translate".
-Viene selezionata prima la lingua di origine, poi la lingua di destinazione.
+Il pulsante apre un menu con "Tradurre in una lingua di destinazione" e "Tradurre in tutte le lingue di destinazione" (tutte le altre lingue supportate da DeepL).
+Viene selezionata prima la lingua di origine, poi la lingua di destinazione (solo per la traduzione in una lingua di destinazione).
 Se si utilizza la lingua Default, è obbligatorio selezionare la lingua associata come lingua predefinita.
 Se è disponibile una sola altra lingua, questa viene selezionata automaticamente come lingua di destinazione.
-Se nella tabella dati sono selezionate delle righe, vengono tradotte solo queste; altrimenti tutte le proprietà.
+Se nella tabella dati sono selezionate delle righe, vengono tradotte solo queste; altrimenti tutte le proprietà visualizzate nella tabella dati (con un filtro di ricerca attivo solo i risultati; vedere 5.1).
+Vengono compilati solo i valori di destinazione vuoti; le traduzioni esistenti non vengono sovrascritte.
+I valori contenuti nel file facoltativo delle costanti di traduzione (vedere 7.2) e i numeri vengono ripresi senza DeepL.
 La traduzione viene eseguita con un indicatore di avanzamento e può essere annullata. Al termine viene visualizzato il numero di traduzioni create.
 La connessione a DeepL utilizza le impostazioni proxy definite nella configurazione dell'applicazione.
 
@@ -180,7 +195,7 @@ Con il pulsante "Trasferisci" è possibile copiare i valori di lingua da un iden
 Ciò è utile, ad esempio, per varianti linguistiche come "de" e "de_AT", oppure per riprendere i valori Default in una lingua specifica.
 Viene selezionata prima la lingua di origine, poi la lingua di destinazione. Se è disponibile una sola altra lingua, questa viene utilizzata automaticamente come lingua di destinazione.
 Vengono trasferiti solo i valori di origine non vuoti. I valori esistenti della lingua di destinazione vengono sovrascritti.
-Se nella tabella dati sono selezionate delle righe, vengono elaborate solo queste; altrimenti tutte le proprietà.
+Se nella tabella dati sono selezionate delle righe, vengono elaborate solo queste; altrimenti tutte le proprietà visualizzate nella tabella dati (con un filtro di ricerca attivo solo i risultati; vedere 5.1).
 Al termine viene visualizzato il numero di valori trasferiti.
 
 4.7 Svuotamento dei valori di lingua identici
@@ -188,7 +203,8 @@ Al termine viene visualizzato il numero di valori trasferiti.
 Il pulsante "Svuota identici" svuota i valori di una lingua di destinazione che corrispondono esattamente al valore di una lingua di origine.
 Ciò è utile, ad esempio, per individuare valori non tradotti che sono stati solo copiati da un'altra lingua, oppure per rimuovere valori superflui di una variante linguistica che hanno comunque lo stesso testo della lingua principale.
 La selezione delle lingue di origine e di destinazione avviene come in 4.6.
-Se nella tabella dati sono selezionate delle righe, vengono elaborate solo queste; altrimenti tutte le proprietà.
+Se nella tabella dati sono selezionate delle righe, vengono elaborate solo queste; altrimenti tutte le proprietà visualizzate nella tabella dati (con un filtro di ricerca attivo solo i risultati; vedere 5.1).
+Un valore svuotato della lingua Default diventa un valore esplicitamente vuoto, in modo che la chiave resti nel file Default.
 Al termine viene visualizzato il numero di valori svuotati.
 
 4.8 Rimozione dei duplicati
@@ -209,13 +225,17 @@ Chiavi, commenti e tutti i valori di lingua vengono controllati per:
 	Surrogati Unicode isolati
 	Caratteri di controllo (eccetto tabulazione e interruzione di riga)
 Le chiavi vengono inoltre controllate per verificare se sono vuote, contengono spazi o contengono i caratteri non ammessi "=" o ":".
+Inoltre i valori di lingua di ogni chiave vengono confrontati con il valore di riferimento (lingua Default, altrimenti la prima lingua con un valore):
+	I segnaposto di MessageFormat ("{0}", "{1,number}") e di String.format ("%s", "%1$d") devono coincidere in tutte le lingue
+	Una punteggiatura finale diversa, spazi iniziali o finali in una sola lingua e interruzioni di riga nelle traduzioni di testi su una sola riga vengono segnalati come scostamenti formali
 Gli errori trovati vengono elencati in un rapporto con il LanguagePropertiesSetPath, la chiave e il campo interessato. Se non vengono trovati errori, viene visualizzato solo un messaggio corrispondente.
 
 4.10 Menu contestuale delle colonne della tabella
 
 Facendo clic con il tasto destro sull'intestazione o su una cella di determinate colonne della tabella dati si apre un menu contestuale:
+	Righe: "Copia le righe selezionate in formato CSV" copia negli appunti le righe selezionate con le colonne visualizzate e i valori completi.
 	Colonna "Percorso": rimuove il LanguagePropertiesSetPath di tutte le proprietà. Al salvataggio, queste proprietà vengono trattate come proprietà appena create (vedere 6.1 e 6.2).
-	Colonne delle lingue: svuota tutti i valori di questa lingua (l'identificatore di lingua viene mantenuto) oppure elimina completamente l'identificatore di lingua (come in 4.4).
+	Colonne delle lingue: per le righe selezionate "Imposta valore vuoto" o "Contrassegna come mancanti" (vedere 4.1). Inoltre svuota tutti i valori di questa lingua (l'identificatore di lingua viene mantenuto; la lingua Default mantiene le sue chiavi con valori vuoti) oppure elimina completamente l'identificatore di lingua (come in 4.4).
 	Colonna "Commento": rimuove i commenti di tutte le proprietà.
 Prima di ciascuna di queste azioni viene visualizzata una richiesta di conferma con il numero di voci interessate.
 La colonna dei commenti viene visualizzata solo se nella configurazione dell'applicazione i commenti non vengono ignorati.
@@ -240,6 +260,9 @@ Le caselle di controllo accanto al campo di ricerca stabiliscono come e dove cer
 	"Chiave" (ricerca nelle chiavi)
 	"Valore" (ricerca in tutti i valori di lingua)
 	"Percorso" (ricerca nel LanguagePropertiesSetPath)
+	"Filtro" (la tabella dati mostra solo le proprietà corrispondenti)
+La barra di stato sotto la tabella dati indica su quali proprietà agiscono le azioni traduci, trasferisci, svuota identici e confronta con il set di base (le righe selezionate o tutte le proprietà visualizzate).
+Il tasto Esc annulla la selezione della tabella dati.
 
 5.2 Statistiche
 
@@ -273,8 +296,9 @@ Questo elenco può essere riordinato e modificato come in 3.5.
 Non appena sono state apportate modifiche ai valori di una proprietà linguistica, il pulsante "Salva file" diventa disponibile.
 Se ai valori del set di proprietà è già stato assegnato un LanguagePropertiesSetPath, i dati vengono (ri)salvati esattamente lì.
 Per i valori appena creati, se è caricato un solo LanguagePropertiesSetPath, questo viene utilizzato come percorso predefinito per i nuovi valori.
-Se sono disponibili più LanguagePropertiesSetPath, viene richiesto una sola volta il LanguagePropertiesSetPath da utilizzare per tutti i nuovi valori.
-Prima del salvataggio viene chiesto se le proprietà già presenti nei file di destinazione, ma non caricate nello strumento, debbano essere mantenute.
+Se sono disponibili più LanguagePropertiesSetPath, viene richiesto una sola volta un file il cui LanguagePropertiesSetPath viene utilizzato per tutti i nuovi valori.
+Prima del salvataggio viene chiesto se le proprietà già presenti nei file di destinazione, ma non caricate nello strumento, debbano essere mantenute. Chiudendo questa domanda il salvataggio viene annullato.
+Se il salvataggio viene annullato o non riesce, le proprietà restano considerate non salvate.
 Se le directory di destinazione non esistono ancora, viene proposto di crearle.
 
 6.2 Salvare i set di proprietà in una directory in base al nome del set
@@ -283,7 +307,8 @@ Se tutte le proprietà attualmente disponibili nello strumento hanno già un pro
 Se invece esistono proprietà senza LanguagePropertiesSetPath, il pulsante richiede di indicare un percorso di directory. Sotto tale percorso vengono quindi cercati tutti i LanguagePropertiesSetPath disponibili.
 Inoltre viene richiesto un nome (preimpostato con "Multiple") con cui queste proprietà senza percorso vengono trattate come un set di proprietà linguistiche a sé stante.
 I LanguagePropertiesSetPath attualmente disponibili nello strumento vengono confrontati con questi e, se il nome del set di proprietà linguistiche corrisponde, per il salvataggio viene utilizzato il percorso del LanguagePropertiesSetPath trovato.
-Ciò funziona solo se i nomi dei set di proprietà linguistiche sono univoci. In presenza di nomi ambigui, l'operazione viene interrotta con un messaggio di errore.
+Un set di proprietà che esiste già nel proprio LanguagePropertiesSetPath sotto questa directory viene salvato direttamente lì; set con lo stesso nome in sottodirectory diverse (ad es. di più moduli) non sono quindi un problema.
+Gli altri set di proprietà vengono associati in base al loro nome. Ciò funziona solo se il nome è univoco sotto la directory. In presenza di nomi ambigui, l'operazione viene interrotta con un messaggio di errore.
 Se per un LanguagePropertiesSetPath attualmente disponibile nello strumento non viene trovato alcun percorso adatto, questo set di proprietà linguistiche viene salvato nella directory di base selezionata.
 Come in 6.1, viene chiesto se le proprietà già esistenti debbano essere mantenute e viene proposta la creazione delle directory mancanti.
 Al termine vengono elencati tutti i set di proprietà salvati.
@@ -293,26 +318,31 @@ Al termine vengono elencati tutti i set di proprietà salvati.
 Il pulsante "Esporta in un singolo file Excel" salva tutti i LanguagePropertiesSetPath attualmente disponibili nello strumento in un singolo file Excel.
 A tale scopo viene creato un file Excel con un foglio e le seguenti colonne di dati:
 	"Path" (LanguagePropertiesSetPath esatto di questo set di proprietà linguistiche; ove possibile viene utilizzato il segnaposto ~ per la directory utente del sistema)
+	"Index" (indicizzazione all'interno di un set di proprietà linguistiche per mantenere l'ordine dei singoli valori)
 	"Key" (chiave del valore della proprietà)
-	"Org.Idx" (indicizzazione all'interno di un set di proprietà linguistiche per mantenere l'ordine dei singoli valori)
+	"Comment" (commento della proprietà, solo se almeno una proprietà ha un commento)
 	"Default" (valore di lingua predefinito della chiave, se disponibile)
 	"en", "de", "de_AT", "de_CH", "fr", ... (valori di lingua dei singoli identificatori di lingua; sono ammessi anche identificatori specifici per paese con trattino basso)
-Se il file selezionato esiste già, viene richiesta una conferma prima di sovrascriverlo.
+Se il file selezionato esiste già, viene richiesta una conferma prima di sovrascriverlo. Il file esistente viene sostituito solo dopo un'esportazione riuscita.
+Un'esportazione riuscita vale come salvataggio, quindi in seguito non ci sono più modifiche non salvate.
 
 6.4 Esportare in un singolo file CSV
 
 Il pulsante "Esporta in un singolo file CSV" salva tutti i LanguagePropertiesSetPath attualmente disponibili nello strumento in un singolo file CSV.
-A tale scopo viene creato un file CSV con le seguenti colonne di dati:
+A tale scopo viene creato un file CSV con il separatore ";" e le virgolette '"' e con le seguenti colonne di dati:
 	"Path" (LanguagePropertiesSetPath esatto di questo set di proprietà linguistiche; ove possibile viene utilizzato il segnaposto ~ per la directory utente del sistema)
+	"Index" (indicizzazione all'interno di un set di proprietà linguistiche per mantenere l'ordine dei singoli valori)
 	"Key" (chiave del valore della proprietà)
-	"Org.Idx" (indicizzazione all'interno di un set di proprietà linguistiche per mantenere l'ordine dei singoli valori)
+	"Comment" (commento della proprietà, solo se almeno una proprietà ha un commento)
 	"Default" (valore di lingua predefinito della chiave, se disponibile)
 	"en", "de", "de_AT", "de_CH", "fr", ... (valori di lingua dei singoli identificatori di lingua; sono ammessi anche identificatori specifici per paese con trattino basso)
-Se il file selezionato esiste già, viene richiesta una conferma prima di sovrascriverlo.
+Se il file selezionato esiste già, viene richiesta una conferma prima di sovrascriverlo. Il file esistente viene sostituito solo dopo un'esportazione riuscita.
+Un'esportazione riuscita vale come salvataggio, quindi in seguito non ci sono più modifiche non salvate.
 
 6.5 Chiusura con modifiche non salvate
 
 Alla chiusura dello strumento e prima del caricamento di altre proprietà (da 3.1 a 3.5), in presenza di modifiche non salvate viene chiesto se debbano essere scartate.
+Se la successiva selezione di file o directory viene annullata, le proprietà caricate restano invariate, comprese le loro modifiche non salvate.
 
 
 7. Valori di configurazione personalizzabili
@@ -323,3 +353,12 @@ Per impostazione predefinita, questo strumento utilizza l'estensione ".propertie
 Per modificare questo comportamento è possibile impostare il valore di configurazione "PropertiesFileExtension", disponibile nel menu di configurazione tramite il pulsante "Configurazione" (simbolo della chiave inglese).
 Ciò consente di utilizzare estensioni come "_mytext.properties", che non seguono lo standard delle proprietà linguistiche.
 Si noti che questa modifica è permanente e si applica a tutte le operazioni di caricamento e salvataggio nell'interfaccia grafica.
+Un punto iniziale mancante viene aggiunto automaticamente ("properties" viene utilizzato come ".properties").
+
+7.2 Altri valori di configurazione
+
+	"OpenDirExcludes": parti di percorso separate da ";" (predefinito "__;/src/test/;\src\test\;/bin/;\bin\"). I file il cui percorso contiene una di queste parti vengono ignorati durante il caricamento di una directory (3.2) e il salvataggio in una directory (6.2).
+	"IgnoreComments": se impostato, i commenti non vengono né caricati né visualizzati e la colonna dei commenti viene nascosta.
+	"DeepL_BaseUrl" e "DeepL_ApiKey": indirizzo e chiave API per la traduzione con DeepL (4.5).
+	"TranslationConstantsFile": file CSV facoltativo (UTF-8, separatore ";", "," o tabulazione) con valori che DeepL non deve modificare, ad es. nomi di prodotti o codici.
+		La prima riga contiene gli identificatori di lingua (ad es. "de;en;it"). Una riga con un solo valore definisce un valore identico in tutte le lingue; le altre righe contengono il valore per lingua.

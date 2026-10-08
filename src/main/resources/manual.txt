@@ -33,29 +33,37 @@ All files of this language property are loaded together and displayed in the dat
 
 3.2 Loading All Available Property Sets from Subdirectories
 
-This button opens a folder selection window. All available language properties from all subdirectories of this folder are then loaded. The tool searches for files with one of the language identifiers "_en" or "_de" and the file extension ".properties".
+This button opens a folder selection window. All available language properties from all subdirectories of this folder are then loaded. The tool searches for properties sets, i.e. files with the configured file extension (default ".properties"), of which at least one file has a valid language identifier like "_en", "_de" or "_de_AT".
+Standalone properties files without any language file next to them (e.g. configuration files) are ignored, as are paths containing one of the exclude parts of the configuration value "OpenDirExcludes" (see 7.2).
 For all LanguagePropertiesSetPaths found, all other available languages are loaded and displayed in the data table on the left side of the tool.
 Depending on the number of subdirectories and files and their size, this may take a moment.
+If a file contains a key more than once, only its first value is loaded. A notice then lists the affected files and keys, because the further values would be lost on the next save.
 
 3.3 Excel Import
 
 The "Import from single Excel file" button allows you to specify a single Excel file to load all language property sets stored in it.
 This Excel file should consist of a single sheet and can contain the following columns:
-	"Path" or "Pfad" (more precisely, LanguagePropertiesSetPath for this language properties set; placeholders ~ and $HOME are allowed, optional)
-	"Key" or "Schlüssel" (key to the property value, required)
+	"Path", "Pfad", "File" or "Datei" (more precisely, LanguagePropertiesSetPath for this language properties set; placeholders ~ and $HOME are allowed, optional; without paths the name of the imported file is used as Language Properties Set Name)
+	"Key", "Keys", "Schlüssel", "Schluessel" or "Bezeichner" (key to the property value, required)
 	"Index", "Idx", or "Org.Idx" (indexing within a language properties set to maintain an order of the individual property values, optional)
+	"Comment" or "Kommentar" (comment of the property, optional, ignored if comments are ignored in the configuration)
 	"Default" (default language value for the key, optional)
 	"en", "de", "de_AT", "de_CH", "fr", ... (language values of the individual language identifiers, even country-specific identifiers with an underscore are allowed)
+The column headers are not case-sensitive.
+If there is a "Default" column, an empty cell means a missing value in the language columns (the key is not written into that language file) and an explicitly empty value in the "Default" column. Without a "Default" column, empty cells are imported as explicitly empty values.
 
 3.4 CSV Import
 
 The "Import from single CSV file" button allows you to specify a single CSV file to load all language property sets stored in it.
-This CSV file can contain the following columns:
-	"Path" or "Pfad" (more precisely, LanguagePropertiesSetPath for this language properties set; placeholders ~ and $HOME are allowed, optional)
-	"Key" or "Schlüssel" (key to the property value, required)
+This CSV file uses the separator ";" and the quote character '"' (values with line breaks are allowed within quotes) and can contain the following columns:
+	"Path", "Pfad", "File" or "Datei" (more precisely, LanguagePropertiesSetPath for this language properties set; placeholders ~ and $HOME are allowed, optional; without paths the name of the imported file is used as Language Properties Set Name)
+	"Key", "Keys", "Schlüssel", "Schluessel" or "Bezeichner" (key to the property value, required)
 	"Index", "Idx", or "Org.Idx" (indexing within a language properties set to maintain an order of the individual property values, optional)
+	"Comment" or "Kommentar" (comment of the property, optional, ignored if comments are ignored in the configuration)
 	"Default" (default language value for the key, optional)
 	"en", "de", "de_AT", "de_CH", "fr", ... (language values of the individual language identifiers, even country-specific identifiers with an underscore are allowed)
+The column headers are not case-sensitive.
+If there is a "Default" column, an empty cell means a missing value in the language columns (the key is not written into that language file) and an explicitly empty value in the "Default" column. Without a "Default" column, empty cells are imported as explicitly empty values.
 
 3.5 Recently Used Paths
 
@@ -78,10 +86,10 @@ The button opens a menu for selecting the source:
 If an error occurs while reading the source or the process is canceled, the currently loaded properties remain unchanged.
 
 Matching of imported properties:
-An imported property is matched to an existing property with the same key if that property has the same LanguagePropertiesSetPath.
-If there is no such match, the same Language Properties Set Name is sufficient (e.g. for a copy of the properties set in another directory). If one side has no path information (e.g. Excel and CSV files without a "Path" column), the key alone is sufficient.
-If a key matches several loaded properties sets, the match is ambiguous. This entry is then skipped and listed in the result report.
-Comparison is done per key and language. A language value counts as new if the existing property has no value for this language. Comments are treated like language values.
+An imported property is matched to an existing property with the same key. The path of the import source is not compared, because it usually differs (e.g. for a copy or an export of the properties set in another directory).
+Only if the key exists in several loaded properties sets, the one with the same LanguagePropertiesSetPath is used. If there is none, the match is ambiguous. This entry is then skipped and listed in the result report.
+If a key occurs more than once within the same loaded properties set, this is no ambiguity: the first occurrence (by original index) is used.
+Comparison is done per key and language. A language value counts as new if the existing property has no value for this language. Comments of existing properties are not compared and remain unchanged, new keys take over their comment from the import source.
 New keys are assigned to the matching loaded properties set, as far as this is unambiguously possible. This way, saving does not write into the files of the import source.
 If this is not possible, new keys keep the LanguagePropertiesSetPath of the import source and would be written there when saving. The result report explicitly points this out.
 Newly added language identifiers are created for all properties.
@@ -108,11 +116,12 @@ The "Compare with base set (remove identical values)" button compares the curren
 Only the deviations from the base set remain. This is helpful, for example, for customer-specific or variant-specific properties sets that should only contain the texts overriding the texts of a base product.
 The button is only available if properties are loaded. It opens the same source selection menu as in 3.6. The selected source is only read as the basis for comparison and is not taken over into the tool.
 If an error occurs while reading the source or the process is canceled, the currently loaded properties remain unchanged.
-If rows are selected in the data table, only these are compared, otherwise all properties.
+If rows are selected in the data table, only these are compared, otherwise all properties shown in the data table (with an active search filter only the hits, see 5.1).
 
 Matching and comparison:
-Each loaded property is matched to its counterpart in the base set by the same rules as in 3.6 (same LanguagePropertiesSetPath, otherwise same Language Properties Set Name, otherwise the key alone if path information is missing).
-If a key matches several entries in the base set, the match is ambiguous. This entry is then skipped and listed in the result report.
+Each loaded property is matched to the entries of the base set with the same key. The path is not compared, because the base set is usually stored in another place.
+If the key occurs several times in the base set, a value counts as identical if it equals the value of any of these entries.
+Entries with an empty key are skipped and listed in the result report.
 Comparison is done per key and language. Only values that are exactly equal to the value of the same language in the base set are removed.
 Values that differ from the base set or are missing there are kept. Likewise, properties without a counterpart in the base set remain unchanged.
 Comments are not compared and are kept.
@@ -144,6 +153,9 @@ In both cases, all unwanted changes can be discarded at any time using the "Disc
 The "Switch to Saved Text View" button changes the display of key and language values for technical encoding in JAVA encoding.
 This is used to specify complex Unicode characters if necessary.
 The "Switch to Displayed Text View" button can be used to return to the normal display view.
+An empty language field stands for a missing value (the key is not written into this language file, so the default value applies). This is marked with "∅" next to the language.
+The context menu of a language field (right click) offers "Set empty value" (the key is written with an empty value as "key=") and "Set as missing".
+The key must not be empty. If no properties are loaded yet, the name of the new language properties set is requested when adding the first property.
 
 4.2 Deleting Property Values
 
@@ -167,10 +179,13 @@ The "Translate" button can be used to create missing language values by using th
 Therefore an API key is needed for authorization, which can be obtained at "https://www.deepl.com/pro-api/".
 Limited test accounts are free, but still require credit card registration.
 The API key may be entered in the application configuration dialog or on first usage of the "Translate" button.
-First the source language is selected, then the target language.
+The button opens a menu with "Translate into one target language" and "Translate into all target languages" (all other languages supported by DeepL).
+First the source language is selected, then the target language (only when translating into one target language).
 Using the Default language sign makes it mandatory to select a language which is associated as default language.
 If there is only one other language sign available, that one will automatically be selected as target language sign.
-If rows are selected in the data table, only these are translated, otherwise all properties.
+If rows are selected in the data table, only these are translated, otherwise all properties shown in the data table (with an active search filter only the hits, see 5.1).
+Only empty target values are filled, existing translations are not overwritten.
+Values contained in the optional translation constants file (see 7.2) as well as plain numbers are taken over without DeepL.
 The translation runs with a progress display and can be canceled. Afterwards the number of created translations is shown.
 The connection to DeepL uses the proxy settings configured in the application configuration.
 
@@ -180,7 +195,7 @@ The "Transfer" button can be used to copy language values from one language tag 
 This is helpful, for example, for language variants such as "de" and "de_AT", or to take over default values into a specific language.
 First the source language is selected, then the target language. If only one other language is available, it is automatically used as target language.
 Only non-empty source values are transferred. Existing values of the target language are overwritten.
-If rows are selected in the data table, only these are processed, otherwise all properties.
+If rows are selected in the data table, only these are processed, otherwise all properties shown in the data table (with an active search filter only the hits, see 5.1).
 Afterwards the number of transferred values is shown.
 
 4.7 Clearing Identical Language Values
@@ -188,7 +203,8 @@ Afterwards the number of transferred values is shown.
 The "Clear identical" button clears values of a target language that are exactly equal to the value of a source language.
 This is helpful, for example, to find untranslated values that were only copied from another language, or to remove superfluous values of a language variant that have the same text as the main language anyway.
 Source and target language are selected as in 4.6.
-If rows are selected in the data table, only these are processed, otherwise all properties.
+If rows are selected in the data table, only these are processed, otherwise all properties shown in the data table (with an active search filter only the hits, see 5.1).
+A cleared value of the default language becomes an explicitly empty value, so the key is kept in the default file.
 Afterwards the number of cleared values is shown.
 
 4.8 Removing Duplicates
@@ -209,13 +225,17 @@ Keys, comments and all language values are checked for:
 	Isolated Unicode surrogates
 	Control characters (except tab and line break)
 In addition, keys are checked for being empty, containing spaces or containing the illegal characters "=" or ":".
+The language values of each key are also compared with the reference value (default language, otherwise the first language with a value):
+	Placeholders of MessageFormat ("{0}", "{1,number}") and String.format ("%s", "%1$d") must be the same in all languages
+	Differing end punctuation, leading or trailing whitespace in only one language and line breaks in translations of single-line texts are reported as formal deviations
 Errors found are listed in a report with LanguagePropertiesSetPath, key and affected field. If no errors are found, only a corresponding notice is shown.
 
 4.10 Context Menu of the Table Columns
 
 Right-clicking the header or a cell of certain columns of the data table opens a context menu:
+	Rows: "Copy selected rows as CSV" copies the selected rows with the shown columns and the complete values into the clipboard.
 	Column "Path": Removes the LanguagePropertiesSetPath of all properties. These properties are treated like newly created properties when saving (see 6.1 and 6.2).
-	Language columns: Clears all values of this language (the language tag itself is kept) or deletes the language tag completely (as in 4.4).
+	Language columns: For the selected rows, "Set empty value" or "Set as missing" (see 4.1). Furthermore, clears all values of this language (the language tag itself is kept, the default language keeps its keys with empty values) or deletes the language tag completely (as in 4.4).
 	Column "Comment": Removes the comments of all properties.
 Before each of these actions, a confirmation prompt appears showing the number of affected entries.
 The comment column is only shown if comments are not ignored in the application configuration.
@@ -240,6 +260,9 @@ The checkboxes next to the search field define how and where to search. They can
 	"Key" (search in the keys)
 	"Value" (search in all language values)
 	"Path" (search in the LanguagePropertiesSetPath)
+	"Filter" (the data table only shows the matching properties)
+The status bar below the data table shows which properties the actions translate, transfer, clear identical and compare with base set affect (the selected rows, or all displayed properties).
+The Escape key clears the selection of the data table.
 
 5.2 Statistics
 
@@ -273,8 +296,9 @@ This list can be reordered and edited as in 3.5.
 As soon as changes have been made to the values of a language property, the "Save Files" button becomes available.
 If a LanguagePropertiesSetPath has already been assigned to the values in the properties set, the data will be (re)saved to that exact location.
 For newly created values and only one LanguagePropertiesSetPath is loaded, this LanguagePropertiesSetPath is used as the default path for new values.
-If multiple LanguagePropertiesSetPaths are available, you will be prompted to specify the LanguagePropertiesSetPath to be used for all new values.
-Before saving, you are asked whether properties already existing in the target files, but not loaded in the tool, should be kept.
+If multiple LanguagePropertiesSetPaths are available, you will be prompted to specify a file, whose LanguagePropertiesSetPath is used for all new values.
+Before saving, you are asked whether properties already existing in the target files, but not loaded in the tool, should be kept. Closing this question cancels the save.
+If saving is canceled or fails, the properties still count as unsaved.
 If target directories do not exist yet, you are offered to create them.
 
 6.2 Save Property Sets to a Directory Based on Set Name
@@ -283,7 +307,8 @@ If all properties currently available in the tool already have their own Languag
 If, however, there are properties without a LanguagePropertiesSetPath, the button prompts you to specify a directory path. All available LanguagePropertiesSetPaths are then searched for under this path.
 In addition, you will be asked to enter a name (pre-filled with "Multiple") under which these path-less properties are treated as their own language properties set.
 The LanguagePropertiesSetPaths currently available in the tool are compared with these paths, and if a matching Language Properties Set Name is found, the path of the found LanguagePropertiesSetPath is used for saving.
-This only works if the Language Properties Set Names are unique. If ambiguous names occur, the process is aborted with an error message.
+A properties set that already exists at its own LanguagePropertiesSetPath below this directory is saved there directly, so equally named sets in different subdirectories (e.g. of several modules) are no problem.
+Other properties sets are matched by their Language Properties Set Name. This only works if the name is unique below the directory. If ambiguous names occur, the process is aborted with an error message.
 If no suitable path is found for a LanguagePropertiesSetPath currently available in the tool, this language properties set is saved in the selected base directory.
 As in 6.1, you are asked whether already existing properties should be kept, and the creation of missing directories is offered.
 Finally, all saved properties sets are listed.
@@ -293,26 +318,31 @@ Finally, all saved properties sets are listed.
 The "Export to single Excel file" button saves all LanguagePropertiesSetPaths currently available in the tool to a single Excel file.
 For this purpose, an Excel file is created with a sheet and the following columns of data:
 	"Path" (more precisely, LanguagePropertiesSetPath for this language properties set; the placeholder ~ for the user directory in the system is used where possible)
+	"Index" (indexing within a language properties set to maintain a sequence of individual property values)
 	"Key" (key to the property value)
-	"Org.Idx" (indexing within a language properties set to maintain a sequence of individual property values)
+	"Comment" (comment of the property, only if any property has a comment)
 	"Default" (default language value for the key, if available)
 	"en", "de", "de_AT", "de_CH", "fr", ... (language values of the individual language identifiers; country-specific identifiers with an underscore are also permitted)
-If the selected file already exists, you are asked before it is overwritten.
+If the selected file already exists, you are asked before it is overwritten. The existing file is only replaced after a successful export.
+A successful export counts as saving, so there are no unsaved changes afterwards.
 
 6.4 Export to Single CSV File
 
 The "Export to single CSV file" button saves all LanguagePropertiesSetPaths currently available in the tool to a single CSV file.
-For this purpose, a CSV file is created with the following columns of data:
+For this purpose, a CSV file with the separator ";" and the quote character '"' is created with the following columns of data:
 	"Path" (more precisely, LanguagePropertiesSetPath for this language properties set; the placeholder ~ for the user directory in the system is used where possible)
+	"Index" (indexing within a language properties set to maintain a sequence of individual property values)
 	"Key" (key to the property value)
-	"Org.Idx" (indexing within a language properties set to maintain a sequence of individual property values)
+	"Comment" (comment of the property, only if any property has a comment)
 	"Default" (default language value for the key, if available)
 	"en", "de", "de_AT", "de_CH", "fr", ... (language values of the individual language identifiers; country-specific identifiers with an underscore are also permitted)
-If the selected file already exists, you are asked before it is overwritten.
+If the selected file already exists, you are asked before it is overwritten. The existing file is only replaced after a successful export.
+A successful export counts as saving, so there are no unsaved changes afterwards.
 
 6.5 Closing with Unsaved Changes
 
 When closing the tool, and before loading other properties (3.1 to 3.5), you are asked whether unsaved changes should be discarded.
+If the following file or directory selection is canceled, the loaded properties remain as they are, including their unsaved changes.
 
 
 7. Individually Customized Configuration Values
@@ -323,3 +353,12 @@ By default, this tool uses the file extension ".properties" for any Language Pro
 To override this behaviour, you may set the configuration value "PropertiesFileExtension" which is available in the configuration menu via the button "configuration" (Wrench symbol).
 This allows the use of file extensions such as "_mytext.properties" that do not follow the language properties standard.
 Please notice that this change is permanent and affects any load or save action in the GUI.
+A missing leading dot is added automatically ("properties" is used as ".properties").
+
+7.2 Further Configuration Values
+
+	"OpenDirExcludes": Path parts separated by ";" (default "__;/src/test/;\src\test\;/bin/;\bin\"). Files whose path contains one of these parts are ignored when loading a directory (3.2) and when saving to a directory (6.2).
+	"IgnoreComments": If set, comments are neither loaded nor shown, and the comment column is hidden.
+	"DeepL_BaseUrl" and "DeepL_ApiKey": Address and API key for the translation with DeepL (4.5).
+	"TranslationConstantsFile": Optional CSV file (UTF-8, separator ";", "," or tab) with values that must not be changed by DeepL, e.g. product names or codes.
+		The first line contains the language identifiers (e.g. "de;en;it"). A line with only one value defines a value that is identical in all languages, other lines contain the value per language.

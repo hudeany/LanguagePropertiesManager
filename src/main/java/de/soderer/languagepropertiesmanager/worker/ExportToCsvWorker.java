@@ -42,7 +42,7 @@ public class ExportToCsvWorker extends WorkerSimple<Boolean> {
 	 * @param overwrite
 	 *            whether an existing file may be replaced
 	 */
-	public ExportToCsvWorker(final WorkerParentSimple parent, final List<LanguageProperty> languageProperties, @SuppressWarnings("unused") final List<String> languagePropertiesSetNames, final File csvOutputFile, final boolean overwrite) {
+	public ExportToCsvWorker(final WorkerParentSimple parent, final List<LanguageProperty> languageProperties, final List<String> languagePropertiesSetNames, final File csvOutputFile, final boolean overwrite) {
 		super(parent);
 
 		this.languageProperties = languageProperties;

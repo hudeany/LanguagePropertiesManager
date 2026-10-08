@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -141,7 +142,7 @@ public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 					} else {
 						final List<LanguageProperty> languagePropertiesForStorage = isNewGroup
 								? languageProperties.stream().filter(o -> Utilities.isBlank(o.getPath())).sorted(compareByIndex).collect(Collectors.toList())
-								: languageProperties.stream().filter(o -> languagePropertiesPath.equals(o.getPath())).sorted(compareByIndex).collect(Collectors.toList());
+								: languageProperties.stream().filter(o -> Objects.equals(languagePropertiesPath, o.getPath())).sorted(compareByIndex).collect(Collectors.toList());
 
 						if (foundAmount == 1) {
 							// Update existing properties set files

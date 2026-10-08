@@ -34,29 +34,37 @@ Alli Dateie vo dere Language Property werdet zäme glade und i de Datetabälle l
 3.2 Alli verfüegbare Properties Sets us Unterverzeichnis lade
 
 De Chnopf füehrt zuenere Ordneruswahl. Dänn werdet alli verfüegbare Language Properties us allne Unterverzeichnis vo dem Ordner glade.
-Dezue wird nach Dateie gsuecht, wo eis vo de Sprachchennzeiche "_en" oder "_de" und d Dateiändig ".properties" händ.
+Dezue wird nach Properties Sets gsuecht, also nach Dateie mit de konfigurierte Dateiändig (Standard ".properties"), wo mindestens eini devo es gültigs Sprachchennzeiche wie "_en", "_de" oder "_de_CH" hät.
+Einzelni Properties-Dateie ohni zuegehörigi Sprachdatei (z.B. Konfigurationsdateie) werdet ignoriert, gliich wie Pfäd, wo eine vo de Usschlussteil vom Konfigurationswärt "OpenDirExcludes" enthalted (lueg 7.2).
 Für jede gfundene LanguagePropertiesSetPath werdet dänn au alli wiitere verfüegbare Sprache glade und i de Datetabälle links im Tool aazeigt.
 Je nach Aazahl vo de Unterverzeichnis und Dateie und ihrere Grössi chas en Moment dure.
+Enthaltet e Datei en Key mehrfach, wird nume sin erschte Wärt glade. En Hiiwiis listet dänn di betroffene Dateie und Keys uuf, will di wiitere Wärt bim nächschte Speichere verlore giengted.
 
 3.3 Excel Import
 
 De Chnopf "Import usere einzelne Excel-Datei" erlaubt, e einzelni Excel-Datei aazgää, zum alli Language Properties Sets, wo drin gspeicheret sind, drus z lade.
 Die Excel-Datei sött us eim einzige Sheet bestah und cha die folgende Spalte enthalte:
-	"Path" oder "Pfad" (Genaue LanguagePropertiesSetPath für das Language Properties Set, Platzhalter ~ und $HOME sind erlaubt, optional)
-	"Key" oder "Schlüssel" (Key zum Property-Wert, obligatorisch)
+	"Path", "Pfad", "File" oder "Datei" (Genaue LanguagePropertiesSetPath für das Language Properties Set, Platzhalter ~ und $HOME sind erlaubt, optional; ohni Pfäd wird de Name vo de importierte Datei als Language Properties Set Name bruucht)
+	"Key", "Keys", "Schlüssel", "Schluessel" oder "Bezeichner" (Key zum Property-Wert, obligatorisch)
 	"Index", "Idx" oder "Org.Idx" (Indexierig innerhalb vomene Language Properties Set, damit d Reihefolg vo de einzelne Propertywärt iighalte wird, optional)
+	"Comment" oder "Kommentar" (Kommentar vom Property, optional, wird ignoriert, wänn Kommentär i de Konfiguration ignoriert werdet)
 	"Default" (Default-Sprachwärt für de Key, optional)
 	"en", "de", "de_AT", "de_CH", "fr", ... (Sprachwärt vo de einzelne Sprachchennzeiche, au länderspezifischi Chennzeiche mit Unterstrich sind erlaubt)
+Gross- und Chliischriibig vo de Spaltenüberschrifte spielt kei Rolle.
+Gits e Spalte "Default", bedüütet e leeri Zälle i de Sprachspalte en fählende Wärt (de Key wird nöd i die Sprachdatei gschribe) und i de Spalte "Default" en explizit leere Wärt. Ohni Spalte "Default" werdet leeri Zälle als explizit leeri Wärt importiert.
 
 3.4 CSV Import
 
 De Chnopf "Import usere einzelne CSV-Datei" erlaubt, e einzelni CSV-Datei aazgää, zum alli Language Properties Sets, wo drin gspeicheret sind, drus z lade.
-Die CSV-Datei cha die folgende Spalte enthalte:
-	"Path" oder "Pfad" (Genaue LanguagePropertiesSetPath für das Language Properties Set, Platzhalter ~ und $HOME sind erlaubt, optional)
-	"Key" oder "Schlüssel" (Key zum Property-Wert, obligatorisch)
+Die CSV-Datei bruucht s Trennzeiche ";" und s Aaführigszeiche '"' (Wärt mit Ziileumbrüch sind innerhalb vo Aaführigszeiche erlaubt) und cha die folgende Spalte enthalte:
+	"Path", "Pfad", "File" oder "Datei" (Genaue LanguagePropertiesSetPath für das Language Properties Set, Platzhalter ~ und $HOME sind erlaubt, optional; ohni Pfäd wird de Name vo de importierte Datei als Language Properties Set Name bruucht)
+	"Key", "Keys", "Schlüssel", "Schluessel" oder "Bezeichner" (Key zum Property-Wert, obligatorisch)
 	"Index", "Idx" oder "Org.Idx" (Indexierig innerhalb vomene Language Properties Set, damit d Reihefolg vo de einzelne Propertywärt iighalte wird, optional)
+	"Comment" oder "Kommentar" (Kommentar vom Property, optional, wird ignoriert, wänn Kommentär i de Konfiguration ignoriert werdet)
 	"Default" (Default-Sprachwärt für de Key, optional)
 	"en", "de", "de_AT", "de_CH", "fr", ... (Sprachwärt vo de einzelne Sprachchennzeiche, au länderspezifischi Chennzeiche mit Unterstrich sind erlaubt)
+Gross- und Chliischriibig vo de Spaltenüberschrifte spielt kei Rolle.
+Gits e Spalte "Default", bedüütet e leeri Zälle i de Sprachspalte en fählende Wärt (de Key wird nöd i die Sprachdatei gschribe) und i de Spalte "Default" en explizit leere Wärt. Ohni Spalte "Default" werdet leeri Zälle als explizit leeri Wärt importiert.
 
 3.5 Chürzlich verwändeti Pfäd
 
@@ -79,10 +87,10 @@ De Chnopf öffnet es Menü zur Uswahl vo de Quelle:
 Gits bim Läse vo de Quelle en Fähler oder wird de Vorgang abbroche, bliibed di aktuell glade Properties unveränderet.
 
 Zuordnig vo de importierte Properties:
-Es importierts Property wird emne scho vorhandene Property mit em gliiche Key zuegordnet, wänn das de gliich LanguagePropertiesSetPath hät.
-Gits kein söttige Träffer, längt de gliich Language Properties Set Name (z.B. binere Kopie vom Properties Set imene andere Verzeichnis). Fählt uf einere Siite d Pfadaagab (z.B. bi Excel- und CSV-Dateie ohni Spalte "Path"), längt de Key elei.
-Passt en Key zu mehrere glade Properties Sets, isch d Zuordnig nöd eidüütig. De Iitrag wird dänn übersprunge und im Ergebnisbricht uufgfüehrt.
-Verglichen wird jewiils pro Key und Sprach. En Sprachwärt gilt als neu, wänn s vorhandeni Property für die Sprach kein Wärt hät. Kommentär werdet wie Sprachwärt behandlet.
+Es importierts Property wird emne scho vorhandene Property mit em gliiche Key zuegordnet. De Pfad vo de Importquelle wird debii nöd verglichen, will er meischtens abwiicht (z.B. binere Kopie oder emne Export vom Properties Set imene andere Verzeichnis).
+Nume wänn de Key i mehrere glade Properties Sets vorchunnt, wird das mit em gliiche LanguagePropertiesSetPath gnoh. Gits das nöd, isch d Zuordnig nöd eidüütig. De Iitrag wird dänn übersprunge und im Ergebnisbricht uufgfüehrt.
+Chunnt en Key im gliiche glade Properties Set mehrfach vor, isch das kei Mehrdüütigkeit: Es wird s erscht Vorcho (nach em ursprüngliche Index) gnoh.
+Verglichen wird jewiils pro Key und Sprach. En Sprachwärt gilt als neu, wänn s vorhandeni Property für die Sprach kein Wärt hät. Kommentär vo vorhandene Properties werdet nöd verglichen und bliibed unveränderet, neui Keys übernämed ihre Kommentar us de Importquelle.
 Neui Keys werdet, sowiit eidüütig möglich, em passende glade Properties Set zuegordnet. So wird bim Speichere nöd i d Dateie vo de Importquelle gschribe.
 Gaht das nöd, bhaltet neui Keys de LanguagePropertiesSetPath vo de Importquelle und würded bim Speichere det ane gschribe. Uf das wiist de Ergebnisbricht usdrücklich hii.
 Neu dezuechoni Sprachchennzeiche werdet für alli Properties aagleit.
@@ -109,11 +117,12 @@ De Chnopf "Mit Basis-Set abgliiche (identischi Wärt entferne)" vergliicht di ak
 Übrig bliibed nume d Abwiichige vom Basis-Set. Das isch z.B. hilfriich für chunde- oder variantespezifischi Properties Sets, wo nume die Text söled enthalte, wo d Text vomene Basisprodukt überschriibed.
 De Chnopf isch nume verfüegbar, wänn Properties glade sind. Er öffnet s gliiche Menü zur Uswahl vo de Quelle wie i 3.6. Di gwählt Quelle wird nume als Verglichsbasis gläse und nöd is Tool übernoh.
 Gits bim Läse vo de Quelle en Fähler oder wird de Vorgang abbroche, bliibed di aktuell glade Properties unveränderet.
-Sind i de Datetabälle Ziile usgwählt, werdet nume die abgliche, susch alli Properties.
+Sind i de Datetabälle Ziile usgwählt, werdet nume die abgliche, susch alli Properties, wo i de Datetabälle aazeigt werdet (bi aktivem Suechfilter nume d Träffer, lueg 5.1).
 
 Zuordnig und Vergliich:
-Jedes glade Property wird sim Gägestück im Basis-Set nach de gliiche Regle wie i 3.6 zuegordnet (gliiche LanguagePropertiesSetPath, susch gliiche Language Properties Set Name, susch de Key elei, wänn d Pfadaagab fählt).
-Passt en Key zu mehrere Iiträg im Basis-Set, isch d Zuordnig nöd eidüütig. De Iitrag wird dänn übersprunge und im Ergebnisbricht uufgfüehrt.
+Jedes glade Property wird de Iiträg vom Basis-Set mit em gliiche Key zuegordnet. De Pfad wird debii nöd verglichen, will s Basis-Set meischtens anere andere Stell liit.
+Chunnt de Key im Basis-Set mehrfach vor, gilt en Wärt als identisch, wänn er em Wärt vo eim vo dene Iiträg entspricht.
+Iiträg mit leerem Key werdet übersprunge und im Ergebnisbricht uufgfüehrt.
 Verglichen wird jewiils pro Key und Sprach. Nume Wärt, wo exakt em Wärt vo de gliiche Sprach im Basis-Set entspräched, werdet entfernt.
 Wärt, wo vom Basis-Set abwiiched oder det fähled, bliibed erhalte. Gliich bliibed Properties ohni Gägestück im Basis-Set unveränderet.
 Kommentär werdet nöd verglichen und bliibed erhalte.
@@ -146,6 +155,9 @@ Mer cha alli unerwünschte Änderige i beide Fäll jederziit mit em Chnopf "Verw
 De Chnopf "Zur Speicher-Text-Darstellig wächsle" änderet d Aazeig vo Key und Sprachwärt uf di technisch Codierig im JAVA-Encoding.
 Das dient de Aagab vo komplexe Unicode-Zeiche, falls nötig.
 Mit em Chnopf "Zur Aazeige-Text-Darstellig wächsle" cha mer zur normale Aazeigedarstellig zruggwächsle.
+Es leers Sprachfäld staht für en fählende Wärt (de Key wird nöd i die Sprachdatei gschribe, es gilt dänn de Default-Wärt). Das wird mit "∅" näbe de Sprach markiert.
+S Kontextmenü vomene Sprachfäld (Rächtsklick) bietet "Leeren Wert setzen" (de Key wird mit leerem Wärt als "key=" gschribe) und "Als fehlend setzen" aa.
+De Key darf nöd leer sii. Sind no kei Properties glade, wird bim Dezuefüege vom erschte Property de Name vom neue Language Properties Set abgfrögt.
 
 4.2 Lösche vo Property-Wärt
 
@@ -169,10 +181,13 @@ Mit em Chnopf "Übersetze" chönd fählendi Sprachwärt erstellt werde, indem de
 Dezue bruucht's en API Key zur Autorisierig, wo mer under "https://www.deepl.com/pro-api/" überchunnt.
 Begränzti Testkonte sind gratis, verlanged aber e Kreditchartereggistrierig.
 De API Key cha im Aawändigs-Konfigurationsdialog oder bim erschte Bruuch vom Chnopf "Übersetze" iigää werde.
-Zerscht wird d Quällsprach, dänn d Zielsprach usgwählt.
+De Chnopf öffnet es Menü mit "In ei Zielsprach übersetze" und "In alli Zielsprache übersetze" (alli wiitere Sprache, wo DeepL unterstützt).
+Zerscht wird d Quällsprach, dänn d Zielsprach usgwählt (nume bim Übersetze in ei Zielsprach).
 Wänn mer d Default-Sprach bruucht, muess e Sprach usgwählt werde, wo als Standardsprach zuegordnet isch.
 Wänn nume no ei wiiteri Sprach verfüegbar isch, wird die automatisch als Zielsprach usgwählt.
-Sind i de Datetabälle Ziile usgwählt, werdet nume die übersetzt, susch alli Properties.
+Sind i de Datetabälle Ziile usgwählt, werdet nume die übersetzt, susch alli Properties, wo i de Datetabälle aazeigt werdet (bi aktivem Suechfilter nume d Träffer, lueg 5.1).
+Es werdet nume leeri Zielwärt gfüllt, vorhandeni Übersetzige werdet nöd überschribe.
+Wärt us de optionale Datei mit Übersetzigskonstante (lueg 7.2) und reini Zahle werdet ohni DeepL übernoh.
 D Übersetzig lauft mit einere Fortschrittsaazeig und cha abbroche werde. Aschliessend wird d Aazahl vo de erstellte Übersetzige aazeigt.
 D Verbindig zu DeepL bruucht d Proxy-Iistellige, wo i de Aawändigs-Konfiguration iigstellt sind.
 
@@ -182,7 +197,7 @@ Mit em Chnopf "Übertrage" chönd Sprachwärt vo eim Sprachchennzeiche inen ande
 Das isch z.B. hilfriich für Sprachvariante wie "de" und "de_CH", oder zum Default-Wärt inere konkreti Sprach z übernäh.
 Zerscht wird d Quällsprach, dänn d Zielsprach usgwählt. Isch nume no ei wiiteri Sprach verfüegbar, wird die automatisch als Zielsprach gnoh.
 Übertreit werdet nume Quällwärt, wo nöd leer sind. Vorhandeni Wärt vo de Zielsprach werdet debii überschribe.
-Sind i de Datetabälle Ziile usgwählt, werdet nume die bearbeitet, susch alli Properties.
+Sind i de Datetabälle Ziile usgwählt, werdet nume die bearbeitet, susch alli Properties, wo i de Datetabälle aazeigt werdet (bi aktivem Suechfilter nume d Träffer, lueg 5.1).
 Aschliessend wird d Aazahl vo de übertreite Wärt aazeigt.
 
 4.7 Identischi Sprachwärt leere
@@ -190,7 +205,8 @@ Aschliessend wird d Aazahl vo de übertreite Wärt aazeigt.
 Mit em Chnopf "Identischi leere" werdet Wärt vonere Zielsprach gleert, wo exakt em Wärt vonere Quällsprach entspräched.
 Das isch z.B. hilfriich, zum nöd übersetzti Wärt z finde, wo nume us enere andere Sprach kopiert worde sind, oder zum überflüssigi Wärt vonere Sprachvariante z entferne, wo sowieso de gliich Text wie d Hauptsprach händ.
 D Uswahl vo Quäll- und Zielsprach gschiet wie i 4.6.
-Sind i de Datetabälle Ziile usgwählt, werdet nume die bearbeitet, susch alli Properties.
+Sind i de Datetabälle Ziile usgwählt, werdet nume die bearbeitet, susch alli Properties, wo i de Datetabälle aazeigt werdet (bi aktivem Suechfilter nume d Träffer, lueg 5.1).
+En gleerte Wärt vo de Default-Sprach wird zumene explizit leere Wärt, damit de Key i de Default-Datei erhalte bliibt.
 Aschliessend wird d Aazahl vo de gleerte Wärt aazeigt.
 
 4.8 Duplikat entferne
@@ -211,13 +227,17 @@ Prüeft werdet Keys, Kommentär und alli Sprachwärt uf:
 	Isolierti Unicode Surrogates
 	Stürzeiche (usser Tabulator und Ziileumbruch)
 Keys werdet zuesätzlich druf prüeft, ob sie leer sind, Leerzeiche enthalted oder di unzuelässige Zeiche "=" oder ":" enthalted.
+Usserdem werdet d Sprachwärt vo jedem Key mit em Referenzwärt verglichen (Default-Sprach, susch di erscht Sprach mit Wärt):
+	Platzhalter vo MessageFormat ("{0}", "{1,number}") und String.format ("%s", "%1$d") mönd i allne Sprache übereistimme
+	Abwiichendi Satzzeiche am Ändi, füehrendi oder abschliessendi Leerzeiche i nume einere Sprach sowie Ziileumbrüch i Übersetzige vo einziilige Text werdet als formali Abwiichige gmäldet
 Gfundeni Fähler werdet imene Bricht mit LanguagePropertiesSetPath, Key und betroffenem Fäld uufglistet. Werdet kei Fähler gfunde, chunnt nume en entsprächende Hiiwiis.
 
 4.10 Kontextmenü vo de Tabällespalte
 
 En Rächtsklick uf d Überschrift oder e Zälle vo bestimmte Spalte vo de Datetabälle öffnet es Kontextmenü:
+	Ziile: "Markierti Ziile als CSV kopiere" kopiert di markierte Ziile mit de aazeigte Spalte und de vollständige Wärt i d Zwüscheablag.
 	Spalte "Pfad": Entfernt d LanguagePropertiesSetPath-Aagab vo allne Properties. Die Properties werdet bim Speichere wie neu aagleiti Properties behandlet (lueg 6.1 und 6.2).
-	Sprachspalte: Leert alli Wärt vo dere Sprach (s Sprachchennzeiche sälber bliibt erhalte) oder löscht s Sprachchennzeiche komplett (wie i 4.4).
+	Sprachspalte: Für di markierte Ziile "Leeren Wert setzen" oder "Als fehlend setzen" (lueg 4.1). Usserdem leert es alli Wärt vo dere Sprach (s Sprachchennzeiche sälber bliibt erhalte, d Default-Sprach bhaltet ihri Keys mit leere Wärt) oder löscht s Sprachchennzeiche komplett (wie i 4.4).
 	Spalte "Kommentar": Entfernt d Kommentär vo allne Properties.
 Vor jedere vo dene Aktione chunnt e Sicherheitsabfrag mit de Aazahl vo de betroffene Iiträg.
 D Kommentarspalte wird nume aazeigt, wänn Kommentär i de Aawändigs-Konfiguration nöd ignoriert werdet.
@@ -242,6 +262,9 @@ D Checkboxe näbem Suechfäld legged fescht, wie und wo gsuecht wird. Sie sind b
 	"Key" (Suechi i de Keys)
 	"Wärt" (Suechi i allne Sprachwärt)
 	"Pfad" (Suechi im LanguagePropertiesSetPath)
+	"Filter" (d Datetabälle zeigt nume di passende Properties)
+D Statusziile under de Datetabälle zeigt, uf weli Properties d Aktione Übersetze, Übertrage, Identischi leere und Abgliich mit Basis-Set wirked (di markierte Ziile oder alli aazeigte Properties).
+D Escape-Taschte hebt d Uswahl i de Datetabälle uuf.
 
 5.2 Statistik
 
@@ -275,8 +298,9 @@ Die Liste cha wie i 3.5 umsortiert und bearbeitet werde.
 Sobald a de Wärt vonere Language Property Änderige gmacht worde sind, wird de Chnopf "Dateie speichere" verfüegbar.
 Wänn de Wärt im Properties Set scho en LanguagePropertiesSetPath zuegwise worde isch, werdet d Date gnau det (zrugg-)gspeicheret.
 Bi neu aagleite Wärt und nume eim glade LanguagePropertiesSetPath wird dä LanguagePropertiesSetPath als Standardpfad für neui Wärt verwändet.
-Bi mehrere verfüegbare LanguagePropertiesSetPath wird mer ufgforderet, eimal de LanguagePropertiesSetPath aazgää, wo für alli neue Wärt söll bruucht werde.
-Vor em Speichere wird abgfrögt, ob Properties, wo i de Zieldateie scho vorhande, aber nöd im Tool glade sind, söled erhalte bliibe.
+Bi mehrere verfüegbare LanguagePropertiesSetPath wird mer ufgforderet, eimal e Datei aazgää, wo ihre LanguagePropertiesSetPath für alli neue Wärt bruucht wird.
+Vor em Speichere wird abgfrögt, ob Properties, wo i de Zieldateie scho vorhande, aber nöd im Tool glade sind, söled erhalte bliibe. Wänn mer die Abfrag schliesst, wird s Speichere abbroche.
+Wird s Speichere abbroche oder gaht's schief, gälted d Properties wiiterhin als nöd gspeicheret.
 Exischtiered Zielverzeichnis no nöd, wird aabote, sie aazlege.
 
 6.2 Properties Sets aahand vom Set-Name imene Verzeichnis speichere
@@ -285,7 +309,8 @@ Wänn alli Properties, wo aktuell im Tool verfüegbar sind, scho en eigete Langu
 Gits aber Properties ohni LanguagePropertiesSetPath, forderet de Chnopf zur Aagab vomene Verzeichnispfad uf. Darunder werdet dänn alli verfüegbare LanguagePropertiesSetPath gsuecht.
 Zuesätzlich wird für die pfadlose Properties en Name abgfrögt (vorbelegt mit "Multiple"), under dem sie als eigets Language Properties Set behandlet werdet.
 Di aktuell im Tool verfüegbare LanguagePropertiesSetPath werdet mit dene abgliche, und bi passendem Language Properties Set Name wird de Pfad vom gfundene LanguagePropertiesSetPath zum Speichere verwändet.
-Das funktioniert nume bi eidüütiger Bezeichnig vo de Language Properties Set Näme. Tauched debii nöd eidüütigi Näme uuf, wird de Vorgang mit enere Fählermäldig abbroche.
+Es Properties Set, wo under dem Verzeichnis scho a sim eigete LanguagePropertiesSetPath existiert, wird diräkt det gspeicheret. Gliichnamigi Sets i verschiedene Unterverzeichnis (z.B. vo mehrere Module) sind drum kei Problem.
+Anderi Properties Sets werdet über ihre Language Properties Set Name zuegordnet. Das funktioniert nume, wänn de Name under em Verzeichnis eidüütig isch. Tauched debii nöd eidüütigi Näme uuf, wird de Vorgang mit enere Fählermäldig abbroche.
 Wird für en LanguagePropertiesSetPath, wo aktuell im Tool verfüegbar isch, kein passende verfüegbare Pfad gfunde, wird das Language Properties Set im gwählte Basisverzeichnis abgleit.
 Wie i 6.1 wird abgfrögt, ob scho vorhandeni Properties söled erhalte bliibe, und s Aalege vo fählende Verzeichnis wird aabote.
 Am Schluss werdet alli gspeicherete Properties Sets uufglistet.
@@ -295,26 +320,31 @@ Am Schluss werdet alli gspeicherete Properties Sets uufglistet.
 De Chnopf "Export ineren einzelne Excel-Datei" speicheret alli LanguagePropertiesSetPath, wo aktuell im Tool verfüegbar sind, ineren einzelne Excel-Datei.
 Dezue wird e Excel-Datei mit eim Sheet und folgende Spalte mit Date aagleit:
 	"Path" (Genaue LanguagePropertiesSetPath für das Language Properties Set, de Platzhalter ~ fürs Benutzerverzeichnis im System wird soweit möglich verwändet)
+	"Index" (Indexierig innerhalb vomene Language Properties Set, damit d Reihefolg vo de einzelne Propertywärt iighalte wird)
 	"Key" (Key zum Property-Wärt)
-	"Org.Idx" (Indexierig innerhalb vomene Language Properties Set, damit d Reihefolg vo de einzelne Propertywärt iighalte wird)
+	"Comment" (Kommentar vom Property, nume wänn mindestens eis Property en Kommentar hät)
 	"Default" (Default-Sprachwärt für de Key, soweit verfüegbar)
 	"en", "de", "de_AT", "de_CH", "fr", ... (Sprachwärt vo de einzelne Sprachchennzeiche, au länderspezifischi Chennzeiche mit Unterstrich sind erlaubt)
-Exischtiert di gwählt Datei scho, chunnt vor em Überschriibe e Abfrag.
+Exischtiert di gwählt Datei scho, chunnt vor em Überschriibe e Abfrag. Di vorhande Datei wird erscht nach emne erfolgriiche Export ersetzt.
+En erfolgriiche Export gilt als Speichere, dänn gits kei nöd gspeicheret Änderige meh.
 
 6.4 Export in einzelni CSV-Datei
 
 De Chnopf "Export ineren einzelne CSV-Datei" speicheret alli LanguagePropertiesSetPath, wo aktuell im Tool verfüegbar sind, ineren einzelne CSV-Datei.
-Dezue wird e CSV-Datei mit folgende Spalte mit Date aagleit:
+Dezue wird e CSV-Datei mit em Trennzeiche ";" und em Aaführigszeiche '"' mit folgende Spalte mit Date aagleit:
 	"Path" (Genaue LanguagePropertiesSetPath für das Language Properties Set, de Platzhalter ~ fürs Benutzerverzeichnis im System wird soweit möglich verwändet)
+	"Index" (Indexierig innerhalb vomene Language Properties Set, damit d Reihefolg vo de einzelne Propertywärt iighalte wird)
 	"Key" (Key zum Property-Wärt)
-	"Org.Idx" (Indexierig innerhalb vomene Language Properties Set, damit d Reihefolg vo de einzelne Propertywärt iighalte wird)
+	"Comment" (Kommentar vom Property, nume wänn mindestens eis Property en Kommentar hät)
 	"Default" (Default-Sprachwärt für de Key, soweit verfüegbar)
 	"en", "de", "de_AT", "de_CH", "fr", ... (Sprachwärt vo de einzelne Sprachchennzeiche, au länderspezifischi Chennzeiche mit Unterstrich sind erlaubt)
-Exischtiert di gwählt Datei scho, chunnt vor em Überschriibe e Abfrag.
+Exischtiert di gwählt Datei scho, chunnt vor em Überschriibe e Abfrag. Di vorhande Datei wird erscht nach emne erfolgriiche Export ersetzt.
+En erfolgriiche Export gilt als Speichere, dänn gits kei nöd gspeicheret Änderige meh.
 
 6.5 Schliesse mit nöd gspeicherete Änderige
 
 Bim Schliesse vom Tool sowie vor em Lade vo andere Properties (3.1 bis 3.5) wird bi nöd gspeicherete Änderige abgfrögt, ob die söled verworfe werde.
+Wird di aschliessend Datei- oder Verzeichnisuswahl abbroche, bliibed di glade Properties mitsamt ihrne nöd gspeicherete Änderige erhalte.
 
 
 7. Individuell aapassbari Konfigurationswärt
@@ -325,3 +355,12 @@ Standardmässig bruucht das Tool d Dateiändig ".properties" für alli Language 
 Zum das Verhalte z überschriibe, chönd Sie de Konfigurationswärt "PropertiesFileExtension" setze, wo im Konfigurationsmenü über de Chnopf "Konfiguration" (Schrubeschlüssel-Symbol) verfüegbar isch.
 Das erlaubt d Verwändig vo Dateiändige wie "_mytext.properties", wo nöd em Language-Properties-Standard entspräched.
 Bitte beachted Sie, dass die Änderig dauerhaft isch und sich uf jede Lade- oder Speichervorgang i de GUI uswirkt.
+En fählende füehrende Punkt wird automatisch ergänzt ("properties" wird als ".properties" bruucht).
+
+7.2 Wiiteri Konfigurationswärt
+
+	"OpenDirExcludes": Mit ";" trennti Pfadteil (Standard "__;/src/test/;\src\test\;/bin/;\bin\"). Dateie, wo ihre Pfad eine vo dene Teil enthaltet, werdet bim Lade vomene Verzeichnis (3.2) und bim Speichere imene Verzeichnis (6.2) ignoriert.
+	"IgnoreComments": Wänn gsetzt, werdet Kommentär wäder glade no aazeigt, und d Kommentarspalte wird usbländet.
+	"DeepL_BaseUrl" und "DeepL_ApiKey": Adrässe und API Key für d Übersetzig mit DeepL (4.5).
+	"TranslationConstantsFile": Optionali CSV-Datei (UTF-8, Trennzeiche ";", "," oder Tabulator) mit Wärt, wo DeepL nöd darf veränderet, z.B. Produktnäme oder Chürzel.
+		Di erscht Ziile enthaltet d Sprachchennzeiche (z.B. "de;en;it"). E Ziile mit nume eim Wärt definiert en Wärt, wo i allne Sprache gliich isch, anderi Ziile enthalted de Wärt je Sprach.

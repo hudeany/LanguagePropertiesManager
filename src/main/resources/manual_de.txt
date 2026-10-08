@@ -34,29 +34,37 @@ Alle Dateien dieses Language Properties werden gemeinsam geladen und in der Date
 3.2 Alle verfügbaren Properties Sets aus Unterverzeichnissen laden
 
 Der Button führt zu einer Ordner Auswahl. Es werden dann alle verfügbaren Language Properties aus allen Unterverzeichnissen dieses Ordners geladen.
-Dazu wird nach Dateien mit einem der Sprachenkennzeichen "_en" oder "_de" und der Dateierweiterung ".properties" gesucht.
+Dazu wird nach Properties Sets gesucht, also nach Dateien mit der konfigurierten Dateierweiterung (Standard ".properties"), von denen mindestens eine ein gültiges Sprachenkennzeichen wie "_en", "_de" oder "_de_AT" trägt.
+Einzelne Properties Dateien ohne zugehörige Sprachdatei (z.B. Konfigurationsdateien) werden ignoriert, ebenso Pfade, die einen der Ausschlussteile des Konfigurationswerts "OpenDirExcludes" enthalten (siehe 7.2).
 Für alle gefundenen LanguagePropertiesSetPath werden dann auch alle weiteren verfügbaren Sprachen geladen und in der Datentabelle links im Tool angezeigt
 Je nach Anzahl der Unterverzeichnisse und Dateien und deren Größe kann dies einen Moment Zeit beanspruchen.
+Enthält eine Datei einen Key mehrfach, wird nur dessen erster Wert geladen. Ein Hinweis listet dann die betroffenen Dateien und Keys auf, da die weiteren Werte beim nächsten Speichern verloren gingen.
 
 3.3 Excel Import
 
 Der Button "Import aus einzelner Datei" erlaubt die Angabe einer einzelnen Excel Datei, um alle darin gespeicherten Language Properties Sets daraus zu laden.
 Diese Excel Datei sollte aus einem einzelnen Sheet bestehen und kann folgende Spalten enthalten:
-	"Path" oder "Pfad" (Genauer LanguagePropertiesSetPath für dieses Language Properties Set, Platzhalter ~ und $HOME sind erlaubt, optional)
-	"Key" oder "Schlüssel" (Key zum Property Wert, erforderlich)
+	"Path", "Pfad", "File" oder "Datei" (Genauer LanguagePropertiesSetPath für dieses Language Properties Set, Platzhalter ~ und $HOME sind erlaubt, optional; ohne Pfade wird der Name der importierten Datei als Language Properties Set Name verwendet)
+	"Key", "Keys", "Schlüssel", "Schluessel" oder "Bezeichner" (Key zum Property Wert, erforderlich)
 	"Index", "Idx" oder "Org.Idx" (Indizierung innerhalb eines Language Properties Sets um eine Reihenfolge der einzelnen Propertywerte einzuhalten, optional)
+	"Comment" oder "Kommentar" (Kommentar des Property, optional, wird ignoriert wenn Kommentare in der Konfiguration ignoriert werden)
 	"Default" (Default Sprachwert für den Key, optional)
 	"en", "de", "de_AT", "de_CH", "fr", ... (Sprachwerte der einzelnen Sprachenkennzeichen, auch Länderspezifische Kennzeichen mit Unterstrich sind erlaubt)
+Groß- und Kleinschreibung der Spaltenüberschriften spielt keine Rolle.
+Gibt es eine Spalte "Default", bedeutet eine leere Zelle in den Sprachspalten einen fehlenden Wert (der Key wird nicht in diese Sprachdatei geschrieben) und in der Spalte "Default" einen explizit leeren Wert. Ohne Spalte "Default" werden leere Zellen als explizit leere Werte importiert.
 
 3.4 CSV Import
 
 Der Button "Import aus einzelner Datei" erlaubt die Angabe einer einzelnen CSV Datei, um alle darin gespeicherten Language Properties Sets daraus zu laden.
-Diese CSV Datei kann folgende Spalten enthalten:
-	"Path" oder "Pfad" (Genauer LanguagePropertiesSetPath für dieses Language Properties Set, Platzhalter ~ und $HOME sind erlaubt, optional)
-	"Key" oder "Schlüssel" (Key zum Property Wert, erforderlich)
+Diese CSV Datei verwendet das Trennzeichen ";" und das Anführungszeichen '"' (Werte mit Zeilenumbrüchen sind innerhalb von Anführungszeichen erlaubt) und kann folgende Spalten enthalten:
+	"Path", "Pfad", "File" oder "Datei" (Genauer LanguagePropertiesSetPath für dieses Language Properties Set, Platzhalter ~ und $HOME sind erlaubt, optional; ohne Pfade wird der Name der importierten Datei als Language Properties Set Name verwendet)
+	"Key", "Keys", "Schlüssel", "Schluessel" oder "Bezeichner" (Key zum Property Wert, erforderlich)
 	"Index", "Idx" oder "Org.Idx" (Indizierung innerhalb eines Language Properties Sets um eine Reihenfolge der einzelnen Propertywerte einzuhalten, optional)
+	"Comment" oder "Kommentar" (Kommentar des Property, optional, wird ignoriert wenn Kommentare in der Konfiguration ignoriert werden)
 	"Default" (Default Sprachwert für den Key, optional)
 	"en", "de", "de_AT", "de_CH", "fr", ... (Sprachwerte der einzelnen Sprachenkennzeichen, auch Länderspezifische Kennzeichen mit Unterstrich sind erlaubt)
+Groß- und Kleinschreibung der Spaltenüberschriften spielt keine Rolle.
+Gibt es eine Spalte "Default", bedeutet eine leere Zelle in den Sprachspalten einen fehlenden Wert (der Key wird nicht in diese Sprachdatei geschrieben) und in der Spalte "Default" einen explizit leeren Wert. Ohne Spalte "Default" werden leere Zellen als explizit leere Werte importiert.
 
 3.5 Kürzlich verwendete Pfade
 
@@ -79,10 +87,10 @@ Der Button öffnet ein Menü zur Auswahl der Quelle:
 Tritt beim Lesen der Quelle ein Fehler auf oder wird der Vorgang abgebrochen, bleiben die aktuell geladenen Properties unverändert.
 
 Zuordnung der importierten Properties:
-Ein importiertes Property wird einem bereits vorhandenen Property mit demselben Key zugeordnet, wenn dieses denselben LanguagePropertiesSetPath hat.
-Gibt es keinen solchen Treffer, genügt derselbe Language Properties Set Name (z.B. bei einer Kopie des Properties Sets in einem anderen Verzeichnis). Fehlt einer Seite die Pfadangabe (z.B. bei Excel und CSV Dateien ohne Spalte "Path"), genügt der Key allein.
-Passt ein Key zu mehreren geladenen Properties Sets, ist die Zuordnung nicht eindeutig. Dieser Eintrag wird dann übersprungen und im Ergebnisbericht aufgeführt.
-Verglichen wird jeweils pro Key und Sprache. Ein Sprachwert gilt als neu, wenn das vorhandene Property für diese Sprache keinen Wert hat. Kommentare werden wie Sprachwerte behandelt.
+Ein importiertes Property wird einem bereits vorhandenen Property mit demselben Key zugeordnet. Der Pfad der Importquelle wird dabei nicht verglichen, da er meist abweicht (z.B. bei einer Kopie oder einem Export des Properties Sets in einem anderen Verzeichnis).
+Nur wenn der Key in mehreren geladenen Properties Sets vorkommt, wird dasjenige mit demselben LanguagePropertiesSetPath verwendet. Gibt es dieses nicht, ist die Zuordnung nicht eindeutig. Dieser Eintrag wird dann übersprungen und im Ergebnisbericht aufgeführt.
+Kommt ein Key innerhalb desselben geladenen Properties Sets mehrfach vor, ist das keine Mehrdeutigkeit: Es wird das erste Vorkommen (nach ursprünglichem Index) verwendet.
+Verglichen wird jeweils pro Key und Sprache. Ein Sprachwert gilt als neu, wenn das vorhandene Property für diese Sprache keinen Wert hat. Kommentare vorhandener Properties werden nicht verglichen und bleiben unverändert, neue Keys übernehmen ihren Kommentar aus der Importquelle.
 Neue Keys werden, soweit eindeutig möglich, dem passenden geladenen Properties Set zugeordnet. So wird beim Speichern nicht in die Dateien der Importquelle geschrieben.
 Ist das nicht möglich, behalten neue Keys den LanguagePropertiesSetPath der Importquelle und würden beim Speichern dorthin geschrieben. Darauf weist der Ergebnisbericht ausdrücklich hin.
 Neu hinzukommende Sprachenkennzeichen werden für alle Properties angelegt.
@@ -109,11 +117,12 @@ Der Button "Mit Basis-Set abgleichen (identische Werte entfernen)" vergleicht di
 Übrig bleiben nur die Abweichungen vom Basis-Set. Dies ist z.B. hilfreich für kunden- oder variantenspezifische Properties Sets, die nur die Texte enthalten sollen, welche die Texte eines Basisprodukts überschreiben.
 Der Button ist nur verfügbar, wenn Properties geladen sind. Er öffnet dasselbe Menü zur Auswahl der Quelle wie in 3.6. Die gewählte Quelle wird nur als Vergleichsbasis gelesen und nicht in das Tool übernommen.
 Tritt beim Lesen der Quelle ein Fehler auf oder wird der Vorgang abgebrochen, bleiben die aktuell geladenen Properties unverändert.
-Sind in der Datentabelle Zeilen ausgewählt, werden nur diese abgeglichen, andernfalls alle Properties.
+Sind in der Datentabelle Zeilen ausgewählt, werden nur diese abgeglichen, andernfalls alle in der Datentabelle angezeigten Properties (bei aktivem Suchfilter nur die Treffer, siehe 5.1).
 
 Zuordnung und Vergleich:
-Jedes geladene Property wird seinem Gegenstück im Basis-Set nach denselben Regeln wie in 3.6 zugeordnet (gleicher LanguagePropertiesSetPath, sonst gleicher Language Properties Set Name, sonst Key allein bei fehlender Pfadangabe).
-Passt ein Key zu mehreren Einträgen im Basis-Set, ist die Zuordnung nicht eindeutig. Dieser Eintrag wird dann übersprungen und im Ergebnisbericht aufgeführt.
+Jedes geladene Property wird den Einträgen des Basis-Sets mit demselben Key zugeordnet. Der Pfad wird dabei nicht verglichen, da das Basis-Set meist an einem anderen Ort liegt.
+Kommt der Key im Basis-Set mehrfach vor, gilt ein Wert als identisch, wenn er dem Wert eines dieser Einträge entspricht.
+Einträge mit leerem Key werden übersprungen und im Ergebnisbericht aufgeführt.
 Verglichen wird jeweils pro Key und Sprache. Nur Werte, die exakt dem Wert derselben Sprache im Basis-Set entsprechen, werden entfernt.
 Werte, die vom Basis-Set abweichen oder dort fehlen, bleiben erhalten. Ebenso bleiben Properties ohne Gegenstück im Basis-Set unverändert.
 Kommentare werden nicht verglichen und bleiben erhalten.
@@ -146,6 +155,9 @@ Ein verwerfen aller unerwünschten Änderungen mittels Button "Verwerfen" ist in
 Der Button "Zur Speicher-Text Darstellung wechseln" ändert die Anzeige der Key und Sprachwerte zur technischen Codierung in JAVA Encoding.
 Dies dient der Angabe von komplexen Unicode Zeichen sofern erforderlich.
 Mittels Button "Zur Anzeige-Text Darstellung wechseln" kann zur normalen Anzeigedarstellung zurückgewechselt werden.
+Ein leeres Sprachfeld steht für einen fehlenden Wert (der Key wird nicht in diese Sprachdatei geschrieben, es gilt dann der Default Wert). Dies wird mit "∅" neben der Sprache markiert.
+Das Kontextmenü eines Sprachfelds (Rechtsklick) bietet "Leeren Wert setzen" (der Key wird mit leerem Wert als "key=" geschrieben) und "Als fehlend setzen".
+Der Key darf nicht leer sein. Sind noch keine Properties geladen, wird beim Hinzufügen des ersten Property der Name des neuen Language Properties Sets abgefragt.
 
 4.2 Löschen von Property Werten
 
@@ -169,10 +181,13 @@ Mit dem Button "Translate" können fehlende Sprachwerte erstellt werden, indem d
 Dazu ist ein API Key zur Autorisierung erforderlich, der unter "https://www.deepl.com/pro-api/" erhältlich ist.
 Begrenzte Testkonten sind kostenlos, erfordern jedoch eine Kreditkartenregistrierung.
 Der API Key kann im Anwendungs-Konfigurationsdialog oder bei der ersten Verwendung des Buttons "Translate" eingegeben werden.
-Zuerst wird die Quellsprache, danach die Zielsprache ausgewählt.
+Der Button öffnet ein Menü mit "In eine Zielsprache übersetzen" und "In alle Zielsprachen übersetzen" (alle weiteren von DeepL unterstützten Sprachen).
+Zuerst wird die Quellsprache, danach die Zielsprache ausgewählt (nur beim Übersetzen in eine Zielsprache).
 Bei Verwendung der Default Sprache muss eine Sprache ausgewählt werden, die als Standardsprache zugeordnet ist.
 Wenn nur eine weitere Sprache verfügbar ist, wird diese automatisch als Zielsprache ausgewählt.
-Sind in der Datentabelle Zeilen ausgewählt, werden nur diese übersetzt, andernfalls alle Properties.
+Sind in der Datentabelle Zeilen ausgewählt, werden nur diese übersetzt, andernfalls alle in der Datentabelle angezeigten Properties (bei aktivem Suchfilter nur die Treffer, siehe 5.1).
+Es werden nur leere Zielwerte gefüllt, vorhandene Übersetzungen werden nicht überschrieben.
+Werte aus der optionalen Datei mit Übersetzungskonstanten (siehe 7.2) sowie reine Zahlen werden ohne DeepL übernommen.
 Die Übersetzung läuft mit einer Fortschrittsanzeige und kann abgebrochen werden. Anschließend wird die Anzahl der erstellten Übersetzungen angezeigt.
 Die Verbindung zu DeepL verwendet die in der Anwendungs-Konfiguration eingestellten Proxy Einstellungen.
 
@@ -182,7 +197,7 @@ Mit dem Button "Übertragen" können Sprachwerte von einem Sprachenkennzeichen i
 Dies ist z.B. hilfreich für Sprachvarianten wie "de" und "de_AT", oder um Default Werte in eine konkrete Sprache zu übernehmen.
 Zuerst wird die Quellsprache, danach die Zielsprache ausgewählt. Ist nur eine weitere Sprache verfügbar, wird diese automatisch als Zielsprache verwendet.
 Übertragen werden nur nicht leere Quellwerte. Vorhandene Werte der Zielsprache werden dabei überschrieben.
-Sind in der Datentabelle Zeilen ausgewählt, werden nur diese bearbeitet, andernfalls alle Properties.
+Sind in der Datentabelle Zeilen ausgewählt, werden nur diese bearbeitet, andernfalls alle in der Datentabelle angezeigten Properties (bei aktivem Suchfilter nur die Treffer, siehe 5.1).
 Anschließend wird die Anzahl der übertragenen Werte angezeigt.
 
 4.7 Identische Sprachwerte leeren
@@ -190,7 +205,8 @@ Anschließend wird die Anzahl der übertragenen Werte angezeigt.
 Mit dem Button "Identische leeren" werden Werte einer Zielsprache geleert, die exakt dem Wert einer Quellsprache entsprechen.
 Dies ist z.B. hilfreich, um nicht übersetzte Werte zu finden, die nur aus einer anderen Sprache kopiert wurden, oder um überflüssige Werte einer Sprachvariante zu entfernen, die ohnehin denselben Text wie die Hauptsprache haben.
 Die Auswahl von Quell- und Zielsprache erfolgt wie in 4.6.
-Sind in der Datentabelle Zeilen ausgewählt, werden nur diese bearbeitet, andernfalls alle Properties.
+Sind in der Datentabelle Zeilen ausgewählt, werden nur diese bearbeitet, andernfalls alle in der Datentabelle angezeigten Properties (bei aktivem Suchfilter nur die Treffer, siehe 5.1).
+Ein geleerter Wert der Default Sprache wird zu einem explizit leeren Wert, damit der Key in der Default Datei erhalten bleibt.
 Anschließend wird die Anzahl der geleerten Werte angezeigt.
 
 4.8 Duplikate entfernen
@@ -211,13 +227,17 @@ Geprüft werden Keys, Kommentare und alle Sprachwerte auf:
 	Isolierte Unicode Surrogates
 	Steuerzeichen (außer Tabulator und Zeilenumbruch)
 Keys werden zusätzlich darauf geprüft, ob sie leer sind, Leerzeichen enthalten oder die unzulässigen Zeichen "=" oder ":" enthalten.
+Außerdem werden die Sprachwerte jedes Keys mit dem Referenzwert verglichen (Default Sprache, sonst die erste Sprache mit Wert):
+	Platzhalter von MessageFormat ("{0}", "{1,number}") und String.format ("%s", "%1$d") müssen in allen Sprachen übereinstimmen
+	Abweichende Satzzeichen am Ende, führende oder abschließende Leerzeichen in nur einer Sprache sowie Zeilenumbrüche in Übersetzungen einzeiliger Texte werden als formale Abweichungen gemeldet
 Gefundene Fehler werden in einem Bericht mit LanguagePropertiesSetPath, Key und betroffenem Feld aufgelistet. Werden keine Fehler gefunden, erfolgt lediglich ein entsprechender Hinweis.
 
 4.10 Kontextmenü der Tabellenspalten
 
 Ein Rechtsklick auf die Überschrift oder eine Zelle bestimmter Spalten der Datentabelle öffnet ein Kontextmenü:
+	Zeilen: "Markierte Zeilen als CSV kopieren" kopiert die markierten Zeilen mit den angezeigten Spalten und den vollständigen Werten in die Zwischenablage.
 	Spalte "Pfad": Entfernt die LanguagePropertiesSetPath Angabe aller Properties. Diese Properties werden beim Speichern wie neu angelegte Properties behandelt (siehe 6.1 und 6.2).
-	Sprachspalten: Leert alle Werte dieser Sprache (das Sprachenkennzeichen selbst bleibt erhalten) oder löscht das Sprachenkennzeichen komplett (wie in 4.4).
+	Sprachspalten: Für die markierten Zeilen "Leeren Wert setzen" oder "Als fehlend setzen" (siehe 4.1). Außerdem leert es alle Werte dieser Sprache (das Sprachenkennzeichen selbst bleibt erhalten, die Default Sprache behält ihre Keys mit leeren Werten) oder löscht das Sprachenkennzeichen komplett (wie in 4.4).
 	Spalte "Kommentar": Entfernt die Kommentare aller Properties.
 Vor jeder dieser Aktionen erfolgt eine Sicherheitsabfrage mit der Anzahl der betroffenen Einträge.
 Die Kommentarspalte wird nur angezeigt, wenn Kommentare in der Anwendungs-Konfiguration nicht ignoriert werden.
@@ -242,6 +262,9 @@ Die Checkboxen neben dem Suchfeld legen fest, wie und wo gesucht wird. Sie sind 
 	"Key" (Suche in den Keys)
 	"Wert" (Suche in allen Sprachwerten)
 	"Pfad" (Suche im LanguagePropertiesSetPath)
+	"Filter" (die Datentabelle zeigt nur die passenden Properties)
+Die Statuszeile unter der Datentabelle zeigt, auf welche Properties die Aktionen Übersetzen, Übertragen, Identische leeren und Abgleich mit Basis-Set wirken (die markierten Zeilen oder alle angezeigten Properties).
+Die Escape-Taste hebt die Auswahl in der Datentabelle auf.
 
 5.2 Statistik
 
@@ -275,8 +298,9 @@ Diese Liste kann wie in 3.5 umsortiert und bearbeitet werden.
 Sobald an den Werten eines Language Properties Änderungen vorgenommen wurden, wird der Button "Dateien speichern" verfügbar.
 Sofern den Werten im Properties Set bereits ein LanguagePropertiesSetPath zugewiesen wurde, werden die Daten genau darin (zurück-)gespeichert.
 Bei neu angelegten Werten und nur einem geladenen LanguagePropertiesSetPath wird dieser LanguagePropertiesSetPath als Standardpfad für neue Werte verwendet.
-Bei mehreren verfügbaren LanguagePropertiesSetPath wird zur einmaligen Angabe des zu verwendenden LanguagePropertiesSetPath für alle neuen Werte aufgefordert.
-Vor dem Speichern wird abgefragt, ob in den Zieldateien bereits vorhandene Properties, die nicht im Tool geladen sind, erhalten bleiben sollen.
+Bei mehreren verfügbaren LanguagePropertiesSetPath wird zur einmaligen Angabe einer Datei aufgefordert, deren LanguagePropertiesSetPath für alle neuen Werte verwendet wird.
+Vor dem Speichern wird abgefragt, ob in den Zieldateien bereits vorhandene Properties, die nicht im Tool geladen sind, erhalten bleiben sollen. Schließen dieser Abfrage bricht das Speichern ab.
+Wird das Speichern abgebrochen oder schlägt es fehl, gelten die Properties weiterhin als ungespeichert.
 Existieren Zielverzeichnisse noch nicht, wird angeboten, diese anzulegen.
 
 6.2 Properties Sets in Verzeichnis speichern anhand Set Namen
@@ -285,7 +309,8 @@ Wenn alle aktuell im Tool verfügbaren Properties bereits einen eigenen Language
 Liegen jedoch Properties ohne LanguagePropertiesSetPath vor, fordert der Button zur Angabe eines Verzeichnispfades auf. Unter diesem werden dann alle verfügbaren LanguagePropertiesSetPath gesucht.
 Zusätzlich wird für diese pfadlosen Properties ein Name abgefragt (vorbelegt mit "Multiple"), unter dem sie als eigenes Language Properties Set behandelt werden.
 Die im Tool aktuell verfügbaren LanguagePropertiesSetPath werden mit diesen abgeglichen und dann bei passendem Language Properties Set Namen der Pfad des gefundenen LanguagePropertiesSetPath zur Speicherung verwendet.
-Dies funktioniert nur bei eindeutiger Bezeichnung der Language Properties Set Namen. Treten hierbei uneindeutige Namen auf wird der Vorgang mit einer Fehlermeldung abgebrochen.
+Ein Properties Set, das unter diesem Verzeichnis bereits an seinem eigenen LanguagePropertiesSetPath existiert, wird direkt dort gespeichert. Gleichnamige Sets in verschiedenen Unterverzeichnissen (z.B. mehrerer Module) sind daher kein Problem.
+Andere Properties Sets werden über ihren Language Properties Set Namen zugeordnet. Dies funktioniert nur, wenn der Name unter dem Verzeichnis eindeutig ist. Treten hierbei uneindeutige Namen auf, wird der Vorgang mit einer Fehlermeldung abgebrochen.
 Wird für einen im Tool aktuell verfügbaren LanguagePropertiesSetPath kein passender verfügbarer Pfad gefunden, so wird dieses Language Properties Set im gewählten Basisverzeichnis abgelegt.
 Wie in 6.1 wird abgefragt, ob bereits vorhandene Properties erhalten bleiben sollen, und das Anlegen fehlender Verzeichnisse angeboten.
 Abschließend werden alle gespeicherten Properties Sets aufgelistet.
@@ -295,26 +320,31 @@ Abschließend werden alle gespeicherten Properties Sets aufgelistet.
 Der Button "Export in einzelne Datei" speichert alle im Tool aktuell verfügbaren LanguagePropertiesSetPath in einer einzelnen Excel Datei.
 Hierfür wird eine Excel Datei mit einem Sheet angelegt sowie folgende Spalten mit Daten:
 	"Path" (Genauer LanguagePropertiesSetPath für dieses Language Properties Set, Platzhalter ~ für das Benutzerverzeichnis im System wird soweit möglich verwendet)
+	"Index" (Indizierung innerhalb eines Language Properties Sets um eine Reihenfolge der einzelnen Propertywerte einzuhalten)
 	"Key" (Key zum Property Wert)
-	"Org.Idx" (Indizierung innerhalb eines Language Properties Sets um eine Reihenfolge der einzelnen Propertywerte einzuhalten)
+	"Comment" (Kommentar des Property, nur wenn mindestens ein Property einen Kommentar hat)
 	"Default" (Default Sprachwert für den Key, soweit verfügbar)
 	"en", "de", "de_AT", "de_CH", "fr", ... (Sprachwerte der einzelnen Sprachenkennzeichen, auch Länderspezifische Kennzeichen mit Unterstrich sind erlaubt)
-Existiert die gewählte Datei bereits, erfolgt eine Abfrage vor dem Überschreiben.
+Existiert die gewählte Datei bereits, erfolgt eine Abfrage vor dem Überschreiben. Die vorhandene Datei wird erst nach erfolgreichem Export ersetzt.
+Ein erfolgreicher Export gilt als Speichern, danach gibt es keine ungespeicherten Änderungen mehr.
 
 6.4 Export in einzelne CSV Datei
 
 Der Button "Export in einzelne CSV Datei" speichert alle im Tool aktuell verfügbaren LanguagePropertiesSetPath in einer einzelnen CSV Datei.
-Hierfür wird eine CSV Datei angelegt mit folgenden Spalten mit Daten:
+Hierfür wird eine CSV Datei mit dem Trennzeichen ";" und dem Anführungszeichen '"' angelegt mit folgenden Spalten mit Daten:
 	"Path" (Genauer LanguagePropertiesSetPath für dieses Language Properties Set, Platzhalter ~ für das Benutzerverzeichnis im System wird soweit möglich verwendet)
+	"Index" (Indizierung innerhalb eines Language Properties Sets um eine Reihenfolge der einzelnen Propertywerte einzuhalten)
 	"Key" (Key zum Property Wert)
-	"Org.Idx" (Indizierung innerhalb eines Language Properties Sets um eine Reihenfolge der einzelnen Propertywerte einzuhalten)
+	"Comment" (Kommentar des Property, nur wenn mindestens ein Property einen Kommentar hat)
 	"Default" (Default Sprachwert für den Key, soweit verfügbar)
 	"en", "de", "de_AT", "de_CH", "fr", ... (Sprachwerte der einzelnen Sprachenkennzeichen, auch Länderspezifische Kennzeichen mit Unterstrich sind erlaubt)
-Existiert die gewählte Datei bereits, erfolgt eine Abfrage vor dem Überschreiben.
+Existiert die gewählte Datei bereits, erfolgt eine Abfrage vor dem Überschreiben. Die vorhandene Datei wird erst nach erfolgreichem Export ersetzt.
+Ein erfolgreicher Export gilt als Speichern, danach gibt es keine ungespeicherten Änderungen mehr.
 
 6.5 Schließen mit ungespeicherten Änderungen
 
 Beim Schließen des Tools sowie vor dem Laden anderer Properties (3.1 bis 3.5) wird bei ungespeicherten Änderungen abgefragt, ob diese verworfen werden sollen.
+Wird die anschließende Datei- oder Verzeichnisauswahl abgebrochen, bleiben die geladenen Properties samt ihren ungespeicherten Änderungen erhalten.
 
 
 7. Individuell anpassbare Konfigurationswerte
@@ -325,3 +355,12 @@ Standardmäßig verwendet dieses Tool die Dateierweiterung ".properties" für al
 Um dieses Verhalten zu überschreiben, können Sie den Konfigurationswert "PropertiesFileExtension" setzen, der im Konfigurationsmenü über die Schaltfläche "Konfiguration" (Schraubenschlüsselsymbol) verfügbar ist.
 Dies erlaubt die Verwendung von Dateiendungen wie "_mytext.properties", die nicht dem Language-Properties-Standard entsprechen.
 Bitte beachten Sie, dass diese Änderung dauerhaft ist und sich auf jeden Lade- oder Speichervorgang in der GUI auswirkt.
+Ein fehlender führender Punkt wird automatisch ergänzt ("properties" wird als ".properties" verwendet).
+
+7.2 Weitere Konfigurationswerte
+
+	"OpenDirExcludes": Durch ";" getrennte Pfadteile (Standard "__;/src/test/;\src\test\;/bin/;\bin\"). Dateien, deren Pfad einen dieser Teile enthält, werden beim Laden eines Verzeichnisses (3.2) und beim Speichern in ein Verzeichnis (6.2) ignoriert.
+	"IgnoreComments": Wenn gesetzt, werden Kommentare weder geladen noch angezeigt, und die Kommentarspalte wird ausgeblendet.
+	"DeepL_BaseUrl" und "DeepL_ApiKey": Adresse und API Key für die Übersetzung mit DeepL (4.5).
+	"TranslationConstantsFile": Optionale CSV Datei (UTF-8, Trennzeichen ";", "," oder Tabulator) mit Werten, die DeepL nicht verändern darf, z.B. Produktnamen oder Kürzel.
+		Die erste Zeile enthält die Sprachenkennzeichen (z.B. "de;en;it"). Eine Zeile mit nur einem Wert definiert einen in allen Sprachen identischen Wert, andere Zeilen enthalten den Wert je Sprache.

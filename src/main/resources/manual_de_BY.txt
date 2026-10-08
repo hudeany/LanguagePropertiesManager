@@ -35,29 +35,36 @@ Olle Datein vo dera Language Property wern nachad mitanand glodn und in da Datnt
 3.2 Olle Properties Sets aus de Unterverzeichnisse lodn
 
 Der Knopf bringt di zu oana Ordnerauswahl. Nachad wern olle Language Properties aus olle Unterverzeichnisse vo dem Ordner glodn.
-Dafür werd nach Datein gsuacht, de wo oans vo de Sprachkennzeichn "_en" oder "_de" und de Dateiendung ".properties" ham.
+Dafür werd nach Properties Sets gsuacht, also nach Datein mit da eigstejtn Dateiendung (normalerweis ".properties"), vo dene mindestens oane a gscheids Sprachkennzeichn wia "_en", "_de" oder "_de_BY" hod.
+Einzelne Properties-Datein ganz ohne Sprachdatei danebn (z.B. Konfigurationsdatein) wern ned beachtet, und Pfade, de wo oan vo de Ausschluss-Trümmer vom Konfigurationswert "OpenDirExcludes" enthoitn (schau in 7.2), aa ned.
 Für jeden gfundna LanguagePropertiesSetPath wern nachad aa olle andern Sprachn glodn und in da Datntabelln links ozeigt.
 Je nachdem, wia vui Unterverzeichnisse und Datein's san und wia groß de san, kann des a Weil dauern. Do kannst da derweil glei a Weißwurscht macha. Aber vor zwöife essn.
+Steht in oaner Datei a Key mehra ois oamoi drin, werd bloß da erste Wert glodn. A Hinweis listet nachad de betroffna Datein und Keys auf, weil de andern Werte beim nächstn Speichern sunst weg warn. Doppelt gmoppelt hoit ned bessa.
 
 3.3 Excel Import
 
 Da Knopf "Import aus oaner Datei" lasst di a einzelne Excel-Datei ogebn, und olle Language Properties Sets, de wo da drin san, wern draus glodn.
 De Excel-Datei soit aus bloß oam Sheet bestehn und ko de foigendn Spoitn ham:
-	"Path" oder "Pfad" (Genauer LanguagePropertiesSetPath für des Language Properties Set, Platzhalter ~ und $HOME san erlaubt, optional)
-	"Key" oder "Schlüssel" (Key zum Property-Wert, des braucht's unbedingt)
+	"Path", "Pfad", "File" oder "Datei" (Genauer LanguagePropertiesSetPath für des Language Properties Set, Platzhalter ~ und $HOME san erlaubt, optional; ohne Pfade werd da Nam vo da importiertn Datei ois Language Properties Set Name hergnomma)
+	"Key", "Keys", "Schlüssel", "Schluessel" oder "Bezeichner" (Key zum Property-Wert, des braucht's unbedingt)
 	"Index", "Idx" oder "Org.Idx" (Nummerierung innerhoib vo am Language Properties Set, damit d'Reihenfoige vo de Propertywerte passt, optional)
+	"Comment" oder "Kommentar" (Anmerkung zum Property, optional, werd ned beachtet, wenn Anmerkunga in da Konfiguration ignoriert wern)
 	"Default" (Default-Sprachwert für den Key, optional)
 	"en", "de", "de_AT", "de_CH", "fr", ... (Sprachwerte vo de einzelnen Sprachkennzeichn, aa länderspezifische Kennzeichn mit Unterstrich san erlaubt, also aa "de_BY", logisch)
+Ob de Spoitnüberschriftn groß oder kloa gschriebn san, is wurscht.
+Gibt's a Spoitn "Default", na hoaßt a leere Zejn in de Sprachspoitn "Wert fehlt" (da Key werd ned in de Sprachdatei gschriebn) und in da Spoitn "Default" "ausdrücklich leer". Ohne Spoitn "Default" wern leere Zejn ois ausdrücklich leere Werte importiert.
 
 3.4 CSV Import
 
 Da Knopf "Import aus oaner Datei" lasst di a einzelne CSV-Datei ogebn, und olle Language Properties Sets, de wo da drin san, wern draus glodn.
-De CSV-Datei ko de foigendn Spoitn ham:
-	"Path" oder "Pfad" (Genauer LanguagePropertiesSetPath für des Language Properties Set, Platzhalter ~ und $HOME san erlaubt, optional)
-	"Key" oder "Schlüssel" (Key zum Property-Wert, des braucht's unbedingt)
+De CSV-Datei nimmt ois Trennzeichn ";" und ois Anführungszeichn '"' her (Werte mit Zeilnumbruch san innerhoib vo Anführungszeichn erlaubt) und ko de foigendn Spoitn ham:
+	"Path", "Pfad", "File" oder "Datei" (Genauer LanguagePropertiesSetPath für des Language Properties Set, Platzhalter ~ und $HOME san erlaubt, optional; ohne Pfade werd da Nam vo da importiertn Datei ois Language Properties Set Name hergnomma)
+	"Key", "Keys", "Schlüssel", "Schluessel" oder "Bezeichner" (Key zum Property-Wert, des braucht's unbedingt)
 	"Index", "Idx" oder "Org.Idx" (Nummerierung innerhoib vo am Language Properties Set, damit d'Reihenfoige vo de Propertywerte passt, optional)
+	"Comment" oder "Kommentar" (Anmerkung zum Property, optional, werd ned beachtet, wenn Anmerkunga in da Konfiguration ignoriert wern)
 	"Default" (Default-Sprachwert für den Key, optional)
 	"en", "de", "de_AT", "de_CH", "fr", ... (Sprachwerte vo de einzelnen Sprachkennzeichn, aa länderspezifische Kennzeichn mit Unterstrich san erlaubt)
+Für leere Zejn und de Spoitn "Default" geit des Gleiche wia in 3.3.
 
 3.5 Kürzlich hergnommane Pfade
 
@@ -80,10 +87,10 @@ Der Knopf macht a Menü auf, wo ma d'Quelle aussuacht:
 Geht beim Lesn vo da Quelle wos schief oder werd des Ganze abbrocha, bleim de grad glodna Properties so, wia's warn. Do passiert nix.
 
 Wo de importiertn Properties highern:
-A importierts Property werd zu am scho vorhandna Property mit dem gleichn Key dazua gsteckt, wenn des den gleichn LanguagePropertiesSetPath hod.
-Gibt's so oan ned, langt da gleiche Language Properties Set Name (z.B. bei oaner Kopie vom Properties Set in am andern Verzeichnis). Fehlt auf oaner Seitn da Pfad (z.B. bei Excel- und CSV-Datein ohne Spoitn "Path"), na langt da Key alloa.
-Basst a Key zu mehrere glodne Properties Sets, na is ned eindeutig, wo er highert. Der Eintrag werd nachad übersprunga und im Ergebnisbericht aufgführt. Mia ham ned de Zeit zum Ratn.
-Verglicha werd jeweils pro Key und Sprach. A Sprachwert guit ois nei, wenn des vorhandne Property für de Sprach no koan Wert hod. Anmerkunga wern wia Sprachwerte behandlt.
+A importierts Property werd zu am scho vorhandna Property mit dem gleichn Key dazua gsteckt. Da Pfad vo da Importquelle werd dabei ned verglicha, weil der eh meistns anders is (z.B. bei oaner Kopie oder am Export vom Properties Set in am andern Verzeichnis).
+Bloß wenn's den Key in mehrane glodne Properties Sets gibt, werd des mit'm gleichn LanguagePropertiesSetPath hergnomma. Gibt's des ned, na is ned eindeutig, wo er highert. Der Eintrag werd nachad übersprunga und im Ergebnisbericht aufgführt. Mia ham ned de Zeit zum Ratn.
+Kimmt a Key im gleichn glodna Properties Set mehrmois vor, is des koa Durchanand: Es werd des erste Vorkomma (nach ursprünglichm Index) hergnomma.
+Verglicha werd jeweils pro Key und Sprach. A Sprachwert guit ois nei, wenn des vorhandne Property für de Sprach no koan Wert hod. Anmerkunga vo vorhandne Properties wern ned verglicha und bleibn wia's san, neie Keys nehman eana Anmerkung aus da Importquelle mit.
 Neie Keys wern, soweit des eindeutig geht, dem passendn glodna Properties Set zuagordnet. So werd beim Speichern ned in de Datein vo da Importquelle neigschriebn.
 Geht des ned, na bhaltn neie Keys den LanguagePropertiesSetPath vo da Importquelle und dadn beim Speichern dorthin gschriebn wern. Do drauf weist da Ergebnisbericht ausdrücklich hi. Obacht gebn!
 Neie Sprachkennzeichn wern für olle Properties oglegt.
@@ -110,11 +117,12 @@ Da Knopf "Mit am Basis-Set abgleichn (gleiche Werte rausschmeißn)" vergleicht d
 Übrig bleim bloß de Abweichunga vom Basis-Set. Des is z.B. praktisch für kundn- oder variantnspezifische Properties Sets, de wo bloß de Texte enthoitn soin, de wo de Texte vo am Basisprodukt überschreibn.
 Da Knopf geht bloß, wenn Properties glodn san. Er macht des gleiche Menü zur Auswahl vo da Quelle auf wia in 3.6. De ausgsuachte Quelle werd bloß zum Vergleicha glesn und ned ins Werkzeig übernomma.
 Geht beim Lesn vo da Quelle wos schief oder werd des Ganze abbrocha, bleim de grad glodna Properties so, wia's warn.
-San in da Datntabelln Zeiln markiert, wern bloß de abgleicha, sonst olle Properties.
+San in da Datntabelln Zeiln markiert, wern bloß de abgleicha, sunst olle Properties, de wo in da Datntabelln ozeigt wern (bei an eigschoitna Suachfilter bloß de Treffer, schau in 5.1).
 
 Zuaordnung und Vergleich:
-Jeds glodne Property werd seim Gegnstück im Basis-Set nach de gleichn Regln wia in 3.6 zuagordnet (gleicher LanguagePropertiesSetPath, sonst gleicher Language Properties Set Name, sonst da Key alloa, wenn da Pfad fehlt).
-Basst a Key zu mehrere Einträg im Basis-Set, is ned eindeutig, wo er highert. Der Eintrag werd nachad übersprunga und im Ergebnisbericht aufgführt.
+Jeds glodne Property werd de Einträg im Basis-Set mit'm gleichn Key zuagordnet. Da Pfad werd dabei ned verglicha, weil des Basis-Set meistns woanders liegt.
+Kimmt da Key im Basis-Set mehrmois vor, guit a Wert ois gleich, wenn er gleich is wia da Wert vo irgendoam vo dene Einträg.
+Einträg mit am leern Key wern übersprunga und im Ergebnisbericht aufgführt.
 Verglicha werd jeweils pro Key und Sprach. Bloß Werte, de wo gnau gleich san wia da Wert vo da gleichn Sprach im Basis-Set, fliagn naus.
 Werte, de wo vom Basis-Set abweichn oder dort fehln, bleibn do. Genauso bleibn Properties ohne Gegnstück im Basis-Set wia's san.
 Anmerkunga wern ned verglicha und bleibn do.
@@ -147,6 +155,9 @@ Olle ungwünschtn Änderunga ko ma in beidn Fäll jederzeit mit'm Knopf "Verwerf
 Da Knopf "Zur Speicher-Text-Darstellung wechseln" stejt de Anzeig vo Key und Sprachwerte auf de technische Codierung im JAVA-Encoding um.
 Des braucht ma, wenn ma komplizierte Unicode-Zeichn ogebn mog. Oder wenn ma gern \u00fc statt ü liest, a jeder wia er mog.
 Mit'm Knopf "Zur Anzeige-Text-Darstellung wechseln" kimmt ma wieder zur normaln Anzeig zruck.
+A leers Sprachfeld hoaßt "Wert fehlt" (da Key werd ned in de Sprachdatei gschriebn, nachad guit da Default-Wert). Des werd mit "∅" nebn da Sprach ozeigt.
+Im Kontextmenü vo am Sprachfeld (Rechtsklick) gibt's "Leeren Wert setzen" (da Key werd mit leerm Wert ois "key=" gschriebn) und "Als fehlend setzen".
+Da Key derf ned leer sei. Is no gar nix glodn, werd beim Dazuamacha vom erstn Property nach'm Nam vom neien Language Properties Set gfragt.
 
 4.2 Property-Werte löschn
 
@@ -171,10 +182,13 @@ Mit'm Knopf "Translate" ko ma fehlende Sprachwerte erzeugn, indem da Wert aus oa
 Dafür braucht ma an API Key zur Autorisierung, den kriagt ma unter "https://www.deepl.com/pro-api/".
 Begrenzte Testkontn san umasunst, aber ma muass trotzdem a Kreditkartn hinterlegn. A so is des hoid.
 Den API Key ko ma im Anwendungs-Konfigurationsdialog eigebn oder beim erstn Drucka auf "Translate".
-Zerst werd de Quellsprach, nachad de Zielsprach ausgsuacht.
+Da Knopf macht a Menü auf mit "In oa Zuisproch iwasetzn" und "In olle Zuisprochn iwasetzn" (olle andern Sprachn, de wo DeepL ko).
+Zerst werd de Quellsprach, nachad de Zielsprach ausgsuacht (bloß beim Übersetzn in oa Zielsprach).
 Nimmt ma de Default-Sprach her, muass ma a Sprach aussuacha, de wo ois Standardsprach zuagordnet is.
 Gibt's bloß no oa andere Sprach, werd de automatisch ois Zielsprach gnomma.
-San in da Datntabelln Zeiln markiert, wern bloß de übersetzt, sonst olle Properties.
+San in da Datntabelln Zeiln markiert, wern bloß de übersetzt, sunst olle Properties, de wo in da Datntabelln ozeigt wern (bei an eigschoitna Suachfilter bloß de Treffer, schau in 5.1).
+Es wern bloß leere Zielwerte aufgfüllt, vorhandne Übersetzunga wern ned überschriebn.
+Werte aus da optionaln Datei mit Übersetzungskonstantn (schau in 7.2) und reine Zahln wern ohne DeepL übernomma. A Zahl bleibt a Zahl, aa auf Boarisch.
 De Übersetzung lafft mit oaner Fortschrittsanzeig und ko abbrocha wern. Am End werd ozeigt, wia vui Übersetzunga's gworn san.
 De Verbindung zu DeepL nimmt de Proxy-Einstellunga her, de wo in da Anwendungs-Konfiguration eigstellt san.
 Boarisch ko DeepL übrigens ned. Do miassn's no a bissl üben.
@@ -185,7 +199,7 @@ Mit'm Knopf "Übertragn" ko ma Sprachwerte vo oam Sprachkennzeichn in a anders k
 Des is z.B. praktisch für Sprachvariantn wia "de" und "de_AT", oder wenn ma Default-Werte in a gscheide Sprach übernehma mog.
 Zerst werd de Quellsprach, nachad de Zielsprach ausgsuacht. Gibt's bloß no oa andere Sprach, werd de automatisch ois Zielsprach gnomma.
 Übertragn wern bloß Quellwerte, de wo ned leer san. Vorhandne Werte in da Zielsprach wern dabei überschriebn.
-San in da Datntabelln Zeiln markiert, wern bloß de bearbeitet, sonst olle Properties.
+San in da Datntabelln Zeiln markiert, wern bloß de bearbeitet, sunst olle Properties, de wo in da Datntabelln ozeigt wern (bei an eigschoitna Suachfilter bloß de Treffer, schau in 5.1).
 Am End werd ozeigt, wia vui Werte übertragn worn san.
 
 4.7 Gleiche Sprachwerte ausleern
@@ -193,7 +207,8 @@ Am End werd ozeigt, wia vui Werte übertragn worn san.
 Mit'm Knopf "Gleiche ausleern" wern Werte vo oaner Zielsprach ausgleert, de wo gnau gleich san wia da Wert vo oaner Quellsprach.
 Des is z.B. praktisch, wenn ma ned übersetzte Werte findn mog, de wo bloß aus oaner andern Sprach rüberkopiert worn san, oder wenn ma überflüssige Werte vo oaner Sprachvariantn loswern mog, de wo eh den gleichn Text wia de Hauptsprach ham.
 Quell- und Zielsprach wern ausgsuacht wia in 4.6.
-San in da Datntabelln Zeiln markiert, wern bloß de bearbeitet, sonst olle Properties.
+San in da Datntabelln Zeiln markiert, wern bloß de bearbeitet, sunst olle Properties, de wo in da Datntabelln ozeigt wern (bei an eigschoitna Suachfilter bloß de Treffer, schau in 5.1).
+A ausgleerter Wert vo da Default-Sprach werd zu am ausdrücklich leern Wert, damit da Key in da Default-Datei drin bleibt.
 Am End werd ozeigt, wia vui Werte ausgleert worn san.
 
 4.8 Doppelte rausschmeißn
@@ -214,13 +229,17 @@ Prüft wern Keys, Anmerkunga und olle Sprachwerte auf:
 	Einsame Unicode Surrogates (de san ganz alloa, de Armen)
 	Steuerzeichn (außer Tabulator und Zeilnumbruch)
 Keys wern zuasätzlich drauf prüft, ob's leer san, Leerzeichn drin ham oder de verbotna Zeichn "=" oder ":" enthoitn.
+Außerdem wern de Sprachwerte vo jedem Key mit'm Referenzwert verglicha (Default-Sprach, sunst de erste Sprach mit am Wert):
+	Platzhalter vo MessageFormat ("{0}", "{1,number}") und String.format ("%s", "%1$d") miassn in olle Sprachn zammpassn
+	Andere Satzzeichn am End, Leerzeichn vorn oder hint in bloß oaner Sprach und Zeilnumbrüch in Übersetzunga vo oazeilign Texte wern ois formale Abweichunga gmejdt
 Gfundne Fehler wern in am Bericht mit LanguagePropertiesSetPath, Key und betroffnm Feld aufglistet. Wern koane Fehler gfundn, kimmt bloß a Hinweis. Na basst's ja.
 
 4.10 Kontextmenü vo de Tabellnspoitn
 
 A Rechtsklick auf de Überschrift oder a Zejn vo bestimmte Spoitn in da Datntabelln macht a Kontextmenü auf:
+	Zeiln: "Markierte Zeiln ois CSV kopiern" kopiert de markiertn Zeiln mit de ozeigtn Spoitn und de kompletten Werte in d'Zwischnablag.
 	Spoitn "Pfad": Schmeißt de LanguagePropertiesSetPath-Ogab vo olle Properties naus. De Properties wern beim Speichern wia neu oglegte Properties behandlt (schau in 6.1 und 6.2).
-	Sprachspoitn: Leert olle Werte vo dera Sprach aus (des Sprachkennzeichn sejba bleibt do) oder löscht des Sprachkennzeichn komplett (wia in 4.4).
+	Sprachspoitn: Für de markiertn Zeiln "Leeren Wert setzen" oder "Als fehlend setzen" (schau in 4.1). Außerdem leert's olle Werte vo dera Sprach aus (des Sprachkennzeichn sejba bleibt do, de Default-Sprach bhoit eana Keys mit leere Werte) oder löscht des Sprachkennzeichn komplett (wia in 4.4).
 	Spoitn "Anmerkung": Schmeißt de Anmerkunga vo olle Properties naus.
 Vor jeder vo de Aktiona kimmt a Sicherheitsfrog mit da Anzahl vo de betroffna Einträg.
 De Anmerkungsspoitn werd bloß ozeigt, wenn Anmerkunga in da Anwendungs-Konfiguration ned ignoriert wern.
@@ -245,6 +264,9 @@ De Kastl zum Ankreizln nebm Suachfeld legn fest, wia und wo gsuacht werd. De ko 
 	"Key" (In de Keys suacha)
 	"Wert" (In olle Sprachwerte suacha)
 	"Pfad" (Im LanguagePropertiesSetPath suacha)
+	"Filter" (de Datntabelln zoagt bloß no de passendn Properties)
+De Statuszeil unter da Datntabelln zoagt, auf wöche Properties de Aktiona Übersetzn, Übertragn, Gleiche ausleern und Abgleich mit'm Basis-Set wirkn (de markiertn Zeiln oder olle ozeigtn Properties).
+Mit da Escape-Tastn is de Auswahl in da Datntabelln wieder weg.
 
 5.2 Statistik
 
@@ -278,8 +300,9 @@ De Listn ko ma wia in 3.5 umanandaschiabn und bearbeitn.
 Sobald an de Werte vo oaner Language Property wos gändert worn is, geht da Knopf "Datein speichern".
 Wenn de Werte im Properties Set scho an LanguagePropertiesSetPath ham, wern de Datn gnau dort (wieder) hi gspeichert.
 Bei neu oglegte Werte und bloß oam glodna LanguagePropertiesSetPath werd der ois Standardpfad für neie Werte hergnomma.
-Gibt's mehrane LanguagePropertiesSetPath, werd ma oamoi gfragt, wöcher LanguagePropertiesSetPath für olle neien Werte hergnomma wern soi.
-Vorm Speichern werd gfragt, ob Properties, de wo in de Zieldatein scho drinstehn, aber ned im Werkzeig glodn san, bleibn soin.
+Gibt's mehrane LanguagePropertiesSetPath, werd ma oamoi nach oaner Datei gfragt, deren LanguagePropertiesSetPath für olle neien Werte hergnomma werd.
+Vorm Speichern werd gfragt, ob Properties, de wo in de Zieldatein scho drinstehn, aber ned im Werkzeig glodn san, bleibn soin. Wer de Frog oafach zuamacht, bricht des Speichern ab.
+Werd as Speichern abbrocha oder geht's schief, gejtn de Properties weiterhin ois ned gspeichert. Nix is verlorn.
 Gibt's de Zielverzeichnisse no ned, werd ogbotn, dass ma's olegt.
 
 6.2 Properties Sets anhand vom Set Namen in a Verzeichnis speichern
@@ -288,7 +311,8 @@ Wenn olle Properties, de wo grad im Werkzeig san, scho an eigna LanguageProperti
 San aber Properties ohne LanguagePropertiesSetPath dabei, werd ma nach am Verzeichnispfad gfragt. Drunter wern nachad olle verfügbarn LanguagePropertiesSetPath gsuacht.
 Zuasätzlich werd für de pfadlosn Properties a Nam gfragt (vorbelegt mit "Multiple"), unter dem's ois eigns Language Properties Set behandlt wern. Heimatlose kriagn hoid a Hoamat.
 De LanguagePropertiesSetPath, de wo grad im Werkzeig san, wern mit dene abgleicha, und bei am passendn Language Properties Set Namen werd da Pfad vom gfundna LanguagePropertiesSetPath zum Speichern hergnomma.
-Des geht bloß, wenn de Language Properties Set Namen eindeutig san. Gibt's do Namen, de wo ned eindeutig san, werd des Ganze mit oaner Fehlermeldung abbrocha. Do huift nix.
+A Properties Set, des wo unter dem Verzeichnis scho an seim eigna LanguagePropertiesSetPath liegt, werd glei dort gspeichert. Gleichnamige Sets in verschiedne Unterverzeichnisse (z.B. vo mehrane Module) san drum koa Problem.
+Andere Properties Sets wern über eanan Language Properties Set Namen zuagordnet. Des geht bloß, wenn der Nam unterm Verzeichnis eindeutig is. Gibt's do Namen, de wo ned eindeutig san, werd des Ganze mit oaner Fehlermeldung abbrocha. Do huift nix.
 Werd für an LanguagePropertiesSetPath, der wo grad im Werkzeig is, koa passender Pfad gfundn, na werd des Language Properties Set im ausgsuachtn Basisverzeichnis abglegt.
 Wia in 6.1 werd gfragt, ob scho vorhandne Properties bleibn soin, und as Olegn vo fehlende Verzeichnisse werd ogbotn.
 Zum Schluss wern olle gspeichertn Properties Sets aufglistet.
@@ -298,27 +322,32 @@ Zum Schluss wern olle gspeichertn Properties Sets aufglistet.
 Da Knopf "Export in oa einzelne Datei" speichert olle LanguagePropertiesSetPath, de wo grad im Werkzeig san, in oa einzelne Excel-Datei.
 Dafür werd a Excel-Datei mit oam Sheet oglegt, mit de foigendn Spoitn:
 	"Path" (Genauer LanguagePropertiesSetPath für des Language Properties Set, da Platzhalter ~ fürs Benutzerverzeichnis im System werd hergnomma, soweit des geht)
+	"Index" (Nummerierung innerhoib vo am Language Properties Set, damit d'Reihenfoige vo de Propertywerte passt)
 	"Key" (Key zum Property-Wert)
-	"Org.Idx" (Nummerierung innerhoib vo am Language Properties Set, damit d'Reihenfoige vo de Propertywerte passt)
+	"Comment" (Anmerkung zum Property, bloß wenn mindestens oa Property a Anmerkung hod)
 	"Default" (Default-Sprachwert für den Key, soweit's oan gibt)
 	"en", "de", "de_AT", "de_CH", "fr", ... (Sprachwerte vo de einzelnen Sprachkennzeichn, aa länderspezifische Kennzeichn mit Unterstrich san erlaubt)
-Gibt's de ausgsuachte Datei scho, werd vorm Überschreibn gfragt.
+Gibt's de ausgsuachte Datei scho, werd vorm Überschreibn gfragt. De oide Datei werd erst nach am erfolgreichn Export ersetzt.
+A erfolgreicher Export guit ois Speichern, nachad gibt's koane ned gspeicherten Änderunga mehr.
 
 6.4 Export in oa einzelne CSV-Datei
 
 Da Knopf "Export in oa einzelne CSV-Datei" speichert olle LanguagePropertiesSetPath, de wo grad im Werkzeig san, in oa einzelne CSV-Datei.
-Dafür werd a CSV-Datei mit de foigendn Spoitn oglegt:
+Dafür werd a CSV-Datei mit'm Trennzeichn ";" und'm Anführungszeichn '"' und de foigendn Spoitn oglegt:
 	"Path" (Genauer LanguagePropertiesSetPath für des Language Properties Set, da Platzhalter ~ fürs Benutzerverzeichnis im System werd hergnomma, soweit des geht)
+	"Index" (Nummerierung innerhoib vo am Language Properties Set, damit d'Reihenfoige vo de Propertywerte passt)
 	"Key" (Key zum Property-Wert)
-	"Org.Idx" (Nummerierung innerhoib vo am Language Properties Set, damit d'Reihenfoige vo de Propertywerte passt)
+	"Comment" (Anmerkung zum Property, bloß wenn mindestens oa Property a Anmerkung hod)
 	"Default" (Default-Sprachwert für den Key, soweit's oan gibt)
 	"en", "de", "de_AT", "de_CH", "fr", ... (Sprachwerte vo de einzelnen Sprachkennzeichn, aa länderspezifische Kennzeichn mit Unterstrich san erlaubt)
-Gibt's de ausgsuachte Datei scho, werd vorm Überschreibn gfragt.
+Gibt's de ausgsuachte Datei scho, werd vorm Überschreibn gfragt. De oide Datei werd erst nach am erfolgreichn Export ersetzt.
+A erfolgreicher Export guit ois Speichern, nachad gibt's koane ned gspeicherten Änderunga mehr.
 
 6.5 Zuamacha mit ned gspeicherte Änderunga
 
 Beim Zuamacha vom Werkzeig und bevor andere Properties glodn wern (3.1 bis 3.5), werd bei ned gspeicherte Änderunga gfragt, ob ma de wirklich wegschmeißn mog.
 Überleg's da guad. Hinterher is ma oiwei gscheida.
+Brichst de nachfoigende Datei- oder Verzeichnisauswahl ab, bleibn de glodna Properties mitsamt eana ned gspeicherten Änderunga so wia's warn.
 
 
 7. Konfigurationswerte, de wo ma sejba eistejn ko
@@ -329,6 +358,15 @@ Standardmäßig nimmt des Werkzeig de Dateiendung ".properties" für olle Langua
 Wenn ma des anders ham mog, ko ma den Konfigurationswert "PropertiesFileExtension" setzn, den gibt's im Konfigurationsmenü über'n Knopf "Konfiguration" (des mit'm Schraubnschlüssl).
 Damit gengan aa Dateiendunga wia "_mytext.properties", de wo ned dem Language-Properties-Standard entsprechn.
 Obacht: De Änderung is dauerhaft und wirkt si auf jeds Lodn und Speichern in da GUI aus. Ned dass nachad hoaßt, des hod koana gsagt.
+Fehlt vorn da Punkt, werd er automatisch dazuagmacht ("properties" werd ois ".properties" hergnomma).
+
+7.2 No mehra Konfigurationswerte
+
+	"OpenDirExcludes": Pfad-Trümmer, mit ";" trennt (normalerweis "__;/src/test/;\src\test\;/bin/;\bin\"). Datein, deren Pfad oans vo dene Trümmer enthoit, wern beim Lodn vo am Verzeichnis (3.2) und beim Speichern in a Verzeichnis (6.2) ned beachtet.
+	"IgnoreComments": Is des gsetzt, wern Anmerkunga weder glodn no ozeigt, und de Anmerkungsspoitn is weg.
+	"DeepL_BaseUrl" und "DeepL_ApiKey": Adress und API Key fürs Übersetzn mit DeepL (4.5).
+	"TranslationConstantsFile": Optionale CSV-Datei (UTF-8, Trennzeichn ";", "," oder Tabulator) mit Werte, de wo DeepL ned olanga derf, z.B. Produktnamen oder Kürzl.
+		De erste Zeil hod de Sprachkennzeichn (z.B. "de;en;it"). A Zeil mit bloß oam Wert is a Wert, der wo in olle Sprachn gleich is, andere Zeiln ham den Wert je Sprach.
 
 
 Prost und vui Spaß beim Übersetzn!

@@ -1,11 +1,11 @@
 Usage:
-	java -jar LanguagePropertiesManager.jar -exportToExcel <language properties file or directory path> -excelFile <output Excel file path> [-v]
+	java -jar LanguagePropertiesManager.jar -exportToExcel <language properties file or directory path> -excelFile <output Excel file path> [-overwrite] [-propertiesFileExtension <extension>] [-v]
 	or
-	java -jar LanguagePropertiesManager.jar -exportToCsv <language properties file or directory path> -csvFile <output CSV file path> [-v]
+	java -jar LanguagePropertiesManager.jar -exportToCsv <language properties file or directory path> -csvFile <output CSV file path> [-overwrite] [-propertiesFileExtension <extension>] [-v]
 	or
-	java -jar LanguagePropertiesManager.jar -importFromExcel <input Excel file path> [-outputDirectory <language properties output directory>] [-v]
+	java -jar LanguagePropertiesManager.jar -importFromExcel <input Excel file path> [-outputDirectory <language properties output directory>] [-propertiesFileExtension <extension>] [-v]
 	or
-	java -jar LanguagePropertiesManager.jar -importFromCsv <input CSV file path> [-outputDirectory <language properties output directory>] [-v]
+	java -jar LanguagePropertiesManager.jar -importFromCsv <input CSV file path> [-outputDirectory <language properties output directory>] [-propertiesFileExtension <extension>] [-v]
 
 Mandatory parameters for Excel file export
 	-exportToExcel <language properties file or directory path>
@@ -24,11 +24,16 @@ Mandatory parameters for Excel file import
 Optional parameters for Excel file import
 	-outputDirectory <language properties output directory>:
 		If outputDirectory is not defined, all language properties sets will be imported to the defined original file paths in the Excel file.
-		If outputDirectory is defined, the existing language properties sets file paths within that directory will be detected and used for matching set names.
-		Other language properties sets without matching file paths will be store as new language properties sets in the base directory itself.
+		In this case every entry of the Excel file must have a path.
+		If outputDirectory is defined, the existing language properties sets within that directory (including subdirectories) will be detected.
+		A set existing at its original file path is used directly, other sets are matched by their set name (the set name must be unique then).
+		Other language properties sets without matching file paths will be stored as new language properties sets in the output directory itself.
+		Entries without path are stored as a set named like the Excel file (without extension).
 	-propertiesFileExtension <extension>:
 		Do not use the default language file extension ".properties", but a differently defined customized extension like "_mytext.properties"
 	-v: verbose output with progress bar
+
+Keys existing in the language properties files, but not in the imported Excel file, are kept.
 
 Mandatory parameters for CSV file export
 	-exportToCsv <language properties file or directory path>
@@ -47,14 +52,19 @@ Mandatory parameters for CSV file import
 Optional parameters for CSV file import
 	-outputDirectory <language properties output directory>:
 		If outputDirectory is not defined, all language properties sets will be imported to the defined original file paths in the CSV file.
-		If outputDirectory is defined, the existing language properties sets file paths within that directory will be detected and used for matching set names.
-		Other language properties sets without matching file paths will be store as new language properties sets in the base directory itself.
+		In this case every entry of the CSV file must have a path.
+		If outputDirectory is defined, the existing language properties sets within that directory (including subdirectories) will be detected.
+		A set existing at its original file path is used directly, other sets are matched by their set name (the set name must be unique then).
+		Other language properties sets without matching file paths will be stored as new language properties sets in the output directory itself.
+		Entries without path are stored as a set named like the CSV file (without extension).
 	-propertiesFileExtension <extension>:
 		Do not use the default language file extension ".properties", but a differently defined customized extension like "_mytext.properties"
 	-v: verbose output with progress bar
 
+Keys existing in the language properties files, but not in the imported CSV file, are kept.
+
 Global standalone parameters
 	help: Show this help manual
-	gui: Open a GUI
+	gui: Open a GUI (also opened when started without any parameter)
 	version: Show current local version of this tool
 	update: Check for online update and ask, whether an available update shall be installed. [username [password]]
