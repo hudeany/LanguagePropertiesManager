@@ -25,6 +25,14 @@ public class LoadedLanguageProperties {
 
 	/**
 	 * For properties read from properties files, the language signs are determined from the properties
+	 *
+	 * @param languageProperties
+	 *            the read properties, null for none
+	 * @param languagePropertiesSetNames
+	 *            names of the read properties sets
+	 * @param sourceDescription
+	 *            file or directory the properties were read from, only for display
+	 * @return the read properties with their language signs, default language first
 	 */
 	public static LoadedLanguageProperties ofPropertiesSets(final List<LanguageProperty> languageProperties, final List<String> languagePropertiesSetNames, final String sourceDescription) {
 		final List<LanguageProperty> properties = languageProperties == null ? new ArrayList<>() : languageProperties;
@@ -34,6 +42,16 @@ public class LoadedLanguageProperties {
 
 	/**
 	 * For properties read from an Excel or CSV file, which delivers its language signs and set name itself
+	 *
+	 * @param languageProperties
+	 *            the read properties, null for none
+	 * @param availableLanguageSigns
+	 *            language signs of the file, default language first
+	 * @param languagePropertiesSetName
+	 *            name of the properties set
+	 * @param sourceDescription
+	 *            file the properties were read from, only for display
+	 * @return the read properties
 	 */
 	public static LoadedLanguageProperties ofSingleSet(final List<LanguageProperty> languageProperties, final List<String> availableLanguageSigns, final String languagePropertiesSetName, final String sourceDescription) {
 		final List<String> setNames = new ArrayList<>();
@@ -41,22 +59,47 @@ public class LoadedLanguageProperties {
 		return new LoadedLanguageProperties(languageProperties, availableLanguageSigns, setNames, sourceDescription);
 	}
 
+	/**
+	 * The read properties.
+	 *
+	 * @return the read properties, never null
+	 */
 	public List<LanguageProperty> getLanguageProperties() {
 		return languageProperties;
 	}
 
+	/**
+	 * Language signs of the read properties, default language first.
+	 *
+	 * @return the language signs, never null
+	 */
 	public List<String> getAvailableLanguageSigns() {
 		return availableLanguageSigns;
 	}
 
+	/**
+	 * Names of the read properties sets.
+	 *
+	 * @return the set names, never null
+	 */
 	public List<String> getLanguagePropertiesSetNames() {
 		return languagePropertiesSetNames;
 	}
 
+	/**
+	 * File or directory the properties were read from, only for display.
+	 *
+	 * @return the source description
+	 */
 	public String getSourceDescription() {
 		return sourceDescription;
 	}
 
+	/**
+	 * Name shown for the read data: the name of the only set, or "Multiple" for several sets.
+	 *
+	 * @return the combined set name, null if no set name is known
+	 */
 	public String getCombinedSetName() {
 		if (languagePropertiesSetNames.isEmpty()) {
 			return null;

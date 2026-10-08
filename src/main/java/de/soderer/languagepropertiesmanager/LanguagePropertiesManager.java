@@ -35,18 +35,22 @@ import de.soderer.utilities.console.ConsoleUtilities;
 import de.soderer.utilities.swing.ErrorDialog;
 import de.soderer.utilities.worker.WorkerParentDual;
 
-/**
- * TODO:
- * Display of multiline value and comments (escape linebreaks in textfield)
- * Excel file Diff
- */
+// TODO: Excel file Diff
 
+/**
+ * Main class of the LanguagePropertiesManager: starts the GUI or executes the
+ * command line actions (import from or export to Excel or CSV) and prints
+ * their progress on the console.
+ */
 public class LanguagePropertiesManager extends UpdateableConsoleApplication implements WorkerParentDual {
 	/** The Constant APPLICATION_NAME. */
 	public static final String APPLICATION_NAME = "LanguagePropertiesManager";
+	/** Name of the start class used as window class, e.g. for pinning the application to the Linux Gnome dock */
 	public static final String APPLICATION_STARTUPCLASS_NAME = "de-soderer-LanguagePropertiesManager";
+	/** Email address for error reports */
 	public static final String APPLICATION_ERROR_EMAIL_ADRESS = "LanguagePropertiesManager.Error@soderer.de";
 
+	/** Keystore of the application, e.g. for trusted certificates */
 	public static final File KEYSTORE_FILE = new File(System.getProperty("user.home") + File.separator + "." + APPLICATION_NAME + File.separator + "." + APPLICATION_NAME + ".keystore");
 
 	/** The Constant VERSION_RESOURCE_FILE, which contains version number and versioninfo download url. */
@@ -64,26 +68,43 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 	/** Trusted CA certificate for updates **/
 	public static String TRUSTED_UPDATE_CA_CERTIFICATES = null;
 
+	/** Resource file with the command line help */
 	public static final String HELP_RESOURCE_FILE_DEFAULT = "/help.txt";
+	/** Resource file with the German command line help (currently the same as the default) */
 	public static final String HELP_RESOURCE_FILE_DE = "/help.txt";
 
 	/** The Constant CONFIGURATION_FILE. */
 	public static final File CONFIGURATION_FILE = new File(System.getProperty("user.home") + File.separator + "." + APPLICATION_NAME + ".config");
 
+	/** Configuration key: repair punctuation on cleanup */
 	public static final String CONFIG_CLEANUP_REPAIRPUNCTUATION = "Cleanup.RepairPunctuation";
+	/** Configuration key: recent check usage settings (directory, file pattern, usage pattern) */
 	public static final String CONFIG_PREVIOUS_CHECK_USAGE = "CheckUsage.Previous";
+	/** Configuration key: recently opened properties files and directories */
 	public static final String CONFIG_RECENT_PROPERTIES = "Recent";
+	/** Configuration key: path parts (separated by ';') of files to ignore when loading or saving a directory */
 	public static final String CONFIG_OPEN_DIR_EXCLUDES = "OpenDirExcludes";
+	/** Configuration key: base URL of the DeepL API */
 	public static final String CONFIG_DEEPL_BASEURL = "DeepL_BaseUrl";
+	/** Configuration key: API key for DeepL */
 	public static final String CONFIG_DEEPL_APIKEY = "DeepL_ApiKey";
+	/** Configuration key: file extension of the properties files */
 	public static final String CONFIG_PROPERTIES_FILE_EXTENSION = "PropertiesFileExtension";
+	/** Configuration key: whether comments are ignored when loading and importing */
 	public static final String CONFIG_IGNORE_COMMENTS = "IgnoreComments";
+	/** Configuration key: optional CSV file with values, which must not be translated by DeepL (see {@link TranslationConstants}) */
 	public static final String CONFIG_TRANSLATION_CONSTANTS_FILE = "TranslationConstantsFile";
 
 	private int previousTerminalWidth = 0;
 
 	private ActionDefinition actionDefinitionToExecute;
 
+	/**
+	 * Adds the default values of all missing configuration entries.
+	 *
+	 * @param applicationConfiguration
+	 *            the configuration to complete
+	 */
 	public static void setupDefaultConfig(final ConfigurationProperties applicationConfiguration) {
 		applicationConfiguration.setupDefaultConfig();
 
@@ -137,8 +158,9 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 	/**
 	 * Method used for main but with no System.exit call to make it junit testable
 	 *
-	 * @param arguments
-	 * @return
+	 * @param args
+	 *            the command line arguments
+	 * @return exit code of the application, or -1 if the GUI was opened and keeps running
 	 */
 	protected static int _main(final String[] args) {
 		ApplicationUpdateUtilities.removeUpdateLeftovers();
@@ -228,7 +250,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 					} else if (actionDefinition.getImportFromExcel() != null) {
 						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Duplicate parameter importFromExcel");
 					} else if (actionDefinition.getExportToExcel() != null) {
-						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Only one of parameters importToExcel and exportFromExcel is allowed");
+						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Only one of parameters importFromExcel and exportToExcel is allowed");
 					} else {
 						actionDefinition.setImportFromExcel(arguments[i]);
 					}
@@ -242,7 +264,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 					} else if (actionDefinition.getExportToExcel() != null) {
 						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Duplicate parameter exportToExcel");
 					} else if (actionDefinition.getImportFromExcel() != null) {
-						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Only one of parameters importToExcel and exportFromExcel is allowed");
+						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Only one of parameters importFromExcel and exportToExcel is allowed");
 					} else {
 						actionDefinition.setExportToExcel(arguments[i]);
 					}
@@ -268,7 +290,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 					} else if (actionDefinition.getImportFromCsv() != null) {
 						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Duplicate parameter importFromCsv");
 					} else if (actionDefinition.getExportToCsv() != null) {
-						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Only one of parameters importToCsv and exportFromCsv is allowed");
+						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Only one of parameters importFromCsv and exportToCsv is allowed");
 					} else {
 						actionDefinition.setImportFromCsv(arguments[i]);
 					}
@@ -282,7 +304,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 					} else if (actionDefinition.getExportToCsv() != null) {
 						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Duplicate parameter exportToCsv");
 					} else if (actionDefinition.getImportFromCsv() != null) {
-						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Only one of parameters importToCsv and exportFromCsv is allowed");
+						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Only one of parameters importFromCsv and exportToCsv is allowed");
 					} else {
 						actionDefinition.setExportToCsv(arguments[i]);
 					}
@@ -398,6 +420,15 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 		}
 	}
 
+	/**
+	 * Converts a language code like "de", "de_AT" or "de-AT" into a Locale.
+	 *
+	 * @param languageCode
+	 *            language code with optional region and variant, separated by '_' or '-'
+	 * @param defaultLocale
+	 *            locale returned for an empty or invalid language code
+	 * @return the locale
+	 */
 	public static Locale toLocale(final String languageCode, final Locale defaultLocale) {
 		if (languageCode == null || languageCode.isBlank()) {
 			return defaultLocale;
@@ -418,6 +449,12 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 		}
 	}
 
+	/**
+	 * Creates the application instance for command line actions and updates.
+	 *
+	 * @throws Exception
+	 *             if the application cannot be initialized
+	 */
 	public LanguagePropertiesManager() throws Exception {
 		super(APPLICATION_NAME, VERSION);
 	}
@@ -534,6 +571,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 				}
 
 				final LoadLanguagePropertiesWorker loadLanguagePropertiesWorker = new LoadLanguagePropertiesWorker(this, propertiesFile, configuredExcludeParts, actionDefinition.getPropertiesFileExtension());
+				loadLanguagePropertiesWorker.setReadComments(!applicationConfiguration.getBoolean(CONFIG_IGNORE_COMMENTS));
 
 				loadLanguagePropertiesWorker.setProgressDisplayDelayMilliseconds(2000);
 				loadLanguagePropertiesWorker.run();
@@ -560,7 +598,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 				// Get result to trigger possible Exception
 				if (exportToCsvWorker.get()) {
 					// Export success
-					System.out.println("Successfully exported in Excel file: \"" + new File(actionDefinition.getCsvFile()).getAbsolutePath() + "\"");
+					System.out.println("Successfully exported in CSV file: \"" + new File(actionDefinition.getCsvFile()).getAbsolutePath() + "\"");
 				} else {
 					throw new LanguagePropertiesException("Cancelled by user");
 				}
@@ -600,6 +638,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 				final String languagePropertiesSetName = importFromCsvWorker.getLanguagePropertiesSetName();
 
 				final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(this, importFromCsvWorker.getLanguageProperties(), languagePropertiesSetName, outputDirectory, configuredExcludeParts, actionDefinition.isExtendAndKeepExistingProperties(), actionDefinition.getPropertiesFileExtension());
+				writeLanguagePropertiesWorker.setReadComments(!applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS));
 
 				writeLanguagePropertiesWorker.setProgressDisplayDelayMilliseconds(2000);
 				writeLanguagePropertiesWorker.run();

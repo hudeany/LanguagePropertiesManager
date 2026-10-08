@@ -121,7 +121,10 @@ public final class LanguagePropertiesChecker {
 	 * <li>other 2 byte sequences (e.g. cyrillic "Ð¿Ñ€") only if directly followed by another sequence,
 	 * because a single one also occurs in real text (e.g. "Fuß“" or "ÉTÉ" followed by a no-break space)</li>
 	 * </ul>
-	 * </p>
+	 *
+	 * @param text
+	 *            text to check
+	 * @return true if the text contains mojibake
 	 */
 	public static boolean containsMojibake(final String text) {
 		for (int i = 0; i < text.length(); i++) {
@@ -146,6 +149,10 @@ public final class LanguagePropertiesChecker {
 	 * Checks a single piece of text (key, value or comment) for signs of encoding corruption
 	 * or other structural problems and returns a list of human readable problem descriptions.
 	 * Returns an empty list if no problems were found.
+	 *
+	 * @param text
+	 *            text to check, may be null
+	 * @return descriptions of the found problems
 	 */
 	public static List<String> findTextErrors(final String text) {
 		final List<String> problems = new ArrayList<>();
@@ -232,7 +239,8 @@ public final class LanguagePropertiesChecker {
 				while (argumentEnd < text.length() && text.charAt(argumentEnd) != ',' && text.charAt(argumentEnd) != '}') {
 					argumentEnd++;
 				}
-				final String argumentNumber = text.substring(i + 1, argumentEnd);
+				// MessageFormat allows whitespace around the argument index, e.g. "{ 0 }"
+				final String argumentNumber = text.substring(i + 1, argumentEnd).trim();
 				if (argumentNumber.length() > 0 && argumentNumber.length() <= 9 && argumentNumber.chars().allMatch(Character::isDigit)) {
 					analysis.argumentIndexes.add(Integer.parseInt(argumentNumber));
 				}
@@ -275,6 +283,10 @@ public final class LanguagePropertiesChecker {
 	 * of the reference value (default language, or else the first language with a value).
 	 * Supports java.text.MessageFormat arguments ({0}, {1,number}) and java.util.Formatter conversions (%s, %1$d).
 	 * Empty values are skipped, because a missing translation is not a placeholder error.
+	 *
+	 * @param languageProperty
+	 *            property to check
+	 * @return descriptions of the found problems
 	 */
 	public static List<String> findPlaceholderErrors(final LanguageProperty languageProperty) {
 		final List<String> problems = new ArrayList<>();
@@ -364,7 +376,8 @@ public final class LanguagePropertiesChecker {
 		if (Utilities.isNotBlank(defaultValue)) {
 			values.put(LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT, defaultValue);
 		}
-		for (final String languageSign : languageProperty.getAvailableLanguageSigns()) {
+		// Sorted, so the reference language and the order of the reported problems do not depend on the hash order
+		for (final String languageSign : new TreeSet<>(languageProperty.getAvailableLanguageSigns())) {
 			final String value = languageProperty.getLanguageValue(languageSign);
 			if (Utilities.isNotBlank(value)) {
 				values.putIfAbsent(languageSign, value);
@@ -433,6 +446,10 @@ public final class LanguagePropertiesChecker {
 	 * (default language, or else the first language with a value): different sentence end punctuation,
 	 * leading or trailing whitespace only in one language and line breaks in translations of single line texts.
 	 * Empty values are skipped, because a missing translation is no formal deviation.
+	 *
+	 * @param languageProperty
+	 *            property to check
+	 * @return descriptions of the found problems
 	 */
 	public static List<String> findFormalDeviations(final LanguageProperty languageProperty) {
 		final List<String> problems = new ArrayList<>();
@@ -486,6 +503,10 @@ public final class LanguagePropertiesChecker {
 	 * Read-only check of the given properties for encoding errors, invalid keys, inconsistent placeholders
 	 * and formal deviations from the reference language.
 	 * Used by the "check errors" button and after a merge import for the imported properties.
+	 *
+	 * @param propertiesToCheck
+	 *            properties to check, may be null
+	 * @return number of issues and the report text
 	 */
 	public static ErrorReport createErrorReport(final Collection<LanguageProperty> propertiesToCheck) {
 		final StringBuilder reportText = new StringBuilder();
@@ -514,7 +535,7 @@ public final class LanguagePropertiesChecker {
 					entryProblems.add(LangResources.get("field_comment") + ": " + textProblem);
 				}
 
-				for (final String languageSign : languageProperty.getAvailableLanguageSigns()) {
+				for (final String languageSign : new TreeSet<>(languageProperty.getAvailableLanguageSigns())) {
 					final String value = languageProperty.getLanguageValue(languageSign);
 					for (final String textProblem : findTextErrors(value)) {
 						entryProblems.add(LangResources.get("field_value", languageSign) + ": " + textProblem);

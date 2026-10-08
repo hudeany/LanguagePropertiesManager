@@ -27,6 +27,13 @@ public final class LanguagePropertiesMerger {
 	/**
 	 * Determines for every imported property, whether it matches an existing
 	 * property, and counts the conflicts. Nothing is changed here.
+	 *
+	 * @param existingProperties
+	 *            currently loaded properties
+	 * @param importedProperties
+	 *            properties read from the import source
+	 * @return plan of the merge, to be applied by
+	 *         {@link #applyMergePlan(List, MergePlan, MergeMode)}
 	 */
 	public static MergePlan createMergePlan(final List<LanguageProperty> existingProperties, final List<LanguageProperty> importedProperties) {
 		final MergePlan mergePlan = new MergePlan();
@@ -167,6 +174,14 @@ public final class LanguagePropertiesMerger {
 	/**
 	 * Applies a merge plan to the target properties (the currently loaded data).
 	 * New properties are appended to the target properties.
+	 *
+	 * @param targetProperties
+	 *            currently loaded properties, new properties are appended to this list
+	 * @param mergePlan
+	 *            plan created by {@link #createMergePlan(List, List)}
+	 * @param mergeMode
+	 *            how conflicts between existing and imported values are resolved
+	 * @return the changes done, for the final report
 	 */
 	public static MergeResult applyMergePlan(final List<LanguageProperty> targetProperties, final MergePlan mergePlan, final MergeMode mergeMode) {
 		final MergeResult mergeResult = new MergeResult();
@@ -245,6 +260,21 @@ public final class LanguagePropertiesMerger {
 		}
 	}
 
+	/**
+	 * Creates the human readable report of a merge import.
+	 *
+	 * @param sourceDescription
+	 *            file or directory of the import source, only for display
+	 * @param mergeMode
+	 *            the used merge mode
+	 * @param mergePlan
+	 *            the applied plan
+	 * @param mergeResult
+	 *            the changes done
+	 * @param errorReport
+	 *            result of the error check of the imported properties
+	 * @return report text
+	 */
 	public static String createMergeReport(final String sourceDescription, final MergeMode mergeMode, final MergePlan mergePlan, final MergeResult mergeResult, final ErrorReport errorReport) {
 		final StringBuilder reportText = new StringBuilder();
 		reportText.append(LangResources.get("mergeImport_resultSummary",

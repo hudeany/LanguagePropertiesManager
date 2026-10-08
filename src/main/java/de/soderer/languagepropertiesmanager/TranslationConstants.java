@@ -40,6 +40,15 @@ public class TranslationConstants {
 		// Use read(File)
 	}
 
+	/**
+	 * Reads the constants from a CSV file.
+	 *
+	 * @param csvFile
+	 *            CSV file in UTF-8 (a BOM is ignored)
+	 * @return the read constants
+	 * @throws Exception
+	 *             if the file does not exist or contains invalid CSV data or header columns
+	 */
 	public static TranslationConstants read(final File csvFile) throws Exception {
 		if (!csvFile.exists()) {
 			throw new Exception("File does not exist: " + csvFile.getAbsolutePath());
@@ -110,6 +119,14 @@ public class TranslationConstants {
 	/**
 	 * Returns the constant translation of the given source value, or null if the value is not a known constant (then normal translation is needed).
 	 * Language signs are matched case-insensitive. A sign like "de_AT" falls back to the column "de" if there is no column "de_at".
+	 *
+	 * @param sourceLanguageSign
+	 *            language of the source value
+	 * @param sourceValue
+	 *            value to translate
+	 * @param targetLanguageSign
+	 *            language to translate into
+	 * @return the constant translation, or null if the value is no known constant
 	 */
 	public String getTranslation(final String sourceLanguageSign, final String sourceValue, final String targetLanguageSign) {
 		if (sourceValue == null || sourceValue.isEmpty()) {
@@ -135,6 +152,10 @@ public class TranslationConstants {
 
 	/**
 	 * Numbers like "42", "-7", "3.14", "3,14" or "1.234.567,89" must stay unchanged
+	 *
+	 * @param value
+	 *            value to check, may be null
+	 * @return true if the value is a number
 	 */
 	public static boolean isNumberConstant(final String value) {
 		return value != null && NUMBER_PATTERN.matcher(value.trim()).matches();

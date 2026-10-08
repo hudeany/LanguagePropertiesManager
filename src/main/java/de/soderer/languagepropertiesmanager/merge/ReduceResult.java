@@ -18,6 +18,11 @@ public class ReduceResult {
 		// Only created by BaseSetReducer
 	}
 
+	/**
+	 * Reduced properties, which still exist after the reduction.
+	 *
+	 * @return the reduced and not removed properties
+	 */
 	public List<LanguageProperty> getChangedProperties() {
 		return changedProperties;
 	}

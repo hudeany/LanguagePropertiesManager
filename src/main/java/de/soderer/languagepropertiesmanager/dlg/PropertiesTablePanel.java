@@ -71,6 +71,8 @@ public class PropertiesTablePanel extends JPanel {
 	 */
 	public interface Callback {
 		/**
+		 * Asks the user, if the detail view has unapplied changes, which would get lost.
+		 *
 		 * @return true if the detail view has no unapplied changes or the user agreed to discard them
 		 */
 		boolean confirmDiscardDetailChanges();
@@ -81,18 +83,51 @@ public class PropertiesTablePanel extends JPanel {
 		/** Row count or filter of the table changed, so the enabled state of buttons may change */
 		void tableStateChanged();
 
+		/** Deletes the selected properties after asking the user (DEL key) */
 		void removeSelectedProperties();
 
+		/** Deletes the comments of all properties after asking the user (context menu of the comment column) */
 		void deleteAllComments();
 
+		/** Deletes the paths of all properties after asking the user (context menu of the path column) */
 		void deleteAllPaths();
 
+		/**
+		 * Deletes the values of one language of all properties after asking the user (context menu of a language column)
+		 *
+		 * @param languageSign
+		 *            the language whose values are deleted
+		 * @param languageDisplayName
+		 *            the name of the language as shown in the column header
+		 */
 		void deleteAllLanguageValues(String languageSign, String languageDisplayName);
 
+		/**
+		 * Sets the value of one language of the selected properties to an explicitly empty or a missing value
+		 *
+		 * @param languageSign
+		 *            the language whose values are set
+		 * @param languageDisplayName
+		 *            the name of the language as shown in the column header
+		 * @param newValue
+		 *            "" for an explicitly empty value, null for a missing value
+		 */
 		void setSelectedLanguageValues(String languageSign, String languageDisplayName, String newValue);
 
+		/**
+		 * Deletes a language from all properties (context menu of a language column)
+		 *
+		 * @param languageSign
+		 *            the language to delete
+		 */
 		void deleteLanguage(String languageSign);
 
+		/**
+		 * Shows an unexpected error with its details.
+		 *
+		 * @param exception
+		 *            the error
+		 */
 		void showError(Exception exception);
 	}
 
@@ -110,17 +145,24 @@ public class PropertiesTablePanel extends JPanel {
 	private static final int COLUMN_KEY = 3;
 	private static final int COLUMN_FIRST_LANGUAGE = 4;
 
+	/** Loaded data and the current selection */
 	private final LanguagePropertiesModel model;
+	/** Actions of the main window */
 	private final Callback callback;
 
+	/** The properties table */
 	private final JTable propertiesTable;
+	/** Table model backed by "displayedProperties" */
 	private final LanguagePropertiesTableModel propertiesTableModel;
+	/** Shows which properties the bulk actions affect */
 	private final ActionScopeStatusBar actionScopeStatusBar;
 
 	/** Suppresses the user selection handling while the table selection is changed programmatically */
 	private boolean technicalSelectionChange = false;
 
+	/** Model index of the column the table is sorted by */
 	private int sortColumnModelIndex = COLUMN_NR;
+	/** Sort direction of the sort column */
 	private boolean sortAscending = true;
 
 	/**
@@ -129,12 +171,19 @@ public class PropertiesTablePanel extends JPanel {
 	 */
 	private boolean commentColumnShown = false;
 
+	/** Current search text, null if the search field is empty */
 	private String searchText;
+	/** Whether the search ignores the case */
 	private boolean searchCaseInsensitivePreference = true;
+	/** Whether the search includes the keys */
 	private boolean searchInKeysPreference = true;
+	/** Whether the search includes the language values */
 	private boolean searchInValuesPreference = false;
+	/** Whether the search includes the paths */
 	private boolean searchInPathPreference = false;
+	/** Whether the table only shows the search hits */
 	private boolean searchFilterPreference = false;
+	/** Search field, buttons and checkboxes, which are enabled together with the table */
 	private final List<JComponent> searchComponents = new ArrayList<>();
 
 	/**
@@ -143,6 +192,16 @@ public class PropertiesTablePanel extends JPanel {
 	 */
 	private List<LanguageProperty> displayedProperties = new ArrayList<>();
 
+	/**
+	 * Creates the search box and the properties table.
+	 *
+	 * @param model
+	 *            loaded data and current selection
+	 * @param callback
+	 *            actions of the main window
+	 * @throws Exception
+	 *             if an icon cannot be loaded
+	 */
 	public PropertiesTablePanel(final LanguagePropertiesModel model, final Callback callback) throws Exception {
 		super(new BorderLayout(0, 3));
 		this.model = model;
@@ -260,27 +319,47 @@ public class PropertiesTablePanel extends JPanel {
 		}
 	}
 
+	/**
+	 * Number of selected table rows.
+	 *
+	 * @return number of selected rows
+	 */
 	public int getSelectedRowCount() {
 		return propertiesTable.getSelectedRowCount();
 	}
 
 	/**
 	 * Properties currently shown in the table (all, or only the search hits with active search filter)
+	 *
+	 * @return unmodifiable list of the displayed properties
 	 */
 	public List<LanguageProperty> getDisplayedProperties() {
 		return Collections.unmodifiableList(displayedProperties);
 	}
 
+	/**
+	 * Number of displayed table rows.
+	 *
+	 * @return number of rows
+	 */
 	public int getRowCount() {
 		return propertiesTableModel.getRowCount();
 	}
 
+	/**
+	 * Whether the table currently shows the comment column.
+	 *
+	 * @return true if the comment column is shown
+	 */
 	public boolean isCommentColumnShown() {
 		return commentColumnShown;
 	}
 
 	/**
 	 * Enables or disables the table and the search components
+	 *
+	 * @param enabled
+	 *            true to enable
 	 */
 	public void setInteractionEnabled(final boolean enabled) {
 		propertiesTable.setEnabled(enabled);
@@ -695,10 +774,11 @@ public class PropertiesTablePanel extends JPanel {
 		sortColumnModelIndex = modelColumn;
 
 		Comparator<LanguageProperty> comparator;
+		// Paths and keys may be null (e.g. imported data), which must not break the sorting
 		if (modelColumn == COLUMN_KEY) {
-			comparator = Comparator.comparing(LanguageProperty::getPath).thenComparing(LanguageProperty::getKey);
+			comparator = Comparator.comparing((final LanguageProperty languageProperty) -> getEmptyForNull(languageProperty.getPath())).thenComparing(languageProperty -> getEmptyForNull(languageProperty.getKey()));
 		} else if (modelColumn == COLUMN_ORIGINAL_INDEX || modelColumn == COLUMN_PATH) {
-			comparator = Comparator.comparing(LanguageProperty::getPath).thenComparing(LanguageProperty::getOriginalIndex);
+			comparator = Comparator.comparing((final LanguageProperty languageProperty) -> getEmptyForNull(languageProperty.getPath())).thenComparing(LanguageProperty::getOriginalIndex);
 		} else if (isCommentColumn(modelColumn)) {
 			comparator = Comparator.comparing(languageProperty -> getEmptyForNull(languageProperty.getComment()));
 		} else {
@@ -797,6 +877,9 @@ public class PropertiesTablePanel extends JPanel {
 	/**
 	 * Selects the given properties (by identity) in the table and scrolls to the
 	 * first one, without triggering the user selection handling.
+	 *
+	 * @param propertiesToSelect
+	 *            properties to select, null for none
 	 */
 	public void restoreSelection(final List<LanguageProperty> propertiesToSelect) {
 		technicalSelectionChange = true;
@@ -822,6 +905,11 @@ public class PropertiesTablePanel extends JPanel {
 		}
 	}
 
+	/**
+	 * Properties of the selected table rows in display order.
+	 *
+	 * @return the selected properties, empty if nothing is selected
+	 */
 	public List<LanguageProperty> getSelectedProperties() {
 		final List<LanguageProperty> returnList = new ArrayList<>();
 		if (model.isLoaded()) {

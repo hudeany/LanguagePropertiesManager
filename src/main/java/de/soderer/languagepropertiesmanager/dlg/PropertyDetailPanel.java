@@ -48,7 +48,11 @@ public class PropertyDetailPanel extends JPanel {
 	 * Actions of the main window triggered by the detail view
 	 */
 	public interface Callback {
-		/** Asks the user for the name of a new properties set, when the first property is added without loaded data */
+		/**
+		 * Asks the user for the name of a new properties set, when the first property is added without loaded data
+		 *
+		 * @return the entered name, or null if the user canceled
+		 */
 		String askForNewLanguagePropertiesSetName();
 
 		/** The available languages changed (new empty properties set), so table and language fields have to be rebuilt */
@@ -60,15 +64,33 @@ public class PropertyDetailPanel extends JPanel {
 		/** A new property was added and is selected */
 		void propertyAdded();
 
+		/**
+		 * Shows an unexpected error with its details.
+		 *
+		 * @param exception
+		 *            the error
+		 */
 		void showError(Exception exception);
 
+		/**
+		 * Shows an expected error as short message.
+		 *
+		 * @param title
+		 *            title of the message
+		 * @param text
+		 *            the error message
+		 */
 		void showErrorMessage(String title, String text);
 	}
 
+	/** Loaded data and the current selection */
 	private final LanguagePropertiesModel model;
+	/** Actions of the main window */
 	private final Callback callback;
 
+	/** Whether the fields show the escaped storage representation of key and values instead of the plain texts */
 	private boolean showStorageTexts = false;
+	/** Whether the fields contain changes, which are not yet applied with the OK button */
 	private boolean dataWasModified = false;
 
 	/** Suppresses the "data was modified" tracking while the detail fields are filled programmatically */
@@ -77,20 +99,36 @@ public class PropertyDetailPanel extends JPanel {
 	/** Whether the detail fields currently show an existing property ("change") or a new one ("add") */
 	private boolean detailShowsExistingProperty = false;
 
+	/** Path of the property (read only) */
 	private final JTextField pathTextfield;
+	/** Key of the property */
 	private final JTextField keyTextfield;
+	/** Comment of the property */
 	private final JTextArea commentTextfield;
+	/** Scrollable part with one field per language */
 	private final JPanel detailFieldsPart;
+	/** Value fields by language sign */
 	private final Map<String, JTextArea> languageTextFields = new LinkedHashMap<>();
 	/** Labels of the language fields, they show whether an empty field means "missing" or "explicitly empty" */
 	private final Map<String, JLabel> languageLabels = new LinkedHashMap<>();
 	/** Language signs whose empty field stands for an explicitly empty value ("key=") instead of a missing key */
 	private final Set<String> explicitlyEmptyLanguageSigns = new HashSet<>();
 
+	/** Applies the changes (change or add the property) */
 	private final JButton okButton;
+	/** Discards the changes */
 	private final JButton cancelButton;
+	/** Switches between plain texts and storage representation */
 	private final JButton textConversionButton;
 
+	/**
+	 * Creates the detail view. The language fields are created by {@link #rebuildLanguageFields()}.
+	 *
+	 * @param model
+	 *            loaded data and current selection
+	 * @param callback
+	 *            actions of the main window
+	 */
 	public PropertyDetailPanel(final LanguagePropertiesModel model, final Callback callback) {
 		super(new BorderLayout(0, 3));
 		this.model = model;
@@ -195,6 +233,8 @@ public class PropertyDetailPanel extends JPanel {
 	}
 
 	/**
+	 * Whether the fields contain unapplied changes.
+	 *
 	 * @return true if the fields contain changes, which are not yet applied with the OK button
 	 */
 	public boolean isModified() {
@@ -345,6 +385,13 @@ public class PropertyDetailPanel extends JPanel {
 	 */
 	private void applyChanges() {
 		try {
+			final String plainKey = getPlainKey(keyTextfield.getText());
+			if (Utilities.isBlank(plainKey)) {
+				// A property without key would be lost on saving
+				callback.showErrorMessage(LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("error_key_empty"));
+				return;
+			}
+
 			if (detailShowsExistingProperty) {
 				// Change existing property
 				final LanguageProperty propertyToChange = model.getFirstSelectedProperty();
@@ -352,7 +399,7 @@ public class PropertyDetailPanel extends JPanel {
 					throw new Exception("Cannot find property to change");
 				}
 
-				propertyToChange.setKey(getPlainKey(keyTextfield.getText()));
+				propertyToChange.setKey(plainKey);
 				propertyToChange.setComment(Utilities.isNotEmpty(commentTextfield.getText()) ? commentTextfield.getText() : null);
 				for (final Map.Entry<String, JTextArea> languageTextField : languageTextFields.entrySet()) {
 					final String languageSign = languageTextField.getKey();
@@ -364,7 +411,7 @@ public class PropertyDetailPanel extends JPanel {
 				updateButtonStatus();
 				callback.propertyChanged();
 			} else {
-				final LanguageProperty newValues = new LanguageProperty(pathTextfield.getText(), getPlainKey(keyTextfield.getText()));
+				final LanguageProperty newValues = new LanguageProperty(pathTextfield.getText(), plainKey);
 				for (final Map.Entry<String, JTextArea> languageTextField : languageTextFields.entrySet()) {
 					newValues.setLanguageValue(languageTextField.getKey(), getDetailLanguageValue(languageTextField.getKey(), languageTextField.getValue()));
 				}
@@ -376,9 +423,22 @@ public class PropertyDetailPanel extends JPanel {
 				}
 
 				if (!model.isLoaded()) {
-					model.createEmpty(callback.askForNewLanguagePropertiesSetName());
+					final String newLanguagePropertiesSetName = callback.askForNewLanguagePropertiesSetName();
+					if (Utilities.isBlank(newLanguagePropertiesSetName)) {
+						// Canceled, the entered data stays in the fields
+						return;
+					}
+					model.createEmpty(newLanguagePropertiesSetName);
 					// Rebuilds the language fields, their content was already taken over into "newValues"
 					callback.languagesChanged();
+				}
+
+				// Without loaded data there were no language fields, so the new property gets every available
+				// language: "" for the default language (otherwise the key would not be written at all), null for the others
+				for (final String languageSign : model.getAvailableLanguageSigns()) {
+					if (!newValues.containsLanguage(languageSign)) {
+						newValues.setLanguageValue(languageSign, LanguageProperty.toStorageValue(languageSign, null));
+					}
 				}
 
 				// Add new property, it is selected afterwards

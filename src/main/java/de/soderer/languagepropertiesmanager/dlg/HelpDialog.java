@@ -22,6 +22,9 @@ import de.soderer.utilities.appupdate.ApplicationUpdateUtilities;
 import de.soderer.utilities.swing.ModalDialog;
 import de.soderer.utilities.swing.ShowDataDialog;
 
+/**
+ * Help dialog with buttons for the version info, the manual and the update check
+ */
 public class HelpDialog extends ModalDialog<Boolean> {
 	private static final long serialVersionUID = -2514371208541305317L;
 
@@ -31,9 +34,21 @@ public class HelpDialog extends ModalDialog<Boolean> {
 	 */
 	private static final int TITLE_BAR_PADDING = 120;
 
+	/** Main window, parent of the dialogs opened from here */
 	private final LanguagePropertiesManagerDialog applicationDialog;
+	/** Configuration of the application, e.g. for the proxy of the update check */
 	private final ConfigurationProperties applicationConfiguration;
 
+	/**
+	 * Creates the help dialog. It is shown by open().
+	 *
+	 * @param applicationDialog
+	 *            main window
+	 * @param title
+	 *            title of the dialog
+	 * @param applicationConfiguration
+	 *            configuration of the application
+	 */
 	public HelpDialog(final LanguagePropertiesManagerDialog applicationDialog, final String title, final ConfigurationProperties applicationConfiguration) {
 		super(applicationDialog, title);
 

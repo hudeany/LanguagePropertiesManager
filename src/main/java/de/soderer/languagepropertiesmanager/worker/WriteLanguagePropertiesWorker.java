@@ -22,6 +22,16 @@ import de.soderer.utilities.Utilities;
 import de.soderer.utilities.worker.WorkerParentSimple;
 import de.soderer.utilities.worker.WorkerSimple;
 
+/**
+ * Writes language properties into sets of language properties files.
+ *
+ * <p>
+ * Without output directory every property is written to the set given by its
+ * own path. With output directory, the sets are searched in that directory
+ * (including subdirectories) by their set name and updated there, unknown sets
+ * and properties without path are created directly in the output directory.
+ * </p>
+ */
 public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 	/**
 	 *  Only used if not defined in LanguageProperty Path
@@ -37,6 +47,24 @@ public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 
 	private List<String> listOfStoredProperties;
 
+	/**
+	 * Creates the write worker.
+	 *
+	 * @param parent
+	 *            receiver of the progress signals, may be null
+	 * @param languageProperties
+	 *            properties to write, properties without path get a path assigned
+	 * @param languagePropertySetName
+	 *            set name for properties without path
+	 * @param outputDirectory
+	 *            directory to search the existing sets in and to create new sets in, or null to write every property to its own path
+	 * @param excludeParts
+	 *            path parts of existing files to ignore when searching the output directory (e.g. "/bin/"), may be null
+	 * @param extendAndKeepExistingProperties
+	 *            whether keys existing in the files, but not in the given properties, are kept
+	 * @param propertiesFileExtension
+	 *            file extension of the properties files, a missing leading dot is added
+	 */
 	public WriteLanguagePropertiesWorker(final WorkerParentSimple parent, final List<LanguageProperty> languageProperties, final String languagePropertySetName, final File outputDirectory, final String[] excludeParts, final boolean extendAndKeepExistingProperties, final String propertiesFileExtension) {
 		super(parent);
 
@@ -45,7 +73,8 @@ public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 		this.outputDirectory = outputDirectory;
 		this.excludeParts = excludeParts;
 		this.extendAndKeepExistingProperties = extendAndKeepExistingProperties;
-		this.propertiesFileExtension = propertiesFileExtension;
+		// Same normalization as the reader, otherwise a configured "properties" (without dot) would not find the existing files
+		this.propertiesFileExtension = LanguagePropertiesFileSetReader.normalizePropertiesFileExtension(propertiesFileExtension);
 	}
 
 	@Override
@@ -72,7 +101,7 @@ public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 			if (languagePropertiesPaths.size() > 0 || hasPropertiesWithoutPath) {
 				final List<String> existingPropertiesPaths = getAllPropertiesPaths(outputDirectory);
 
-				final Comparator<LanguageProperty> compareByIndex = Comparator.comparing(LanguageProperty::getPath).thenComparing(LanguageProperty::getOriginalIndex);
+				final Comparator<LanguageProperty> compareByIndex = Comparator.comparing(LanguageProperty::getPath, Comparator.nullsFirst(Comparator.naturalOrder())).thenComparing(LanguageProperty::getOriginalIndex);
 
 				// Properties without a path yet are handled as one additional group, identified by languagePropertySetName
 				final List<String> groupsToProcess = new ArrayList<>(languagePropertiesPaths);
@@ -89,11 +118,22 @@ public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 					int foundAmount = 0;
 					String foundPath = null;
 					final String propertySetName = isNewGroup ? languagePropertySetName : new File(languagePropertiesPath).getName();
-					for (final String existingPropertiesPath : existingPropertiesPaths) {
-						final String existingPropertieSetName = new File(existingPropertiesPath).getName();
-						if (existingPropertieSetName.equals(propertySetName)) {
-							foundPath = existingPropertiesPath;
-							foundAmount++;
+					if (!isNewGroup) {
+						// A set existing at its own path is preferred, so sets with the same name in different
+						// subdirectories (e.g. "messages" of several modules) are no ambiguity
+						final String ownAbsolutePath = new File(Utilities.replaceUsersHome(languagePropertiesPath)).getAbsolutePath();
+						if (existingPropertiesPaths.contains(ownAbsolutePath)) {
+							foundPath = ownAbsolutePath;
+							foundAmount = 1;
+						}
+					}
+					if (foundPath == null) {
+						for (final String existingPropertiesPath : existingPropertiesPaths) {
+							final String existingPropertieSetName = new File(existingPropertiesPath).getName();
+							if (existingPropertieSetName.equals(propertySetName)) {
+								foundPath = existingPropertiesPath;
+								foundAmount++;
+							}
 						}
 					}
 					if (foundAmount > 1) {
@@ -101,7 +141,7 @@ public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 					} else {
 						final List<LanguageProperty> languagePropertiesForStorage = isNewGroup
 								? languageProperties.stream().filter(o -> Utilities.isBlank(o.getPath())).sorted(compareByIndex).collect(Collectors.toList())
-								: languageProperties.stream().filter(o -> o.getPath().equals(languagePropertiesPath)).sorted(compareByIndex).collect(Collectors.toList());
+								: languageProperties.stream().filter(o -> languagePropertiesPath.equals(o.getPath())).sorted(compareByIndex).collect(Collectors.toList());
 
 						if (foundAmount == 1) {
 							// Update existing properties set files
@@ -128,17 +168,10 @@ public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 				LanguagePropertiesFileSetWriter.write(languageProperties, outputDirectory, languagePropertySetName, extendAndKeepExistingProperties, propertiesFileExtension, readComments);
 			}
 		} else {
-			if (outputDirectory == null) {
-				for (final LanguageProperty languageProperty : languageProperties) {
-					if (Utilities.isBlank(languageProperty.getPath())) {
-						throw new LanguagePropertiesException("Property '" + languageProperty.getKey() + "' has no path and no outputDirectory was given");
-					}
-				}
-			}
-
+			// Without output directory every property must have its own path
 			for (final LanguageProperty languageProperty : languageProperties) {
 				if (Utilities.isBlank(languageProperty.getPath())) {
-					languageProperty.setPath(Utilities.replaceUsersHomeByTilde(outputDirectory.getAbsolutePath()));
+					throw new LanguagePropertiesException("Property '" + languageProperty.getKey() + "' has no path and no outputDirectory was given");
 				}
 			}
 
@@ -185,7 +218,8 @@ public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 			boolean excluded = false;
 			if (excludeParts != null) {
 				for (final String excludePart : excludeParts) {
-					if (propertiesFile.getAbsolutePath().contains(excludePart.replace("\\\\", "\\"))) {
+					// An empty part (e.g. from an empty configuration or ";;") would exclude every file
+					if (Utilities.isNotEmpty(excludePart) && propertiesFile.getAbsolutePath().contains(excludePart.replace("\\\\", "\\"))) {
 						excluded = true;
 						break;
 					}
@@ -205,6 +239,11 @@ public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 		return returnList;
 	}
 
+	/**
+	 * Paths of the written properties sets, available after writing.
+	 *
+	 * @return the written set paths
+	 */
 	public List<String> getListOfStoredProperties() {
 		return listOfStoredProperties;
 	}
@@ -214,10 +253,21 @@ public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 		return null;
 	}
 
+	/**
+	 * Whether comments of kept existing properties are read (see extendAndKeepExistingProperties).
+	 *
+	 * @return true if comments are read
+	 */
 	public boolean isReadComments() {
 		return readComments;
 	}
 
+	/**
+	 * Sets whether comments of kept existing properties are read. Must be set before writing is started.
+	 *
+	 * @param readComments
+	 *            true to read comments
+	 */
 	public void setReadComments(final boolean readComments) {
 		this.readComments = readComments;
 	}

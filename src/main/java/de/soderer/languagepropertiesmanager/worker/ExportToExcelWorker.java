@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.util.WorkbookUtil;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -21,12 +22,31 @@ import de.soderer.utilities.Utilities;
 import de.soderer.utilities.worker.WorkerParentSimple;
 import de.soderer.utilities.worker.WorkerSimple;
 
+/**
+ * Exports language properties into an Excel file (xlsx) with the columns
+ * path, index, key, optional comment and one column per language. The file is
+ * readable by {@link ImportFromExcelWorker}.
+ */
 public class ExportToExcelWorker extends WorkerSimple<Boolean> {
 	private final List<String> languagePropertiesSetNames;
 	private final List<LanguageProperty> languageProperties;
 	private final File excelOutputFile;
 	private final boolean overwrite;
 
+	/**
+	 * Creates the export worker.
+	 *
+	 * @param parent
+	 *            receiver of the progress signals, may be null
+	 * @param languageProperties
+	 *            properties to export
+	 * @param languagePropertiesSetNames
+	 *            names of the exported sets, a single name is used as sheet name, otherwise "Multiple"
+	 * @param excelOutputFile
+	 *            Excel file to create
+	 * @param overwrite
+	 *            whether an existing file may be replaced
+	 */
 	public ExportToExcelWorker(final WorkerParentSimple parent, final List<LanguageProperty> languageProperties, final List<String> languagePropertiesSetNames, final File excelOutputFile, final boolean overwrite) {
 		super(parent);
 
@@ -47,7 +67,7 @@ public class ExportToExcelWorker extends WorkerSimple<Boolean> {
 
 		final List<String> availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT);
 
-		final Comparator<LanguageProperty> compareByPathAndIndex = Comparator.comparing(LanguageProperty::getPath).thenComparing(LanguageProperty::getOriginalIndex);
+		final Comparator<LanguageProperty> compareByPathAndIndex = Comparator.comparing(LanguageProperty::getPath, Comparator.nullsFirst(Comparator.naturalOrder())).thenComparing(LanguageProperty::getOriginalIndex);
 		final List<LanguageProperty> sortedLanguageProperties = languageProperties.stream().sorted(compareByPathAndIndex).collect(Collectors.toList());
 
 		boolean commentsFound = false;
@@ -66,7 +86,9 @@ public class ExportToExcelWorker extends WorkerSimple<Boolean> {
 		try {
 			try (final XSSFWorkbook workbook = new XSSFWorkbook()) {
 				try (final FileOutputStream outputStream = new FileOutputStream(tempOutputFile)) {
-					final XSSFSheet sheet = workbook.createSheet(languagePropertiesSetNames.size() == 1 ? languagePropertiesSetNames.get(0) : "Multiple");
+					// Excel sheet names are limited to 31 characters and must not contain some special characters (e.g. '/', '?', '*')
+					final String sheetName = languagePropertiesSetNames != null && languagePropertiesSetNames.size() == 1 && Utilities.isNotBlank(languagePropertiesSetNames.get(0)) ? languagePropertiesSetNames.get(0) : "Multiple";
+					final XSSFSheet sheet = workbook.createSheet(WorkbookUtil.createSafeSheetName(sheetName));
 
 					final XSSFCellStyle cellStyle = workbook.createCellStyle();
 					cellStyle.setWrapText(true);
@@ -141,7 +163,9 @@ public class ExportToExcelWorker extends WorkerSimple<Boolean> {
 					}
 
 					// Resize columns for optimal width
-					for (int i = 0; i < languageSignsInOutputOrder.size() + 3; i++) {
+					// Path, index, key, optional comment and the language columns
+					final int columnCount = 3 + (commentsFound ? 1 : 0) + languageSignsInOutputOrder.size();
+					for (int i = 0; i < columnCount; i++) {
 						sheet.autoSizeColumn(i);
 					}
 

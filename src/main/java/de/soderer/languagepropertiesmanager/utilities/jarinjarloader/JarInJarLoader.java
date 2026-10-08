@@ -21,7 +21,13 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
+/**
+ * Start class of the executable jar file: loads the jar files embedded in the
+ * jar ("Rsrc-Class-Path" of the manifest, or all embedded jars) by a new class
+ * loader and starts the real main class ("Rsrc-Main-Class").
+ */
 public class JarInJarLoader {
+	/** Name of the system property, which is filled with the path of the executed jar file */
 	public static final String SYSTEM_PARAMETER_NAME_CURRENT_RUNNING_JAR = "process.jar";
 
 	private static class ManifestInfo {
@@ -29,10 +35,55 @@ public class JarInJarLoader {
 		String[] classPath;
 	}
 
+	/**
+	 * Thrown if the embedded SWT libraries do not support the current platform.
+	 * Unlike other errors while reading a manifest file, this one must not be skipped.
+	 */
+	private static class UnsupportedPlatformException extends IOException {
+		private static final long serialVersionUID = 3021457791850637172L;
+
+		UnsupportedPlatformException(final String message) {
+			super(message);
+		}
+	}
+
+	/**
+	 * Only static usage
+	 */
+	protected JarInJarLoader() {
+		// Only static usage
+	}
+
+	/**
+	 * Main method of the executable jar file.
+	 *
+	 * @param args
+	 *            command line arguments, handed over to the real main class
+	 * @throws Exception
+	 *             if the real main class cannot be loaded or started
+	 */
 	public static void main(final String[] args) throws Exception {
 		jarInJarLoaderStart(args);
 	}
 
+	/**
+	 * Sets up the class loader for the embedded jar files and starts the real main class.
+	 *
+	 * @param args
+	 *            command line arguments, handed over to the real main class
+	 * @throws IOException
+	 *             if the manifest cannot be read or has no valid attributes
+	 * @throws MalformedURLException
+	 *             if a class path entry is no valid URL
+	 * @throws InvocationTargetException
+	 *             if the main method of the real main class throws an exception
+	 * @throws IllegalAccessException
+	 *             if the main method of the real main class is not accessible
+	 * @throws ClassNotFoundException
+	 *             if the real main class does not exist
+	 * @throws NoSuchMethodException
+	 *             if the real main class has no main method
+	 */
 	protected static void jarInJarLoaderStart(final String[] args) throws IOException, MalformedURLException,
 	InvocationTargetException, IllegalAccessException, ClassNotFoundException, NoSuchMethodException {
 		// Fill an environment variable with the path of the executed jar file
@@ -124,7 +175,7 @@ public class JarInJarLoader {
 							e.printStackTrace();
 						}
 						if (swtFound && !swtLoaded) {
-							throw new Exception("Unsupported OS name or architecture for this SWT application: " + osName + " / " + osArch);
+							throw new UnsupportedPlatformException("Unsupported OS name or architecture for this SWT application: " + osName + " / " + osArch);
 						}
 					}
 					manifestInfo.classPath = rsrcClassPath.split(" ");
@@ -132,6 +183,9 @@ public class JarInJarLoader {
 						return manifestInfo;
 					}
 				}
+			} catch (final UnsupportedPlatformException e) {
+				// Must be reported, otherwise the misleading "Missing attributes" error below would be shown
+				throw e;
 			} catch (@SuppressWarnings("unused") final Exception e) {
 				// Skip invalid manifest file
 			}

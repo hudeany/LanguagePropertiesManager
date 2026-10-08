@@ -34,12 +34,19 @@ public class MergeResult {
 		}
 	}
 
+	/**
+	 * Whether the merge added or changed any property.
+	 *
+	 * @return true if anything was changed
+	 */
 	public boolean hasChanges() {
 		return !changedProperties.isEmpty();
 	}
 
 	/**
 	 * Added or changed properties in order of their change
+	 *
+	 * @return added or changed properties, each contained only once
 	 */
 	public List<LanguageProperty> getChangedProperties() {
 		return changedProperties;
@@ -48,6 +55,9 @@ public class MergeResult {
 	/**
 	 * Language signs, which did not exist in the loaded data before the merge.
 	 * They are determined by the caller after completing the language signs of all properties.
+	 *
+	 * @param languageSign
+	 *            language sign that is new in the loaded data
 	 */
 	public void addNewLanguageSign(final String languageSign) {
 		newLanguageSigns.add(languageSign);

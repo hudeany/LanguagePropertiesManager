@@ -29,28 +29,40 @@ public class ActionScopeStatusBar extends JPanel {
 
 	private static final Color HIGHLIGHT_COLOR = new Color(0xB0, 0x5A, 0x00);
 
+	/** The observed table */
 	private final JTable table;
+	/** Number of all loaded properties, independent of the search filter */
 	private final IntSupplier totalCountSupplier;
+	/** Whether the search filter currently restricts the visible rows */
 	private final BooleanSupplier filterActiveSupplier;
 
+	/** Shows which properties the bulk actions affect */
 	private final JLabel scopeLabel = new JLabel(" ");
+	/** Shows whether the search filter is active */
 	private final JLabel filterLabel = new JLabel(" ");
 
+	/** Text color of the labels when not highlighted */
 	private final Color defaultForeground;
+	/** Font of the labels when not highlighted */
 	private final Font defaultFont;
+	/** Font of the labels when highlighted */
 	private final Font boldFont;
 
 	/** Several table events for one user action are combined into a single refresh */
 	private boolean refreshPending = false;
 
+	/** Refreshes after selection changes of the table */
 	private final ListSelectionListener selectionListener = e -> {
 		if (!e.getValueIsAdjusting()) {
 			scheduleRefresh();
 		}
 	};
+	/** Refreshes after content changes of the table */
 	private final TableModelListener tableModelListener = e -> scheduleRefresh();
 
 	/**
+	 * Creates the status bar and starts observing the table.
+	 *
 	 * @param table
 	 *            the table whose selection and visible rows are observed
 	 * @param totalCountSupplier

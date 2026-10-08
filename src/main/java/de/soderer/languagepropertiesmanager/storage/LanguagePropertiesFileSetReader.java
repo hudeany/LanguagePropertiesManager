@@ -13,6 +13,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -20,28 +21,59 @@ import java.util.stream.Collectors;
 import de.soderer.utilities.PropertiesReader;
 import de.soderer.utilities.Utilities;
 
+/**
+ * Reads sets of language properties files ("name.properties",
+ * "name_de.properties", "name_en_US.properties", ...) into
+ * {@link LanguageProperty} items.
+ */
 public class LanguagePropertiesFileSetReader {
+	/** Language sign of the default language file, which has no locale suffix */
 	public static final String LANGUAGE_SIGN_DEFAULT = "default";
+	/** File extension of language properties files if none is configured */
 	public static final String DEFAULT_PROPERTIES_FILE_EXTENSION = ".properties";
 	private static final Set<String> ISO_LANGUAGES = new HashSet<>(Arrays.asList(Locale.getISOLanguages()));
 	private static final Set<String> ISO_COUNTRIES = new HashSet<>(Arrays.asList(Locale.getISOCountries()));
 	private static final Pattern LOCALE_SUFFIX_PATTERN = Pattern.compile("_([a-z]{2})(?:_([A-Z]{2})(?:_([A-Za-z0-9]+))?)?$");
 
+	private LanguagePropertiesFileSetReader() {
+		// Utility class, no instances
+	}
+
 	/**
-	 * Reads a set of language properties files into a map with values of item name strings as keys, where each of them is referencing a map of language signs and their value string for display
-	 * @param basePropertiesFilePath
-	 * @return
+	 * Reads a set of language properties files with the default file extension ".properties".
+	 *
+	 * @param propertiesDirectory
+	 *            directory containing the files of the set
+	 * @param propertySetName
+	 *            name of the set, which is the file name of the default language file without extension
+	 * @param readKeysCaseInsensitive
+	 *            whether keys are read case-insensitively
+	 * @param readComments
+	 *            whether comments are read
+	 * @return one property per key, in the order of the default language file
 	 * @throws Exception
+	 *             if the directory does not exist or a file cannot be read
 	 */
 	public static List<LanguageProperty> read(final File propertiesDirectory, final String propertySetName, final boolean readKeysCaseInsensitive, final boolean readComments) throws Exception {
 		return read(propertiesDirectory, propertySetName, DEFAULT_PROPERTIES_FILE_EXTENSION, readKeysCaseInsensitive, readComments);
 	}
 
 	/**
-	 * Reads a set of language properties files into a map with values of item name strings as keys, where each of them is referencing a map of language signs and their value string for display
-	 * @param basePropertiesFilePath
-	 * @return
+	 * Reads a set of language properties files.
+	 *
+	 * @param propertiesDirectory
+	 *            directory containing the files of the set
+	 * @param propertySetName
+	 *            name of the set, which is the file name of the default language file without extension
+	 * @param propertiesFileExtension
+	 *            file extension of the properties files, a missing leading dot is added
+	 * @param readKeysCaseInsensitive
+	 *            whether keys are read case-insensitively
+	 * @param readComments
+	 *            whether comments are read
+	 * @return one property per key, in the order of the default language file
 	 * @throws Exception
+	 *             if the directory does not exist or a file cannot be read
 	 */
 	public static List<LanguageProperty> read(final File propertiesDirectory, final String propertySetName,
 			final String propertiesFileExtension, final boolean readKeysCaseInsensitive, final boolean readComments)
@@ -53,9 +85,22 @@ public class LanguagePropertiesFileSetReader {
 	 * Reads a set of language properties files like read() above and additionally reports keys that occur more than once within a single file.
 	 * Of such duplicates the first value is kept, the later ones are dropped and would be lost on the next save.
 	 *
+	 * @param propertiesDirectory
+	 *            directory containing the files of the set
+	 * @param propertySetName
+	 *            name of the set, which is the file name of the default language file without extension
+	 * @param propertiesFileExtension
+	 *            file extension of the properties files, a missing leading dot is added
+	 * @param readKeysCaseInsensitive
+	 *            whether keys are read case-insensitively
+	 * @param readComments
+	 *            whether comments are read
 	 * @param duplicateKeysByFile
 	 *            Optional (may be null): receives the display path of every file containing duplicate keys and its duplicate keys.
 	 *            Entries are added, so one map can collect the results of several sets.
+	 * @return one property per key, in the order of the default language file
+	 * @throws Exception
+	 *             if the directory does not exist or a file cannot be read
 	 */
 	public static List<LanguageProperty> read(final File propertiesDirectory, final String propertySetName,
 			final String propertiesFileExtension, final boolean readKeysCaseInsensitive, final boolean readComments,
@@ -143,6 +188,14 @@ public class LanguagePropertiesFileSetReader {
 	 * or "propertySetName + '_' + validLocaleSuffix + extension".
 	 * A plain wildcard match on "propertySetName*extension" would also match unrelated files
 	 * like "propertySetName-customer.properties", which must be excluded here.
+	 *
+	 * @param fileName
+	 *            file name without directory
+	 * @param propertySetName
+	 *            name of the set
+	 * @param propertiesFileExtension
+	 *            file extension of the properties files, a missing leading dot is added
+	 * @return true if the file belongs to the set
 	 */
 	public static boolean isFileOfPropertySet(final String fileName, final String propertySetName, final String propertiesFileExtension) {
 		final String normalizedPropertiesFileExtension = normalizePropertiesFileExtension(propertiesFileExtension);
@@ -174,6 +227,14 @@ public class LanguagePropertiesFileSetReader {
 	 * Get language sign of a filename that belongs to the given property set (checked by isFileOfPropertySet()).
 	 * Only the part after the property set name is evaluated, so set names ending with a locale-like suffix
 	 * (e.g. "texts_de") are handled correctly.
+	 *
+	 * @param fileName
+	 *            file name without directory
+	 * @param propertySetName
+	 *            name of the set
+	 * @param propertiesFileExtension
+	 *            file extension of the properties files, a missing leading dot is added
+	 * @return the language sign, {@link #LANGUAGE_SIGN_DEFAULT} for the default language file
 	 */
 	public static String getLanguageSignOfFilename(final String fileName, final String propertySetName, final String propertiesFileExtension) {
 		final String normalizedPropertiesFileExtension = normalizePropertiesFileExtension(propertiesFileExtension);
@@ -187,7 +248,12 @@ public class LanguagePropertiesFileSetReader {
 	}
 
 	/**
-	 * Get language sign of a language properties filename
+	 * Get language sign of a language properties filename, which is the valid
+	 * locale suffix (e.g. "de" or "de_AT") before the file extension.
+	 *
+	 * @param fileName
+	 *            file name, may contain a directory
+	 * @return the language sign, {@link #LANGUAGE_SIGN_DEFAULT} if the file name has no valid locale suffix
 	 */
 	public static String getLanguageSignOfFilename(final String fileName) {
 		String fileNamePart = fileName.replace("\\", "/");
@@ -215,25 +281,53 @@ public class LanguagePropertiesFileSetReader {
 		}
 	}
 
+	/**
+	 * Collects the language signs registered in any of the given properties.
+	 *
+	 * @param languageProperties
+	 *            properties to check
+	 * @return all language signs, unsorted
+	 */
 	public static Set<String> getAvailableLanguageSignsOfProperties(final List<LanguageProperty> languageProperties) {
 		return languageProperties.stream().map(o -> o.getAvailableLanguageSigns()).flatMap(Set::stream).collect(Collectors.toSet());
 	}
 
+	/**
+	 * Determines the names of the properties sets of the given properties (last part of their paths).
+	 *
+	 * @param languageProperties
+	 *            properties to check
+	 * @return distinct set names, properties without a path are ignored
+	 */
 	public static List<String> getLanguagePropertiesSetNames(final List<LanguageProperty> languageProperties) {
 		final Set<String> languagePropertiesSetPaths = new HashSet<>();
 		for (final LanguageProperty languageProperty : languageProperties) {
-			languagePropertiesSetPaths.add(languageProperty.getPath());
+			// Properties without path (e.g. imported without path column) have no set name
+			if (Utilities.isNotBlank(languageProperty.getPath())) {
+				languagePropertiesSetPaths.add(languageProperty.getPath());
+			}
 		}
 
-		final List<String> languagePropertiesSetNames = new ArrayList<>();
+		// Different paths may have the same set name (e.g. "messages" in several modules), each name is listed only once
+		final Set<String> languagePropertiesSetNames = new TreeSet<>();
 		for (final String languagePropertiesSetPath : languagePropertiesSetPaths) {
 			final String filename = new File(languagePropertiesSetPath).getName();
 			languagePropertiesSetNames.add(filename);
 		}
 
-		return languagePropertiesSetNames;
+		return new ArrayList<>(languagePropertiesSetNames);
 	}
 
+	/**
+	 * Determines the name of the properties set a file belongs to, which is the
+	 * file name without a valid locale suffix and without the file extension.
+	 *
+	 * @param fileName
+	 *            file name without directory
+	 * @param propertiesFileExtension
+	 *            file extension of the properties files, a missing leading dot is added
+	 * @return the set name, or null if the file name does not end with the file extension
+	 */
 	public static String getPropertySetBaseName(final String fileName, final String propertiesFileExtension) {
 		final String normalizedPropertiesFileExtension = normalizePropertiesFileExtension(propertiesFileExtension);
 		if (fileName == null || !fileName.endsWith(normalizedPropertiesFileExtension)) {
@@ -258,6 +352,10 @@ public class LanguagePropertiesFileSetReader {
 	/**
 	 * Ensures the properties file extension starts with a dot (e.g. configured "properties" becomes ".properties").
 	 * Without the dot, the remaining base name would end with "." and locale suffixes like "_de" would not be detected.
+	 *
+	 * @param propertiesFileExtension
+	 *            configured file extension, may be null or empty
+	 * @return the file extension starting with a dot, {@link #DEFAULT_PROPERTIES_FILE_EXTENSION} if none is configured
 	 */
 	public static String normalizePropertiesFileExtension(final String propertiesFileExtension) {
 		if (propertiesFileExtension == null || propertiesFileExtension.trim().isEmpty()) {

@@ -20,6 +20,12 @@ import de.soderer.utilities.csv.CsvReader;
 import de.soderer.utilities.worker.WorkerParentSimple;
 import de.soderer.utilities.worker.WorkerSimple;
 
+/**
+ * Imports language properties from a CSV file (separator ';', RFC 4180
+ * quoting) as written by {@link ExportToCsvWorker}. A key column is mandatory,
+ * path, index, comment and language columns ("default", "de", "de_AT", ...)
+ * are detected by their header.
+ */
 public class ImportFromCsvWorker extends WorkerSimple<Boolean> {
 	private static final Pattern LANGUAGEANDCOUNTRYPATTERN = Pattern.compile("^[a-zA-Z]{2}_[a-zA-Z]{2}$");
 	private static final Pattern LANGUAGEPATTERN = Pattern.compile("^[a-zA-Z]{2}$");
@@ -32,6 +38,14 @@ public class ImportFromCsvWorker extends WorkerSimple<Boolean> {
 	private boolean ignoreComments = false;
 	private boolean commentsFound;
 
+	/**
+	 * Creates the import worker.
+	 *
+	 * @param parent
+	 *            receiver of the progress signals, may be null
+	 * @param importCsvFile
+	 *            CSV file to read
+	 */
 	public ImportFromCsvWorker(final WorkerParentSimple parent, final File importCsvFile) {
 		super(parent);
 
@@ -174,10 +188,9 @@ public class ImportFromCsvWorker extends WorkerSimple<Boolean> {
 
 		availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT);
 
-		final Comparator<LanguageProperty> compareByPathAndIndex = Comparator.comparing(LanguageProperty::getPath).thenComparing(LanguageProperty::getOriginalIndex);
+		final Comparator<LanguageProperty> compareByPathAndIndex = Comparator.comparing(LanguageProperty::getPath, Comparator.nullsFirst(Comparator.naturalOrder())).thenComparing(LanguageProperty::getOriginalIndex);
 		languageProperties = languageProperties.stream().sorted(compareByPathAndIndex).collect(Collectors.toList());
 
-		// TODO
 		languagePropertiesSetNames = LanguagePropertiesFileSetReader.getLanguagePropertiesSetNames(languageProperties);
 
 		commentsFound = false;
@@ -208,32 +221,74 @@ public class ImportFromCsvWorker extends WorkerSimple<Boolean> {
 		return null;
 	}
 
+	/**
+	 * Names of the properties sets found in the path column, available after the import.
+	 *
+	 * @return the set names, empty if the file has no paths
+	 */
 	public List<String> getLanguagePropertiesSetNames() {
 		return languagePropertiesSetNames;
 	}
 
+	/**
+	 * The imported properties, sorted by path and original index, available after the import.
+	 *
+	 * @return the imported properties
+	 */
 	public List<LanguageProperty> getLanguageProperties() {
 		return languageProperties;
 	}
 
+	/**
+	 * Language signs of the imported properties, default language first, available after the import.
+	 *
+	 * @return the language signs
+	 */
 	public List<String> getAvailableLanguageSigns() {
 		return availableLanguageSigns;
 	}
 
+	/**
+	 * Whether any imported property has a comment.
+	 *
+	 * @return true if comments were found
+	 */
 	public boolean isCommentsFound() {
 		return commentsFound;
 	}
 
+	/**
+	 * Whether a comment column is ignored.
+	 *
+	 * @return true if comments are ignored
+	 */
 	public boolean isIgnoreComments() {
 		return ignoreComments;
 	}
 
+	/**
+	 * Sets whether a comment column is ignored. Must be set before the import is started.
+	 *
+	 * @param ignoreComments
+	 *            true to ignore comments
+	 */
 	public void setIgnoreComments(final boolean ignoreComments) {
 		this.ignoreComments = ignoreComments;
 	}
 
+	/**
+	 * Name of the imported properties set: the only set name of the path column,
+	 * "Multiple" for several set names, or the name of the CSV file (without
+	 * extension) if the file has no paths.
+	 *
+	 * @return the set name
+	 */
 	public String getLanguagePropertiesSetName() {
-		if (languagePropertiesSetNames.size() == 1) {
+		if (languagePropertiesSetNames == null || languagePropertiesSetNames.isEmpty()) {
+			// Without paths a set name derived from the file is better than an empty name, which would create files like ".properties"
+			final String fileName = importCsvFile.getName();
+			return fileName.contains(".") ? fileName.substring(0, fileName.lastIndexOf('.')) : fileName;
+		} else if (languagePropertiesSetNames.size() == 1) {
 			return languagePropertiesSetNames.get(0);
 		} else {
 			return "Multiple";

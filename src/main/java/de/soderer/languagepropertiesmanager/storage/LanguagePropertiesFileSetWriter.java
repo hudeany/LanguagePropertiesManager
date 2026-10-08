@@ -8,37 +8,88 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.soderer.utilities.PropertiesWriter;
 import de.soderer.utilities.Utilities;
 
+/**
+ * Writes {@link LanguageProperty} items into sets of language properties files
+ * ("name.properties", "name_de.properties", ...), one file per language.
+ */
 public class LanguagePropertiesFileSetWriter {
+	/** Language sign of the default language file, which has no locale suffix */
 	public static final String LANGUAGE_SIGN_DEFAULT = "default";
+	/** File extension of language properties files if none is configured */
 	public static final String DEFAULT_PROPERTIES_FILE_EXTENSION = ".properties";
 
 	/**
+	 * Misspelled name of {@link #DEFAULT_PROPERTIES_FILE_EXTENSION}, kept for compatibility.
+	 *
 	 * @deprecated Misspelled, use DEFAULT_PROPERTIES_FILE_EXTENSION
 	 */
 	@Deprecated
 	public static final String DEFAULT_POPERTIES_FILE_EXTENSION = DEFAULT_PROPERTIES_FILE_EXTENSION;
 
+	private LanguagePropertiesFileSetWriter() {
+		// Utility class, no instances
+	}
+
+	/**
+	 * Writes language properties with the default file extension ".properties".
+	 *
+	 * @param languageProperties
+	 *            properties to write, grouped into sets by their paths
+	 * @param directory
+	 *            directory for properties without a path
+	 * @param languagePropertySetName
+	 *            set name for properties without a path
+	 * @param extendAndKeepExistingProperties
+	 *            whether keys existing in the files, but not in the given properties, are kept
+	 * @param readComments
+	 *            whether comments of kept existing properties are read
+	 * @throws Exception
+	 *             if a directory does not exist or a file cannot be written
+	 */
 	public static void write(final List<LanguageProperty> languageProperties, final File directory, final String languagePropertySetName, final boolean extendAndKeepExistingProperties, final boolean readComments) throws Exception {
 		write(languageProperties, directory, languagePropertySetName, extendAndKeepExistingProperties, DEFAULT_PROPERTIES_FILE_EXTENSION, readComments);
 	}
 
+	/**
+	 * Writes language properties. Every distinct path of the properties is
+	 * written as its own set of files, properties without a path are written
+	 * into the given directory with the given set name.
+	 *
+	 * @param languageProperties
+	 *            properties to write, grouped into sets by their paths
+	 * @param directory
+	 *            directory for properties without a path
+	 * @param languagePropertySetName
+	 *            set name for properties without a path
+	 * @param extendAndKeepExistingProperties
+	 *            whether keys existing in the files, but not in the given properties, are kept
+	 * @param propertiesFileExtension
+	 *            file extension of the properties files, a missing leading dot is added
+	 * @param readComments
+	 *            whether comments of kept existing properties are read
+	 * @throws Exception
+	 *             if a directory does not exist or a file cannot be written
+	 */
 	public static void write(final List<LanguageProperty> languageProperties, final File directory, final String languagePropertySetName, final boolean extendAndKeepExistingProperties, final String propertiesFileExtension, final boolean readComments) throws Exception {
-		final Set<String> languagePropertiesPaths = languageProperties.stream().map(o -> o.getPath()).collect(Collectors.toSet());
-		final Comparator<LanguageProperty> compareByPathAndIndex = Comparator.comparing(LanguageProperty::getPath).thenComparing(LanguageProperty::getOriginalIndex);
+		// Same normalization as the reader, otherwise a configured "properties" (without dot) would create files like "nameproperties"
+		final String normalizedPropertiesFileExtension = LanguagePropertiesFileSetReader.normalizePropertiesFileExtension(propertiesFileExtension);
+		final Set<String> languagePropertiesPaths = languageProperties.stream().map(o -> getEmptyForNull(o.getPath())).collect(Collectors.toSet());
+		final Comparator<LanguageProperty> compareByPathAndIndex = Comparator.comparing((final LanguageProperty o) -> getEmptyForNull(o.getPath())).thenComparing(LanguageProperty::getOriginalIndex);
 		final List<LanguageProperty> sortedLanguageProperties = languageProperties.stream().sorted(compareByPathAndIndex).collect(Collectors.toList());
 		for (final String nextLanguagePropertiesPath : languagePropertiesPaths) {
 			// Must be a modifiable list, because existing properties may be added below
-			final List<LanguageProperty> filteredLanguageProperties = sortedLanguageProperties.stream().filter(o -> o.getPath().equals(nextLanguagePropertiesPath)).collect(Collectors.toCollection(ArrayList::new));
+			final List<LanguageProperty> filteredLanguageProperties = sortedLanguageProperties.stream().filter(o -> Objects.equals(getEmptyForNull(o.getPath()), nextLanguagePropertiesPath)).collect(Collectors.toCollection(ArrayList::new));
 
 			File propertiesDirectory;
 			String propertySetName;
-			final String languagePropertiesPath = Utilities.replaceUsersHome(nextLanguagePropertiesPath);
+			final String languagePropertiesPath = Utilities.isBlank(nextLanguagePropertiesPath) ? "" : Utilities.replaceUsersHome(nextLanguagePropertiesPath);
 			if (Utilities.isNotBlank(languagePropertiesPath)) {
 				try {
 					Paths.get(languagePropertiesPath);
@@ -65,7 +116,7 @@ public class LanguagePropertiesFileSetWriter {
 
 			final List<String> availableLanguageSigns = Utilities.sortButPutItemsFirst(getAvailableLanguageSignsOfProperties(filteredLanguageProperties), LANGUAGE_SIGN_DEFAULT);
 			if (extendAndKeepExistingProperties) {
-				final List<LanguageProperty> existingProperties = LanguagePropertiesFileSetReader.read(propertiesDirectory, propertySetName, propertiesFileExtension, false, readComments);
+				final List<LanguageProperty> existingProperties = LanguagePropertiesFileSetReader.read(propertiesDirectory, propertySetName, normalizedPropertiesFileExtension, false, readComments);
 				if (existingProperties != null) {
 					final Set<String> keysToStore = filteredLanguageProperties.stream().map(LanguageProperty::getKey).collect(Collectors.toSet());
 					for (final LanguageProperty existingProperty : existingProperties) {
@@ -79,9 +130,9 @@ public class LanguagePropertiesFileSetWriter {
 			for (final String languageSign : availableLanguageSigns) {
 				String filename;
 				if (LANGUAGE_SIGN_DEFAULT.equals(languageSign)) {
-					filename = propertySetName + propertiesFileExtension;
+					filename = propertySetName + normalizedPropertiesFileExtension;
 				} else {
-					filename = propertySetName + "_" + languageSign + propertiesFileExtension;
+					filename = propertySetName + "_" + languageSign + normalizedPropertiesFileExtension;
 				}
 
 				try (PropertiesWriter propertiesWriter = new PropertiesWriter(new FileOutputStream(new File(propertiesDirectory, filename)))) {
@@ -109,6 +160,17 @@ public class LanguagePropertiesFileSetWriter {
 		}
 	}
 
+	private static String getEmptyForNull(final String value) {
+		return value == null ? "" : value;
+	}
+
+	/**
+	 * Collects the language signs registered in any of the given properties.
+	 *
+	 * @param languageProperties
+	 *            properties to check
+	 * @return all language signs, unsorted
+	 */
 	public static Set<String> getAvailableLanguageSignsOfProperties(final List<LanguageProperty> languageProperties) {
 		final Set<String> availableLanguageSigns = new HashSet<>();
 		for (final LanguageProperty languageProperty : languageProperties) {

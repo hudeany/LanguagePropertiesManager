@@ -27,6 +27,11 @@ import de.soderer.utilities.Utilities;
 import de.soderer.utilities.worker.WorkerParentSimple;
 import de.soderer.utilities.worker.WorkerSimple;
 
+/**
+ * Loads language properties from the files of a single properties set (given
+ * by one of its files) or from all properties sets found in a directory and its
+ * subdirectories.
+ */
 public class LoadLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 	private final File languagePropertiesFileOrBasicDirectory;
 	private final String[] excludeParts;
@@ -43,6 +48,18 @@ public class LoadLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 	 */
 	private final Map<String, Set<String>> duplicateKeysByFile = new LinkedHashMap<>();
 
+	/**
+	 * Creates the load worker.
+	 *
+	 * @param parent
+	 *            receiver of the progress signals, may be null
+	 * @param languagePropertiesFileOrBasicDirectory
+	 *            one file of a properties set, or a directory to search for properties sets
+	 * @param excludeParts
+	 *            path parts of files to ignore when searching a directory (e.g. "/bin/"), may be null
+	 * @param propertiesFileExtension
+	 *            file extension of the properties files, a missing leading dot is added
+	 */
 	public LoadLanguagePropertiesWorker(final WorkerParentSimple parent, final File languagePropertiesFileOrBasicDirectory, final String[] excludeParts, final String propertiesFileExtension) {
 		super(parent);
 
@@ -92,7 +109,9 @@ public class LoadLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 				boolean excluded = false;
 				if (excludeParts != null) {
 					for (final String excludePart : excludeParts) {
-						if (propertiesFile.getAbsolutePath().contains(excludePart)) {
+						// An empty part (e.g. from an empty configuration or ";;") would exclude every file.
+						// Escaped backslashes are handled like when writing, so loading and writing exclude the same files.
+						if (Utilities.isNotEmpty(excludePart) && propertiesFile.getAbsolutePath().contains(excludePart.replace("\\\\", "\\"))) {
 							excluded = true;
 							break;
 						}
@@ -157,22 +176,47 @@ public class LoadLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 		return !cancel;
 	}
 
+	/**
+	 * Names of the loaded properties sets, available after loading.
+	 *
+	 * @return the set names
+	 */
 	public List<String> getLanguagePropertiesSetNames() {
 		return languagePropertiesSetNames;
 	}
 
+	/**
+	 * The loaded properties, sorted by path and original index, available after loading.
+	 *
+	 * @return the loaded properties
+	 */
 	public List<LanguageProperty> getLanguageProperties() {
 		return languageProperties;
 	}
 
+	/**
+	 * Language signs of the loaded properties, default language first, available after loading.
+	 *
+	 * @return the language signs
+	 */
 	public List<String> getAvailableLanguageSigns() {
 		return availableLanguageSigns;
 	}
 
+	/**
+	 * Files with keys occurring more than once, only the first value of such a key was loaded.
+	 *
+	 * @return display path of file to its duplicate keys, empty if there are none
+	 */
 	public Map<String, Set<String>> getDuplicateKeysByFile() {
 		return duplicateKeysByFile;
 	}
 
+	/**
+	 * Whether any loaded property has a comment.
+	 *
+	 * @return true if comments were found
+	 */
 	public boolean isCommentsFound() {
 		return commentsFound;
 	}
@@ -182,10 +226,21 @@ public class LoadLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 		return null;
 	}
 
+	/**
+	 * Whether comments are read.
+	 *
+	 * @return true if comments are read
+	 */
 	public boolean isReadComments() {
 		return readComments;
 	}
 
+	/**
+	 * Sets whether comments are read. Must be set before loading is started.
+	 *
+	 * @param readComments
+	 *            true to read comments
+	 */
 	public void setReadComments(final boolean readComments) {
 		this.readComments = readComments;
 	}

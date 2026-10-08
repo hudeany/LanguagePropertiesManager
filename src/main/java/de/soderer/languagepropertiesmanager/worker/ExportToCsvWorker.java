@@ -18,11 +18,30 @@ import de.soderer.utilities.csv.CsvWriter;
 import de.soderer.utilities.worker.WorkerParentSimple;
 import de.soderer.utilities.worker.WorkerSimple;
 
+/**
+ * Exports language properties into a CSV file (separator ';', RFC 4180
+ * quoting) with the columns path, index, key, optional comment and one column
+ * per language. The file is readable by {@link ImportFromCsvWorker}.
+ */
 public class ExportToCsvWorker extends WorkerSimple<Boolean> {
 	private final List<LanguageProperty> languageProperties;
 	private final File csvOutputFile;
 	private final boolean overwrite;
 
+	/**
+	 * Creates the export worker.
+	 *
+	 * @param parent
+	 *            receiver of the progress signals, may be null
+	 * @param languageProperties
+	 *            properties to export
+	 * @param languagePropertiesSetNames
+	 *            not used, kept for the same signature as {@link ExportToExcelWorker}
+	 * @param csvOutputFile
+	 *            CSV file to create
+	 * @param overwrite
+	 *            whether an existing file may be replaced
+	 */
 	public ExportToCsvWorker(final WorkerParentSimple parent, final List<LanguageProperty> languageProperties, @SuppressWarnings("unused") final List<String> languagePropertiesSetNames, final File csvOutputFile, final boolean overwrite) {
 		super(parent);
 
@@ -43,7 +62,7 @@ public class ExportToCsvWorker extends WorkerSimple<Boolean> {
 		// Already sorted with default language sign first, which is also the output order of the language columns
 		final List<String> languageSignsInOutputOrder = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT);
 
-		final Comparator<LanguageProperty> compareByPathAndIndex = Comparator.comparing(LanguageProperty::getPath).thenComparing(LanguageProperty::getOriginalIndex);
+		final Comparator<LanguageProperty> compareByPathAndIndex = Comparator.comparing(LanguageProperty::getPath, Comparator.nullsFirst(Comparator.naturalOrder())).thenComparing(LanguageProperty::getOriginalIndex);
 		final List<LanguageProperty> sortedLanguageProperties = languageProperties.stream().sorted(compareByPathAndIndex).collect(Collectors.toList());
 
 		boolean commentsFound = false;

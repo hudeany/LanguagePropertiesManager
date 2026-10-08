@@ -37,7 +37,9 @@ import de.soderer.utilities.Utilities;
  * reported to registered PropertyChangeListeners.
  */
 public final class LanguagePropertiesModel {
+	/** Name of the property change event fired when the "unsaved changes" state changes */
 	public static final String PROPERTY_UNSAVED_CHANGES = "unsavedChanges";
+	/** Name of the property change event fired when the name of the loaded properties set changes */
 	public static final String PROPERTY_LANGUAGE_PROPERTIES_SET_NAME = "languagePropertiesSetName";
 
 	private final PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
@@ -56,20 +58,49 @@ public final class LanguagePropertiesModel {
 	 */
 	private List<LanguageProperty> currentSelection = new ArrayList<>();
 
+	/**
+	 * Creates a model without loaded data
+	 */
+	public LanguagePropertiesModel() {
+		// Nothing loaded yet
+	}
+
+	/**
+	 * Registers a listener for the events {@link #PROPERTY_UNSAVED_CHANGES} and {@link #PROPERTY_LANGUAGE_PROPERTIES_SET_NAME}.
+	 *
+	 * @param listener
+	 *            the listener to add
+	 */
 	public void addPropertyChangeListener(final PropertyChangeListener listener) {
 		propertyChangeSupport.addPropertyChangeListener(listener);
 	}
 
+	/**
+	 * Removes a listener registered by {@link #addPropertyChangeListener(PropertyChangeListener)}.
+	 *
+	 * @param listener
+	 *            the listener to remove
+	 */
 	public void removePropertyChangeListener(final PropertyChangeListener listener) {
 		propertyChangeSupport.removePropertyChangeListener(listener);
 	}
 
 	// ---------- State
 
+	/**
+	 * Whether data is loaded (it may still contain no properties).
+	 *
+	 * @return true if data is loaded
+	 */
 	public boolean isLoaded() {
 		return languageProperties != null;
 	}
 
+	/**
+	 * Whether data is loaded and contains at least one property.
+	 *
+	 * @return true if there are properties
+	 */
 	public boolean hasProperties() {
 		return languageProperties != null && !languageProperties.isEmpty();
 	}
@@ -78,6 +109,8 @@ public final class LanguagePropertiesModel {
 	 * The loaded properties in their current order, or null if nothing is loaded.
 	 * Workers may read and change the properties themselves, but the list should
 	 * only be changed by the methods of this model.
+	 *
+	 * @return the loaded properties or null
 	 */
 	public List<LanguageProperty> getLanguageProperties() {
 		return languageProperties;
@@ -85,29 +118,58 @@ public final class LanguagePropertiesModel {
 
 	/**
 	 * Language signs of the loaded properties, default language first, or null if nothing is loaded
+	 *
+	 * @return the language signs or null
 	 */
 	public List<String> getAvailableLanguageSigns() {
 		return availableLanguageSigns;
 	}
 
+	/**
+	 * Whether more than one language is available.
+	 *
+	 * @return true if there are at least two languages
+	 */
 	public boolean hasMultipleLanguages() {
 		return availableLanguageSigns != null && availableLanguageSigns.size() > 1;
 	}
 
+	/**
+	 * Name of the loaded properties set, "Multiple" for several sets.
+	 *
+	 * @return the set name or null
+	 */
 	public String getLanguagePropertiesSetName() {
 		return languagePropertiesSetName;
 	}
 
+	/**
+	 * Sets the name of the loaded properties set and fires {@link #PROPERTY_LANGUAGE_PROPERTIES_SET_NAME}.
+	 *
+	 * @param languagePropertiesSetName
+	 *            the new set name
+	 */
 	public void setLanguagePropertiesSetName(final String languagePropertiesSetName) {
 		final String oldValue = this.languagePropertiesSetName;
 		this.languagePropertiesSetName = languagePropertiesSetName;
 		propertyChangeSupport.firePropertyChange(PROPERTY_LANGUAGE_PROPERTIES_SET_NAME, oldValue, languagePropertiesSetName);
 	}
 
+	/**
+	 * Whether the loaded data was changed since it was loaded or saved.
+	 *
+	 * @return true if there are unsaved changes
+	 */
 	public boolean hasUnsavedChanges() {
 		return unsavedChanges;
 	}
 
+	/**
+	 * Sets the "unsaved changes" state and fires {@link #PROPERTY_UNSAVED_CHANGES}.
+	 *
+	 * @param unsavedChanges
+	 *            the new state
+	 */
 	public void setUnsavedChanges(final boolean unsavedChanges) {
 		final boolean oldValue = this.unsavedChanges;
 		this.unsavedChanges = unsavedChanges;
@@ -116,21 +178,37 @@ public final class LanguagePropertiesModel {
 
 	// ---------- Selection
 
+	/**
+	 * Currently selected properties in the order of their selection.
+	 *
+	 * @return unmodifiable list of the selected properties, empty if nothing is selected
+	 */
 	public List<LanguageProperty> getCurrentSelection() {
 		return Collections.unmodifiableList(currentSelection);
 	}
 
 	/**
 	 * First selected property, which is shown in the detail view, or null if nothing is selected
+	 *
+	 * @return the first selected property or null
 	 */
 	public LanguageProperty getFirstSelectedProperty() {
 		return currentSelection.isEmpty() ? null : currentSelection.get(0);
 	}
 
+	/**
+	 * Replaces the current selection.
+	 *
+	 * @param selection
+	 *            the new selection, null for none
+	 */
 	public void setCurrentSelection(final Collection<LanguageProperty> selection) {
 		currentSelection = selection == null ? new ArrayList<>() : new ArrayList<>(selection);
 	}
 
+	/**
+	 * Clears the current selection.
+	 */
 	public void clearCurrentSelection() {
 		currentSelection = new ArrayList<>();
 	}
@@ -152,6 +230,9 @@ public final class LanguagePropertiesModel {
 
 	/**
 	 * Replaces the loaded data. The selection is cleared and there are no unsaved changes afterwards.
+	 *
+	 * @param loadedLanguageProperties
+	 *            the new data
 	 */
 	public void load(final LoadedLanguageProperties loadedLanguageProperties) {
 		languageProperties = loadedLanguageProperties.getLanguageProperties();
@@ -163,6 +244,9 @@ public final class LanguagePropertiesModel {
 
 	/**
 	 * Starts with empty data, which only knows the default language
+	 *
+	 * @param newLanguagePropertiesSetName
+	 *            name of the new properties set
 	 */
 	public void createEmpty(final String newLanguagePropertiesSetName) {
 		languageProperties = new ArrayList<>();
@@ -188,6 +272,9 @@ public final class LanguagePropertiesModel {
 
 	/**
 	 * Appends a new property, selects it and marks the data as changed
+	 *
+	 * @param newProperty
+	 *            the property to add, it gets the next free original index
 	 */
 	public void addProperty(final LanguageProperty newProperty) {
 		newProperty.setOriginalIndex(LanguageProperty.getNextOriginalIndex(languageProperties));
@@ -200,6 +287,8 @@ public final class LanguagePropertiesModel {
 	 * Removes the given properties by identity, so also exactly the given one of
 	 * several duplicates is removed. The selection is cleared.
 	 *
+	 * @param propertiesToRemove
+	 *            the properties to remove
 	 * @return number of removed properties
 	 */
 	public int removeProperties(final Collection<LanguageProperty> propertiesToRemove) {
@@ -218,7 +307,12 @@ public final class LanguagePropertiesModel {
 	}
 
 	/**
-	 * Changes only the order of the properties, which is no change of the data
+	 * Changes only the order of the properties, which is no change of the data.
+	 * The model gets a new list instance, so a previously returned list of
+	 * {@link #getLanguageProperties()} keeps the old order.
+	 *
+	 * @param comparator
+	 *            the sort order
 	 */
 	public void sortProperties(final Comparator<LanguageProperty> comparator) {
 		languageProperties = languageProperties.stream().sorted(comparator).collect(Collectors.toList());
@@ -234,7 +328,7 @@ public final class LanguagePropertiesModel {
 	 */
 	private List<String> completeLanguageSigns() {
 		final Set<String> previousLanguageSigns = availableLanguageSigns == null ? new HashSet<>() : new HashSet<>(availableLanguageSigns);
-		availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT);
+		updateAvailableLanguageSigns(previousLanguageSigns);
 		for (final LanguageProperty languageProperty : languageProperties) {
 			for (final String languageSign : availableLanguageSigns) {
 				if (!languageProperty.getAvailableLanguageSigns().contains(languageSign)) {
@@ -254,6 +348,9 @@ public final class LanguagePropertiesModel {
 	/**
 	 * Adds a language. All properties get a missing (null) value for it, so the
 	 * language column exists, but nothing is written into its file yet.
+	 *
+	 * @param newLanguageSign
+	 *            the language to add
 	 */
 	public void addLanguage(final String newLanguageSign) {
 		for (final LanguageProperty languageProperty : languageProperties) {
@@ -261,12 +358,17 @@ public final class LanguagePropertiesModel {
 				languageProperty.setLanguageValue(newLanguageSign, null);
 			}
 		}
-		updateAvailableLanguageSigns();
+		// The new language must also be kept if there are no properties yet, which could carry it
+		final Set<String> languageSigns = availableLanguageSigns == null ? new HashSet<>() : new HashSet<>(availableLanguageSigns);
+		languageSigns.add(newLanguageSign);
+		updateAvailableLanguageSigns(languageSigns);
 	}
 
 	/**
 	 * Removes a language from all properties. The last language can not be deleted.
 	 *
+	 * @param languageSign
+	 *            the language to delete
 	 * @return true if the language was deleted
 	 */
 	public boolean deleteLanguage(final String languageSign) {
@@ -276,21 +378,40 @@ public final class LanguagePropertiesModel {
 		for (final LanguageProperty languageProperty : languageProperties) {
 			languageProperty.removeLanguageValue(languageSign);
 		}
-		updateAvailableLanguageSigns();
+		final Set<String> remainingLanguageSigns = new HashSet<>(availableLanguageSigns);
+		remainingLanguageSigns.remove(languageSign);
+		updateAvailableLanguageSigns(remainingLanguageSigns);
 		setUnsavedChanges(true);
 		return true;
 	}
 
-	private void updateAvailableLanguageSigns() {
-		availableLanguageSigns = Utilities.sortButPutItemsFirst(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties), LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT);
+	/**
+	 * Determines the available language signs from the properties. The given
+	 * language signs are kept additionally, so languages are not lost while no
+	 * property carries them (e.g. in new empty data).
+	 */
+	private void updateAvailableLanguageSigns(final Set<String> languageSignsToKeep) {
+		final Set<String> languageSigns = new HashSet<>(LanguagePropertiesFileSetReader.getAvailableLanguageSignsOfProperties(languageProperties));
+		if (languageSignsToKeep != null) {
+			languageSigns.addAll(languageSignsToKeep);
+		}
+		availableLanguageSigns = Utilities.sortButPutItemsFirst(languageSigns, LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT);
 	}
 
 	// ---------- Bulk changes of values, comments and paths
 
+	/**
+	 * Number of properties with a non-empty comment.
+	 *
+	 * @return number of comments
+	 */
 	public long countComments() {
 		return languageProperties.stream().filter(languageProperty -> Utilities.isNotEmpty(languageProperty.getComment())).count();
 	}
 
+	/**
+	 * Removes the comments of all properties and marks the data as changed.
+	 */
 	public void deleteAllComments() {
 		for (final LanguageProperty languageProperty : languageProperties) {
 			languageProperty.setComment(null);
@@ -298,6 +419,11 @@ public final class LanguagePropertiesModel {
 		setUnsavedChanges(true);
 	}
 
+	/**
+	 * Number of properties with a non-empty path.
+	 *
+	 * @return number of paths
+	 */
 	public long countPaths() {
 		return languageProperties.stream().filter(languageProperty -> Utilities.isNotEmpty(languageProperty.getPath())).count();
 	}
@@ -313,17 +439,31 @@ public final class LanguagePropertiesModel {
 		setUnsavedChanges(true);
 	}
 
+	/**
+	 * Number of non-empty values of a language.
+	 *
+	 * @param properties
+	 *            properties to check
+	 * @param languageSign
+	 *            language to check
+	 * @return number of non-empty values
+	 */
 	public static long countNonEmptyValues(final Collection<LanguageProperty> properties, final String languageSign) {
 		return properties.stream().filter(languageProperty -> Utilities.isNotEmpty(languageProperty.getLanguageValue(languageSign))).count();
 	}
 
 	/**
-	 * Removes the values of one language from all properties, but keeps the language itself
+	 * Removes the values of one language from all properties, but keeps the language itself.
+	 * The default language keeps its keys with explicitly empty values, so no key gets lost on saving.
+	 *
+	 * @param languageSign
+	 *            the language whose values are removed
 	 */
 	public void deleteAllLanguageValues(final String languageSign) {
 		for (final LanguageProperty languageProperty : languageProperties) {
-			// A null value keeps the language sign registered (same as in addLanguage()), so the column stays
-			languageProperty.setLanguageValue(languageSign, null);
+			// A null value keeps the language sign registered (same as in addLanguage()), so the column stays.
+			// For the default language "" is used instead, otherwise the keys would vanish from the default file.
+			languageProperty.setLanguageValue(languageSign, LanguageProperty.toStorageValue(languageSign, null));
 		}
 		setUnsavedChanges(true);
 	}
@@ -334,6 +474,12 @@ public final class LanguagePropertiesModel {
 	 * not written into this language file and ResourceBundle falls back to the
 	 * default value) or any other value.
 	 *
+	 * @param properties
+	 *            properties to change
+	 * @param languageSign
+	 *            language of the values
+	 * @param newValue
+	 *            the new value, "" or null
 	 * @return true if any value was changed
 	 */
 	public boolean setLanguageValues(final Collection<LanguageProperty> properties, final String languageSign, final String newValue) {
@@ -354,6 +500,12 @@ public final class LanguagePropertiesModel {
 	/**
 	 * Copies the non blank values of the source language into the target language
 	 *
+	 * @param properties
+	 *            properties to change
+	 * @param sourceLanguageSign
+	 *            language to copy from
+	 * @param targetLanguageSign
+	 *            language to copy to
 	 * @return number of transferred values
 	 */
 	public int transferValues(final Collection<LanguageProperty> properties, final String sourceLanguageSign, final String targetLanguageSign) {
@@ -372,8 +524,15 @@ public final class LanguagePropertiesModel {
 	}
 
 	/**
-	 * Removes the values of the target language, which are identical to the source language
+	 * Removes the values of the target language, which are identical to the source language.
+	 * A cleared value of the default language becomes explicitly empty, other languages become missing.
 	 *
+	 * @param properties
+	 *            properties to change
+	 * @param sourceLanguageSign
+	 *            language to compare with
+	 * @param targetLanguageSign
+	 *            language whose identical values are cleared
 	 * @return number of cleared values
 	 */
 	public int clearIdenticalValues(final Collection<LanguageProperty> properties, final String sourceLanguageSign, final String targetLanguageSign) {
@@ -382,7 +541,7 @@ public final class LanguagePropertiesModel {
 			final String sourceValue = languageProperty.getLanguageValue(sourceLanguageSign);
 			final String targetValue = languageProperty.getLanguageValue(targetLanguageSign);
 			if (Utilities.isNotBlank(targetValue) && targetValue.equals(sourceValue)) {
-				languageProperty.setLanguageValue(targetLanguageSign, null);
+				languageProperty.setLanguageValue(targetLanguageSign, LanguageProperty.toStorageValue(targetLanguageSign, null));
 				countCleared++;
 			}
 		}
@@ -396,6 +555,8 @@ public final class LanguagePropertiesModel {
 
 	/**
 	 * Finds properties with the same combination of path and key. Nothing is changed here.
+	 *
+	 * @return the found duplicates, to be removed by {@link #removeDuplicates(DuplicatesPlan)}
 	 */
 	public DuplicatesPlan findDuplicates() {
 		final Map<String, List<LanguageProperty>> groupedByPathAndKey = new LinkedHashMap<>();
@@ -421,6 +582,8 @@ public final class LanguagePropertiesModel {
 	 * still missing from the duplicates, in order of original index, so the first
 	 * available value wins. The selection is cleared.
 	 *
+	 * @param duplicatesPlan
+	 *            plan created by {@link #findDuplicates()}
 	 * @return number of removed properties
 	 */
 	public int removeDuplicates(final DuplicatesPlan duplicatesPlan) {
@@ -450,6 +613,14 @@ public final class LanguagePropertiesModel {
 	 * Applies a merge import. If nothing was loaded before, the imported data
 	 * becomes the loaded data. Afterwards every property knows every language
 	 * sign and the added or changed properties are selected.
+	 *
+	 * @param importSource
+	 *            the imported data
+	 * @param mergePlan
+	 *            plan created by {@link LanguagePropertiesMerger#createMergePlan(List, List)}
+	 * @param mergeMode
+	 *            how conflicts between existing and imported values are resolved
+	 * @return the changes done, for the final report
 	 */
 	public MergeResult applyMerge(final LoadedLanguageProperties importSource, final MergePlan mergePlan, final MergeMode mergeMode) {
 		final boolean noDataLoadedYet = languageProperties == null;
@@ -480,6 +651,12 @@ public final class LanguagePropertiesModel {
 	/**
 	 * Applies a reduction by a base set. The reduced properties, which still
 	 * exist, are selected afterwards.
+	 *
+	 * @param reducePlan
+	 *            plan created by {@link BaseSetReducer#createReducePlan(List, List)}
+	 * @param removeEmptyProperties
+	 *            whether properties without any remaining value are removed
+	 * @return the changes done, for the final report
 	 */
 	public ReduceResult applyReduction(final ReducePlan reducePlan, final boolean removeEmptyProperties) {
 		final ReduceResult reduceResult = BaseSetReducer.applyReducePlan(languageProperties, reducePlan, removeEmptyProperties);

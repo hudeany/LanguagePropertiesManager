@@ -3,9 +3,18 @@ package de.soderer.languagepropertiesmanager.utilities.jarinjarloader;
 import java.io.IOException;
 import java.net.URL;
 
+/**
+ * Handler of "rsrc:" URLs, which refer to resources within the executed jar file
+ */
 public class JarInJarURLStreamHandler extends java.net.URLStreamHandler {
 	private final ClassLoader classLoader;
 
+	/**
+	 * Creates the handler.
+	 *
+	 * @param classLoader
+	 *            class loader to read the resources with
+	 */
 	public JarInJarURLStreamHandler(final ClassLoader classLoader) {
 		this.classLoader = classLoader;
 	}

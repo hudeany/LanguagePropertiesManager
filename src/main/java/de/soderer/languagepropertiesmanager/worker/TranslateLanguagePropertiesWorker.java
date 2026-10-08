@@ -28,6 +28,26 @@ public class TranslateLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 	private int countTranslations = 0;
 	private String translateErrorMessage = null;
 
+	/**
+	 * Creates the translation worker.
+	 *
+	 * @param parent
+	 *            receiver of the progress signals, may be null
+	 * @param languagePropertiesToTranslate
+	 *            properties to translate, only empty target values are filled
+	 * @param deepLHelper
+	 *            DeepL client used for the translations
+	 * @param languageSignSource
+	 *            language sign of the source values
+	 * @param languageSignTarget
+	 *            language sign of the target values
+	 * @param sourceLanguage
+	 *            DeepL source language (e.g. "de")
+	 * @param targetLanguage
+	 *            DeepL target language (e.g. "en")
+	 * @param translationConstants
+	 *            values which must not be translated by DeepL, may be null
+	 */
 	public TranslateLanguagePropertiesWorker(final WorkerParentSimple parent, final List<LanguageProperty> languagePropertiesToTranslate, final DeepLHelper deepLHelper,
 			final String languageSignSource, final String languageSignTarget, final String sourceLanguage, final String targetLanguage, final TranslationConstants translationConstants) {
 		super(parent);
@@ -104,10 +124,20 @@ public class TranslateLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 		return null;
 	}
 
+	/**
+	 * Number of filled target values, also available after canceling or an error.
+	 *
+	 * @return number of translations
+	 */
 	public int getCountTranslations() {
 		return countTranslations;
 	}
 
+	/**
+	 * Error message of DeepL (e.g. reached license limits), which stopped the translation.
+	 *
+	 * @return the error message or null if no error occurred
+	 */
 	public String getTranslateErrorMessage() {
 		return translateErrorMessage;
 	}

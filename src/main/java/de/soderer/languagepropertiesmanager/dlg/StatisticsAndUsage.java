@@ -252,7 +252,20 @@ final class StatisticsAndUsage {
 		}
 	}
 
-	@SuppressWarnings("unused")
+	/**
+	 * Checks, which properties are used in the source files of a directory, and shows the report.
+	 *
+	 * @param storageToCheck
+	 *            properties to check
+	 * @param directory
+	 *            directory with the source files, searched recursively
+	 * @param filePattern
+	 *            regular expression for the names of the source files
+	 * @param usagePatternString
+	 *            usage of a property in the source files, "&lt;property&gt;" stands for the key
+	 * @throws Exception
+	 *             if the source files cannot be read
+	 */
 	public void checkUsage(final List<LanguageProperty> storageToCheck, final String directory, final String filePattern, final String usagePatternString) throws Exception {
 		final Set<String> existingDefaultProperties = new HashSet<>();
 		final Set<String> existingOverallProperties = new HashSet<>();
@@ -262,7 +275,8 @@ final class StatisticsAndUsage {
 		final Set<String> unusedProperties = new HashSet<>();
 		final Set<File> filesWithMissingValues = new HashSet<>();
 
-		for (final LanguageProperty languageProperty : model.getLanguageProperties()) {
+		// The given properties are checked (before they were ignored and always all loaded properties were used)
+		for (final LanguageProperty languageProperty : storageToCheck) {
 			if (Utilities.isNotEmpty(languageProperty.getLanguageValue(LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT))) {
 				existingDefaultProperties.add(languageProperty.getKey());
 			}

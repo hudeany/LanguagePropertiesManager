@@ -18,11 +18,20 @@ public class DuplicatesPlan {
 		// Only created by LanguagePropertiesModel
 	}
 
+	/**
+	 * Whether any duplicates were found.
+	 *
+	 * @return true if there are duplicates to remove
+	 */
 	public boolean hasDuplicates() {
 		return !duplicateGroups.isEmpty();
 	}
 
-	/** Number of properties, which would be removed */
+	/**
+	 * Number of properties, which would be removed.
+	 *
+	 * @return number of duplicates
+	 */
 	public int getDuplicateCount() {
 		int duplicateCount = 0;
 		for (final List<LanguageProperty> group : duplicateGroups) {
@@ -31,7 +40,11 @@ public class DuplicatesPlan {
 		return duplicateCount;
 	}
 
-	/** One line per duplicate path/key combination with the number of its occurrences */
+	/**
+	 * One line per duplicate path/key combination with the number of its occurrences.
+	 *
+	 * @return report text
+	 */
 	public String getReportText() {
 		final StringBuilder reportText = new StringBuilder();
 		for (final List<LanguageProperty> group : duplicateGroups) {

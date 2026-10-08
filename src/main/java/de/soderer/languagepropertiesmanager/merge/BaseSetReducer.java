@@ -29,6 +29,13 @@ public final class BaseSetReducer {
 	 * contains the key more than once, a value counts as identical if any of
 	 * these base properties has the same value for that language.
 	 * Nothing is changed here.
+	 *
+	 * @param propertiesToCheck
+	 *            loaded properties to compare with the base set
+	 * @param baseProperties
+	 *            properties of the base set
+	 * @return plan of the values to clear, to be applied by
+	 *         {@link #applyReducePlan(List, ReducePlan, boolean)}
 	 */
 	public static ReducePlan createReducePlan(final List<LanguageProperty> propertiesToCheck, final List<LanguageProperty> baseProperties) {
 		final ReducePlan reducePlan = new ReducePlan();
@@ -94,6 +101,14 @@ public final class BaseSetReducer {
 	/**
 	 * Clears the values identical to the base set. Properties without any
 	 * remaining value are removed from the given list, if requested.
+	 *
+	 * @param languageProperties
+	 *            all loaded properties, empty properties are removed from this list
+	 * @param reducePlan
+	 *            plan created by {@link #createReducePlan(List, List)}
+	 * @param removeEmptyProperties
+	 *            whether properties without any remaining value are removed
+	 * @return the changes done, for the final report
 	 */
 	public static ReduceResult applyReducePlan(final List<LanguageProperty> languageProperties, final ReducePlan reducePlan, final boolean removeEmptyProperties) {
 		final ReduceResult reduceResult = new ReduceResult();
@@ -121,6 +136,19 @@ public final class BaseSetReducer {
 		return reduceResult;
 	}
 
+	/**
+	 * Creates the human readable report of a reduction by a base set.
+	 *
+	 * @param sourceDescription
+	 *            file or directory of the base set, only for display
+	 * @param checkedPropertyCount
+	 *            number of properties compared with the base set
+	 * @param reducePlan
+	 *            the applied plan
+	 * @param reduceResult
+	 *            the changes done
+	 * @return report text
+	 */
 	public static String createReduceReport(final String sourceDescription, final int checkedPropertyCount, final ReducePlan reducePlan, final ReduceResult reduceResult) {
 		final StringBuilder reportText = new StringBuilder();
 		reportText.append(LangResources.get("reduceByBaseSet_resultSummary",
