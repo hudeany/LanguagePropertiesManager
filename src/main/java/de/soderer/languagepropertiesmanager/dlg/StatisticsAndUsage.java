@@ -15,6 +15,8 @@ import de.soderer.languagepropertiesmanager.LanguagePropertiesManager;
 import de.soderer.languagepropertiesmanager.model.LanguagePropertiesModel;
 import de.soderer.languagepropertiesmanager.storage.LanguagePropertiesFileSetReader;
 import de.soderer.languagepropertiesmanager.storage.LanguageProperty;
+import de.soderer.swing.ComboSelectionDialog;
+import de.soderer.swing.SimpleInputDialog;
 import de.soderer.utilities.ConfigurationProperties;
 import de.soderer.utilities.FileUtilities;
 import de.soderer.utilities.LangResources;
@@ -23,8 +25,6 @@ import de.soderer.utilities.collection.UniqueFifoQueuedList;
 import de.soderer.utilities.csv.CsvFormat;
 import de.soderer.utilities.csv.CsvReader;
 import de.soderer.utilities.csv.CsvWriter;
-import de.soderer.utilities.swing.ComboSelectionDialog;
-import de.soderer.utilities.swing.SimpleInputDialog;
 
 /**
  * Statistics of the loaded properties and the check of their usage in source

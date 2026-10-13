@@ -15,14 +15,14 @@ import de.soderer.languagepropertiesmanager.TranslationConstants;
 import de.soderer.languagepropertiesmanager.model.LanguagePropertiesModel;
 import de.soderer.languagepropertiesmanager.storage.LanguageProperty;
 import de.soderer.languagepropertiesmanager.worker.TranslateLanguagePropertiesWorker;
+import de.soderer.swing.ComboSelectionDialog;
+import de.soderer.swing.ProgressDialog;
+import de.soderer.swing.SimpleInputDialog;
 import de.soderer.utilities.ConfigurationProperties;
 import de.soderer.utilities.DeepLHelper;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.Result;
 import de.soderer.utilities.Utilities;
-import de.soderer.utilities.swing.ComboSelectionDialog;
-import de.soderer.utilities.swing.ProgressDialog;
-import de.soderer.utilities.swing.SimpleInputDialog;
 
 /**
  * Translation of language values with DeepL into one or all other languages

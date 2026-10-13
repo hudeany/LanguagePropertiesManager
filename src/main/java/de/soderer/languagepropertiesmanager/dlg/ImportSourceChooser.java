@@ -15,12 +15,12 @@ import de.soderer.languagepropertiesmanager.storage.LoadedLanguageProperties;
 import de.soderer.languagepropertiesmanager.worker.ImportFromCsvWorker;
 import de.soderer.languagepropertiesmanager.worker.ImportFromExcelWorker;
 import de.soderer.languagepropertiesmanager.worker.LoadLanguagePropertiesWorker;
+import de.soderer.swing.ComboSelectionDialog;
+import de.soderer.swing.ProgressDialog;
 import de.soderer.utilities.ConfigurationProperties;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.Result;
 import de.soderer.utilities.Utilities;
-import de.soderer.utilities.swing.ComboSelectionDialog;
-import de.soderer.utilities.swing.ProgressDialog;
 
 /**
  * Reading of language properties from all supported sources (properties file,

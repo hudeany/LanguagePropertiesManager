@@ -12,6 +12,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 
+import de.soderer.applicationbase.ApplicationUpdateUtilities;
+import de.soderer.applicationbase.UpdateableConsoleApplication;
+import de.soderer.console.ConsoleType;
+import de.soderer.console.ConsoleUtilities;
 import de.soderer.languagepropertiesmanager.dlg.LanguagePropertiesManagerDialog;
 import de.soderer.languagepropertiesmanager.storage.LanguagePropertiesFileSetReader;
 import de.soderer.languagepropertiesmanager.worker.ExportToCsvWorker;
@@ -20,19 +24,15 @@ import de.soderer.languagepropertiesmanager.worker.ImportFromCsvWorker;
 import de.soderer.languagepropertiesmanager.worker.ImportFromExcelWorker;
 import de.soderer.languagepropertiesmanager.worker.LoadLanguagePropertiesWorker;
 import de.soderer.languagepropertiesmanager.worker.WriteLanguagePropertiesWorker;
+import de.soderer.swing.ErrorDialog;
 import de.soderer.utilities.ConfigurationProperties;
 import de.soderer.utilities.DateUtilities;
 import de.soderer.utilities.DeepLHelper;
 import de.soderer.utilities.IoUtilities;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.ParameterException;
-import de.soderer.utilities.UpdateableConsoleApplication;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.Version;
-import de.soderer.utilities.appupdate.ApplicationUpdateUtilities;
-import de.soderer.utilities.console.ConsoleType;
-import de.soderer.utilities.console.ConsoleUtilities;
-import de.soderer.utilities.swing.ErrorDialog;
 import de.soderer.utilities.worker.WorkerParentDual;
 
 // TODO: Excel file Diff
@@ -368,8 +368,8 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 
 			if (openGui) {
 				// Allows pinning the application to the Linux Gnome dock (needs "--add-opens=java.desktop/sun.awt.X11=ALL-UNNAMED")
-				de.soderer.utilities.swing.SwingUtilities.setAwtWmClass(APPLICATION_STARTUPCLASS_NAME);
-				de.soderer.utilities.swing.SwingUtilities.setSystemLookAndFeel();
+				de.soderer.swing.SwingUtilities.setAwtWmClass(APPLICATION_STARTUPCLASS_NAME);
+				de.soderer.swing.SwingUtilities.setSystemLookAndFeel();
 
 				final ConfigurationProperties guiApplicationConfiguration = applicationConfiguration;
 				final int[] guiReturnCode = new int[] { -1 };

@@ -27,6 +27,9 @@ import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.WindowConstants;
 
+import de.soderer.applicationbase.ApplicationConfigurationDialog;
+import de.soderer.applicationbase.ApplicationUpdateUtilities;
+import de.soderer.applicationbase.UpdateableGuiApplication;
 import de.soderer.languagepropertiesmanager.LanguagePropertiesException;
 import de.soderer.languagepropertiesmanager.LanguagePropertiesManager;
 import de.soderer.languagepropertiesmanager.check.ErrorReport;
@@ -47,23 +50,20 @@ import de.soderer.languagepropertiesmanager.worker.ExportToCsvWorker;
 import de.soderer.languagepropertiesmanager.worker.ExportToExcelWorker;
 import de.soderer.languagepropertiesmanager.worker.WriteLanguagePropertiesWorker;
 import de.soderer.network.NetworkUtilities;
+import de.soderer.swing.ComboSelectionDialog;
+import de.soderer.swing.ErrorDialog;
+import de.soderer.swing.ProgressDialog;
+import de.soderer.swing.QuestionDialog;
+import de.soderer.swing.ShowDataDialog;
+import de.soderer.swing.SimpleInputDialog;
+import de.soderer.swing.SwingColor;
 import de.soderer.utilities.ConfigurationProperties;
 import de.soderer.utilities.DateUtilities;
 import de.soderer.utilities.IoUtilities;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.Result;
 import de.soderer.utilities.Utilities;
-import de.soderer.utilities.appupdate.ApplicationUpdateUtilities;
 import de.soderer.utilities.collection.UniqueFifoQueuedList;
-import de.soderer.utilities.swing.ApplicationConfigurationDialog;
-import de.soderer.utilities.swing.ComboSelectionDialog;
-import de.soderer.utilities.swing.ErrorDialog;
-import de.soderer.utilities.swing.ProgressDialog;
-import de.soderer.utilities.swing.QuestionDialog;
-import de.soderer.utilities.swing.ShowDataDialog;
-import de.soderer.utilities.swing.SimpleInputDialog;
-import de.soderer.utilities.swing.SwingColor;
-import de.soderer.utilities.swing.UpdateableGuiApplication;
 
 /**
  * Main window of the GUI: buttons for all actions, the properties table (left)
