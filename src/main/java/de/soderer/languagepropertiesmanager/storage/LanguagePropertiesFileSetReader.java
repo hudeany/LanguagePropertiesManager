@@ -105,6 +105,36 @@ public class LanguagePropertiesFileSetReader {
 	public static List<LanguageProperty> read(final File propertiesDirectory, final String propertySetName,
 			final String propertiesFileExtension, final boolean readKeysCaseInsensitive, final boolean readComments,
 			final Map<String, Set<String>> duplicateKeysByFile) throws Exception {
+		return read(propertiesDirectory, propertySetName, propertiesFileExtension, readKeysCaseInsensitive, readComments, duplicateKeysByFile, false);
+	}
+
+	/**
+	 * Reads a set of language properties files like read() above and optionally converts apostrophes escaped by
+	 * doubling ("''", as needed by java.text.MessageFormat) back into single apostrophes.
+	 * The loaded values then always contain plain text, which is shown, exported to CSV and Excel and translated.
+	 *
+	 * @param propertiesDirectory
+	 *            directory containing the files of the set
+	 * @param propertySetName
+	 *            name of the set, which is the file name of the default language file without extension
+	 * @param propertiesFileExtension
+	 *            file extension of the properties files, a missing leading dot is added
+	 * @param readKeysCaseInsensitive
+	 *            whether keys are read case-insensitively
+	 * @param readComments
+	 *            whether comments are read
+	 * @param duplicateKeysByFile
+	 *            Optional (may be null): receives the display path of every file containing duplicate keys and its duplicate keys.
+	 *            Entries are added, so one map can collect the results of several sets.
+	 * @param unescapeDoubledApostrophes
+	 *            whether "''" in values is read as a single apostrophe (see {@link #unescapeDoubledApostrophes(String)})
+	 * @return one property per key, in the order of the default language file
+	 * @throws Exception
+	 *             if the directory does not exist or a file cannot be read
+	 */
+	public static List<LanguageProperty> read(final File propertiesDirectory, final String propertySetName,
+			final String propertiesFileExtension, final boolean readKeysCaseInsensitive, final boolean readComments,
+			final Map<String, Set<String>> duplicateKeysByFile, final boolean unescapeDoubledApostrophes) throws Exception {
 		final String normalizedPropertiesFileExtension = normalizePropertiesFileExtension(propertiesFileExtension);
 		if (!propertiesDirectory.exists()) {
 			throw new Exception("Properties directory '" + propertiesDirectory + "' does not exist");
@@ -160,7 +190,7 @@ public class LanguagePropertiesFileSetReader {
 								property.setComment(propertiesReader.getComments().get(entry.getKey()));
 							}
 						}
-						property.setLanguageValue(languageSign, entry.getValue());
+						property.setLanguageValue(languageSign, unescapeDoubledApostrophes ? unescapeDoubledApostrophes(entry.getValue()) : entry.getValue());
 					}
 				} catch (final Exception e) {
 					throw new Exception("Error when reading file: " + propertyFile.getAbsolutePath(), e);
@@ -347,6 +377,19 @@ public class LanguagePropertiesFileSetReader {
 
 		// No valid locale suffix found -> this file IS the base/default file itself
 		return baseName;
+	}
+
+	/**
+	 * Converts apostrophes escaped by doubling ("''", as needed by java.text.MessageFormat) back into single
+	 * apostrophes. Single apostrophes, which are not escaped yet, are kept as they are, so files which are not
+	 * escaped consistently are also read correctly. They get escaped on the next save.
+	 *
+	 * @param value
+	 *            value read from a properties file, may be null
+	 * @return value with single apostrophes, null for null
+	 */
+	public static String unescapeDoubledApostrophes(final String value) {
+		return value == null ? null : value.replace("''", "'");
 	}
 
 	/**

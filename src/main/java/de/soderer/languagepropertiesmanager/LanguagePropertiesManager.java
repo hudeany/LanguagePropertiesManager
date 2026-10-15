@@ -94,6 +94,12 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 	public static final String CONFIG_IGNORE_COMMENTS = "IgnoreComments";
 	/** Configuration key: optional CSV file with values, which must not be translated by DeepL (see {@link TranslationConstants}) */
 	public static final String CONFIG_TRANSLATION_CONSTANTS_FILE = "TranslationConstantsFile";
+	/**
+	 * Configuration key: whether apostrophes are escaped by doubling ("''") in the properties files, as needed by
+	 * java.text.MessageFormat. Only the properties files contain the doubled apostrophes, the GUI, the CSV and the
+	 * Excel files work with single apostrophes.
+	 */
+	public static final String CONFIG_ESCAPE_APOSTROPHES_BY_DOUBLING = "EscapeApostrophesByDoubling";
 
 	private int previousTerminalWidth = 0;
 
@@ -129,6 +135,10 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 		if (!applicationConfiguration.containsKey(LanguagePropertiesManager.CONFIG_TRANSLATION_CONSTANTS_FILE)) {
 			// Optional CSV file with values that must not be altered by DeepL translation
 			applicationConfiguration.set(LanguagePropertiesManager.CONFIG_TRANSLATION_CONSTANTS_FILE, "");
+		}
+		if (!applicationConfiguration.containsKey(LanguagePropertiesManager.CONFIG_ESCAPE_APOSTROPHES_BY_DOUBLING)) {
+			// Off by default, so existing properties files are read and written unchanged
+			applicationConfiguration.set(LanguagePropertiesManager.CONFIG_ESCAPE_APOSTROPHES_BY_DOUBLING, "false");
 		}
 	}
 
@@ -478,6 +488,8 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 
 				final LoadLanguagePropertiesWorker loadLanguagePropertiesWorker = new LoadLanguagePropertiesWorker(this, propertiesFile, configuredExcludeParts, actionDefinition.getPropertiesFileExtension());
 				loadLanguagePropertiesWorker.setReadComments(!applicationConfiguration.getBoolean(CONFIG_IGNORE_COMMENTS));
+				// Doubled apostrophes are only used in the properties files, the export gets single apostrophes
+				loadLanguagePropertiesWorker.setEscapeApostrophesByDoubling(applicationConfiguration.getBoolean(CONFIG_ESCAPE_APOSTROPHES_BY_DOUBLING));
 
 				loadLanguagePropertiesWorker.setProgressDisplayDelayMilliseconds(2000);
 				loadLanguagePropertiesWorker.run();
@@ -545,6 +557,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 
 				final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(this, importFromExcelWorker.getLanguageProperties(), languagePropertiesSetName, outputDirectory, configuredExcludeParts, actionDefinition.isExtendAndKeepExistingProperties(), actionDefinition.getPropertiesFileExtension());
 				writeLanguagePropertiesWorker.setReadComments(!applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS));
+				writeLanguagePropertiesWorker.setEscapeApostrophesByDoubling(applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_ESCAPE_APOSTROPHES_BY_DOUBLING));
 
 				writeLanguagePropertiesWorker.setProgressDisplayDelayMilliseconds(2000);
 				writeLanguagePropertiesWorker.run();
@@ -572,6 +585,8 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 
 				final LoadLanguagePropertiesWorker loadLanguagePropertiesWorker = new LoadLanguagePropertiesWorker(this, propertiesFile, configuredExcludeParts, actionDefinition.getPropertiesFileExtension());
 				loadLanguagePropertiesWorker.setReadComments(!applicationConfiguration.getBoolean(CONFIG_IGNORE_COMMENTS));
+				// Doubled apostrophes are only used in the properties files, the export gets single apostrophes
+				loadLanguagePropertiesWorker.setEscapeApostrophesByDoubling(applicationConfiguration.getBoolean(CONFIG_ESCAPE_APOSTROPHES_BY_DOUBLING));
 
 				loadLanguagePropertiesWorker.setProgressDisplayDelayMilliseconds(2000);
 				loadLanguagePropertiesWorker.run();
@@ -639,6 +654,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 
 				final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(this, importFromCsvWorker.getLanguageProperties(), languagePropertiesSetName, outputDirectory, configuredExcludeParts, actionDefinition.isExtendAndKeepExistingProperties(), actionDefinition.getPropertiesFileExtension());
 				writeLanguagePropertiesWorker.setReadComments(!applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS));
+				writeLanguagePropertiesWorker.setEscapeApostrophesByDoubling(applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_ESCAPE_APOSTROPHES_BY_DOUBLING));
 
 				writeLanguagePropertiesWorker.setProgressDisplayDelayMilliseconds(2000);
 				writeLanguagePropertiesWorker.run();

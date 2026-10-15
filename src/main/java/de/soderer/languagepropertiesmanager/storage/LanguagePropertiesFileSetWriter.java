@@ -78,6 +78,33 @@ public class LanguagePropertiesFileSetWriter {
 	 *             if a directory does not exist or a file cannot be written
 	 */
 	public static void write(final List<LanguageProperty> languageProperties, final File directory, final String languagePropertySetName, final boolean extendAndKeepExistingProperties, final String propertiesFileExtension, final boolean readComments) throws Exception {
+		write(languageProperties, directory, languagePropertySetName, extendAndKeepExistingProperties, propertiesFileExtension, readComments, false);
+	}
+
+	/**
+	 * Writes language properties like write() above and optionally escapes apostrophes in the values by doubling
+	 * them ("'" becomes "''"), as needed by java.text.MessageFormat. Only the written files contain the escaped
+	 * values, the given properties keep their plain values.
+	 *
+	 * @param languageProperties
+	 *            properties to write, grouped into sets by their paths
+	 * @param directory
+	 *            directory for properties without a path
+	 * @param languagePropertySetName
+	 *            set name for properties without a path
+	 * @param extendAndKeepExistingProperties
+	 *            whether keys existing in the files, but not in the given properties, are kept
+	 * @param propertiesFileExtension
+	 *            file extension of the properties files, a missing leading dot is added
+	 * @param readComments
+	 *            whether comments of kept existing properties are read
+	 * @param escapeApostrophesByDoubling
+	 *            whether apostrophes in values are written doubled (see {@link #escapeApostrophesByDoubling(String)}).
+	 *            Kept existing properties are read with the same setting, so their apostrophes are not doubled twice.
+	 * @throws Exception
+	 *             if a directory does not exist or a file cannot be written
+	 */
+	public static void write(final List<LanguageProperty> languageProperties, final File directory, final String languagePropertySetName, final boolean extendAndKeepExistingProperties, final String propertiesFileExtension, final boolean readComments, final boolean escapeApostrophesByDoubling) throws Exception {
 		// Same normalization as the reader, otherwise a configured "properties" (without dot) would create files like "nameproperties"
 		final String normalizedPropertiesFileExtension = LanguagePropertiesFileSetReader.normalizePropertiesFileExtension(propertiesFileExtension);
 		final Set<String> languagePropertiesPaths = languageProperties.stream().map(o -> getEmptyForNull(o.getPath())).collect(Collectors.toSet());
@@ -116,7 +143,7 @@ public class LanguagePropertiesFileSetWriter {
 
 			final List<String> availableLanguageSigns = Utilities.sortButPutItemsFirst(getAvailableLanguageSignsOfProperties(filteredLanguageProperties), LANGUAGE_SIGN_DEFAULT);
 			if (extendAndKeepExistingProperties) {
-				final List<LanguageProperty> existingProperties = LanguagePropertiesFileSetReader.read(propertiesDirectory, propertySetName, normalizedPropertiesFileExtension, false, readComments);
+				final List<LanguageProperty> existingProperties = LanguagePropertiesFileSetReader.read(propertiesDirectory, propertySetName, normalizedPropertiesFileExtension, false, readComments, null, escapeApostrophesByDoubling);
 				if (existingProperties != null) {
 					final Set<String> keysToStore = filteredLanguageProperties.stream().map(LanguageProperty::getKey).collect(Collectors.toSet());
 					for (final LanguageProperty existingProperty : existingProperties) {
@@ -152,12 +179,24 @@ public class LanguagePropertiesFileSetWriter {
 							if (Utilities.isNotEmpty(languageProperty.getComment())) {
 								propertiesWriter.writeComment(languageProperty.getComment());
 							}
-							propertiesWriter.writeProperty(languageProperty.getKey(), languageProperty.getLanguageValue(languageSign));
+							final String value = languageProperty.getLanguageValue(languageSign);
+							propertiesWriter.writeProperty(languageProperty.getKey(), escapeApostrophesByDoubling ? escapeApostrophesByDoubling(value) : value);
 						}
 					}
 				}
 			}
 		}
+	}
+
+	/**
+	 * Escapes apostrophes by doubling them ("'" becomes "''"), as needed by java.text.MessageFormat.
+	 *
+	 * @param value
+	 *            plain value, may be null
+	 * @return value with doubled apostrophes, null for null
+	 */
+	public static String escapeApostrophesByDoubling(final String value) {
+		return value == null ? null : value.replace("'", "''");
 	}
 
 	private static String getEmptyForNull(final String value) {

@@ -1078,6 +1078,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 			final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(null, model.getLanguageProperties(), model.getLanguagePropertiesSetName(), null, null, extendAndKeepExistingProperties, applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION));
 			writeLanguagePropertiesWorker.setReadComments(!applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS));
+			writeLanguagePropertiesWorker.setEscapeApostrophesByDoubling(applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_ESCAPE_APOSTROPHES_BY_DOUBLING));
 			final ProgressDialog<WriteLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(this, LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("save_files"), writeLanguagePropertiesWorker);
 			final Result dialogResult = progressDialog.open();
 			if (dialogResult == Result.CANCELED || !Boolean.TRUE.equals(writeLanguagePropertiesWorker.get())) {
@@ -1139,6 +1140,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 			final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(null, model.getLanguageProperties(), newPropertiesSetName, directory, excludeParts, extendAndKeepExistingProperties, applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION));
 			writeLanguagePropertiesWorker.setReadComments(!applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS));
+			writeLanguagePropertiesWorker.setEscapeApostrophesByDoubling(applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_ESCAPE_APOSTROPHES_BY_DOUBLING));
 			final ProgressDialog<WriteLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(this, LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("save_files"), writeLanguagePropertiesWorker);
 			final Result dialogResult = progressDialog.open();
 			if (dialogResult == Result.CANCELED || !Boolean.TRUE.equals(writeLanguagePropertiesWorker.get())) {

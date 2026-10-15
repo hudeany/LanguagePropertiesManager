@@ -45,6 +45,7 @@ public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 	private final boolean extendAndKeepExistingProperties;
 	private final String propertiesFileExtension;
 	private boolean readComments = true;
+	private boolean escapeApostrophesByDoubling = false;
 
 	private List<String> listOfStoredProperties;
 
@@ -149,14 +150,14 @@ public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 							for (final LanguageProperty languageProperty : languagePropertiesForStorage) {
 								languageProperty.setPath(Utilities.replaceUsersHomeByTilde(new File(foundPath).getAbsolutePath()));
 							}
-							LanguagePropertiesFileSetWriter.write(languagePropertiesForStorage, new File(foundPath).getParentFile(), new File(foundPath).getName(), extendAndKeepExistingProperties, propertiesFileExtension, readComments);
+							LanguagePropertiesFileSetWriter.write(languagePropertiesForStorage, new File(foundPath).getParentFile(), new File(foundPath).getName(), extendAndKeepExistingProperties, propertiesFileExtension, readComments, escapeApostrophesByDoubling);
 							listOfStoredProperties.add(foundPath);
 						} else {
 							// Create new properties set files
 							for (final LanguageProperty languageProperty : languagePropertiesForStorage) {
 								languageProperty.setPath(Utilities.replaceUsersHomeByTilde(new File(outputDirectory, propertySetName).getAbsolutePath()));
 							}
-							LanguagePropertiesFileSetWriter.write(languagePropertiesForStorage, outputDirectory, propertySetName, extendAndKeepExistingProperties, propertiesFileExtension, readComments);
+							LanguagePropertiesFileSetWriter.write(languagePropertiesForStorage, outputDirectory, propertySetName, extendAndKeepExistingProperties, propertiesFileExtension, readComments, escapeApostrophesByDoubling);
 							listOfStoredProperties.add(new File(outputDirectory, propertySetName).getAbsolutePath());
 						}
 					}
@@ -166,7 +167,7 @@ public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 				}
 			} else {
 				// Store only one language properties set which has no file path defined in LanguageProperty objects
-				LanguagePropertiesFileSetWriter.write(languageProperties, outputDirectory, languagePropertySetName, extendAndKeepExistingProperties, propertiesFileExtension, readComments);
+				LanguagePropertiesFileSetWriter.write(languageProperties, outputDirectory, languagePropertySetName, extendAndKeepExistingProperties, propertiesFileExtension, readComments, escapeApostrophesByDoubling);
 			}
 		} else {
 			// Without output directory every property must have its own path
@@ -197,7 +198,7 @@ public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 
 				LanguagePropertiesFileSetWriter.write(languagePropertiesForStorage,
 						new File(languagePropertiesPath).getParentFile(), propertySetName,
-						extendAndKeepExistingProperties, propertiesFileExtension, readComments);
+						extendAndKeepExistingProperties, propertiesFileExtension, readComments, escapeApostrophesByDoubling);
 				listOfStoredProperties.add(languagePropertiesPath);
 
 				itemsDone++;
@@ -271,5 +272,27 @@ public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 	 */
 	public void setReadComments(final boolean readComments) {
 		this.readComments = readComments;
+	}
+
+	/**
+	 * Whether apostrophes in the values of the properties files are escaped by doubling ("''"), as needed by
+	 * java.text.MessageFormat.
+	 *
+	 * @return true if apostrophes are escaped by doubling
+	 */
+	public boolean isEscapeApostrophesByDoubling() {
+		return escapeApostrophesByDoubling;
+	}
+
+	/**
+	 * Sets whether apostrophes in the values of the properties files are escaped by doubling ("''"), as needed by
+	 * java.text.MessageFormat. If set, "'" is written as "''", the given properties keep their plain values.
+	 * Must be set before writing is started.
+	 *
+	 * @param escapeApostrophesByDoubling
+	 *            true to escape apostrophes by doubling
+	 */
+	public void setEscapeApostrophesByDoubling(final boolean escapeApostrophesByDoubling) {
+		this.escapeApostrophesByDoubling = escapeApostrophesByDoubling;
 	}
 }

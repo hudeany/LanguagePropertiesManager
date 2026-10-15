@@ -42,6 +42,7 @@ public class LoadLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 	private boolean commentsFound;
 	private final String propertiesFileExtension;
 	private boolean readComments = true;
+	private boolean escapeApostrophesByDoubling = false;
 
 	/**
 	 * Files with keys occurring more than once, collected over all read sets (display path of file -> duplicate keys)
@@ -91,7 +92,7 @@ public class LoadLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 				throw new Exception("Missing mandatory file extension '" + propertiesFileExtension + "'");
 			}
 
-			languageProperties = LanguagePropertiesFileSetReader.read(languagePropertiesFileOrBasicDirectory.getParentFile(), languagePropertiesSetName, propertiesFileExtension, false, readComments, duplicateKeysByFile);
+			languageProperties = LanguagePropertiesFileSetReader.read(languagePropertiesFileOrBasicDirectory.getParentFile(), languagePropertiesSetName, propertiesFileExtension, false, readComments, duplicateKeysByFile, escapeApostrophesByDoubling);
 			languagePropertiesSetNames.add(languagePropertiesSetName);
 		} else {
 			parent.changeTitle(LangResources.get("searchingLanguageProperties"));
@@ -148,7 +149,7 @@ public class LoadLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 			languageProperties = new ArrayList<>();
 			for (final String propertiesPath : propertiesPaths) {
 				final String layoutPropertySetName = new File(propertiesPath).getName();
-				final List<LanguageProperty> nextLanguageProperties = LanguagePropertiesFileSetReader.read(new File(propertiesPath).getParentFile(), layoutPropertySetName, propertiesFileExtension, false, readComments, duplicateKeysByFile);
+				final List<LanguageProperty> nextLanguageProperties = LanguagePropertiesFileSetReader.read(new File(propertiesPath).getParentFile(), layoutPropertySetName, propertiesFileExtension, false, readComments, duplicateKeysByFile, escapeApostrophesByDoubling);
 				languageProperties.addAll(nextLanguageProperties);
 				languagePropertiesSetNames.add(layoutPropertySetName);
 
@@ -243,6 +244,27 @@ public class LoadLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 	 */
 	public void setReadComments(final boolean readComments) {
 		this.readComments = readComments;
+	}
+
+	/**
+	 * Whether apostrophes in the values of the properties files are escaped by doubling ("''"), as needed by
+	 * java.text.MessageFormat.
+	 *
+	 * @return true if apostrophes are escaped by doubling
+	 */
+	public boolean isEscapeApostrophesByDoubling() {
+		return escapeApostrophesByDoubling;
+	}
+
+	/**
+	 * Sets whether apostrophes in the values of the properties files are escaped by doubling ("''"), as needed by
+	 * java.text.MessageFormat. If set, "''" is read as a single apostrophe, so the loaded values contain plain text. Must be set before loading is started.
+	 *
+	 * @param escapeApostrophesByDoubling
+	 *            true to escape apostrophes by doubling
+	 */
+	public void setEscapeApostrophesByDoubling(final boolean escapeApostrophesByDoubling) {
+		this.escapeApostrophesByDoubling = escapeApostrophesByDoubling;
 	}
 
 	final IOFileFilter languagePropertiesFilter = new AbstractFileFilter() {

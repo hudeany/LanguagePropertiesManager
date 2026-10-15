@@ -49,6 +49,8 @@ final class ImportSourceChooser {
 	LoadedLanguageProperties readSingleLanguagePropertiesSet(final String filePath) throws ExecutionException {
 		final LoadLanguagePropertiesWorker openFilesLanguagePropertiesWorker = new LoadLanguagePropertiesWorker(null, new File(filePath), null, applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION));
 		openFilesLanguagePropertiesWorker.setReadComments(!applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS));
+		// Doubled apostrophes ("''") are only used in the properties files, the loaded values contain single apostrophes
+		openFilesLanguagePropertiesWorker.setEscapeApostrophesByDoubling(applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_ESCAPE_APOSTROPHES_BY_DOUBLING));
 		final ProgressDialog<LoadLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(owner, LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("tooltip_load_files"), openFilesLanguagePropertiesWorker);
 		final Result dialogResult = progressDialog.open();
 		if (dialogResult == Result.CANCELED) {
@@ -71,6 +73,8 @@ final class ImportSourceChooser {
 		final String[] excludeParts = applicationConfiguration.get(LanguagePropertiesManager.CONFIG_OPEN_DIR_EXCLUDES).split(";");
 		final LoadLanguagePropertiesWorker openFolderLanguagePropertiesWorker = new LoadLanguagePropertiesWorker(null, new File(basicDirectoryPath), excludeParts, applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION));
 		openFolderLanguagePropertiesWorker.setReadComments(!applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS));
+		// Doubled apostrophes ("''") are only used in the properties files, the loaded values contain single apostrophes
+		openFolderLanguagePropertiesWorker.setEscapeApostrophesByDoubling(applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_ESCAPE_APOSTROPHES_BY_DOUBLING));
 		final ProgressDialog<LoadLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(owner, LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("load_folder"), openFolderLanguagePropertiesWorker);
 		final Result dialogResult = progressDialog.open();
 		if (dialogResult == Result.CANCELED) {
