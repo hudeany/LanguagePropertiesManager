@@ -479,6 +479,12 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		public void showErrorMessage(final String title, final String text) {
 			LanguagePropertiesManagerDialog.this.showErrorMessage(title, text);
 		}
+
+		@Override
+		public boolean isEscapeApostrophesByDoubling() {
+			// Read on every call, so a change in the configuration dialog applies immediately
+			return applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_ESCAPE_APOSTROPHES_BY_DOUBLING);
+		}
 	}
 
 	private void addNewProperty() {
@@ -789,7 +795,6 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	 * Enables or disables the buttons according to the loaded data and the selection.
 	 */
 	public void checkButtonStatus() {
-		final int rowCount = tablePanel == null ? 0 : tablePanel.getRowCount();
 		final boolean hasProperties = model.hasProperties();
 		final boolean hasMultipleLanguages = hasProperties && model.hasMultipleLanguages();
 
@@ -803,13 +808,16 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			exportToCsvButton.setEnabled(model.isLoaded());
 		}
 		if (addButton != null) {
-			addButton.setEnabled(rowCount > 0);
+			// Not the displayed rows, so a new property can also be added while the search filter shows no hits
+			addButton.setEnabled(hasProperties);
 		}
 		if (loadRecentButton != null) {
 			loadRecentButton.setEnabled(recentlyOpenedDirectories != null && recentlyOpenedDirectories.size() > 0);
 		}
 		if (tablePanel != null) {
-			tablePanel.setInteractionEnabled(rowCount > 0);
+			// Decided by the loaded properties, not by the displayed rows: an active search filter without hits
+			// shows no rows, but search and filter must stay usable to deactivate it again
+			tablePanel.setInteractionEnabled(hasProperties);
 		}
 		if (removeButton != null) {
 			removeButton.setEnabled(model.getFirstSelectedProperty() != null);

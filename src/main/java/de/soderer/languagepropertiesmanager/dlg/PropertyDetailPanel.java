@@ -30,6 +30,7 @@ import javax.swing.event.DocumentListener;
 import de.soderer.languagepropertiesmanager.LanguagePropertiesManager;
 import de.soderer.languagepropertiesmanager.model.LanguagePropertiesModel;
 import de.soderer.languagepropertiesmanager.storage.LanguagePropertiesFileSetReader;
+import de.soderer.languagepropertiesmanager.storage.LanguagePropertiesFileSetWriter;
 import de.soderer.languagepropertiesmanager.storage.LanguageProperty;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.PropertiesReader;
@@ -81,6 +82,16 @@ public class PropertyDetailPanel extends JPanel {
 		 *            the error message
 		 */
 		void showErrorMessage(String title, String text);
+
+		/**
+		 * Whether apostrophes are escaped by doubling ("''") in the properties files, so the storage text view
+		 * shows them doubled, too.
+		 *
+		 * @return true if apostrophes are escaped by doubling
+		 */
+		default boolean isEscapeApostrophesByDoubling() {
+			return false;
+		}
 	}
 
 	/** Loaded data and the current selection */
@@ -90,6 +101,11 @@ public class PropertyDetailPanel extends JPanel {
 
 	/** Whether the fields show the escaped storage representation of key and values instead of the plain texts */
 	private boolean showStorageTexts = false;
+	/**
+	 * Whether the storage texts currently shown contain doubled apostrophes. Determined when the storage texts are
+	 * filled in, so a configuration change while they are shown does not convert them back wrongly.
+	 */
+	private boolean storageTextsWithDoubledApostrophes = false;
 	/** Whether the fields contain changes, which are not yet applied with the OK button */
 	private boolean dataWasModified = false;
 
@@ -330,6 +346,9 @@ public class PropertyDetailPanel extends JPanel {
 		technicalDataChange = true;
 		try {
 			final LanguageProperty property = model.getFirstSelectedProperty();
+			if (showStorageTexts) {
+				storageTextsWithDoubledApostrophes = callback.isEscapeApostrophesByDoubling();
+			}
 			if (property != null) {
 				pathTextfield.setText(property.getPath());
 				keyTextfield.setText(showStorageTexts ? PropertiesWriter.escapeKey(property.getKey()) : property.getKey());
@@ -339,7 +358,7 @@ public class PropertyDetailPanel extends JPanel {
 					if (value == null) {
 						languageTextField.getValue().setText("");
 					} else if (showStorageTexts) {
-						languageTextField.getValue().setText(PropertiesWriter.escapeValue(value));
+						languageTextField.getValue().setText(toStorageValue(value));
 					} else {
 						languageTextField.getValue().setText(value);
 					}
@@ -490,7 +509,25 @@ public class PropertyDetailPanel extends JPanel {
 	 * See getPlainKey().
 	 */
 	private String getPlainValue(final String fieldText) throws Exception {
-		return showStorageTexts ? PropertiesReader.unescapeValue(fieldText) : fieldText;
+		return showStorageTexts ? toPlainValue(fieldText) : fieldText;
+	}
+
+	/**
+	 * Converts a plain value into its representation in the properties file: escaped like by PropertiesWriter and,
+	 * if configured, with doubled apostrophes like written by LanguagePropertiesFileSetWriter.
+	 */
+	private String toStorageValue(final String plainValue) throws Exception {
+		final String value = storageTextsWithDoubledApostrophes ? LanguagePropertiesFileSetWriter.escapeApostrophesByDoubling(plainValue) : plainValue;
+		return PropertiesWriter.escapeValue(value);
+	}
+
+	/**
+	 * Converts the representation of a value in the properties file back into the plain value, the same way as
+	 * reading the file does (see {@link #toStorageValue(String)}).
+	 */
+	private String toPlainValue(final String storageValue) throws Exception {
+		final String value = PropertiesReader.unescapeValue(storageValue);
+		return storageTextsWithDoubledApostrophes ? LanguagePropertiesFileSetReader.unescapeDoubledApostrophes(value) : value;
 	}
 
 	/**
@@ -613,14 +650,16 @@ public class PropertyDetailPanel extends JPanel {
 		final Map<JTextArea, String> convertedValues = new LinkedHashMap<>();
 		try {
 			if (changeToShowStorageTexts) {
+				// The current configuration decides, whether the storage texts show doubled apostrophes
+				storageTextsWithDoubledApostrophes = callback.isEscapeApostrophesByDoubling();
 				convertedKey = PropertiesWriter.escapeKey(keyTextfield.getText());
 				for (final JTextArea field : languageTextFields.values()) {
-					convertedValues.put(field, PropertiesWriter.escapeValue(field.getText()));
+					convertedValues.put(field, toStorageValue(field.getText()));
 				}
 			} else {
 				convertedKey = PropertiesReader.unescapeKey(keyTextfield.getText());
 				for (final JTextArea field : languageTextFields.values()) {
-					convertedValues.put(field, PropertiesReader.unescapeValue(field.getText()));
+					convertedValues.put(field, toPlainValue(field.getText()));
 				}
 			}
 		} catch (final Exception e) {
