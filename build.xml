@@ -109,7 +109,6 @@
 		<getMavenDependency groupId="org.apache.commons" artifactId="commons-lang3" version="${commons-lang3.version}" />
 		<getMavenDependency groupId="org.apache.commons" artifactId="commons-text" version="${commons-text.version}" />
 		<getMavenDependency groupId="net.java.dev.jna" artifactId="jna" version="${jna.version}" />
-		<getMavenDependency groupId="net.java.dev.jna" artifactId="jna-platform" version="${jna.version}" />
 	</target>
 
 	<target name="compile" depends="download_dependencies">
