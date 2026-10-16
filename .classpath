@@ -16,7 +16,7 @@
 	<classpathentry kind="lib" path="lib/log4j-1.2-api-2.20.0.jar"/>
 	<classpathentry kind="lib" path="lib/log4j-api-2.20.0.jar"/>
 	<classpathentry kind="lib" path="lib/log4j-core-2.20.0.jar"/>
-	<classpathentry kind="lib" path="lib/commons-compress-1.24.0.jar"/>
+	<classpathentry kind="lib" path="lib/commons-compress-1.28.0.jar"/>
 	<classpathentry kind="lib" path="lib/proxyautoconfig-26.1.4.jar"/>
 	<classpathentry kind="lib" path="lib/csv-26.1.10.jar"/>
 	<classpathentry kind="lib" path="lib/network-26.0.37.jar"/>
