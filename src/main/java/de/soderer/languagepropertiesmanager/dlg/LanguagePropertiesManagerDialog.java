@@ -1461,7 +1461,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	 * @return true if the file may be overwritten
 	 */
 	public boolean askForOverwriteFile(final String filePath) {
-		final Integer returncode = new QuestionDialog(this, getTitle(), LangResources.get("question.overwritefile", filePath), LangResources.get("overwrite"), LangResources.get("cancel")).setBackgroundColor(SwingColor.LightRed).open();
+		final Integer returncode = new QuestionDialog(this, getTitle(), LangResources.get("question.overwritefile", filePath), LangResources.get("overwrite"), LangResources.get("cancel")).withBackgroundColor(SwingColor.LightRed).open();
 		return returncode != null && returncode == 0;
 	}
 
@@ -1525,6 +1525,6 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	 *            error message to show
 	 */
 	public void showErrorMessage(final String title, final String text) {
-		new QuestionDialog(this, title, text, LangResources.get("ok")).setBackgroundColor(SwingColor.LightRed).open();
+		new QuestionDialog(this, title, text, LangResources.get("ok")).withBackgroundColor(SwingColor.LightRed).open();
 	}
 }
