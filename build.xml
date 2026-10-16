@@ -21,14 +21,14 @@
 	<property name="commons-text.version" value="1.9" />
 	<property name="mailapi.version" value="2.0.1" />
 	<property name="jna.version" value="5.19.1" />
-	<property name="csv.version" value="26.1.9" />
-	<property name="json.version" value="26.2.8" />
+	<property name="csv.version" value="26.1.10" />
+	<property name="json.version" value="26.2.9" />
 	<property name="proxyautoconfig.version" value="26.1.4" />
 	<property name="network.version" value="26.0.37" />
 	<property name="soderer-console.version" value="26.0.5" />
 	<property name="soderer-swing.version" value="26.0.3" />
 	<property name="soderer-utilities.version" value="26.2.106" />
-	<property name="soderer-applicationbase.version" value="26.0.6" />
+	<property name="soderer-applicationbase.version" value="26.0.7" />
 
 	<patternset id="application.resources">
 		<include name="**/LanguageProperties*.properties" />
