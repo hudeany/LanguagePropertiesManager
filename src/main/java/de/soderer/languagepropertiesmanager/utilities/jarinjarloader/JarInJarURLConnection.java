@@ -1,26 +1,24 @@
 package de.soderer.languagepropertiesmanager.utilities.jarinjarloader;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 
 /**
- * Connection of a "rsrc:" URL, which reads the resource by the given class loader
+ * Connection for "rsrc:" URLs, which reads the addressed resource via a class loader.
  */
 public class JarInJarURLConnection extends URLConnection {
 	private final ClassLoader classLoader;
 
 	/**
-	 * Creates the connection.
+	 * Creates a connection for the given "rsrc:" URL.
 	 *
-	 * @param url
-	 *            the "rsrc:" URL
-	 * @param classLoader
-	 *            class loader to read the resource with
+	 * @param url URL of the resource, its file part is the resource path
+	 * @param classLoader class loader to read the resource with
 	 */
 	public JarInJarURLConnection(final URL url, final ClassLoader classLoader) {
 		super(url);
@@ -39,7 +37,8 @@ public class JarInJarURLConnection extends URLConnection {
 		final String file = URLDecoder.decode(url.getFile().replace("+", "%2B"), StandardCharsets.UTF_8);
 		final InputStream result = classLoader.getResourceAsStream(file);
 		if (result == null) {
-			throw new MalformedURLException("Could not open InputStream for URL '" + url + "'");
+			// FileNotFoundException is the IOException expected for a missing resource (like for file and jar URLs)
+			throw new FileNotFoundException("Could not open InputStream for URL '" + url + "'");
 		} else {
 			return result;
 		}
