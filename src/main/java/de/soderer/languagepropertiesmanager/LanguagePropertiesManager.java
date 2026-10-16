@@ -18,6 +18,7 @@ import de.soderer.console.ConsoleType;
 import de.soderer.console.ConsoleUtilities;
 import de.soderer.languagepropertiesmanager.dlg.LanguagePropertiesManagerDialog;
 import de.soderer.languagepropertiesmanager.storage.LanguagePropertiesFileSetReader;
+import de.soderer.languagepropertiesmanager.worker.DeepLHelper;
 import de.soderer.languagepropertiesmanager.worker.ExportToCsvWorker;
 import de.soderer.languagepropertiesmanager.worker.ExportToExcelWorker;
 import de.soderer.languagepropertiesmanager.worker.ImportFromCsvWorker;
@@ -27,7 +28,6 @@ import de.soderer.languagepropertiesmanager.worker.WriteLanguagePropertiesWorker
 import de.soderer.swing.ErrorDialog;
 import de.soderer.utilities.ConfigurationProperties;
 import de.soderer.utilities.DateUtilities;
-import de.soderer.utilities.DeepLHelper;
 import de.soderer.utilities.IoUtilities;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.ParameterException;

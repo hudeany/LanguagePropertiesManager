@@ -4,7 +4,6 @@ import java.util.List;
 
 import de.soderer.languagepropertiesmanager.TranslationConstants;
 import de.soderer.languagepropertiesmanager.storage.LanguageProperty;
-import de.soderer.utilities.DeepLHelper;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.worker.WorkerParentSimple;
