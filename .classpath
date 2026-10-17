@@ -4,7 +4,6 @@
 	<classpathentry kind="src" path="src/main/resources"/>
 	<classpathentry kind="src" path="src/test/java"/>
 	<classpathentry kind="lib" path="lib/commons-text-1.15.0.jar"/>
-	<classpathentry kind="lib" path="lib/commons-lang3-3.21.0.jar"/>
 	<classpathentry kind="lib" path="lib/mailapi-2.0.2.jar"/>
 	<classpathentry kind="lib" path="lib/json-26.2.11.jar"/>
 	<classpathentry kind="lib" path="lib/poi-5.5.1.jar"/>
@@ -25,6 +24,7 @@
 	<classpathentry kind="lib" path="lib/soderer-swing-26.0.9.jar"/>
 	<classpathentry kind="lib" path="lib/soderer-applicationbase-26.0.22.jar"/>
 	<classpathentry kind="lib" path="lib/jna-5.19.1.jar"/>
+	<classpathentry kind="lib" path="lib/commons-lang3-3.18.0.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">
 		<attributes>
 			<attribute name="module" value="true"/>
