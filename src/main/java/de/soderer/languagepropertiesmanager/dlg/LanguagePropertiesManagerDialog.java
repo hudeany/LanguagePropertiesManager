@@ -78,6 +78,8 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private JLabel propertiesLabel;
 	/** Deletes the selected properties */
 	private JButton removeButton;
+	/** Deletes the displayed properties that are not selected, so only the selected ones remain */
+	private JButton removeUnselectedButton;
 	/** Saves the properties into their own paths */
 	private JButton saveButton;
 	/** Saves the properties into a directory */
@@ -285,6 +287,8 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		addButton = createIconButton(buttonSection2, "newProperty.png", "tooltip_create_new_property", e -> addNewProperty());
 		removeButton = createIconButton(buttonSection2, "trash.png", "tooltip_delete_properties", e -> removeSelectedProperties());
 		removeButton.setEnabled(false);
+		removeUnselectedButton = createIconButton(buttonSection2, "funnel.png", "tooltip_delete_unselected_properties", e -> removeUnselectedProperties());
+		removeUnselectedButton.setEnabled(false);
 		checkUsageButton = createIconButton(buttonSection2, "puzzle.png", "checkusage", e -> statisticsAndUsage.checkUsageNew());
 		checkUsageButton.setEnabled(false);
 		checkUsageButtonPrevious = createIconButton(buttonSection2, "puzzleClock.png", "checkusageprevious", e -> statisticsAndUsage.checkUsagePrevious());
@@ -498,9 +502,10 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	/** Shared by the trash button and the DEL key on the properties table */
 	private void removeSelectedProperties() {
 		try {
-			if (tablePanel.getSelectedRowCount() > 0 && askForDropProperties()) {
+			final List<LanguageProperty> propertiesToRemove = tablePanel.getSelectedProperties();
+			if (!propertiesToRemove.isEmpty() && askForDropProperties("question_content_delete_selected_properties", propertiesToRemove.size())) {
 				// Removed by identity, so also exactly the selected one of several duplicates is removed
-				model.removeProperties(tablePanel.getSelectedProperties());
+				model.removeProperties(propertiesToRemove);
 				setupTable();
 				refreshDetailView();
 				checkButtonStatus();
@@ -508,6 +513,39 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		} catch (final Exception ex) {
 			showError(ex);
 		}
+	}
+
+	/**
+	 * Removes all properties that are not selected, so only the selected ones remain.
+	 * With an active search filter, this also removes the properties hidden by the filter.
+	 */
+	private void removeUnselectedProperties() {
+		try {
+			if (tablePanel.getSelectedRowCount() == 0) {
+				return;
+			}
+
+			final List<LanguageProperty> propertiesToRemove = tablePanel.getUnselectedProperties();
+			if (propertiesToRemove.isEmpty()) {
+				return;
+			}
+
+			// The selected properties are kept, but refreshing the detail view afterwards would drop its unapplied changes
+			if (!confirmDiscardDetailChanges()) {
+				return;
+			}
+
+			if (askForDropProperties("question_content_delete_unselected_properties", propertiesToRemove.size())) {
+				// Removed by identity, so of several duplicates exactly the unselected ones are removed
+				model.removeProperties(propertiesToRemove);
+				// The selection stays valid, because only unselected properties were removed
+				setupTable();
+				refreshDetailView();
+			}
+		} catch (final Exception ex) {
+			showError(ex);
+		}
+		checkButtonStatus();
 	}
 
 	private void addLanguage() {
@@ -822,6 +860,13 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		if (removeButton != null) {
 			removeButton.setEnabled(model.getFirstSelectedProperty() != null);
 		}
+		if (removeUnselectedButton != null && tablePanel != null) {
+			// Only useful if something is selected and at least one loaded property is not selected.
+			// Compared with all loaded properties, not the displayed rows: with an active search filter
+			// and all hits selected, the hidden properties are still removable.
+			final int selectedRowCount = tablePanel.getSelectedRowCount();
+			removeUnselectedButton.setEnabled(hasProperties && selectedRowCount > 0 && selectedRowCount < model.getLanguageProperties().size());
+		}
 		if (checkUsageButton != null) {
 			checkUsageButton.setEnabled(hasProperties);
 		}
@@ -860,8 +905,17 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		}
 	}
 
-	private boolean askForDropProperties() {
-		final Integer returncode = new QuestionDialog(this, LangResources.get("question_title_delete_property"), LangResources.get("question_content_delete_property"), LangResources.get("yes"), LangResources.get("no")).open();
+	/**
+	 * Asks the user before properties are removed, showing how many are affected.
+	 *
+	 * @param questionKey
+	 *            language key of the question text, with "{0}" for the number of properties
+	 * @param count
+	 *            number of properties to remove
+	 * @return true if the user agreed
+	 */
+	private boolean askForDropProperties(final String questionKey, final int count) {
+		final Integer returncode = new QuestionDialog(this, LangResources.get("question_title_delete_property"), LangResources.get(questionKey, count), LangResources.get("yes"), LangResources.get("no")).open();
 		return returncode != null && returncode == 0;
 	}
 

@@ -922,6 +922,27 @@ public class PropertiesTablePanel extends JPanel {
 		return returnList;
 	}
 
+	/**
+	 * All loaded properties that are currently not selected, in model order.
+	 * With an active search filter, this includes the properties hidden by the filter,
+	 * so "remove unselected" reduces the loaded data to exactly the selected properties.
+	 *
+	 * @return the unselected properties, empty if nothing is loaded
+	 */
+	public List<LanguageProperty> getUnselectedProperties() {
+		final List<LanguageProperty> returnList = new ArrayList<>();
+		if (model.isLoaded()) {
+			final List<LanguageProperty> selectedProperties = getSelectedProperties();
+			for (final LanguageProperty languageProperty : model.getLanguageProperties()) {
+				// By identity, so of several duplicates only the unselected ones are returned
+				if (indexOfIdentical(selectedProperties, languageProperty) < 0) {
+					returnList.add(languageProperty);
+				}
+			}
+		}
+		return returnList;
+	}
+
 	private static int indexOfIdentical(final List<LanguageProperty> list, final LanguageProperty property) {
 		for (int i = 0; i < list.size(); i++) {
 			if (list.get(i) == property) {
