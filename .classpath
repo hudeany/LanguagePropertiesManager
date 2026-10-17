@@ -3,19 +3,19 @@
 	<classpathentry kind="src" path="src/main/java"/>
 	<classpathentry kind="src" path="src/main/resources"/>
 	<classpathentry kind="src" path="src/test/java"/>
-	<classpathentry kind="lib" path="lib/commons-text-1.9.jar"/>
-	<classpathentry kind="lib" path="lib/commons-lang3-3.11.jar"/>
+	<classpathentry kind="lib" path="lib/commons-text-1.15.0.jar"/>
+	<classpathentry kind="lib" path="lib/commons-lang3-3.21.0.jar"/>
 	<classpathentry kind="lib" path="lib/mailapi-2.0.2.jar"/>
 	<classpathentry kind="lib" path="lib/json-26.2.10.jar"/>
-	<classpathentry kind="lib" path="lib/poi-5.2.4.jar"/>
-	<classpathentry kind="lib" path="lib/poi-ooxml-5.2.4.jar"/>
-	<classpathentry kind="lib" path="lib/poi-ooxml-full-5.2.4.jar"/>
-	<classpathentry kind="lib" path="lib/commons-io-2.14.0.jar"/>
-	<classpathentry kind="lib" path="lib/xmlbeans-5.1.1.jar"/>
-	<classpathentry kind="lib" path="lib/commons-collections4-4.4.jar"/>
-	<classpathentry kind="lib" path="lib/log4j-1.2-api-2.20.0.jar"/>
-	<classpathentry kind="lib" path="lib/log4j-api-2.20.0.jar"/>
-	<classpathentry kind="lib" path="lib/log4j-core-2.20.0.jar"/>
+	<classpathentry kind="lib" path="lib/poi-5.5.1.jar"/>
+	<classpathentry kind="lib" path="lib/poi-ooxml-5.5.1.jar"/>
+	<classpathentry kind="lib" path="lib/poi-ooxml-full-5.5.1.jar"/>
+	<classpathentry kind="lib" path="lib/commons-io-2.22.0.jar"/>
+	<classpathentry kind="lib" path="lib/xmlbeans-5.4.1.jar"/>
+	<classpathentry kind="lib" path="lib/commons-collections4-4.6.0.jar"/>
+	<classpathentry kind="lib" path="lib/log4j-1.2-api-2.26.1.jar"/>
+	<classpathentry kind="lib" path="lib/log4j-api-2.26.1.jar"/>
+	<classpathentry kind="lib" path="lib/log4j-core-2.26.1.jar"/>
 	<classpathentry kind="lib" path="lib/commons-compress-1.28.0.jar"/>
 	<classpathentry kind="lib" path="lib/proxyautoconfig-26.1.4.jar"/>
 	<classpathentry kind="lib" path="lib/csv-26.1.10.jar"/>
