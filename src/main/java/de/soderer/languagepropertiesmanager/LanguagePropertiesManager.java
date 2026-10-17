@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 
+import de.soderer.applicationbase.ApplicationConfigurationProperties;
 import de.soderer.applicationbase.ApplicationUpdateUtilities;
 import de.soderer.applicationbase.UpdateableConsoleApplication;
 import de.soderer.console.ConsoleType;
@@ -194,9 +195,9 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 			return 1;
 		}
 
-		ConfigurationProperties applicationConfiguration;
+		ApplicationConfigurationProperties applicationConfiguration;
 		try {
-			applicationConfiguration = new ConfigurationProperties(LanguagePropertiesManager.APPLICATION_NAME, true);
+			applicationConfiguration = new ApplicationConfigurationProperties(LanguagePropertiesManager.APPLICATION_NAME, true);
 			LanguagePropertiesManager.setupDefaultConfig(applicationConfiguration);
 			Locale.setDefault(toLocale(applicationConfiguration.get(ConfigurationProperties.CONFIG_KEY_LANGUAGE), Locale.ENGLISH));
 		} catch (@SuppressWarnings("unused") final Exception e) {
@@ -381,7 +382,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 				de.soderer.swing.SwingUtilities.setAwtWmClass(APPLICATION_STARTUPCLASS_NAME);
 				de.soderer.swing.SwingUtilities.setSystemLookAndFeel();
 
-				final ConfigurationProperties guiApplicationConfiguration = applicationConfiguration;
+				final ApplicationConfigurationProperties guiApplicationConfiguration = applicationConfiguration;
 				final int[] guiReturnCode = new int[] { -1 };
 				javax.swing.SwingUtilities.invokeAndWait(() -> {
 					try {

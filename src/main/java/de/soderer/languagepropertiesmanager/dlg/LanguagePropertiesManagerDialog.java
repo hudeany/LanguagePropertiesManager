@@ -28,6 +28,7 @@ import javax.swing.JSplitPane;
 import javax.swing.WindowConstants;
 
 import de.soderer.applicationbase.ApplicationConfigurationDialog;
+import de.soderer.applicationbase.ApplicationConfigurationProperties;
 import de.soderer.applicationbase.ApplicationUpdateUtilities;
 import de.soderer.applicationbase.UpdateableGuiApplication;
 import de.soderer.languagepropertiesmanager.LanguagePropertiesException;
@@ -57,7 +58,6 @@ import de.soderer.swing.QuestionDialog;
 import de.soderer.swing.ShowDataDialog;
 import de.soderer.swing.SimpleInputDialog;
 import de.soderer.swing.SwingColor;
-import de.soderer.utilities.ConfigurationProperties;
 import de.soderer.utilities.DateUtilities;
 import de.soderer.utilities.IoUtilities;
 import de.soderer.utilities.LangResources;
@@ -129,7 +129,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	/** Recently opened files and directories, the latest used is the last entry */
 	private UniqueFifoQueuedList<String> recentlyOpenedDirectories;
 	/** Configuration of the application, saved on changes */
-	private final ConfigurationProperties applicationConfiguration;
+	private final ApplicationConfigurationProperties applicationConfiguration;
 
 	/** Reads properties from all supported sources (load, merge import, reduction by base set) */
 	private final ImportSourceChooser importSourceChooser;
@@ -146,7 +146,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	 * @throws Exception
 	 *             if the window cannot be created (e.g. a missing icon)
 	 */
-	public LanguagePropertiesManagerDialog(final ConfigurationProperties applicationConfiguration) throws Exception {
+	public LanguagePropertiesManagerDialog(final ApplicationConfigurationProperties applicationConfiguration) throws Exception {
 		super(LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION, LanguagePropertiesManager.KEYSTORE_FILE);
 
 		this.applicationConfiguration = applicationConfiguration;
@@ -1467,14 +1467,14 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 	@Override
 	protected void setDailyUpdateCheckStatus(final boolean checkboxStatus) {
-		applicationConfiguration.set(ConfigurationProperties.CONFIG_KEY_DAILY_UPDATE_CHECK, checkboxStatus);
-		applicationConfiguration.set(ConfigurationProperties.CONFIG_KEY_NEXT_DAILY_UPDATE_CHECK, LocalDateTime.now().plusDays(1));
+		applicationConfiguration.set(ApplicationConfigurationProperties.CONFIG_KEY_DAILY_UPDATE_CHECK, checkboxStatus);
+		applicationConfiguration.set(ApplicationConfigurationProperties.CONFIG_KEY_NEXT_DAILY_UPDATE_CHECK, LocalDateTime.now().plusDays(1));
 		applicationConfiguration.save();
 	}
 
 	@Override
 	protected Boolean isDailyUpdateCheckActivated() {
-		return applicationConfiguration.getBoolean(ConfigurationProperties.CONFIG_KEY_DAILY_UPDATE_CHECK);
+		return applicationConfiguration.getBoolean(ApplicationConfigurationProperties.CONFIG_KEY_DAILY_UPDATE_CHECK);
 	}
 
 	/**
@@ -1483,8 +1483,8 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	 * @return true if the update check should be done now
 	 */
 	protected boolean dailyUpdateCheckIsPending() {
-		return applicationConfiguration.getBoolean(ConfigurationProperties.CONFIG_KEY_DAILY_UPDATE_CHECK)
-				&& (applicationConfiguration.getDate(ConfigurationProperties.CONFIG_KEY_NEXT_DAILY_UPDATE_CHECK) == null || applicationConfiguration.getDate(ConfigurationProperties.CONFIG_KEY_NEXT_DAILY_UPDATE_CHECK).isBefore(LocalDateTime.now()))
+		return applicationConfiguration.getBoolean(ApplicationConfigurationProperties.CONFIG_KEY_DAILY_UPDATE_CHECK)
+				&& (applicationConfiguration.getDate(ApplicationConfigurationProperties.CONFIG_KEY_NEXT_DAILY_UPDATE_CHECK) == null || applicationConfiguration.getDate(ApplicationConfigurationProperties.CONFIG_KEY_NEXT_DAILY_UPDATE_CHECK).isBefore(LocalDateTime.now()))
 				&& NetworkUtilities.checkForNetworkConnection();
 	}
 

@@ -12,11 +12,11 @@ import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 
+import de.soderer.applicationbase.ApplicationConfigurationProperties;
 import de.soderer.applicationbase.ApplicationUpdateUtilities;
 import de.soderer.languagepropertiesmanager.LanguagePropertiesManager;
 import de.soderer.swing.ModalDialog;
 import de.soderer.swing.ShowDataDialog;
-import de.soderer.utilities.ConfigurationProperties;
 import de.soderer.utilities.IoUtilities;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.Utilities;
@@ -37,7 +37,7 @@ public class HelpDialog extends ModalDialog<Boolean> {
 	/** Main window, parent of the dialogs opened from here */
 	private final LanguagePropertiesManagerDialog applicationDialog;
 	/** Configuration of the application, e.g. for the proxy of the update check */
-	private final ConfigurationProperties applicationConfiguration;
+	private final ApplicationConfigurationProperties applicationConfiguration;
 
 	/**
 	 * Creates the help dialog. It is shown by open().
@@ -49,7 +49,7 @@ public class HelpDialog extends ModalDialog<Boolean> {
 	 * @param applicationConfiguration
 	 *            configuration of the application
 	 */
-	public HelpDialog(final LanguagePropertiesManagerDialog applicationDialog, final String title, final ConfigurationProperties applicationConfiguration) {
+	public HelpDialog(final LanguagePropertiesManagerDialog applicationDialog, final String title, final ApplicationConfigurationProperties applicationConfiguration) {
 		super(applicationDialog, title);
 
 		this.applicationDialog = applicationDialog;

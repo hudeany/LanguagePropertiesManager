@@ -10,6 +10,7 @@ import java.util.Map;
 import javax.swing.JButton;
 import javax.swing.JPopupMenu;
 
+import de.soderer.applicationbase.ApplicationConfigurationProperties;
 import de.soderer.languagepropertiesmanager.LanguagePropertiesManager;
 import de.soderer.languagepropertiesmanager.TranslationConstants;
 import de.soderer.languagepropertiesmanager.model.LanguagePropertiesModel;
@@ -19,7 +20,6 @@ import de.soderer.languagepropertiesmanager.worker.TranslateLanguagePropertiesWo
 import de.soderer.swing.ComboSelectionDialog;
 import de.soderer.swing.ProgressDialog;
 import de.soderer.swing.SimpleInputDialog;
-import de.soderer.utilities.ConfigurationProperties;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.Result;
 import de.soderer.utilities.Utilities;
@@ -31,10 +31,10 @@ import de.soderer.utilities.Utilities;
  */
 final class TranslationAction {
 	private final LanguagePropertiesManagerDialog owner;
-	private final ConfigurationProperties applicationConfiguration;
+	private final ApplicationConfigurationProperties applicationConfiguration;
 	private final LanguagePropertiesModel model;
 
-	TranslationAction(final LanguagePropertiesManagerDialog owner, final LanguagePropertiesModel model, final ConfigurationProperties applicationConfiguration) {
+	TranslationAction(final LanguagePropertiesManagerDialog owner, final LanguagePropertiesModel model, final ApplicationConfigurationProperties applicationConfiguration) {
 		this.owner = owner;
 		this.model = model;
 		this.applicationConfiguration = applicationConfiguration;
