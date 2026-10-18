@@ -1216,13 +1216,12 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				return;
 			}
 
-			final Integer returncode = new QuestionDialog(this, getTitle(), LangResources.get("question.keepExistingProperties"), LangResources.get("yes"), LangResources.get("no")).open();
-			if (returncode == null) {
-				// Closing the question is no "no", which would drop the existing keys of the files
+			final Boolean extendAndKeepExistingProperties = resolveConfigurationChoice(LanguagePropertiesManager.CONFIG_KEEP_EXISTING_KEYS);
+			if (extendAndKeepExistingProperties == null) {
+				// Cancelling the question is no "no", which would drop the existing keys of the files
 				showErrorMessage(LangResources.get("save_file_dialog_text"), LangResources.get("canceledByUser"));
 				return;
 			}
-			final boolean extendAndKeepExistingProperties = returncode == 0;
 
 			final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(null, model.getLanguageProperties(), model.getLanguagePropertiesSetName(), null, null, extendAndKeepExistingProperties, applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION));
 			if (!applyWriteConfigurationChoices(writeLanguagePropertiesWorker)) {
@@ -1280,13 +1279,12 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				return;
 			}
 
-			final Integer returncode = new QuestionDialog(this, getTitle(), LangResources.get("question.keepExistingProperties"), LangResources.get("yes"), LangResources.get("no")).open();
-			if (returncode == null) {
-				// Closing the question is no "no", which would drop the existing keys of the files
+			final Boolean extendAndKeepExistingProperties = resolveConfigurationChoice(LanguagePropertiesManager.CONFIG_KEEP_EXISTING_KEYS);
+			if (extendAndKeepExistingProperties == null) {
+				// Cancelling the question is no "no", which would drop the existing keys of the files
 				showErrorMessage(LangResources.get("save_directory_dialog_text"), LangResources.get("canceledByUser"));
 				return;
 			}
-			final boolean extendAndKeepExistingProperties = returncode == 0;
 
 			final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(null, model.getLanguageProperties(), newPropertiesSetName, directory, excludeParts, extendAndKeepExistingProperties, applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION));
 			if (!applyWriteConfigurationChoices(writeLanguagePropertiesWorker)) {

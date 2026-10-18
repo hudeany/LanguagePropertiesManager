@@ -72,6 +72,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 
 	/** Resource file with the command line help */
 	public static final String HELP_RESOURCE_FILE_DEFAULT = "/help.txt";
+
 	/** Resource file with the German command line help (currently the same as the default) */
 	public static final String HELP_RESOURCE_FILE_DE = "/help.txt";
 
@@ -80,34 +81,47 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 
 	/** Configuration key: repair punctuation on cleanup */
 	public static final String CONFIG_CLEANUP_REPAIRPUNCTUATION = "Cleanup.RepairPunctuation";
+
 	/** Configuration key: recent check usage settings (directory, file pattern, usage pattern) */
 	public static final String CONFIG_PREVIOUS_CHECK_USAGE = "CheckUsage.Previous";
+
 	/** Configuration key: recently opened properties files and directories */
 	public static final String CONFIG_RECENT_PROPERTIES = "Recent";
+
 	/** Configuration key: path parts (separated by ';') of files to ignore when loading or saving a directory */
 	public static final String CONFIG_OPEN_DIR_EXCLUDES = "OpenDirExcludes";
+
 	/** Configuration key: base URL of the DeepL API */
 	public static final String CONFIG_DEEPL_BASEURL = "DeepL_BaseUrl";
+
 	/** Configuration key: API key for DeepL */
 	public static final String CONFIG_DEEPL_APIKEY = "DeepL_ApiKey";
+
 	/** Configuration key: file extension of the properties files */
 	public static final String CONFIG_PROPERTIES_FILE_EXTENSION = "PropertiesFileExtension";
+
 	/** Configuration key ({@link YesNoAsk}): whether comments are ignored when loading and importing */
 	public static final String CONFIG_IGNORE_COMMENTS = "IgnoreComments";
+
 	/** Configuration key: optional CSV file with values, which must not be translated by DeepL (see {@link TranslationConstants}) */
 	public static final String CONFIG_TRANSLATION_CONSTANTS_FILE = "TranslationConstantsFile";
+
 	/**
 	 * Configuration key ({@link YesNoAsk}): whether apostrophes are escaped by doubling ("''") in the properties files, as
 	 * needed by java.text.MessageFormat. Only the properties files contain the doubled apostrophes, the GUI, the CSV and
 	 * the Excel files work with single apostrophes.
 	 */
 	public static final String CONFIG_ESCAPE_APOSTROPHES_BY_DOUBLING = "EscapeApostrophesByDoubling";
+
 	/**
 	 * Configuration key ({@link YesNoAsk}): whether the properties files are stored as UTF-8 files (without BOM) without
 	 * escaping non-ASCII characters as "\\uXXXX" (supported by java.util.PropertyResourceBundle since Java 9). If not set,
 	 * the files are stored as ISO-8859-1 files with all non-ASCII characters escaped.
 	 */
 	public static final String CONFIG_STORE_AS_UTF8 = "StoreAsUtf8";
+
+	/** Whether keys existing only in the files on disk are kept when saving (yes, no or ask) */
+	public static final String CONFIG_KEEP_EXISTING_KEYS = "KeepExistingKeysOnSave";
 
 	private int previousTerminalWidth = 0;
 
@@ -148,6 +162,9 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 		applicationConfiguration.ensureYesNoAsk(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS, YesNoAsk.NO);
 		applicationConfiguration.ensureYesNoAsk(LanguagePropertiesManager.CONFIG_ESCAPE_APOSTROPHES_BY_DOUBLING, YesNoAsk.NO);
 		applicationConfiguration.ensureYesNoAsk(LanguagePropertiesManager.CONFIG_STORE_AS_UTF8, YesNoAsk.NO);
+
+		// Ask by default, as before this option existed
+		applicationConfiguration.ensureYesNoAsk(LanguagePropertiesManager.CONFIG_KEEP_EXISTING_KEYS, YesNoAsk.ASK);
 	}
 
 	/** The usage message. */
