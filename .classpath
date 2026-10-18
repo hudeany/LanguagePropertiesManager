@@ -19,10 +19,10 @@
 	<classpathentry kind="lib" path="lib/proxyautoconfig-26.1.5.jar"/>
 	<classpathentry kind="lib" path="lib/csv-26.1.11.jar"/>
 	<classpathentry kind="lib" path="lib/network-26.0.39.jar"/>
-	<classpathentry kind="lib" path="lib/soderer-utilities-26.2.116.jar"/>
+	<classpathentry kind="lib" path="lib/soderer-utilities-26.2.117.jar"/>
 	<classpathentry kind="lib" path="lib/soderer-console-26.0.9.jar"/>
-	<classpathentry kind="lib" path="lib/soderer-swing-26.0.11.jar"/>
-	<classpathentry kind="lib" path="lib/soderer-applicationbase-26.0.26.jar"/>
+	<classpathentry kind="lib" path="lib/soderer-swing-26.0.12.jar"/>
+	<classpathentry kind="lib" path="lib/soderer-applicationbase-26.0.27.jar"/>
 	<classpathentry kind="lib" path="lib/jna-5.19.1.jar"/>
 	<classpathentry kind="lib" path="lib/commons-lang3-3.21.0.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">
