@@ -13,7 +13,9 @@ import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
@@ -63,6 +65,7 @@ import de.soderer.utilities.IoUtilities;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.Result;
 import de.soderer.utilities.Utilities;
+import de.soderer.utilities.YesNoAsk;
 import de.soderer.utilities.collection.UniqueFifoQueuedList;
 
 /**
@@ -73,6 +76,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private static final long serialVersionUID = 3371684406925137014L;
 
 	private static final int ICON_BUTTON_SIZE = 28;
+
+	/** Prefix of the language keys of the questions for {@link YesNoAsk} configuration values set to "ask" */
+	private static final String CONFIGURATION_CHOICE_QUESTION_PREFIX = "question.config.";
 
 	/** Title above the table, shows the name of the loaded properties set */
 	private JLabel propertiesLabel;
@@ -132,6 +138,12 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private UniqueFifoQueuedList<String> recentlyOpenedDirectories;
 	/** Configuration of the application, saved on changes */
 	private final ApplicationConfigurationProperties applicationConfiguration;
+
+	/**
+	 * Latest decisions of the user for {@link YesNoAsk} configuration values set to "ask" (configuration key ->
+	 * decision). Used where a value is needed without a user action to ask for (e.g. showing the comment column).
+	 */
+	private final Map<String, Boolean> latestConfigurationChoices = new HashMap<>();
 
 	/** Reads properties from all supported sources (load, merge import, reduction by base set) */
 	private final ImportSourceChooser importSourceChooser;
@@ -236,6 +248,50 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	 */
 	public void checkUsage(final List<LanguageProperty> storageToCheck, final String directory, final String filePattern, final String usagePatternString) throws Exception {
 		statisticsAndUsage.checkUsage(storageToCheck, directory, filePattern, usagePatternString);
+	}
+
+	/**
+	 * Resolves a {@link YesNoAsk} configuration value for a user action. For "ask" the user is asked with the question
+	 * of the language key "question.config.&lt;configKey&gt;" (buttons yes, no and cancel). The decision is remembered
+	 * for {@link #getEffectiveConfigurationChoice(String)}.
+	 * Must be called on the event dispatch thread, before a worker for the action is started.
+	 *
+	 * @param configKey
+	 *            configuration key of the YesNoAsk value
+	 * @return the decision, or null if the user cancelled (the action must be aborted)
+	 */
+	Boolean resolveConfigurationChoice(final String configKey) {
+		final Boolean decision = applicationConfiguration.getYesNoAsk(configKey, YesNoAsk.NO).resolve(() -> {
+			final Integer returncode = new QuestionDialog(this, getTitle(), LangResources.get(CONFIGURATION_CHOICE_QUESTION_PREFIX + configKey), LangResources.get("yes"), LangResources.get("no"), LangResources.get("cancel")).open();
+			if (returncode != null && returncode == 0) {
+				return Boolean.TRUE;
+			} else if (returncode != null && returncode == 1) {
+				return Boolean.FALSE;
+			} else {
+				return null;
+			}
+		});
+		if (decision != null) {
+			latestConfigurationChoices.put(configKey, decision);
+		}
+		return decision;
+	}
+
+	/**
+	 * Current value of a {@link YesNoAsk} configuration value without asking the user. For "ask" the latest decision of
+	 * the user is used (false, if the user was not asked yet).
+	 *
+	 * @param configKey
+	 *            configuration key of the YesNoAsk value
+	 * @return the effective value
+	 */
+	boolean getEffectiveConfigurationChoice(final String configKey) {
+		final YesNoAsk configuredValue = applicationConfiguration.getYesNoAsk(configKey, YesNoAsk.NO);
+		if (configuredValue == YesNoAsk.ASK) {
+			return latestConfigurationChoices.getOrDefault(configKey, Boolean.FALSE);
+		} else {
+			return configuredValue == YesNoAsk.YES;
+		}
 	}
 
 	private void loadConfiguration() {
@@ -486,8 +542,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 		@Override
 		public boolean isEscapeApostrophesByDoubling() {
-			// Read on every call, so a change in the configuration dialog applies immediately
-			return applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_ESCAPE_APOSTROPHES_BY_DOUBLING);
+			// Read on every call, so a change in the configuration dialog applies immediately.
+			// Never asks the user, for "ask" the latest decision (e.g. of the last load) is used.
+			return getEffectiveConfigurationChoice(LanguagePropertiesManager.CONFIG_ESCAPE_APOSTROPHES_BY_DOUBLING);
 		}
 	}
 
@@ -563,9 +620,10 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 	/**
 	 * The comment column is shown, if comments are not ignored by configuration
+	 * (for "ask": if they were not ignored at the latest decision of the user)
 	 */
 	private boolean isCommentColumnWanted() {
-		return model.isLoaded() && !applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS);
+		return model.isLoaded() && !getEffectiveConfigurationChoice(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS);
 	}
 
 	/**
@@ -1095,6 +1153,34 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		checkButtonStatus();
 	}
 
+	/**
+	 * Resolves the {@link YesNoAsk} configuration values used for writing the properties files and applies them to the
+	 * worker. For "ask" the user is asked once per save.
+	 *
+	 * @param writeLanguagePropertiesWorker
+	 *            the worker to configure
+	 * @return false if the user cancelled one of the questions (the save must be aborted)
+	 */
+	private boolean applyWriteConfigurationChoices(final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker) {
+		final Boolean ignoreComments = resolveConfigurationChoice(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS);
+		if (ignoreComments == null) {
+			return false;
+		}
+		final Boolean escapeApostrophesByDoubling = resolveConfigurationChoice(LanguagePropertiesManager.CONFIG_ESCAPE_APOSTROPHES_BY_DOUBLING);
+		if (escapeApostrophesByDoubling == null) {
+			return false;
+		}
+		final Boolean storeAsUtf8 = resolveConfigurationChoice(LanguagePropertiesManager.CONFIG_STORE_AS_UTF8);
+		if (storeAsUtf8 == null) {
+			return false;
+		}
+
+		writeLanguagePropertiesWorker.setReadComments(!ignoreComments);
+		writeLanguagePropertiesWorker.setEscapeApostrophesByDoubling(escapeApostrophesByDoubling);
+		writeLanguagePropertiesWorker.setStoreAsUtf8(storeAsUtf8);
+		return true;
+	}
+
 	private void saveFiles() {
 		try {
 			String defaultLanguagePropertiesPath = null;
@@ -1139,8 +1225,10 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			final boolean extendAndKeepExistingProperties = returncode == 0;
 
 			final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(null, model.getLanguageProperties(), model.getLanguagePropertiesSetName(), null, null, extendAndKeepExistingProperties, applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION));
-			writeLanguagePropertiesWorker.setReadComments(!applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS));
-			writeLanguagePropertiesWorker.setEscapeApostrophesByDoubling(applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_ESCAPE_APOSTROPHES_BY_DOUBLING));
+			if (!applyWriteConfigurationChoices(writeLanguagePropertiesWorker)) {
+				showErrorMessage(LangResources.get("save_file_dialog_text"), LangResources.get("canceledByUser"));
+				return;
+			}
 			final ProgressDialog<WriteLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(this, LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("save_files"), writeLanguagePropertiesWorker);
 			final Result dialogResult = progressDialog.open();
 			if (dialogResult == Result.CANCELED || !Boolean.TRUE.equals(writeLanguagePropertiesWorker.get())) {
@@ -1201,8 +1289,10 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			final boolean extendAndKeepExistingProperties = returncode == 0;
 
 			final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(null, model.getLanguageProperties(), newPropertiesSetName, directory, excludeParts, extendAndKeepExistingProperties, applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION));
-			writeLanguagePropertiesWorker.setReadComments(!applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS));
-			writeLanguagePropertiesWorker.setEscapeApostrophesByDoubling(applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_ESCAPE_APOSTROPHES_BY_DOUBLING));
+			if (!applyWriteConfigurationChoices(writeLanguagePropertiesWorker)) {
+				showErrorMessage(LangResources.get("save_directory_dialog_text"), LangResources.get("canceledByUser"));
+				return;
+			}
 			final ProgressDialog<WriteLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(this, LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("save_files"), writeLanguagePropertiesWorker);
 			final Result dialogResult = progressDialog.open();
 			if (dialogResult == Result.CANCELED || !Boolean.TRUE.equals(writeLanguagePropertiesWorker.get())) {

@@ -34,6 +34,7 @@ import de.soderer.utilities.LangResources;
 import de.soderer.utilities.ParameterException;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.Version;
+import de.soderer.utilities.YesNoAsk;
 import de.soderer.utilities.worker.WorkerParentDual;
 
 // TODO: Excel file Diff
@@ -91,20 +92,20 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 	public static final String CONFIG_DEEPL_APIKEY = "DeepL_ApiKey";
 	/** Configuration key: file extension of the properties files */
 	public static final String CONFIG_PROPERTIES_FILE_EXTENSION = "PropertiesFileExtension";
-	/** Configuration key: whether comments are ignored when loading and importing */
+	/** Configuration key ({@link YesNoAsk}): whether comments are ignored when loading and importing */
 	public static final String CONFIG_IGNORE_COMMENTS = "IgnoreComments";
 	/** Configuration key: optional CSV file with values, which must not be translated by DeepL (see {@link TranslationConstants}) */
 	public static final String CONFIG_TRANSLATION_CONSTANTS_FILE = "TranslationConstantsFile";
 	/**
-	 * Configuration key: whether apostrophes are escaped by doubling ("''") in the properties files, as needed by
-	 * java.text.MessageFormat. Only the properties files contain the doubled apostrophes, the GUI, the CSV and the
-	 * Excel files work with single apostrophes.
+	 * Configuration key ({@link YesNoAsk}): whether apostrophes are escaped by doubling ("''") in the properties files, as
+	 * needed by java.text.MessageFormat. Only the properties files contain the doubled apostrophes, the GUI, the CSV and
+	 * the Excel files work with single apostrophes.
 	 */
 	public static final String CONFIG_ESCAPE_APOSTROPHES_BY_DOUBLING = "EscapeApostrophesByDoubling";
 	/**
-	 * Configuration key: whether the properties files are stored as UTF-8 files (without BOM) without escaping
-	 * non-ASCII characters as "\\uXXXX" (supported by java.util.PropertyResourceBundle since Java 9). If not set, the
-	 * files are stored as ISO-8859-1 files with all non-ASCII characters escaped.
+	 * Configuration key ({@link YesNoAsk}): whether the properties files are stored as UTF-8 files (without BOM) without
+	 * escaping non-ASCII characters as "\\uXXXX" (supported by java.util.PropertyResourceBundle since Java 9). If not set,
+	 * the files are stored as ISO-8859-1 files with all non-ASCII characters escaped.
 	 */
 	public static final String CONFIG_STORE_AS_UTF8 = "StoreAsUtf8";
 
@@ -114,6 +115,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 
 	/**
 	 * Adds the default values of all missing configuration entries.
+	 * Must be called on every application start, because it also registers the {@link YesNoAsk} keys.
 	 *
 	 * @param applicationConfiguration
 	 *            the configuration to complete
@@ -136,21 +138,16 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 		if (!applicationConfiguration.containsKey(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION)) {
 			applicationConfiguration.set(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION, LanguagePropertiesFileSetReader.DEFAULT_PROPERTIES_FILE_EXTENSION);
 		}
-		if (!applicationConfiguration.containsKey(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS)) {
-			applicationConfiguration.set(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS, "false");
-		}
 		if (!applicationConfiguration.containsKey(LanguagePropertiesManager.CONFIG_TRANSLATION_CONSTANTS_FILE)) {
 			// Optional CSV file with values that must not be altered by DeepL translation
 			applicationConfiguration.set(LanguagePropertiesManager.CONFIG_TRANSLATION_CONSTANTS_FILE, "");
 		}
-		if (!applicationConfiguration.containsKey(LanguagePropertiesManager.CONFIG_ESCAPE_APOSTROPHES_BY_DOUBLING)) {
-			// Off by default, so existing properties files are read and written unchanged
-			applicationConfiguration.set(LanguagePropertiesManager.CONFIG_ESCAPE_APOSTROPHES_BY_DOUBLING, "false");
-		}
-		if (!applicationConfiguration.containsKey(LanguagePropertiesManager.CONFIG_STORE_AS_UTF8)) {
-			// Off by default, so existing properties files keep their escaped ISO-8859-1 format
-			applicationConfiguration.set(LanguagePropertiesManager.CONFIG_STORE_AS_UTF8, "false");
-		}
+
+		// Yes / no / ask values, off by default, so existing properties files are read and written unchanged.
+		// Existing boolean values ("true" / "false") stay valid.
+		applicationConfiguration.ensureYesNoAsk(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS, YesNoAsk.NO);
+		applicationConfiguration.ensureYesNoAsk(LanguagePropertiesManager.CONFIG_ESCAPE_APOSTROPHES_BY_DOUBLING, YesNoAsk.NO);
+		applicationConfiguration.ensureYesNoAsk(LanguagePropertiesManager.CONFIG_STORE_AS_UTF8, YesNoAsk.NO);
 	}
 
 	/** The usage message. */
@@ -471,6 +468,54 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 	}
 
 	/**
+	 * Resolves a {@link YesNoAsk} configuration value for a command line action. For "ask" the user is asked on the
+	 * console.
+	 *
+	 * @param configuration
+	 *            configuration of the application
+	 * @param configKey
+	 *            configuration key of the YesNoAsk value
+	 * @param question
+	 *            question shown on the console for "ask"
+	 * @return the decision
+	 * @throws LanguagePropertiesException
+	 *             if "ask" is configured but no interactive console is available, or if the user cancelled
+	 */
+	private static boolean resolveConfigurationChoice(final ConfigurationProperties configuration, final String configKey, final String question) throws LanguagePropertiesException {
+		final YesNoAsk configuredValue = configuration.getYesNoAsk(configKey, YesNoAsk.NO);
+		if (configuredValue == YesNoAsk.ASK && System.console() == null) {
+			throw new LanguagePropertiesException("Configuration value '" + configKey + "' is set to 'ask', but no interactive console is available");
+		}
+		final Boolean decision = configuredValue.resolve(() -> askOnConsole(question));
+		if (decision == null) {
+			throw new LanguagePropertiesException("Cancelled by user");
+		}
+		return decision;
+	}
+
+	/**
+	 * Asks a yes/no question on the console until a valid answer is given.
+	 *
+	 * @param question
+	 *            question to show
+	 * @return the decision, or null on end of input (cancel)
+	 */
+	private static Boolean askOnConsole(final String question) {
+		while (true) {
+			final String answer = System.console().readLine("%s [y/n]: ", question);
+			if (answer == null) {
+				return null;
+			}
+			final String trimmedAnswer = answer.trim();
+			if ("y".equalsIgnoreCase(trimmedAnswer) || "yes".equalsIgnoreCase(trimmedAnswer)) {
+				return Boolean.TRUE;
+			} else if ("n".equalsIgnoreCase(trimmedAnswer) || "no".equalsIgnoreCase(trimmedAnswer)) {
+				return Boolean.FALSE;
+			}
+		}
+	}
+
+	/**
 	 * Creates the application instance for command line actions and updates.
 	 *
 	 * @throws Exception
@@ -497,10 +542,14 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 					throw new LanguagePropertiesException("Export Excel file '" + excelFile.getAbsolutePath() + "' already exists. Use 'overwrite' to replace existing file.");
 				}
 
+				// Resolved once for the whole action, before any work is done
+				final boolean ignoreComments = resolveConfigurationChoice(applicationConfiguration, CONFIG_IGNORE_COMMENTS, "Ignore comments of the properties files?");
+				final boolean escapeApostrophesByDoubling = resolveConfigurationChoice(applicationConfiguration, CONFIG_ESCAPE_APOSTROPHES_BY_DOUBLING, "Are apostrophes escaped by doubling in the properties files?");
+
 				final LoadLanguagePropertiesWorker loadLanguagePropertiesWorker = new LoadLanguagePropertiesWorker(this, propertiesFile, configuredExcludeParts, actionDefinition.getPropertiesFileExtension());
-				loadLanguagePropertiesWorker.setReadComments(!applicationConfiguration.getBoolean(CONFIG_IGNORE_COMMENTS));
+				loadLanguagePropertiesWorker.setReadComments(!ignoreComments);
 				// Doubled apostrophes are only used in the properties files, the export gets single apostrophes
-				loadLanguagePropertiesWorker.setEscapeApostrophesByDoubling(applicationConfiguration.getBoolean(CONFIG_ESCAPE_APOSTROPHES_BY_DOUBLING));
+				loadLanguagePropertiesWorker.setEscapeApostrophesByDoubling(escapeApostrophesByDoubling);
 
 				loadLanguagePropertiesWorker.setProgressDisplayDelayMilliseconds(2000);
 				loadLanguagePropertiesWorker.run();
@@ -539,8 +588,13 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 					throw new LanguagePropertiesException("Import Excel file '" + excelFile.getAbsolutePath() + "' does not exist.");
 				}
 
+				// Resolved once for the whole action (import and write), before any work is done
+				final boolean ignoreComments = resolveConfigurationChoice(applicationConfiguration, CONFIG_IGNORE_COMMENTS, "Ignore comments?");
+				final boolean escapeApostrophesByDoubling = resolveConfigurationChoice(applicationConfiguration, CONFIG_ESCAPE_APOSTROPHES_BY_DOUBLING, "Escape apostrophes by doubling in the properties files?");
+				final boolean storeAsUtf8 = resolveConfigurationChoice(applicationConfiguration, CONFIG_STORE_AS_UTF8, "Store properties files as UTF-8 (instead of ISO-8859-1 with unicode escapes)?");
+
 				final ImportFromExcelWorker importFromExcelWorker = new ImportFromExcelWorker(this, excelFile);
-				importFromExcelWorker.setIgnoreComments(applicationConfiguration.getBoolean(CONFIG_IGNORE_COMMENTS));
+				importFromExcelWorker.setIgnoreComments(ignoreComments);
 
 				importFromExcelWorker.setProgressDisplayDelayMilliseconds(2000);
 				importFromExcelWorker.run();
@@ -567,9 +621,9 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 				final String languagePropertiesSetName = importFromExcelWorker.getLanguagePropertiesSetName();
 
 				final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(this, importFromExcelWorker.getLanguageProperties(), languagePropertiesSetName, outputDirectory, configuredExcludeParts, actionDefinition.isExtendAndKeepExistingProperties(), actionDefinition.getPropertiesFileExtension());
-				writeLanguagePropertiesWorker.setReadComments(!applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS));
-				writeLanguagePropertiesWorker.setEscapeApostrophesByDoubling(applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_ESCAPE_APOSTROPHES_BY_DOUBLING));
-				writeLanguagePropertiesWorker.setStoreAsUtf8(applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_STORE_AS_UTF8));
+				writeLanguagePropertiesWorker.setReadComments(!ignoreComments);
+				writeLanguagePropertiesWorker.setEscapeApostrophesByDoubling(escapeApostrophesByDoubling);
+				writeLanguagePropertiesWorker.setStoreAsUtf8(storeAsUtf8);
 
 				writeLanguagePropertiesWorker.setProgressDisplayDelayMilliseconds(2000);
 				writeLanguagePropertiesWorker.run();
@@ -595,10 +649,14 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 					throw new LanguagePropertiesException("Export CSV file '" + csvFile.getAbsolutePath() + "' already exists. Use 'overwrite' to replace existing file.");
 				}
 
+				// Resolved once for the whole action, before any work is done
+				final boolean ignoreComments = resolveConfigurationChoice(applicationConfiguration, CONFIG_IGNORE_COMMENTS, "Ignore comments of the properties files?");
+				final boolean escapeApostrophesByDoubling = resolveConfigurationChoice(applicationConfiguration, CONFIG_ESCAPE_APOSTROPHES_BY_DOUBLING, "Are apostrophes escaped by doubling in the properties files?");
+
 				final LoadLanguagePropertiesWorker loadLanguagePropertiesWorker = new LoadLanguagePropertiesWorker(this, propertiesFile, configuredExcludeParts, actionDefinition.getPropertiesFileExtension());
-				loadLanguagePropertiesWorker.setReadComments(!applicationConfiguration.getBoolean(CONFIG_IGNORE_COMMENTS));
+				loadLanguagePropertiesWorker.setReadComments(!ignoreComments);
 				// Doubled apostrophes are only used in the properties files, the export gets single apostrophes
-				loadLanguagePropertiesWorker.setEscapeApostrophesByDoubling(applicationConfiguration.getBoolean(CONFIG_ESCAPE_APOSTROPHES_BY_DOUBLING));
+				loadLanguagePropertiesWorker.setEscapeApostrophesByDoubling(escapeApostrophesByDoubling);
 
 				loadLanguagePropertiesWorker.setProgressDisplayDelayMilliseconds(2000);
 				loadLanguagePropertiesWorker.run();
@@ -637,8 +695,13 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 					throw new LanguagePropertiesException("Import CSV file '" + csvFile.getAbsolutePath() + "' does not exist.");
 				}
 
+				// Resolved once for the whole action (import and write), before any work is done
+				final boolean ignoreComments = resolveConfigurationChoice(applicationConfiguration, CONFIG_IGNORE_COMMENTS, "Ignore comments?");
+				final boolean escapeApostrophesByDoubling = resolveConfigurationChoice(applicationConfiguration, CONFIG_ESCAPE_APOSTROPHES_BY_DOUBLING, "Escape apostrophes by doubling in the properties files?");
+				final boolean storeAsUtf8 = resolveConfigurationChoice(applicationConfiguration, CONFIG_STORE_AS_UTF8, "Store properties files as UTF-8 (instead of ISO-8859-1 with unicode escapes)?");
+
 				final ImportFromCsvWorker importFromCsvWorker = new ImportFromCsvWorker(this, csvFile);
-				importFromCsvWorker.setIgnoreComments(applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS));
+				importFromCsvWorker.setIgnoreComments(ignoreComments);
 
 				importFromCsvWorker.setProgressDisplayDelayMilliseconds(2000);
 				importFromCsvWorker.run();
@@ -665,9 +728,9 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 				final String languagePropertiesSetName = importFromCsvWorker.getLanguagePropertiesSetName();
 
 				final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(this, importFromCsvWorker.getLanguageProperties(), languagePropertiesSetName, outputDirectory, configuredExcludeParts, actionDefinition.isExtendAndKeepExistingProperties(), actionDefinition.getPropertiesFileExtension());
-				writeLanguagePropertiesWorker.setReadComments(!applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS));
-				writeLanguagePropertiesWorker.setEscapeApostrophesByDoubling(applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_ESCAPE_APOSTROPHES_BY_DOUBLING));
-				writeLanguagePropertiesWorker.setStoreAsUtf8(applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_STORE_AS_UTF8));
+				writeLanguagePropertiesWorker.setReadComments(!ignoreComments);
+				writeLanguagePropertiesWorker.setEscapeApostrophesByDoubling(escapeApostrophesByDoubling);
+				writeLanguagePropertiesWorker.setStoreAsUtf8(storeAsUtf8);
 
 				writeLanguagePropertiesWorker.setProgressDisplayDelayMilliseconds(2000);
 				writeLanguagePropertiesWorker.run();
