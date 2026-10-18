@@ -101,6 +101,12 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 	 * Excel files work with single apostrophes.
 	 */
 	public static final String CONFIG_ESCAPE_APOSTROPHES_BY_DOUBLING = "EscapeApostrophesByDoubling";
+	/**
+	 * Configuration key: whether the properties files are stored as UTF-8 files (without BOM) without escaping
+	 * non-ASCII characters as "\\uXXXX" (supported by java.util.PropertyResourceBundle since Java 9). If not set, the
+	 * files are stored as ISO-8859-1 files with all non-ASCII characters escaped.
+	 */
+	public static final String CONFIG_STORE_AS_UTF8 = "StoreAsUtf8";
 
 	private int previousTerminalWidth = 0;
 
@@ -140,6 +146,10 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 		if (!applicationConfiguration.containsKey(LanguagePropertiesManager.CONFIG_ESCAPE_APOSTROPHES_BY_DOUBLING)) {
 			// Off by default, so existing properties files are read and written unchanged
 			applicationConfiguration.set(LanguagePropertiesManager.CONFIG_ESCAPE_APOSTROPHES_BY_DOUBLING, "false");
+		}
+		if (!applicationConfiguration.containsKey(LanguagePropertiesManager.CONFIG_STORE_AS_UTF8)) {
+			// Off by default, so existing properties files keep their escaped ISO-8859-1 format
+			applicationConfiguration.set(LanguagePropertiesManager.CONFIG_STORE_AS_UTF8, "false");
 		}
 	}
 
@@ -559,6 +569,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 				final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(this, importFromExcelWorker.getLanguageProperties(), languagePropertiesSetName, outputDirectory, configuredExcludeParts, actionDefinition.isExtendAndKeepExistingProperties(), actionDefinition.getPropertiesFileExtension());
 				writeLanguagePropertiesWorker.setReadComments(!applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS));
 				writeLanguagePropertiesWorker.setEscapeApostrophesByDoubling(applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_ESCAPE_APOSTROPHES_BY_DOUBLING));
+				writeLanguagePropertiesWorker.setStoreAsUtf8(applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_STORE_AS_UTF8));
 
 				writeLanguagePropertiesWorker.setProgressDisplayDelayMilliseconds(2000);
 				writeLanguagePropertiesWorker.run();
@@ -656,6 +667,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 				final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(this, importFromCsvWorker.getLanguageProperties(), languagePropertiesSetName, outputDirectory, configuredExcludeParts, actionDefinition.isExtendAndKeepExistingProperties(), actionDefinition.getPropertiesFileExtension());
 				writeLanguagePropertiesWorker.setReadComments(!applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS));
 				writeLanguagePropertiesWorker.setEscapeApostrophesByDoubling(applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_ESCAPE_APOSTROPHES_BY_DOUBLING));
+				writeLanguagePropertiesWorker.setStoreAsUtf8(applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_STORE_AS_UTF8));
 
 				writeLanguagePropertiesWorker.setProgressDisplayDelayMilliseconds(2000);
 				writeLanguagePropertiesWorker.run();

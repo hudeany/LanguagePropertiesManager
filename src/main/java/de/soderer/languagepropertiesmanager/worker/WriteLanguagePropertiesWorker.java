@@ -46,6 +46,7 @@ public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 	private final String propertiesFileExtension;
 	private boolean readComments = true;
 	private boolean escapeApostrophesByDoubling = false;
+	private boolean storeAsUtf8 = false;
 
 	private List<String> listOfStoredProperties;
 
@@ -150,14 +151,14 @@ public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 							for (final LanguageProperty languageProperty : languagePropertiesForStorage) {
 								languageProperty.setPath(Utilities.replaceUsersHomeByTilde(new File(foundPath).getAbsolutePath()));
 							}
-							LanguagePropertiesFileSetWriter.write(languagePropertiesForStorage, new File(foundPath).getParentFile(), new File(foundPath).getName(), extendAndKeepExistingProperties, propertiesFileExtension, readComments, escapeApostrophesByDoubling);
+							LanguagePropertiesFileSetWriter.write(languagePropertiesForStorage, new File(foundPath).getParentFile(), new File(foundPath).getName(), extendAndKeepExistingProperties, propertiesFileExtension, readComments, escapeApostrophesByDoubling, storeAsUtf8);
 							listOfStoredProperties.add(foundPath);
 						} else {
 							// Create new properties set files
 							for (final LanguageProperty languageProperty : languagePropertiesForStorage) {
 								languageProperty.setPath(Utilities.replaceUsersHomeByTilde(new File(outputDirectory, propertySetName).getAbsolutePath()));
 							}
-							LanguagePropertiesFileSetWriter.write(languagePropertiesForStorage, outputDirectory, propertySetName, extendAndKeepExistingProperties, propertiesFileExtension, readComments, escapeApostrophesByDoubling);
+							LanguagePropertiesFileSetWriter.write(languagePropertiesForStorage, outputDirectory, propertySetName, extendAndKeepExistingProperties, propertiesFileExtension, readComments, escapeApostrophesByDoubling, storeAsUtf8);
 							listOfStoredProperties.add(new File(outputDirectory, propertySetName).getAbsolutePath());
 						}
 					}
@@ -167,7 +168,7 @@ public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 				}
 			} else {
 				// Store only one language properties set which has no file path defined in LanguageProperty objects
-				LanguagePropertiesFileSetWriter.write(languageProperties, outputDirectory, languagePropertySetName, extendAndKeepExistingProperties, propertiesFileExtension, readComments, escapeApostrophesByDoubling);
+				LanguagePropertiesFileSetWriter.write(languageProperties, outputDirectory, languagePropertySetName, extendAndKeepExistingProperties, propertiesFileExtension, readComments, escapeApostrophesByDoubling, storeAsUtf8);
 			}
 		} else {
 			// Without output directory every property must have its own path
@@ -198,7 +199,7 @@ public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 
 				LanguagePropertiesFileSetWriter.write(languagePropertiesForStorage,
 						new File(languagePropertiesPath).getParentFile(), propertySetName,
-						extendAndKeepExistingProperties, propertiesFileExtension, readComments, escapeApostrophesByDoubling);
+						extendAndKeepExistingProperties, propertiesFileExtension, readComments, escapeApostrophesByDoubling, storeAsUtf8);
 				listOfStoredProperties.add(languagePropertiesPath);
 
 				itemsDone++;
@@ -294,5 +295,26 @@ public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 	 */
 	public void setEscapeApostrophesByDoubling(final boolean escapeApostrophesByDoubling) {
 		this.escapeApostrophesByDoubling = escapeApostrophesByDoubling;
+	}
+
+	/**
+	 * Whether the properties files are stored as UTF-8 files without escaping non-ASCII characters.
+	 *
+	 * @return true if the files are stored as unescaped UTF-8
+	 */
+	public boolean isStoreAsUtf8() {
+		return storeAsUtf8;
+	}
+
+	/**
+	 * Sets whether the properties files are stored as UTF-8 files (without BOM) without escaping non-ASCII
+	 * characters as "\\uXXXX". Otherwise they are stored as ISO-8859-1 files with all non-ASCII characters escaped.
+	 * Must be set before writing is started.
+	 *
+	 * @param storeAsUtf8
+	 *            true to store unescaped UTF-8 files
+	 */
+	public void setStoreAsUtf8(final boolean storeAsUtf8) {
+		this.storeAsUtf8 = storeAsUtf8;
 	}
 }

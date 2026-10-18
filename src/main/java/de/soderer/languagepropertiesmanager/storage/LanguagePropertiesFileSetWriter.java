@@ -84,7 +84,7 @@ public class LanguagePropertiesFileSetWriter {
 	/**
 	 * Writes language properties like write() above and optionally escapes apostrophes in the values by doubling
 	 * them ("'" becomes "''"), as needed by java.text.MessageFormat. Only the written files contain the escaped
-	 * values, the given properties keep their plain values.
+	 * values, the given properties keep their plain values. Non-ASCII characters are escaped as "\\uXXXX".
 	 *
 	 * @param languageProperties
 	 *            properties to write, grouped into sets by their paths
@@ -105,6 +105,36 @@ public class LanguagePropertiesFileSetWriter {
 	 *             if a directory does not exist or a file cannot be written
 	 */
 	public static void write(final List<LanguageProperty> languageProperties, final File directory, final String languagePropertySetName, final boolean extendAndKeepExistingProperties, final String propertiesFileExtension, final boolean readComments, final boolean escapeApostrophesByDoubling) throws Exception {
+		write(languageProperties, directory, languagePropertySetName, extendAndKeepExistingProperties, propertiesFileExtension, readComments, escapeApostrophesByDoubling, false);
+	}
+
+	/**
+	 * Writes language properties like write() above and optionally stores the files as UTF-8 without escaping
+	 * non-ASCII characters.
+	 *
+	 * @param languageProperties
+	 *            properties to write, grouped into sets by their paths
+	 * @param directory
+	 *            directory for properties without a path
+	 * @param languagePropertySetName
+	 *            set name for properties without a path
+	 * @param extendAndKeepExistingProperties
+	 *            whether keys existing in the files, but not in the given properties, are kept
+	 * @param propertiesFileExtension
+	 *            file extension of the properties files, a missing leading dot is added
+	 * @param readComments
+	 *            whether comments of kept existing properties are read
+	 * @param escapeApostrophesByDoubling
+	 *            whether apostrophes in values are written doubled (see {@link #escapeApostrophesByDoubling(String)}).
+	 *            Kept existing properties are read with the same setting, so their apostrophes are not doubled twice.
+	 * @param storeAsUtf8
+	 *            whether the files are stored as UTF-8 (without BOM) without escaping non-ASCII characters as
+	 *            "\\uXXXX" (supported by java.util.PropertyResourceBundle since Java 9). Otherwise all non-ASCII
+	 *            characters are escaped, so the files are readable as ISO-8859-1 too.
+	 * @throws Exception
+	 *             if a directory does not exist or a file cannot be written
+	 */
+	public static void write(final List<LanguageProperty> languageProperties, final File directory, final String languagePropertySetName, final boolean extendAndKeepExistingProperties, final String propertiesFileExtension, final boolean readComments, final boolean escapeApostrophesByDoubling, final boolean storeAsUtf8) throws Exception {
 		// Same normalization as the reader, otherwise a configured "properties" (without dot) would create files like "nameproperties"
 		final String normalizedPropertiesFileExtension = LanguagePropertiesFileSetReader.normalizePropertiesFileExtension(propertiesFileExtension);
 		final Set<String> languagePropertiesPaths = languageProperties.stream().map(o -> getEmptyForNull(o.getPath())).collect(Collectors.toSet());
@@ -162,7 +192,7 @@ public class LanguagePropertiesFileSetWriter {
 					filename = propertySetName + "_" + languageSign + normalizedPropertiesFileExtension;
 				}
 
-				try (PropertiesWriter propertiesWriter = new PropertiesWriter(new FileOutputStream(new File(propertiesDirectory, filename)))) {
+				try (PropertiesWriter propertiesWriter = new PropertiesWriter(new FileOutputStream(new File(propertiesDirectory, filename)), storeAsUtf8)) {
 					// Empty lines of properties missing in this language are carried over, so block boundaries are kept
 					int pendingEmptyLines = 0;
 					for (final LanguageProperty languageProperty : filteredLanguageProperties) {
