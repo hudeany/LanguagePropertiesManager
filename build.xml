@@ -2,7 +2,7 @@
 <project default="build_jar" name="Create all Jars for Project LanguagePropertiesManager">
 	<!-- Project specific part -->
 	<property name="applicationName" value="LanguagePropertiesManager" />
-	<property name="sourcePath" value="src" />
+	<property name="sourcePath" value="src/main/java" />
 	<property name="mainClass" value="de.soderer.LanguagePropertiesManager" />
 	<property name="rsrcMainClass" value="de.soderer.languagepropertiesmanager.LanguagePropertiesManager" />
 	<property name="versionFileName" value="application_version.txt" />
@@ -65,7 +65,6 @@
 		<getMavenDependency groupId="org.apache.poi" artifactId="poi-ooxml" version="${poi.version}" />
 		<getMavenDependency groupId="org.apache.poi" artifactId="poi-ooxml-full" version="${poi.version}" />
 		<getMavenDependency groupId="org.apache.xmlbeans" artifactId="xmlbeans" version="${xmlbeans.version}" />
-		<getMavenDependency groupId="org.apache.commons" artifactId="commons-lang3" version="${commons-lang3.version}" />
 		<getMavenDependency groupId="org.apache.commons" artifactId="commons-text" version="${commons-text.version}" />
 		<getMavenDependency groupId="net.java.dev.jna" artifactId="jna" version="${jna.version}" />
 	</target>
@@ -178,6 +177,7 @@
 
 		<mkdir dir="${buildPath}/bin" />
 		<javac release="17" debug="true" nowarn="true" deprecation="false" destdir="${buildPath}/bin" fork="yes" srcdir="${sourcePath}" includeantruntime="false" encoding="UTF-8">
+			<exclude name="test/**" />
 			<classpath refid="build.classpath" />
 			<compilerarg value="-Xlint:unchecked" />
 			<compilerarg value="-parameters" />
@@ -306,7 +306,7 @@
 		<javadoc destdir="${buildPath}/javadoc" encoding="UTF-8" charset="UTF-8" docencoding="UTF-8" source="17" failonerror="true">
 			<classpath refid="build.classpath" />
 			<arg value="-quiet" />
-			<fileset dir="${sourcePath}" includes="**/*.java" />
+			<fileset dir="${sourcePath}" includes="**/*.java" excludes="test/**" />
 		</javadoc>
 
 		<jar destfile="${buildPath}/${applicationName}-${build.version}-javadoc.jar">
