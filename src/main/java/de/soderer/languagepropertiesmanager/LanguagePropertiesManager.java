@@ -124,7 +124,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 	public static final String CONFIG_KEEP_EXISTING_KEYS = "KeepExistingKeysOnSave";
 
 	/** Storage of last recently used filepath for open and save files **/
-	public static final String CONFIG_LAST_IMPORT_EXPORT_DIRECTORY  = "LastImportExportDirectory";
+	public static final String CONFIG_LAST_IMPORT_EXPORT_DIRECTORY = "LastImportExportDirectory";
 
 	private int previousTerminalWidth = 0;
 
@@ -168,6 +168,8 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 
 		// Ask by default, as before this option existed
 		applicationConfiguration.ensureYesNoAsk(LanguagePropertiesManager.CONFIG_KEEP_EXISTING_KEYS, YesNoAsk.ASK);
+
+		applicationConfiguration.set(LanguagePropertiesManager.CONFIG_LAST_IMPORT_EXPORT_DIRECTORY, "");
 	}
 
 	/** The usage message. */

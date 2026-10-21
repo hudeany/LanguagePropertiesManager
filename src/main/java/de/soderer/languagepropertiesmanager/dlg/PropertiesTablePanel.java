@@ -637,6 +637,10 @@ public class PropertiesTablePanel extends JPanel {
 				final JMenuItem copyAsCsvItem = new JMenuItem(LangResources.get("contextmenu_copySelectedRowsAsCsv", propertiesTable.getSelectedRowCount()));
 				copyAsCsvItem.addActionListener(e -> copySelectedPropertiesAsCsvToClipboard());
 				contextMenu.add(copyAsCsvItem);
+
+				final JMenuItem copyKeysMenuItem = new JMenuItem(LangResources.get("contextmenu_copyKeysToClipboard", propertiesTable.getSelectedRowCount()));
+				copyKeysMenuItem.addActionListener(e -> copySelectedKeysToClipboard());
+				contextMenu.add(copyKeysMenuItem);
 			}
 		}
 
@@ -1172,6 +1176,20 @@ public class PropertiesTablePanel extends JPanel {
 		@Override
 		public void changedUpdate(final DocumentEvent event) {
 			// Attribute changes only, no text change
+		}
+	}
+
+	/**
+	 * Copies the keys of the selected properties into the system clipboard, one key per line,
+	 * in table order. Keys occurring in several paths are copied once per occurrence.
+	 */
+	private void copySelectedKeysToClipboard() {
+		final List<String> keys = new ArrayList<>();
+		for (final LanguageProperty languageProperty : getSelectedProperties()) {
+			keys.add(languageProperty.getKey());
+		}
+		if (!keys.isEmpty()) {
+			Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(String.join("\n", keys)), null);
 		}
 	}
 }
