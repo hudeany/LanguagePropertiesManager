@@ -17,10 +17,10 @@ import de.soderer.languagepropertiesmanager.worker.ImportFromExcelWorker;
 import de.soderer.languagepropertiesmanager.worker.LoadLanguagePropertiesWorker;
 import de.soderer.swing.ComboSelectionDialog;
 import de.soderer.swing.ProgressDialog;
+import de.soderer.swing.SwingDialogUtilities;
 import de.soderer.utilities.ConfigurationProperties;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.Result;
-import de.soderer.utilities.Utilities;
 
 /**
  * Reading of language properties from all supported sources (properties file,
@@ -42,15 +42,38 @@ final class ImportSourceChooser {
 	}
 
 	/**
+	 * Resolves the YesNoAsk configuration values used for reading properties files and applies them to the worker.
+	 * For "ask" the user is asked, and the decision is remembered by the owner for the display (e.g. comment column).
+	 * Must be called on the event dispatch thread, before the worker is started.
+	 *
+	 * @return false if the user cancelled one of the questions (reading must be aborted)
+	 */
+	private boolean applyReadConfigurationChoices(final LoadLanguagePropertiesWorker loadLanguagePropertiesWorker) {
+		final Boolean ignoreComments = owner.resolveConfigurationChoice(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS);
+		if (ignoreComments == null) {
+			return false;
+		}
+		final Boolean escapeApostrophesByDoubling = owner.resolveConfigurationChoice(LanguagePropertiesManager.CONFIG_ESCAPE_APOSTROPHES_BY_DOUBLING);
+		if (escapeApostrophesByDoubling == null) {
+			return false;
+		}
+
+		loadLanguagePropertiesWorker.setReadComments(!ignoreComments);
+		// Doubled apostrophes ("''") are only used in the properties files, the loaded values contain single apostrophes
+		loadLanguagePropertiesWorker.setEscapeApostrophesByDoubling(escapeApostrophesByDoubling);
+		return true;
+	}
+
+	/**
 	 * Reads a single language properties set without changing the currently loaded data.
 	 *
 	 * @return the read properties or null if canceled by the user
 	 */
 	LoadedLanguageProperties readSingleLanguagePropertiesSet(final String filePath) throws ExecutionException {
 		final LoadLanguagePropertiesWorker openFilesLanguagePropertiesWorker = new LoadLanguagePropertiesWorker(null, new File(filePath), null, applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION));
-		openFilesLanguagePropertiesWorker.setReadComments(!applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS));
-		// Doubled apostrophes ("''") are only used in the properties files, the loaded values contain single apostrophes
-		openFilesLanguagePropertiesWorker.setEscapeApostrophesByDoubling(applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_ESCAPE_APOSTROPHES_BY_DOUBLING));
+		if (!applyReadConfigurationChoices(openFilesLanguagePropertiesWorker)) {
+			return null;
+		}
 		final ProgressDialog<LoadLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(owner, LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("tooltip_load_files"), openFilesLanguagePropertiesWorker);
 		final Result dialogResult = progressDialog.open();
 		if (dialogResult == Result.CANCELED) {
@@ -72,9 +95,9 @@ final class ImportSourceChooser {
 	LoadedLanguageProperties readAllLanguagePropertiesSets(final String basicDirectoryPath) throws ExecutionException {
 		final String[] excludeParts = applicationConfiguration.get(LanguagePropertiesManager.CONFIG_OPEN_DIR_EXCLUDES).split(";");
 		final LoadLanguagePropertiesWorker openFolderLanguagePropertiesWorker = new LoadLanguagePropertiesWorker(null, new File(basicDirectoryPath), excludeParts, applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION));
-		openFolderLanguagePropertiesWorker.setReadComments(!applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS));
-		// Doubled apostrophes ("''") are only used in the properties files, the loaded values contain single apostrophes
-		openFolderLanguagePropertiesWorker.setEscapeApostrophesByDoubling(applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_ESCAPE_APOSTROPHES_BY_DOUBLING));
+		if (!applyReadConfigurationChoices(openFolderLanguagePropertiesWorker)) {
+			return null;
+		}
 		final ProgressDialog<LoadLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(owner, LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("load_folder"), openFolderLanguagePropertiesWorker);
 		final Result dialogResult = progressDialog.open();
 		if (dialogResult == Result.CANCELED) {
@@ -117,8 +140,13 @@ final class ImportSourceChooser {
 	 * @return the read properties or null if canceled by the user
 	 */
 	LoadedLanguageProperties readFromExcel(final File file) throws Exception {
+		final Boolean ignoreComments = owner.resolveConfigurationChoice(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS);
+		if (ignoreComments == null) {
+			return null;
+		}
+
 		final ImportFromExcelWorker importFromExcelWorker = new ImportFromExcelWorker(null, file);
-		importFromExcelWorker.setIgnoreComments(applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS));
+		importFromExcelWorker.setIgnoreComments(ignoreComments);
 		final Result dialogResult = new ProgressDialog<>(owner, LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("import_file"), importFromExcelWorker).open();
 		if (dialogResult == Result.CANCELED) {
 			return null;
@@ -135,8 +163,13 @@ final class ImportSourceChooser {
 	 * @return the read properties or null if canceled by the user
 	 */
 	LoadedLanguageProperties readFromCsv(final File file) throws Exception {
+		final Boolean ignoreComments = owner.resolveConfigurationChoice(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS);
+		if (ignoreComments == null) {
+			return null;
+		}
+
 		final ImportFromCsvWorker importFromCsvWorker = new ImportFromCsvWorker(null, file);
-		importFromCsvWorker.setIgnoreComments(applicationConfiguration.getBoolean(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS));
+		importFromCsvWorker.setIgnoreComments(ignoreComments);
 		final Result dialogResult = new ProgressDialog<>(owner, LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("import_file"), importFromCsvWorker).open();
 		if (dialogResult == Result.CANCELED) {
 			return null;
@@ -176,7 +209,7 @@ final class ImportSourceChooser {
 	}
 
 	private LoadedLanguageProperties readImportSourceFromRecent(final String title) throws Exception {
-		final ComboSelectionDialog dialog = new ComboSelectionDialog(owner, owner.getTitle() + " " + title, LangResources.get("recent_directories_dialog_text"), owner.getRecentlyOpenedDirectories(), DialogUtilities.getLastEntryIndex(owner.getRecentlyOpenedDirectories())).withSize(600, -1);
+		final ComboSelectionDialog dialog = new ComboSelectionDialog(owner, owner.getTitle() + " " + title, LangResources.get("recent_directories_dialog_text"), owner.getRecentlyOpenedDirectories(), SwingDialogUtilities.getLastEntryIndex(owner.getRecentlyOpenedDirectories())).withSize(600, -1);
 		final String filePath = dialog.open();
 
 		// Take over a possible reordering (drag&drop) or deletion of the recent directories done in the dialog
@@ -202,7 +235,8 @@ final class ImportSourceChooser {
 	}
 
 	private LoadedLanguageProperties readImportSourceFromFile(final String title) throws Exception {
-		final File file = DialogUtilities.chooseFileToOpen(owner, owner.getTitle() + " " + title, owner.getRecentlyOpenedDirectories().getLatestAdded());
+		// Preselects the directory of the latest used properties, robust against files, deleted paths and an empty recent list
+		final File file = SwingDialogUtilities.chooseFileToOpen(owner, owner.getTitle() + " " + title, owner.getInitialPropertiesDirectory());
 		if (file == null) {
 			owner.showErrorMessage(title, LangResources.get("canceledByUser"));
 			return null;
@@ -217,7 +251,8 @@ final class ImportSourceChooser {
 	}
 
 	private LoadedLanguageProperties readImportSourceFromFolder(final String title) throws Exception {
-		final File directory = DialogUtilities.chooseDirectory(owner, owner.getTitle() + " " + title, owner.getRecentlyOpenedDirectories().getLatestAdded());
+		// Preselects the directory of the latest used properties, robust against files, deleted paths and an empty recent list
+		final File directory = SwingDialogUtilities.chooseDirectory(owner, owner.getTitle() + " " + title, owner.getInitialPropertiesDirectory());
 		if (directory == null) {
 			owner.showErrorMessage(title, LangResources.get("canceledByUser"));
 			return null;
@@ -237,17 +272,19 @@ final class ImportSourceChooser {
 	}
 
 	private LoadedLanguageProperties readImportSourceFromDataFile(final String title, final DataFileReader dataFileReader, final String... fileExtensions) throws Exception {
-		final File importFile = DialogUtilities.chooseFileToOpen(owner, owner.getTitle() + " " + title, Utilities.replaceUsersHome("~" + File.separator + "Downloads"), fileExtensions);
+		// Shares the remembered directory with the Excel and CSV import and export of the main window
+		final File importFile = SwingDialogUtilities.chooseFileToOpen(owner, owner.getTitle() + " " + title, owner.getInitialImportExportDirectory(), fileExtensions);
 		if (importFile == null) {
 			owner.showErrorMessage(title, LangResources.get("canceledByUser"));
 			return null;
 		} else {
+			owner.rememberImportExportDirectory(importFile);
 			return readImportSourceResult(title, dataFileReader.read(importFile));
 		}
 	}
 
 	/**
-	 * Shows the cancel message, if reading was canceled in the progress dialog
+	 * Shows the cancel message, if reading was canceled in the progress dialog or in a configuration question
 	 */
 	private LoadedLanguageProperties readImportSourceResult(final String title, final LoadedLanguageProperties loadedLanguageProperties) {
 		if (loadedLanguageProperties == null) {

@@ -123,6 +123,9 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 	/** Whether keys existing only in the files on disk are kept when saving (yes, no or ask) */
 	public static final String CONFIG_KEEP_EXISTING_KEYS = "KeepExistingKeysOnSave";
 
+	/** Storage of last recently used filepath for open and save files **/
+	public static final String CONFIG_LAST_IMPORT_EXPORT_DIRECTORY  = "LastImportExportDirectory";
+
 	private int previousTerminalWidth = 0;
 
 	private ActionDefinition actionDefinitionToExecute;

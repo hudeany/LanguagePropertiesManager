@@ -17,6 +17,7 @@ import de.soderer.languagepropertiesmanager.storage.LanguagePropertiesFileSetRea
 import de.soderer.languagepropertiesmanager.storage.LanguageProperty;
 import de.soderer.swing.ComboSelectionDialog;
 import de.soderer.swing.SimpleInputDialog;
+import de.soderer.swing.SwingDialogUtilities;
 import de.soderer.utilities.ConfigurationProperties;
 import de.soderer.utilities.FileUtilities;
 import de.soderer.utilities.LangResources;
@@ -164,7 +165,7 @@ final class StatisticsAndUsage {
 
 	void checkUsageNew() {
 		try {
-			final File directory = DialogUtilities.chooseDirectory(owner, owner.getTitle() + " " + LangResources.get("directory_dialog_title"), null);
+			final File directory = SwingDialogUtilities.chooseDirectory(owner, owner.getTitle() + " " + LangResources.get("directory_dialog_title"), null);
 			if (directory == null) {
 				owner.showErrorMessage(LangResources.get("open_directory_dialog_text"), LangResources.get("canceledByUser"));
 			} else if (directory.exists() && directory.isDirectory()) {
@@ -178,7 +179,7 @@ final class StatisticsAndUsage {
 					usagePatternDialog.setDefaultText("LangResources.get(\"<property>\"");
 					final String usagePattern = usagePatternDialog.open();
 					if (usagePattern != null) {
-						DialogUtilities.moveToEnd(recentlyCheckUsages, CsvWriter.getCsvLine(createCheckUsageCsvFormat(), directory.getAbsolutePath(), filePattern, usagePattern));
+						SwingDialogUtilities.moveToEnd(recentlyCheckUsages, CsvWriter.getCsvLine(createCheckUsageCsvFormat(), directory.getAbsolutePath(), filePattern, usagePattern));
 						applicationConfiguration.set(LanguagePropertiesManager.CONFIG_PREVIOUS_CHECK_USAGE, recentlyCheckUsages);
 						checkUsage(model.getLanguageProperties(), directory.getAbsolutePath(), filePattern, usagePattern);
 						owner.checkButtonStatus();
@@ -227,7 +228,7 @@ final class StatisticsAndUsage {
 
 	void checkUsagePrevious() {
 		try {
-			final ComboSelectionDialog dialog = new ComboSelectionDialog(owner, owner.getTitle() + " " + LangResources.get("recentsettingsdialogtitle"), LangResources.get("recent_settings_dialog_text"), recentlyCheckUsages, DialogUtilities.getLastEntryIndex(recentlyCheckUsages));
+			final ComboSelectionDialog dialog = new ComboSelectionDialog(owner, owner.getTitle() + " " + LangResources.get("recentsettingsdialogtitle"), LangResources.get("recent_settings_dialog_text"), recentlyCheckUsages, SwingDialogUtilities.getLastEntryIndex(recentlyCheckUsages));
 			final String setting = dialog.open();
 
 			// Take over a possible reordering (drag&drop) or deletion of the recent
@@ -238,7 +239,7 @@ final class StatisticsAndUsage {
 			applicationConfiguration.set(LanguagePropertiesManager.CONFIG_PREVIOUS_CHECK_USAGE, recentlyCheckUsages);
 
 			if (setting != null) {
-				DialogUtilities.moveToEnd(recentlyCheckUsages, setting); // put selected as latest used
+				SwingDialogUtilities.moveToEnd(recentlyCheckUsages, setting); // put selected as latest used
 				applicationConfiguration.set(LanguagePropertiesManager.CONFIG_PREVIOUS_CHECK_USAGE, recentlyCheckUsages);
 				final List<String> settings = parseCheckUsageSetting(setting);
 				final String directory = settings.get(0);

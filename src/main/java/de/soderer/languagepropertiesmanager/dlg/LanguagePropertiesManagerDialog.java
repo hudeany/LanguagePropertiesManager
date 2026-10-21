@@ -60,6 +60,7 @@ import de.soderer.swing.QuestionDialog;
 import de.soderer.swing.ShowDataDialog;
 import de.soderer.swing.SimpleInputDialog;
 import de.soderer.swing.SwingColor;
+import de.soderer.swing.SwingDialogUtilities;
 import de.soderer.utilities.DateUtilities;
 import de.soderer.utilities.IoUtilities;
 import de.soderer.utilities.LangResources;
@@ -1018,13 +1019,13 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		}
 
 		try {
-			final File file = DialogUtilities.chooseFileToOpen(this, getTitle() + " " + LangResources.get("open_file_dialog_text"), null);
+			final File file = SwingDialogUtilities.chooseFileToOpen(this, getTitle() + " " + LangResources.get("open_file_dialog_text"), getInitialPropertiesDirectory());
 			if (file == null) {
 				// The loaded data stays as it is, including its unsaved changes state
 				showErrorMessage(LangResources.get("open_file_dialog_text"), LangResources.get("canceledByUser"));
 			} else if (file.exists() && file.isFile()) {
 				if (loadSingleLanguagePropertiesSet(file.getAbsolutePath())) {
-					DialogUtilities.moveToEnd(recentlyOpenedDirectories, file.getAbsolutePath()); // put selected as latest used
+					SwingDialogUtilities.moveToEnd(recentlyOpenedDirectories, file.getAbsolutePath()); // put selected as latest used
 					applicationConfiguration.set(LanguagePropertiesManager.CONFIG_RECENT_PROPERTIES, recentlyOpenedDirectories);
 					afterLoad();
 				}
@@ -1062,13 +1063,13 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		}
 
 		try {
-			final File basicDirectory = DialogUtilities.chooseDirectory(this, LangResources.get("open_directory_dialog_text"), null);
+			final File basicDirectory = SwingDialogUtilities.chooseDirectory(this, LangResources.get("open_directory_dialog_text"), getInitialPropertiesDirectory());
 			if (basicDirectory == null) {
 				// The loaded data stays as it is, including its unsaved changes state
 				showErrorMessage(LangResources.get("open_directory_dialog_text"), LangResources.get("canceledByUser"));
 			} else if (basicDirectory.exists()) {
 				if (openAllLanguagePropertiesSets(basicDirectory.getAbsolutePath())) {
-					DialogUtilities.moveToEnd(recentlyOpenedDirectories, basicDirectory.getAbsolutePath()); // put selected as latest used
+					SwingDialogUtilities.moveToEnd(recentlyOpenedDirectories, basicDirectory.getAbsolutePath()); // put selected as latest used
 					applicationConfiguration.set(LanguagePropertiesManager.CONFIG_RECENT_PROPERTIES, recentlyOpenedDirectories);
 					afterLoad();
 				}
@@ -1118,7 +1119,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		}
 
 		try {
-			final ComboSelectionDialog dialog = new ComboSelectionDialog(this, getTitle() + " " + LangResources.get("recent_directories_dialog_title"), LangResources.get("recent_directories_dialog_text"), recentlyOpenedDirectories, DialogUtilities.getLastEntryIndex(recentlyOpenedDirectories)).withSize(600, -1);
+			final ComboSelectionDialog dialog = new ComboSelectionDialog(this, getTitle() + " " + LangResources.get("recent_directories_dialog_title"), LangResources.get("recent_directories_dialog_text"), recentlyOpenedDirectories, SwingDialogUtilities.getLastEntryIndex(recentlyOpenedDirectories)).withSize(600, -1);
 			final String filePath = dialog.open();
 
 			// Take over a possible reordering (drag&drop) or deletion of the recent directories done in the dialog,
@@ -1139,7 +1140,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					loaded = loadSingleLanguagePropertiesSet(filePath);
 				}
 				if (loaded) {
-					DialogUtilities.moveToEnd(recentlyOpenedDirectories, filePath); // put selected as latest used
+					SwingDialogUtilities.moveToEnd(recentlyOpenedDirectories, filePath); // put selected as latest used
 					applicationConfiguration.set(LanguagePropertiesManager.CONFIG_RECENT_PROPERTIES, recentlyOpenedDirectories);
 					afterLoad();
 				}
@@ -1191,7 +1192,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					defaultLanguagePropertiesPath = Utilities.replaceUsersHome(new ArrayList<>(languagePropertiesPaths).get(0));
 				} else {
 					final String propertiesFileExtension = applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION);
-					final File file = DialogUtilities.chooseFileToSave(this, getTitle() + " " + LangResources.get("save_file_dialog_text"), recentlyOpenedDirectories.getLatestAdded(), "MyLanguageProperties" + propertiesFileExtension);
+					final File file = SwingDialogUtilities.chooseFileToSave(this, getTitle() + " " + LangResources.get("save_file_dialog_text"), getInitialPropertiesDirectory(), "MyLanguageProperties" + propertiesFileExtension);
 					if (file == null) {
 						showErrorMessage(LangResources.get("save_file_dialog_text"), LangResources.get("canceledByUser"));
 						return;
@@ -1256,7 +1257,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			File directory = null;
 			String newPropertiesSetName = "Multiple";
 			if (hasPropertiesWithoutPath) {
-				directory = DialogUtilities.chooseDirectory(this, LangResources.get("save_directory_dialog_text"), null);
+				directory = SwingDialogUtilities.chooseDirectory(this, LangResources.get("save_directory_dialog_text"), getInitialPropertiesDirectory());
 				if (directory == null) {
 					showErrorMessage(LangResources.get("save_directory_dialog_text"), LangResources.get("canceledByUser"));
 					return;
@@ -1391,11 +1392,12 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			return;
 		}
 
-		final File importFile = DialogUtilities.chooseFileToOpen(this, getTitle() + " " + LangResources.get("import_file"), Utilities.replaceUsersHome("~" + File.separator + "Downloads"), fileExtensions);
+		final File importFile = SwingDialogUtilities.chooseFileToOpen(this, getTitle() + " " + LangResources.get("import_file"), getInitialImportExportDirectory(), fileExtensions);
 		if (importFile == null) {
 			showErrorMessage(LangResources.get("import_file"), LangResources.get("canceledByUser"));
 			return;
 		}
+		rememberImportExportDirectory(importFile);
 
 		try {
 			if (importAction.process(importFile)) {
@@ -1567,11 +1569,12 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private void exportToFile(final String fileExtension, final FileAction exportAction) {
 		try {
 			final String exportBaseName = Utilities.isNotBlank(model.getLanguagePropertiesSetName()) ? model.getLanguagePropertiesSetName() : "LanguageProperties";
-			final File exportFile = DialogUtilities.chooseFileToSave(this, getTitle() + " " + LangResources.get("export_file"), Utilities.replaceUsersHome("~" + File.separator + "Downloads"), exportBaseName + "_Export_" + DateUtilities.formatDate("yyyy-MM-dd_HH-mm", LocalDateTime.now()) + "." + fileExtension, fileExtension);
+			final File exportFile = SwingDialogUtilities.chooseFileToSave(this, getTitle() + " " + LangResources.get("export_file"), getInitialImportExportDirectory(), exportBaseName + "_Export_" + DateUtilities.formatDate("yyyy-MM-dd_HH-mm", LocalDateTime.now()) + "." + fileExtension, fileExtension);
 			if (exportFile == null) {
 				showErrorMessage(LangResources.get("export_file"), LangResources.get("canceledByUser"));
 				return;
 			}
+			rememberImportExportDirectory(exportFile);
 
 			// The existing file is not deleted here: the export workers replace it only after a successful export
 			if (exportFile.exists() && !askForOverwriteFile(exportFile.getAbsolutePath())) {
@@ -1668,5 +1671,55 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	 */
 	public void showErrorMessage(final String title, final String text) {
 		new QuestionDialog(this, title, text, LangResources.get("ok")).withBackgroundColor(SwingColor.LightRed).open();
+	}
+
+	/**
+	 * Directory to preselect in the choosers for properties files and directories:
+	 * the latest used entry of the recently opened files and directories, or its
+	 * nearest existing parent directory.
+	 *
+	 * @return absolute path of the directory, or null for the chooser's default
+	 */
+	String getInitialPropertiesDirectory() {
+		if (recentlyOpenedDirectories == null || recentlyOpenedDirectories.size() == 0) {
+			return null;
+		}
+		final File directory = getNearestExistingDirectory(recentlyOpenedDirectories.getLatestAdded());
+		return directory == null ? null : directory.getAbsolutePath();
+	}
+
+	/**
+	 * Directory to preselect in the choosers for Excel and CSV import and export:
+	 * the directory of the latest import or export, otherwise the user's downloads directory.
+	 */
+	String getInitialImportExportDirectory() {
+		final File directory = getNearestExistingDirectory(applicationConfiguration.get(LanguagePropertiesManager.CONFIG_LAST_IMPORT_EXPORT_DIRECTORY));
+		return directory != null ? directory.getAbsolutePath() : Utilities.replaceUsersHome("~" + File.separator + "Downloads");
+	}
+
+	/**
+	 * Remembers the directory of an imported or exported file for the next chooser.
+	 * Saved together with the rest of the configuration.
+	 */
+	void rememberImportExportDirectory(final File file) {
+		final File directory = file.getAbsoluteFile().getParentFile();
+		if (directory != null) {
+			applicationConfiguration.set(LanguagePropertiesManager.CONFIG_LAST_IMPORT_EXPORT_DIRECTORY, directory.getAbsolutePath());
+		}
+	}
+
+	/**
+	 * The given path itself if it is a directory, otherwise its nearest existing parent directory.
+	 * Handles file paths as well as paths that do not exist anymore.
+	 */
+	private static File getNearestExistingDirectory(final String path) {
+		if (Utilities.isBlank(path)) {
+			return null;
+		}
+		File directory = new File(Utilities.replaceUsersHome(path)).getAbsoluteFile();
+		while (directory != null && !directory.isDirectory()) {
+			directory = directory.getParentFile();
+		}
+		return directory;
 	}
 }
