@@ -166,15 +166,11 @@ final class StatisticsAndUsage {
 	void checkUsageNew() {
 		try {
 			final File directory = SwingDialogUtilities.chooseDirectory(owner, owner.getTitle() + " " + LangResources.get("directory_dialog_title"), null);
-			if (directory == null) {
-				owner.showErrorMessage(LangResources.get("open_directory_dialog_text"), LangResources.get("canceledByUser"));
-			} else if (directory.exists() && directory.isDirectory()) {
+			if (directory != null && directory.exists() && directory.isDirectory()) {
 				final SimpleInputDialog filePatternDialog = new SimpleInputDialog(owner, owner.getTitle(), LangResources.get("enterfilepattern"));
 				filePatternDialog.setDefaultText(".*\\.java");
 				final String filePattern = filePatternDialog.open();
-				if (filePattern == null) {
-					owner.showErrorMessage(LangResources.get("open_directory_dialog_text"), LangResources.get("canceledByUser"));
-				} else {
+				if (filePattern != null) {
 					final SimpleInputDialog usagePatternDialog = new SimpleInputDialog(owner, owner.getTitle(), LangResources.get("enterusagepattern"));
 					usagePatternDialog.setDefaultText("LangResources.get(\"<property>\"");
 					final String usagePattern = usagePatternDialog.open();

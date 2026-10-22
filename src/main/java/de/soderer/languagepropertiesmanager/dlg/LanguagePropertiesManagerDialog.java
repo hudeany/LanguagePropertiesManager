@@ -1020,17 +1020,17 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 		try {
 			final File file = SwingDialogUtilities.chooseFileToOpen(this, getTitle() + " " + LangResources.get("open_file_dialog_text"), getInitialPropertiesDirectory());
-			if (file == null) {
-				// The loaded data stays as it is, including its unsaved changes state
-				showErrorMessage(LangResources.get("open_file_dialog_text"), LangResources.get("canceledByUser"));
-			} else if (file.exists() && file.isFile()) {
-				if (loadSingleLanguagePropertiesSet(file.getAbsolutePath())) {
-					SwingDialogUtilities.moveToEnd(recentlyOpenedDirectories, file.getAbsolutePath()); // put selected as latest used
-					applicationConfiguration.set(LanguagePropertiesManager.CONFIG_RECENT_PROPERTIES, recentlyOpenedDirectories);
-					afterLoad();
+			// Without a selected file the loaded data stays as it is, including its unsaved changes state
+			if (file != null) {
+				if (file.exists() && file.isFile()) {
+					if (loadSingleLanguagePropertiesSet(file.getAbsolutePath())) {
+						SwingDialogUtilities.moveToEnd(recentlyOpenedDirectories, file.getAbsolutePath()); // put selected as latest used
+						applicationConfiguration.set(LanguagePropertiesManager.CONFIG_RECENT_PROPERTIES, recentlyOpenedDirectories);
+						afterLoad();
+					}
+				} else {
+					throw new Exception("Selected language properties set path is not an existing file");
 				}
-			} else {
-				throw new Exception("Selected language properties set path is not an existing file");
 			}
 		} catch (final Exception e) {
 			resetLoadedData();
@@ -1048,7 +1048,6 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 		final LoadedLanguageProperties loadedLanguageProperties = importSourceChooser.readSingleLanguagePropertiesSet(filePath);
 		if (loadedLanguageProperties == null) {
-			showErrorMessage(LangResources.get("open_file_dialog_text"), LangResources.get("canceledByUser"));
 			return false;
 		} else {
 			takeOverLoadedLanguageProperties(loadedLanguageProperties);
@@ -1064,10 +1063,8 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 		try {
 			final File basicDirectory = SwingDialogUtilities.chooseDirectory(this, LangResources.get("open_directory_dialog_text"), getInitialPropertiesDirectory());
-			if (basicDirectory == null) {
-				// The loaded data stays as it is, including its unsaved changes state
-				showErrorMessage(LangResources.get("open_directory_dialog_text"), LangResources.get("canceledByUser"));
-			} else if (basicDirectory.exists()) {
+			// Without a selected directory the loaded data stays as it is, including its unsaved changes state
+			if (basicDirectory != null && basicDirectory.exists()) {
 				if (openAllLanguagePropertiesSets(basicDirectory.getAbsolutePath())) {
 					SwingDialogUtilities.moveToEnd(recentlyOpenedDirectories, basicDirectory.getAbsolutePath()); // put selected as latest used
 					applicationConfiguration.set(LanguagePropertiesManager.CONFIG_RECENT_PROPERTIES, recentlyOpenedDirectories);
@@ -1085,7 +1082,6 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private boolean openAllLanguagePropertiesSets(final String basicDirectoryPath) throws ExecutionException {
 		final LoadedLanguageProperties loadedLanguageProperties = importSourceChooser.readAllLanguagePropertiesSets(basicDirectoryPath);
 		if (loadedLanguageProperties == null) {
-			showErrorMessage(LangResources.get("open_directory_dialog_text"), LangResources.get("canceledByUser"));
 			return false;
 		} else {
 			takeOverLoadedLanguageProperties(loadedLanguageProperties);
@@ -1128,21 +1124,21 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			recentlyOpenedDirectories.addAll(dialog.getItems());
 			applicationConfiguration.set(LanguagePropertiesManager.CONFIG_RECENT_PROPERTIES, recentlyOpenedDirectories);
 
-			if (filePath == null) {
-				showErrorMessage(LangResources.get("recent_directories_dialog_title"), LangResources.get("canceledByUser"));
-			} else if (!new File(filePath).exists()) {
-				showErrorMessage(LangResources.get("recent_directories_dialog_title"), LangResources.get("error.recentPathDoesNotExistAnymore", filePath));
-			} else {
-				final boolean loaded;
-				if (new File(filePath).isDirectory()) {
-					loaded = openAllLanguagePropertiesSets(filePath);
+			if (filePath != null) {
+				if (!new File(filePath).exists()) {
+					showErrorMessage(LangResources.get("recent_directories_dialog_title"), LangResources.get("error.recentPathDoesNotExistAnymore", filePath));
 				} else {
-					loaded = loadSingleLanguagePropertiesSet(filePath);
-				}
-				if (loaded) {
-					SwingDialogUtilities.moveToEnd(recentlyOpenedDirectories, filePath); // put selected as latest used
-					applicationConfiguration.set(LanguagePropertiesManager.CONFIG_RECENT_PROPERTIES, recentlyOpenedDirectories);
-					afterLoad();
+					final boolean loaded;
+					if (new File(filePath).isDirectory()) {
+						loaded = openAllLanguagePropertiesSets(filePath);
+					} else {
+						loaded = loadSingleLanguagePropertiesSet(filePath);
+					}
+					if (loaded) {
+						SwingDialogUtilities.moveToEnd(recentlyOpenedDirectories, filePath); // put selected as latest used
+						applicationConfiguration.set(LanguagePropertiesManager.CONFIG_RECENT_PROPERTIES, recentlyOpenedDirectories);
+						afterLoad();
+					}
 				}
 			}
 		} catch (final Exception e) {
@@ -1194,7 +1190,6 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					final String propertiesFileExtension = applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION);
 					final File file = SwingDialogUtilities.chooseFileToSave(this, getTitle() + " " + LangResources.get("save_file_dialog_text"), getInitialPropertiesDirectory(), "MyLanguageProperties" + propertiesFileExtension);
 					if (file == null) {
-						showErrorMessage(LangResources.get("save_file_dialog_text"), LangResources.get("canceledByUser"));
 						return;
 					}
 					final String filePath = file.getAbsolutePath();
@@ -1213,28 +1208,23 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 			// Offer to create missing target directories instead of letting the save fail
 			if (!ensureDirectoriesExist(model.getLanguageProperties().stream().map(LanguageProperty::getPath).collect(Collectors.toSet()), null)) {
-				showErrorMessage(LangResources.get("save_file_dialog_text"), LangResources.get("canceledByUser"));
 				return;
 			}
 
 			final Boolean extendAndKeepExistingProperties = resolveConfigurationChoice(LanguagePropertiesManager.CONFIG_KEEP_EXISTING_KEYS);
 			if (extendAndKeepExistingProperties == null) {
 				// Cancelling the question is no "no", which would drop the existing keys of the files
-				showErrorMessage(LangResources.get("save_file_dialog_text"), LangResources.get("canceledByUser"));
 				return;
 			}
 
 			final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(null, model.getLanguageProperties(), model.getLanguagePropertiesSetName(), null, null, extendAndKeepExistingProperties, applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION));
 			if (!applyWriteConfigurationChoices(writeLanguagePropertiesWorker)) {
-				showErrorMessage(LangResources.get("save_file_dialog_text"), LangResources.get("canceledByUser"));
 				return;
 			}
 			final ProgressDialog<WriteLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(this, LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("save_files"), writeLanguagePropertiesWorker);
 			final Result dialogResult = progressDialog.open();
-			if (dialogResult == Result.CANCELED || !Boolean.TRUE.equals(writeLanguagePropertiesWorker.get())) {
-				// A canceled save may have written only a part of the files, so the data still counts as unsaved
-				showErrorMessage(LangResources.get("save_file_dialog_text"), LangResources.get("canceledByUser"));
-			} else {
+			// A canceled save may have written only a part of the files, so the data then still counts as unsaved
+			if (dialogResult != Result.CANCELED && Boolean.TRUE.equals(writeLanguagePropertiesWorker.get())) {
 				model.setUnsavedChanges(false);
 				showMessage(LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("saveSuccess"));
 			}
@@ -1259,10 +1249,8 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			if (hasPropertiesWithoutPath) {
 				directory = SwingDialogUtilities.chooseDirectory(this, LangResources.get("save_directory_dialog_text"), getInitialPropertiesDirectory());
 				if (directory == null) {
-					showErrorMessage(LangResources.get("save_directory_dialog_text"), LangResources.get("canceledByUser"));
 					return;
 				} else if (!ensureDirectoriesExist(null, directory)) {
-					showErrorMessage(LangResources.get("save_directory_dialog_text"), LangResources.get("canceledByUser"));
 					return;
 				}
 
@@ -1270,34 +1258,28 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				nameDialog.setDefaultText(newPropertiesSetName);
 				final String enteredName = nameDialog.open();
 				if (Utilities.isBlank(enteredName)) {
-					showErrorMessage(LangResources.get("save_directory_dialog_text"), LangResources.get("canceledByUser"));
 					return;
 				}
 				newPropertiesSetName = enteredName;
 			} else if (!ensureDirectoriesExist(model.getLanguageProperties().stream().map(LanguageProperty::getPath).collect(Collectors.toSet()), null)) {
 				// All properties are saved to their own paths, so their directories must exist
-				showErrorMessage(LangResources.get("save_directory_dialog_text"), LangResources.get("canceledByUser"));
 				return;
 			}
 
 			final Boolean extendAndKeepExistingProperties = resolveConfigurationChoice(LanguagePropertiesManager.CONFIG_KEEP_EXISTING_KEYS);
 			if (extendAndKeepExistingProperties == null) {
 				// Cancelling the question is no "no", which would drop the existing keys of the files
-				showErrorMessage(LangResources.get("save_directory_dialog_text"), LangResources.get("canceledByUser"));
 				return;
 			}
 
 			final WriteLanguagePropertiesWorker writeLanguagePropertiesWorker = new WriteLanguagePropertiesWorker(null, model.getLanguageProperties(), newPropertiesSetName, directory, excludeParts, extendAndKeepExistingProperties, applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION));
 			if (!applyWriteConfigurationChoices(writeLanguagePropertiesWorker)) {
-				showErrorMessage(LangResources.get("save_directory_dialog_text"), LangResources.get("canceledByUser"));
 				return;
 			}
 			final ProgressDialog<WriteLanguagePropertiesWorker> progressDialog = new ProgressDialog<>(this, LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("save_files"), writeLanguagePropertiesWorker);
 			final Result dialogResult = progressDialog.open();
-			if (dialogResult == Result.CANCELED || !Boolean.TRUE.equals(writeLanguagePropertiesWorker.get())) {
-				// A canceled save may have written only a part of the files, so the data still counts as unsaved
-				showErrorMessage(LangResources.get("save_directory_dialog_text"), LangResources.get("canceledByUser"));
-			} else {
+			// A canceled save may have written only a part of the files, so the data then still counts as unsaved
+			if (dialogResult != Result.CANCELED && Boolean.TRUE.equals(writeLanguagePropertiesWorker.get())) {
 				model.setUnsavedChanges(false);
 				showData(LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("saveDirectoryResult", Utilities.join(writeLanguagePropertiesWorker.getListOfStoredProperties(), "\n")));
 			}
@@ -1394,7 +1376,6 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 		final File importFile = SwingDialogUtilities.chooseFileToOpen(this, getTitle() + " " + LangResources.get("import_file"), getInitialImportExportDirectory(), fileExtensions);
 		if (importFile == null) {
-			showErrorMessage(LangResources.get("import_file"), LangResources.get("canceledByUser"));
 			return;
 		}
 		rememberImportExportDirectory(importFile);
@@ -1406,8 +1387,6 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				setupTable();
 				refreshDetailView();
 				showMessage(LangResources.get("import_file"), LangResources.get("actionSuccessfullyCompleted"));
-			} else {
-				showErrorMessage(LangResources.get("import_file"), LangResources.get("canceledByUser"));
 			}
 		} catch (final ExecutionException e) {
 			resetLoadedData();
@@ -1460,7 +1439,6 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			} else if (returncode != null && returncode == 2) {
 				mergeMode = MergeMode.FILL_EMPTY_ONLY;
 			} else {
-				showErrorMessage(LangResources.get("mergeImport_title"), LangResources.get("canceledByUser"));
 				return;
 			}
 		}
@@ -1516,7 +1494,6 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		} else if (returncode != null && returncode == 1) {
 			removeEmptyProperties = false;
 		} else {
-			showErrorMessage(title, LangResources.get("canceledByUser"));
 			return;
 		}
 
@@ -1571,7 +1548,6 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			final String exportBaseName = Utilities.isNotBlank(model.getLanguagePropertiesSetName()) ? model.getLanguagePropertiesSetName() : "LanguageProperties";
 			final File exportFile = SwingDialogUtilities.chooseFileToSave(this, getTitle() + " " + LangResources.get("export_file"), getInitialImportExportDirectory(), exportBaseName + "_Export_" + DateUtilities.formatDate("yyyy-MM-dd_HH-mm", LocalDateTime.now()) + "." + fileExtension, fileExtension);
 			if (exportFile == null) {
-				showErrorMessage(LangResources.get("export_file"), LangResources.get("canceledByUser"));
 				return;
 			}
 			rememberImportExportDirectory(exportFile);
@@ -1586,8 +1562,6 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 					// An export into Excel or CSV also counts as saved data
 					model.setUnsavedChanges(false);
 					showMessage(LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("exportSuccess"));
-				} else {
-					showErrorMessage(LangResources.get("export_file"), LangResources.get("canceledByUser"));
 				}
 			} catch (final Exception e) {
 				showError(e);

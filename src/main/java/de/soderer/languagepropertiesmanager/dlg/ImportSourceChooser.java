@@ -219,18 +219,17 @@ final class ImportSourceChooser {
 		owner.checkButtonStatus();
 
 		if (filePath == null) {
-			owner.showErrorMessage(title, LangResources.get("canceledByUser"));
 			return null;
 		} else if (!new File(filePath).exists()) {
 			owner.showErrorMessage(title, LangResources.get("error.recentPathDoesNotExistAnymore", filePath));
 			return null;
 		} else if (new File(filePath).isDirectory()) {
-			return readImportSourceResult(title, readAllLanguagePropertiesSets(filePath));
+			return readAllLanguagePropertiesSets(filePath);
 		} else if (!hasLanguagePropertiesFileExtension(filePath)) {
 			owner.showErrorMessage(title, LangResources.get("missingMandatoryFileExtension", applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION)));
 			return null;
 		} else {
-			return readImportSourceResult(title, readSingleLanguagePropertiesSet(filePath));
+			return readSingleLanguagePropertiesSet(filePath);
 		}
 	}
 
@@ -238,7 +237,6 @@ final class ImportSourceChooser {
 		// Preselects the directory of the latest used properties, robust against files, deleted paths and an empty recent list
 		final File file = SwingDialogUtilities.chooseFileToOpen(owner, owner.getTitle() + " " + title, owner.getInitialPropertiesDirectory());
 		if (file == null) {
-			owner.showErrorMessage(title, LangResources.get("canceledByUser"));
 			return null;
 		} else if (!file.isFile()) {
 			throw new Exception("Selected language properties set path is not an existing file");
@@ -246,7 +244,7 @@ final class ImportSourceChooser {
 			owner.showErrorMessage(title, LangResources.get("missingMandatoryFileExtension", applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION)));
 			return null;
 		} else {
-			return readImportSourceResult(title, readSingleLanguagePropertiesSet(file.getAbsolutePath()));
+			return readSingleLanguagePropertiesSet(file.getAbsolutePath());
 		}
 	}
 
@@ -254,12 +252,11 @@ final class ImportSourceChooser {
 		// Preselects the directory of the latest used properties, robust against files, deleted paths and an empty recent list
 		final File directory = SwingDialogUtilities.chooseDirectory(owner, owner.getTitle() + " " + title, owner.getInitialPropertiesDirectory());
 		if (directory == null) {
-			owner.showErrorMessage(title, LangResources.get("canceledByUser"));
 			return null;
 		} else if (!directory.isDirectory()) {
 			throw new Exception("Selected language properties directory is not an existing directory");
 		} else {
-			return readImportSourceResult(title, readAllLanguagePropertiesSets(directory.getAbsolutePath()));
+			return readAllLanguagePropertiesSets(directory.getAbsolutePath());
 		}
 	}
 
@@ -275,22 +272,11 @@ final class ImportSourceChooser {
 		// Shares the remembered directory with the Excel and CSV import and export of the main window
 		final File importFile = SwingDialogUtilities.chooseFileToOpen(owner, owner.getTitle() + " " + title, owner.getInitialImportExportDirectory(), fileExtensions);
 		if (importFile == null) {
-			owner.showErrorMessage(title, LangResources.get("canceledByUser"));
 			return null;
 		} else {
 			owner.rememberImportExportDirectory(importFile);
-			return readImportSourceResult(title, dataFileReader.read(importFile));
+			return dataFileReader.read(importFile);
 		}
-	}
-
-	/**
-	 * Shows the cancel message, if reading was canceled in the progress dialog or in a configuration question
-	 */
-	private LoadedLanguageProperties readImportSourceResult(final String title, final LoadedLanguageProperties loadedLanguageProperties) {
-		if (loadedLanguageProperties == null) {
-			owner.showErrorMessage(title, LangResources.get("canceledByUser"));
-		}
-		return loadedLanguageProperties;
 	}
 
 	/**
