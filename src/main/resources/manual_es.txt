@@ -94,20 +94,21 @@ Las claves nuevas se asignan al conjunto de propiedades cargado correspondiente,
 Si no es posible, las claves nuevas conservan el LanguagePropertiesSetPath del origen de la importación y se escribirían allí al guardar. El informe de resultados lo indica expresamente.
 Los identificadores de idioma nuevos se crean para todas las propiedades.
 
-Tratamiento de conflictos:
-Solo aparece una consulta si los valores importados difieren de valores existentes no vacíos.
-Muestra el número de claves nuevas, de claves ya existentes, de claves con valores distintos, de valores vacíos que se pueden rellenar y de entradas omitidas.
-Están disponibles las siguientes opciones:
-	"Solo añadir lo nuevo" (se añaden las claves nuevas y se rellenan los valores vacíos; los valores existentes no cambian)
-	"Sobrescribir existentes" (además, los valores existentes distintos se sustituyen por los valores importados)
-	"Solo rellenar valores vacíos" (no se añaden claves nuevas; solo se rellenan los valores vacíos de las claves existentes)
-	"Cancelar" (no se modifica nada)
-Si no hay valores distintos, las claves nuevas se añaden y los valores vacíos se rellenan sin consulta.
+Elección de los efectos:
+Antes de modificar nada, siempre aparece un diálogo que muestra los efectos de la importación. Indica el origen de la importación, el número de entradas importadas asignadas a una propiedad existente y el número de entradas omitidas.
+Cada efecto se puede activar o desactivar con su propia casilla. Cada casilla indica el número de propiedades o valores afectados y, debajo, una breve explicación:
+	"Añadir propiedades nuevas" (se añaden las propiedades del origen de la importación que todavía no existen; seleccionada por defecto)
+	"Rellenar valores vacíos" (los valores hasta ahora vacíos de las propiedades existentes se rellenan con el valor importado; seleccionada por defecto)
+	"Sobrescribir valores distintos" (los valores existentes no vacíos que difieren del valor importado se sustituyen por este; no seleccionada por defecto, ya que se pierden los valores existentes)
+Una casilla que no afecta a ninguna entrada está desactivada.
+Un resumen bajo las casillas muestra inmediatamente, con cada cambio, lo que hará la importación con la selección actual. La sobrescritura de valores existentes se resalta allí en rojo.
+El botón "Importar" solo está activo si la selección actual realmente modifica algo. "Cancelar" o la tecla Escape cierran el diálogo sin modificar nada.
+Por ejemplo, para cerrar solo huecos sin incorporar claves nuevas, se selecciona únicamente "Rellenar valores vacíos".
 
 Después de la importación:
 Todas las propiedades añadidas y modificadas quedan seleccionadas en la tabla de datos, de modo que se pueden revisar o, por ejemplo, traducir directamente (véase 4.5).
 Las propiedades se consideran modificadas y todavía deben guardarse.
-Un informe de resultados enumera las claves añadidas, los valores rellenados, sobrescritos y los valores distintos conservados, las entradas no añadidas y omitidas, así como los identificadores de idioma nuevos.
+Un informe de resultados enumera las opciones elegidas, las claves añadidas, los valores rellenados, sobrescritos y los valores distintos conservados, los valores vacíos no rellenados, las entradas no añadidas y omitidas, así como los identificadores de idioma nuevos.
 Además, contiene el resultado de una comprobación de errores (véase 4.9) de las entradas importadas, ya que el origen de la importación puede utilizar, por ejemplo, otra codificación.
 
 3.7 Comparación con un conjunto base (eliminar valores idénticos)
@@ -137,7 +138,7 @@ Si no se encuentran valores idénticos, solo se muestra el aviso correspondiente
 Después de la comparación:
 Las propiedades restantes modificadas quedan seleccionadas en la tabla de datos. Las propiedades se consideran modificadas y todavía deben guardarse.
 Un informe de resultados enumera las entradas eliminadas, los valores idénticos eliminados, los valores restantes que difieren del conjunto base y las entradas omitidas.
-Importante: para que las claves eliminadas también desaparezcan de los archivos, al guardar (véase 6.1) hay que responder "No" a la pregunta de si se deben conservar las propiedades ya existentes. De lo contrario, estas claves permanecen en los archivos.
+Importante: para que las claves eliminadas también desaparezcan de los archivos, al guardar (véase 6.1) no se deben conservar las claves ya existentes. Por tanto, hay que responder "No" a la pregunta correspondiente, o el valor de configuración "KeepExistingKeysOnSave" debe estar en "No" (véase 7.3). De lo contrario, estas claves permanecen en los archivos.
 
 
 4. Edición de valores de propiedades individuales
@@ -297,7 +298,8 @@ En cuanto se modifican los valores de una propiedad de idioma, el botón "Guarda
 Si a los valores del conjunto de propiedades ya se les ha asignado un LanguagePropertiesSetPath, los datos se guardan (de nuevo) exactamente allí.
 Para valores recién creados, si solo hay un LanguagePropertiesSetPath cargado, este se utiliza como ruta predeterminada para los valores nuevos.
 Si hay varios LanguagePropertiesSetPath disponibles, se solicita una única vez un archivo cuyo LanguagePropertiesSetPath se utiliza para todos los valores nuevos.
-Antes de guardar se pregunta si se deben conservar las propiedades que ya existen en los archivos de destino pero que no están cargadas en la herramienta. Si se cierra esta pregunta, se cancela el guardado.
+Antes de guardar se pregunta si se deben conservar las propiedades que ya existen en los archivos de destino pero que no están cargadas en la herramienta ("Sí", "No" o "Cancelar"). "Cancelar" o cerrar esta pregunta cancela el guardado.
+El valor de configuración "KeepExistingKeysOnSave" determina si aparece esta pregunta o si se decide siempre de la misma manera (véase 7.3).
 Si el guardado se cancela o falla, las propiedades siguen considerándose no guardadas.
 Si los directorios de destino todavía no existen, se ofrece crearlos.
 
@@ -358,7 +360,17 @@ Si falta el punto inicial, se añade automáticamente ("properties" se utiliza c
 7.2 Otros valores de configuración
 
 	"OpenDirExcludes": partes de ruta separadas por ";" (por defecto "__;/src/test/;\src\test\;/bin/;\bin\"). Los archivos cuya ruta contiene alguna de estas partes se ignoran al cargar un directorio (3.2) y al guardar en un directorio (6.2).
-	"IgnoreComments": si está activado, los comentarios no se cargan ni se muestran, y la columna de comentarios se oculta.
 	"DeepL_BaseUrl" y "DeepL_ApiKey": dirección y clave API para la traducción con DeepL (4.5).
 	"TranslationConstantsFile": archivo CSV opcional (UTF-8, separador ";", "," o tabulador) con valores que DeepL no debe modificar, p. ej., nombres de productos o códigos.
 		La primera línea contiene los identificadores de idioma (p. ej., "de;en;it"). Una línea con un solo valor define un valor idéntico en todos los idiomas; las demás líneas contienen el valor por idioma.
+
+7.3 Valores de configuración con Sí / No / Preguntar cada vez
+
+Algunos valores de configuración se pueden establecer en "Sí", "No" o "Preguntar cada vez" en el diálogo de configuración.
+Con "Preguntar cada vez", la pregunta aparece una vez por acción (p. ej., una sola vez para la carga y el posterior guardado de una importación), antes de modificar nada. Las respuestas posibles son "Sí", "No" y "Cancelar"; "Cancelar" interrumpe toda la acción.
+Las entradas existentes "true" y "false" en el archivo de configuración siguen siendo válidas y equivalen a "Sí" y "No".
+	"IgnoreComments" (por defecto "No"): con "Sí", los comentarios no se cargan ni se muestran, y la columna de comentarios se oculta.
+	"EscapeApostrophesByDoubling" (por defecto "No"): con "Sí", los apóstrofos se duplican ("''") en los archivos de propiedades, tal como espera java.text.MessageFormat. Al cargar, "''" vuelve a convertirse en un solo apóstrofo. En la herramienta y en los archivos Excel y CSV siempre hay apóstrofos simples; solo la vista de texto de almacenamiento (véase 4.1) los muestra duplicados.
+	"StoreAsUtf8" (por defecto "No"): con "Sí", los archivos de propiedades se guardan en UTF-8 (sin BOM) y los caracteres no ASCII no se escapan como "\uXXXX" (admitido por java.util.PropertyResourceBundle desde Java 9). Con "No", se guardan en ISO-8859-1 con los caracteres no ASCII escapados.
+	"KeepExistingKeysOnSave" (por defecto "Preguntar cada vez"): determina si al guardar se conservan las claves que existen en los archivos de destino pero no están cargadas en la herramienta (véanse 6.1 y 3.7).
+En la línea de comandos, "Preguntar cada vez" requiere una consola interactiva; de lo contrario, la acción se interrumpe con un mensaje de error.

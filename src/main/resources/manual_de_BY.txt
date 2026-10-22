@@ -95,20 +95,21 @@ Neie Keys wern, soweit des eindeutig geht, dem passendn glodna Properties Set zu
 Geht des ned, na bhaltn neie Keys den LanguagePropertiesSetPath vo da Importquelle und dadn beim Speichern dorthin gschriebn wern. Do drauf weist da Ergebnisbericht ausdrücklich hi. Obacht gebn!
 Neie Sprachkennzeichn wern für olle Properties oglegt.
 
-Wenn's an Streit gibt:
-Bloß wenn importierte Werte vo scho vorhandna, ned leern Werte abweichn, werd nachgfragt.
-De Frog zoagt o, wia vui neie Keys, scho vorhandne Keys, Keys mit abweichende Werte, leere Werte zum Auffuin und übersprungane Einträge's gibt.
-Zur Auswahl stenga:
-	"Bloß Neis dazua" (Neie Keys kemman dazua und leere Werte wern aufgfüllt, vorhandne Werte bleibn wia's san)
-	"Bestehende überschreibn" (Zuasätzlich wern abweichende vorhandne Werte durch de importiertn ersetzt)
-	"Bloß leere Werte auffuin" (Es kemman koane neien Keys dazua, bloß leere Werte vo vorhandne Keys wern aufgfüllt)
-	"Abbrecha" (Es werd nix gändert. Gar nix.)
-Gibt's koane abweichendn Werte, na kemman neie Keys ohne Frog dazua und leere Werte wern aufgfüllt.
+Aussuacha, wos passiern soi:
+Bevor irgendwos gändert werd, kimmt oiwei a Dialog, der wo zoagt, wos da Import ostejt. Drin steht d'Importquelle, wia vui Importeinträg zu am vorhandna Property passn und wia vui Einträg übersprunga wern.
+Jede Auswirkung ko ma mit am eigna Kastl zum Ankreizln einzeln o- oder abwählen. Bei jedem Kastl steht, wia vui Properties oder Werte's betrifft, und drunter a kurze Erklärung:
+	"Neie Properties dazua" (Properties aus da Importquelle, de wo's no ned gibt, kemman dazua, is normalerweis ankreizlt)
+	"Leere Werte auffuin" (Bis jetzt leere Werte vo vorhandne Properties wern mit'm importiertn Wert aufgfüllt, is normalerweis ankreizlt)
+	"Abweichende Werte überschreibn" (Vorhandne, ned leere Werte, de wo vom importiertn Wert abweichn, wern durch den ersetzt, is normalerweis ned ankreizlt, weil de oidn Werte nachad weg san. Wos weg is, is weg.)
+A Kastl, des wo koan Eintrag betrifft, is ausgraut. Do gibt's nix zum Ankreizln.
+A Zammfassung unter de Kastl zoagt bei jeder Änderung glei o, wos da Import mit da aktuellen Auswahl ostejt. Wenn vorhandne Werte überschriebn wern, steht des rot do. Obacht!
+Da Knopf "Importiern" geht bloß, wenn de Auswahl aa wirklich wos ändert. "Abbrecha" oder d'Escape-Tastn macha den Dialog zua, ohne dass wos gändert werd.
+Wer z.B. bloß de Lückn stopfa mog, ohne neie Keys dazuazholn, kreizlt bloß "Leere Werte auffuin" o.
 
 Nachm Import:
 Olle dazuakemmana und gänderten Properties wern in da Datntabelln markiert, damit ma's glei anschaun oder z.B. übersetzn ko (schau in 4.5).
 De Properties gejtn ois gändert und miassn no gspeichert wern. Von alloa speichert si nix.
-A Ergebnisbericht listet de dazuakemmana Keys, aufgfüllte, überschriebne und bhaltne abweichende Werte, ned dazuakemmane und übersprungane Einträg und neie Sprachkennzeichn auf.
+A Ergebnisbericht listet de ausgsuachtn Optiona, de dazuakemmana Keys, aufgfüllte, überschriebne und bhaltne abweichende Werte, ned aufgfüllte leere Werte, ned dazuakemmane und übersprungane Einträg und neie Sprachkennzeichn auf.
 Zuasätzlich steht no as Ergebnis vo oaner Fehlerprüfung (schau in 4.9) vo de importiertn Einträg drin, weil d'Importquelle z.B. a anders Encoding ham ko. Ma woaß ja nia, wo des Zeig herkimmt.
 
 3.7 Mit am Basis-Set abgleichn (gleiche Werte rausschmeißn)
@@ -138,7 +139,7 @@ Werdn koane gleichn Werte gfundn, kimmt bloß a Hinweis und sunst passiert nix.
 Nachm Abgleich:
 De übrigbliebna, gänderten Properties wern in da Datntabelln markiert. De Properties gejtn ois gändert und miassn no gspeichert wern.
 A Ergebnisbericht listet glöschte Einträg, rausgschmissne gleiche Werte, de übrigbliebna vom Basis-Set abweichendn Werte und übersprungane Einträg auf.
-Wichtig, jetzt aufpassn: Damit glöschte Keys aa aus de Datein verschwindn, muass ma beim Speichern (schau in 6.1) de Frog, ob scho vorhandne Properties bleibn soin, mit "Na" beantwortn. Sonst bleibn de Keys in de Datein drin, wia da Rausch vom Vortag.
+Wichtig, jetzt aufpassn: Damit glöschte Keys aa aus de Datein verschwindn, dürfa beim Speichern (schau in 6.1) de scho vorhandna Keys ned bleibn. De Frog muass ma also mit "Na" beantwortn, oder da Konfigurationswert "KeepExistingKeysOnSave" muass auf "Na" steh (schau in 7.3). Sonst bleibn de Keys in de Datein drin, wia da Rausch vom Vortag.
 
 
 4. Einzelne Property-Werte bearbeitn
@@ -301,7 +302,8 @@ Sobald an de Werte vo oaner Language Property wos gändert worn is, geht da Knop
 Wenn de Werte im Properties Set scho an LanguagePropertiesSetPath ham, wern de Datn gnau dort (wieder) hi gspeichert.
 Bei neu oglegte Werte und bloß oam glodna LanguagePropertiesSetPath werd der ois Standardpfad für neie Werte hergnomma.
 Gibt's mehrane LanguagePropertiesSetPath, werd ma oamoi nach oaner Datei gfragt, deren LanguagePropertiesSetPath für olle neien Werte hergnomma werd.
-Vorm Speichern werd gfragt, ob Properties, de wo in de Zieldatein scho drinstehn, aber ned im Werkzeig glodn san, bleibn soin. Wer de Frog oafach zuamacht, bricht des Speichern ab.
+Vorm Speichern werd gfragt, ob Properties, de wo in de Zieldatein scho drinstehn, aber ned im Werkzeig glodn san, bleibn soin ("Freilich", "Na" oder "Abbrecha"). Wer "Abbrecha" druckt oder de Frog oafach zuamacht, bricht des Speichern ab.
+Ob de Frog überhaupts kimmt oder oiwei gleich entschiedn werd, stejt ma mit'm Konfigurationswert "KeepExistingKeysOnSave" ei (schau in 7.3).
 Werd as Speichern abbrocha oder geht's schief, gejtn de Properties weiterhin ois ned gspeichert. Nix is verlorn.
 Gibt's de Zielverzeichnisse no ned, werd ogbotn, dass ma's olegt.
 
@@ -363,10 +365,20 @@ Fehlt vorn da Punkt, werd er automatisch dazuagmacht ("properties" werd ois ".pr
 7.2 No mehra Konfigurationswerte
 
 	"OpenDirExcludes": Pfad-Trümmer, mit ";" trennt (normalerweis "__;/src/test/;\src\test\;/bin/;\bin\"). Datein, deren Pfad oans vo dene Trümmer enthoit, wern beim Lodn vo am Verzeichnis (3.2) und beim Speichern in a Verzeichnis (6.2) ned beachtet.
-	"IgnoreComments": Is des gsetzt, wern Anmerkunga weder glodn no ozeigt, und de Anmerkungsspoitn is weg.
 	"DeepL_BaseUrl" und "DeepL_ApiKey": Adress und API Key fürs Übersetzn mit DeepL (4.5).
 	"TranslationConstantsFile": Optionale CSV-Datei (UTF-8, Trennzeichn ";", "," oder Tabulator) mit Werte, de wo DeepL ned olanga derf, z.B. Produktnamen oder Kürzl.
 		De erste Zeil hod de Sprachkennzeichn (z.B. "de;en;it"). A Zeil mit bloß oam Wert is a Wert, der wo in olle Sprachn gleich is, andere Zeiln ham den Wert je Sprach.
+
+7.3 Konfigurationswerte mit Freilich / Na / Jeds Moi frogn
+
+A paar Konfigurationswerte ko ma im Konfigurationsdialog auf "Freilich", "Na" oder "Jeds Moi frogn" stejn. Für Leit, de wo si ned entscheidn kenna.
+Bei "Jeds Moi frogn" kimmt de Frog oamoi pro Aktion (z.B. bloß oamoi fürs Lodn und des Speichern danach bei am Import), bevor wos gändert werd. Zur Auswahl stenga "Freilich", "Na" und "Abbrecha", wobei "Abbrecha" de ganze Aktion abbricht.
+De oidn Einträg "true" und "false" in da Konfigurationsdatei gejtn weiterhin und hoaßn des Gleiche wia "Freilich" und "Na".
+	"IgnoreComments" (normalerweis "Na"): Bei "Freilich" wern Anmerkunga weder glodn no ozeigt, und de Anmerkungsspoitn is weg.
+	"EscapeApostrophesByDoubling" (normalerweis "Na"): Bei "Freilich" wern Apostroph in de Properties-Datein verdoppelt ("''"), so wia's java.text.MessageFormat hom mog. Beim Lodn werd aus "''" wieder a einzelner Apostroph. Im Werkzeig und in Excel- und CSV-Datein stenga oiwei einfache Apostroph, bloß de Speicher-Text-Darstellung (schau in 4.1) zoagt's doppelt. Doppelt gmoppelt hoit.
+	"StoreAsUtf8" (normalerweis "Na"): Bei "Freilich" wern de Properties-Datein ois UTF-8 (ohne BOM) gspeichert, und Zeichn außerhoib vo ASCII wern ned ois "\uXXXX" verschlüsselt (des ko java.util.PropertyResourceBundle seit Java 9). Bei "Na" wern's ois ISO-8859-1 mit verschlüsselte Nicht-ASCII-Zeichn gspeichert. Do schaut a "ü" nachad aus wia "\u00fc", aber des kennt ma ja scho.
+	"KeepExistingKeysOnSave" (normalerweis "Jeds Moi frogn"): Ob beim Speichern Keys bleibn, de wo in de Zieldatein drinstehn, aber ned im Werkzeig glodn san (schau in 6.1 und 3.7).
+Auf da Kommandozeil braucht "Jeds Moi frogn" a Konsoln, de wo ma wos eitippn ko. Sonst bricht de Aktion mit oaner Fehlermeldung ab.
 
 
 Prost und vui Spaß beim Übersetzn!

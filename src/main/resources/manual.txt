@@ -94,20 +94,21 @@ New keys are assigned to the matching loaded properties set, as far as this is u
 If this is not possible, new keys keep the LanguagePropertiesSetPath of the import source and would be written there when saving. The result report explicitly points this out.
 Newly added language identifiers are created for all properties.
 
-Handling of conflicts:
-A prompt only appears if imported values differ from existing, non-empty values.
-It shows the number of new keys, of already existing keys, of keys with differing values, of empty values that can be filled and of skipped entries.
-The following options are available:
-	"Only add new" (new keys are added and empty values are filled, existing values remain unchanged)
-	"Overwrite existing" (in addition, differing existing values are replaced by the imported values)
-	"Only fill empty values" (no new keys are added, only empty values of existing keys are filled)
-	"Cancel" (nothing is changed)
-If there are no differing values, new keys are added and empty values are filled without a prompt.
+Choosing the effects:
+Before anything is changed, a dialog always appears that shows the effects of the import. It names the import source, the number of import entries matched to an existing property and the number of skipped entries.
+Each effect can be selected or deselected with its own checkbox. Each checkbox shows the number of affected properties or values, with a short explanation below it:
+	"Add new properties" (properties of the import source that do not exist yet are added, selected by default)
+	"Fill empty values" (previously empty values of existing properties are filled with the imported value, selected by default)
+	"Overwrite differing values" (existing, non-empty values that differ from the imported value are replaced by it, not selected by default, because existing values are lost)
+A checkbox that does not affect any entry is disabled.
+A summary below the checkboxes immediately shows what the import does with the current selection whenever a checkbox changes. Overwriting existing values is highlighted in red there.
+The "Import" button is only enabled if the current selection actually changes something. "Cancel" or the Escape key close the dialog without changing anything.
+To only close gaps without taking over new keys, for example, select only "Fill empty values".
 
 After the import:
 All added and changed properties are selected in the data table, so they can be reviewed or, for example, translated right away (see 4.5).
 The properties are marked as changed and still need to be saved.
-A result report lists added keys, filled, overwritten and kept differing values, entries not added and skipped, as well as new language identifiers.
+A result report lists the chosen options, added keys, filled, overwritten and kept differing values, empty values not filled, entries not added and skipped, as well as new language identifiers.
 In addition, it contains the result of an error check (see 4.9) of the imported entries, since the import source may, for example, use a different encoding.
 
 3.7 Comparison with a Base Set (Removing Identical Values)
@@ -137,7 +138,7 @@ If no identical values are found, only a corresponding notice is shown and no fu
 After the comparison:
 The remaining changed properties are selected in the data table. The properties are marked as changed and still need to be saved.
 A result report lists deleted entries, removed identical values, the remaining values differing from the base set, and skipped entries.
-Important: To remove deleted keys from the files as well, the question whether already existing properties should be kept must be answered with "No" when saving (see 6.1). Otherwise these keys remain in the files.
+Important: To remove deleted keys from the files as well, already existing keys must not be kept when saving (see 6.1). So the corresponding question must be answered with "No", or the configuration value "KeepExistingKeysOnSave" must be set to "No" (see 7.3). Otherwise these keys remain in the files.
 
 
 4. Editing Individual Property Values
@@ -297,7 +298,8 @@ As soon as changes have been made to the values of a language property, the "Sav
 If a LanguagePropertiesSetPath has already been assigned to the values in the properties set, the data will be (re)saved to that exact location.
 For newly created values and only one LanguagePropertiesSetPath is loaded, this LanguagePropertiesSetPath is used as the default path for new values.
 If multiple LanguagePropertiesSetPaths are available, you will be prompted to specify a file, whose LanguagePropertiesSetPath is used for all new values.
-Before saving, you are asked whether properties already existing in the target files, but not loaded in the tool, should be kept. Closing this question cancels the save.
+Before saving, you are asked whether properties already existing in the target files, but not loaded in the tool, should be kept ("Yes", "No" or "Cancel"). "Cancel" or closing this question cancels the save.
+Whether this question appears or is always decided the same way is defined by the configuration value "KeepExistingKeysOnSave" (see 7.3).
 If saving is canceled or fails, the properties still count as unsaved.
 If target directories do not exist yet, you are offered to create them.
 
@@ -358,7 +360,17 @@ A missing leading dot is added automatically ("properties" is used as ".properti
 7.2 Further Configuration Values
 
 	"OpenDirExcludes": Path parts separated by ";" (default "__;/src/test/;\src\test\;/bin/;\bin\"). Files whose path contains one of these parts are ignored when loading a directory (3.2) and when saving to a directory (6.2).
-	"IgnoreComments": If set, comments are neither loaded nor shown, and the comment column is hidden.
 	"DeepL_BaseUrl" and "DeepL_ApiKey": Address and API key for the translation with DeepL (4.5).
 	"TranslationConstantsFile": Optional CSV file (UTF-8, separator ";", "," or tab) with values that must not be changed by DeepL, e.g. product names or codes.
 		The first line contains the language identifiers (e.g. "de;en;it"). A line with only one value defines a value that is identical in all languages, other lines contain the value per language.
+
+7.3 Configuration Values with Yes / No / Ask Each Time
+
+Some configuration values can be set to "Yes", "No" or "Ask each time" in the configuration dialog.
+With "Ask each time", the question appears once per action (e.g. only once for loading and subsequently saving an import), before anything is changed. The answers are "Yes", "No" and "Cancel", where "Cancel" aborts the whole action.
+Existing entries "true" and "false" in the configuration file stay valid and correspond to "Yes" and "No".
+	"IgnoreComments" (default "No"): With "Yes", comments are neither loaded nor shown, and the comment column is hidden.
+	"EscapeApostrophesByDoubling" (default "No"): With "Yes", apostrophes are doubled ("''") in the properties files, as expected by java.text.MessageFormat. When loading, "''" becomes a single apostrophe again. The tool as well as Excel and CSV files always contain single apostrophes, only the saved text view (see 4.1) shows them doubled.
+	"StoreAsUtf8" (default "No"): With "Yes", the properties files are stored as UTF-8 (without BOM) and non-ASCII characters are not escaped as "\uXXXX" (supported by java.util.PropertyResourceBundle since Java 9). With "No", they are stored as ISO-8859-1 with escaped non-ASCII characters.
+	"KeepExistingKeysOnSave" (default "Ask each time"): Whether keys existing in the target files, but not loaded in the tool, are kept when saving (see 6.1 and 3.7).
+On the command line, "Ask each time" requires an interactive console, otherwise the action is aborted with an error message.

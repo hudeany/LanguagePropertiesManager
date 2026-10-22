@@ -95,20 +95,21 @@ Neue Keys werden, soweit eindeutig möglich, dem passenden geladenen Properties 
 Ist das nicht möglich, behalten neue Keys den LanguagePropertiesSetPath der Importquelle und würden beim Speichern dorthin geschrieben. Darauf weist der Ergebnisbericht ausdrücklich hin.
 Neu hinzukommende Sprachenkennzeichen werden für alle Properties angelegt.
 
-Behandlung von Konflikten:
-Nur wenn importierte Werte von bereits vorhandenen, nicht leeren Werten abweichen, erfolgt eine Abfrage.
-Diese zeigt die Anzahl der neuen Keys, der bereits vorhandenen Keys, der Keys mit abweichenden Werten, der füllbaren leeren Werte und der übersprungenen Einträge an.
-Zur Auswahl stehen:
-	"Nur Neues hinzufügen" (Neue Keys werden hinzugefügt und leere Werte gefüllt, vorhandene Werte bleiben unverändert)
-	"Bestehende überschreiben" (Zusätzlich werden abweichende vorhandene Werte durch die importierten Werte ersetzt)
-	"Nur leere Werte füllen" (Es werden keine neuen Keys hinzugefügt, nur leere Werte vorhandener Keys werden gefüllt)
-	"Abbrechen" (Es wird nichts verändert)
-Gibt es keine abweichenden Werte, werden neue Keys ohne Abfrage hinzugefügt und leere Werte gefüllt.
+Auswahl der Auswirkungen:
+Bevor etwas verändert wird, erscheint immer ein Dialog, der die Auswirkungen des Imports zeigt. Er nennt die Importquelle, die Anzahl der Importeinträge, die einem vorhandenen Property zugeordnet wurden, und die Anzahl der übersprungenen Einträge.
+Jede Auswirkung lässt sich über eine eigene Checkbox einzeln an- oder abwählen. Jede Checkbox nennt die Anzahl der betroffenen Properties bzw. Werte, darunter steht eine kurze Erklärung:
+	"Neue Properties hinzufügen" (Properties der Importquelle, die es noch nicht gibt, werden hinzugefügt, standardmäßig gewählt)
+	"Leere Werte füllen" (Bisher leere Werte vorhandener Properties werden mit dem importierten Wert gefüllt, standardmäßig gewählt)
+	"Abweichende Werte überschreiben" (Vorhandene, nicht leere Werte, die vom importierten Wert abweichen, werden durch diesen ersetzt, standardmäßig nicht gewählt, da dabei bestehende Werte verloren gehen)
+Eine Checkbox, die keinen Eintrag betrifft, ist deaktiviert.
+Eine Zusammenfassung unter den Checkboxen zeigt bei jeder Änderung sofort, was der Import mit der aktuellen Auswahl bewirkt. Das Überschreiben vorhandener Werte wird dort rot hervorgehoben.
+Der Button "Importieren" ist nur aktiv, wenn die aktuelle Auswahl tatsächlich etwas verändert. "Abbrechen" oder die Escape-Taste schließen den Dialog, ohne etwas zu verändern.
+Sollen z.B. nur Lücken geschlossen werden, ohne neue Keys aufzunehmen, wählt man nur "Leere Werte füllen".
 
 Nach dem Import:
 Alle hinzugefügten und geänderten Properties werden in der Datentabelle ausgewählt, so dass sie direkt geprüft oder z.B. übersetzt werden können (siehe 4.5).
 Die Properties gelten als geändert und müssen noch gespeichert werden.
-Ein Ergebnisbericht listet hinzugefügte Keys, gefüllte, überschriebene und beibehaltene abweichende Werte, nicht hinzugefügte und übersprungene Einträge sowie neue Sprachenkennzeichen auf.
+Ein Ergebnisbericht listet die gewählten Optionen, hinzugefügte Keys, gefüllte, überschriebene und beibehaltene abweichende Werte, nicht gefüllte leere Werte, nicht hinzugefügte und übersprungene Einträge sowie neue Sprachenkennzeichen auf.
 Zusätzlich enthält er das Ergebnis einer Fehlerprüfung (siehe 4.9) der importierten Einträge, da die Importquelle z.B. ein anderes Encoding verwenden kann.
 
 3.7 Abgleich mit einem Basis-Set (identische Werte entfernen)
@@ -138,7 +139,7 @@ Werden keine identischen Werte gefunden, erfolgt lediglich ein entsprechender Hi
 Nach dem Abgleich:
 Die verbleibenden, veränderten Properties werden in der Datentabelle ausgewählt. Die Properties gelten als geändert und müssen noch gespeichert werden.
 Ein Ergebnisbericht listet gelöschte Einträge, entfernte identische Werte und die verbleibenden vom Basis-Set abweichenden Werte sowie übersprungene Einträge auf.
-Wichtig: Damit gelöschte Keys auch aus den Dateien entfernt werden, muss beim Speichern (siehe 6.1) die Frage, ob bereits vorhandene Properties erhalten bleiben sollen, mit "Nein" beantwortet werden. Andernfalls bleiben diese Keys in den Dateien bestehen.
+Wichtig: Damit gelöschte Keys auch aus den Dateien entfernt werden, dürfen beim Speichern (siehe 6.1) bereits vorhandene Keys nicht erhalten bleiben. Die entsprechende Frage muss also mit "Nein" beantwortet werden, bzw. der Konfigurationswert "KeepExistingKeysOnSave" muss auf "Nein" stehen (siehe 7.3). Andernfalls bleiben diese Keys in den Dateien bestehen.
 
 
 4. Bearbeiten von einzelnen Property Werten
@@ -299,7 +300,8 @@ Sobald an den Werten eines Language Properties Änderungen vorgenommen wurden, w
 Sofern den Werten im Properties Set bereits ein LanguagePropertiesSetPath zugewiesen wurde, werden die Daten genau darin (zurück-)gespeichert.
 Bei neu angelegten Werten und nur einem geladenen LanguagePropertiesSetPath wird dieser LanguagePropertiesSetPath als Standardpfad für neue Werte verwendet.
 Bei mehreren verfügbaren LanguagePropertiesSetPath wird zur einmaligen Angabe einer Datei aufgefordert, deren LanguagePropertiesSetPath für alle neuen Werte verwendet wird.
-Vor dem Speichern wird abgefragt, ob in den Zieldateien bereits vorhandene Properties, die nicht im Tool geladen sind, erhalten bleiben sollen. Schließen dieser Abfrage bricht das Speichern ab.
+Vor dem Speichern wird abgefragt, ob in den Zieldateien bereits vorhandene Properties, die nicht im Tool geladen sind, erhalten bleiben sollen ("Ja", "Nein" oder "Abbrechen"). "Abbrechen" oder Schließen dieser Abfrage bricht das Speichern ab.
+Ob diese Frage erscheint oder immer gleich entschieden wird, legt der Konfigurationswert "KeepExistingKeysOnSave" fest (siehe 7.3).
 Wird das Speichern abgebrochen oder schlägt es fehl, gelten die Properties weiterhin als ungespeichert.
 Existieren Zielverzeichnisse noch nicht, wird angeboten, diese anzulegen.
 
@@ -360,7 +362,17 @@ Ein fehlender führender Punkt wird automatisch ergänzt ("properties" wird als 
 7.2 Weitere Konfigurationswerte
 
 	"OpenDirExcludes": Durch ";" getrennte Pfadteile (Standard "__;/src/test/;\src\test\;/bin/;\bin\"). Dateien, deren Pfad einen dieser Teile enthält, werden beim Laden eines Verzeichnisses (3.2) und beim Speichern in ein Verzeichnis (6.2) ignoriert.
-	"IgnoreComments": Wenn gesetzt, werden Kommentare weder geladen noch angezeigt, und die Kommentarspalte wird ausgeblendet.
 	"DeepL_BaseUrl" und "DeepL_ApiKey": Adresse und API Key für die Übersetzung mit DeepL (4.5).
 	"TranslationConstantsFile": Optionale CSV Datei (UTF-8, Trennzeichen ";", "," oder Tabulator) mit Werten, die DeepL nicht verändern darf, z.B. Produktnamen oder Kürzel.
 		Die erste Zeile enthält die Sprachenkennzeichen (z.B. "de;en;it"). Eine Zeile mit nur einem Wert definiert einen in allen Sprachen identischen Wert, andere Zeilen enthalten den Wert je Sprache.
+
+7.3 Konfigurationswerte mit Ja / Nein / Jedes Mal fragen
+
+Einige Konfigurationswerte können im Konfigurationsdialog auf "Ja", "Nein" oder "Jedes Mal fragen" gestellt werden.
+Bei "Jedes Mal fragen" erscheint die Frage einmal pro Aktion (z.B. nur einmal für das Laden und anschließende Speichern eines Imports), bevor etwas verändert wird. Zur Auswahl stehen "Ja", "Nein" und "Abbrechen", wobei "Abbrechen" die ganze Aktion abbricht.
+Bisherige Einträge "true" und "false" in der Konfigurationsdatei bleiben gültig und entsprechen "Ja" und "Nein".
+	"IgnoreComments" (Standard "Nein"): Bei "Ja" werden Kommentare weder geladen noch angezeigt, und die Kommentarspalte wird ausgeblendet.
+	"EscapeApostrophesByDoubling" (Standard "Nein"): Bei "Ja" werden Apostrophe in den Properties Dateien verdoppelt ("''"), wie es java.text.MessageFormat erwartet. Beim Laden wird "''" wieder zu einem einzelnen Apostroph. Im Tool sowie in Excel und CSV Dateien stehen immer einfache Apostrophe, nur die Speicher-Text Darstellung (siehe 4.1) zeigt sie verdoppelt.
+	"StoreAsUtf8" (Standard "Nein"): Bei "Ja" werden die Properties Dateien als UTF-8 (ohne BOM) gespeichert, Nicht-ASCII-Zeichen werden dabei nicht als "\uXXXX" maskiert (von java.util.PropertyResourceBundle ab Java 9 unterstützt). Bei "Nein" werden sie als ISO-8859-1 mit maskierten Nicht-ASCII-Zeichen gespeichert.
+	"KeepExistingKeysOnSave" (Standard "Jedes Mal fragen"): Ob beim Speichern Keys erhalten bleiben, die in den Zieldateien vorhanden, aber nicht im Tool geladen sind (siehe 6.1 und 3.7).
+Über die Kommandozeile setzt "Jedes Mal fragen" eine interaktive Konsole voraus, andernfalls bricht die Aktion mit einer Fehlermeldung ab.

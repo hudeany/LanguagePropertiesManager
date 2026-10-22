@@ -95,20 +95,21 @@ Neui Keys werdet, sowiit eidüütig möglich, em passende glade Properties Set z
 Gaht das nöd, bhaltet neui Keys de LanguagePropertiesSetPath vo de Importquelle und würded bim Speichere det ane gschribe. Uf das wiist de Ergebnisbricht usdrücklich hii.
 Neu dezuechoni Sprachchennzeiche werdet für alli Properties aagleit.
 
-Behandlig vo Konflikt:
-Nume wänn importierti Wärt vo scho vorhandene, nöd leere Wärt abwiiched, chunnt e Abfrag.
-Die zeigt d Aazahl vo de neue Keys, vo de scho vorhandene Keys, vo de Keys mit abwiichende Wärt, vo de füllbare leere Wärt und vo de übersprungene Iiträg aa.
-Zur Uswahl stönd:
-	"Nume Neus dezuefüege" (Neui Keys werdet dezuegfüegt und leeri Wärt gfüllt, vorhandeni Wärt bliibed unveränderet)
-	"Bestehendi überschriibe" (Zuesätzlich werdet abwiichendi vorhandeni Wärt dur di importierte Wärt ersetzt)
-	"Nume leeri Wärt fülle" (Es werdet kei neue Keys dezuegfüegt, nume leeri Wärt vo vorhandene Keys werdet gfüllt)
-	"Abbräche" (Es wird nüt veränderet)
-Gits kei abwiichendi Wärt, werdet neui Keys ohni Abfrag dezuegfüegt und leeri Wärt gfüllt.
+Uswahl vo de Uswürkige:
+Bevor öppis veränderet wird, chunnt immer en Dialog, wo d Uswürkige vom Import zeigt. Er nännt d Importquelle, d Aazahl vo de Importiiträg, wo emne vorhandene Property zuegordnet worde sind, und d Aazahl vo de übersprungene Iiträg.
+Jedi Uswürkig cha mer mit enere eigete Checkbox einzeln aa- oder abwähle. Jedi Checkbox nännt d Aazahl vo de betroffene Properties bzw. Wärt, darunder staht e churzi Erchlärig:
+	"Neui Properties dezuefüege" (Properties vo de Importquelle, wo s no nöd git, werdet dezuegfüegt, standardmässig gwählt)
+	"Leeri Wärt fülle" (Bis jetzt leeri Wärt vo vorhandene Properties werdet mit em importierte Wärt gfüllt, standardmässig gwählt)
+	"Abwiichendi Wärt überschriibe" (Vorhandeni, nöd leeri Wärt, wo vom importierte Wärt abwiiched, werdet dur dä ersetzt, standardmässig nöd gwählt, will debii bestehendi Wärt verlore gönd)
+E Checkbox, wo kein Iitrag betrifft, isch deaktiviert.
+E Zämmefassig under de Checkboxe zeigt bi jedere Änderig sofort, was de Import mit de aktuelle Uswahl bewürkt. S Überschriibe vo vorhandene Wärt wird det rot hervorghobe.
+De Chnopf "Importiere" isch nume aktiv, wänn di aktuell Uswahl würkli öppis veränderet. "Abbräche" oder d Escape-Taschte schliessed de Dialog, ohni dass öppis veränderet wird.
+Wänn mer z.B. nume Lücke wott fülle, ohni neui Keys z übernäh, wählt mer nume "Leeri Wärt fülle".
 
 Nach em Import:
 Alli dezuegfüegte und veränderete Properties werdet i de Datetabälle usgwählt, so dass mer sie grad chan prüefe oder z.B. übersetze (lueg 4.5).
 D Properties gälted als veränderet und mönd no gspeicheret werde.
-En Ergebnisbricht listet dezuegfüegti Keys, gfüllti, überschribeni und bhalteni abwiichendi Wärt, nöd dezuegfüegti und übersprungeni Iiträg sowie neui Sprachchennzeiche uuf.
+En Ergebnisbricht listet di gwählte Optione, dezuegfüegti Keys, gfüllti, überschribeni und bhalteni abwiichendi Wärt, nöd gfüllti leeri Wärt, nöd dezuegfüegti und übersprungeni Iiträg sowie neui Sprachchennzeiche uuf.
 Zuesätzlich enthaltet er s Ergebnis vonere Fählerprüefig (lueg 4.9) vo de importierte Iiträg, will d Importquelle z.B. es anders Encoding cha bruuche.
 
 3.7 Abgliich mit emne Basis-Set (identischi Wärt entferne)
@@ -138,7 +139,7 @@ Werdet kei identischi Wärt gfunde, chunnt nume en entsprächende Hiiwiis ohni w
 Nach em Abgliich:
 Di verbliibende, veränderete Properties werdet i de Datetabälle usgwählt. D Properties gälted als veränderet und mönd no gspeicheret werde.
 En Ergebnisbricht listet glöschti Iiträg, entfernti identischi Wärt und di verbliibende, vom Basis-Set abwiichende Wärt sowie übersprungeni Iiträg uuf.
-Wichtig: Damit glöschti Keys au us de Dateie entfernt werdet, muess bim Speichere (lueg 6.1) d Frag, ob scho vorhandeni Properties söled erhalte bliibe, mit "Nei" beantwortet werde. Susch bliibed die Keys i de Dateie bestah.
+Wichtig: Damit glöschti Keys au us de Dateie entfernt werdet, dörfed bim Speichere (lueg 6.1) scho vorhandeni Keys nöd erhalte bliibe. D entsprächend Frag muess also mit "Nei" beantwortet werde, bzw. de Konfigurationswärt "KeepExistingKeysOnSave" muess uf "Nei" staa (lueg 7.3). Susch bliibed die Keys i de Dateie bestah.
 
 
 4. Bearbeite vo einzelne Property-Wärt
@@ -299,7 +300,8 @@ Sobald a de Wärt vonere Language Property Änderige gmacht worde sind, wird de 
 Wänn de Wärt im Properties Set scho en LanguagePropertiesSetPath zuegwise worde isch, werdet d Date gnau det (zrugg-)gspeicheret.
 Bi neu aagleite Wärt und nume eim glade LanguagePropertiesSetPath wird dä LanguagePropertiesSetPath als Standardpfad für neui Wärt verwändet.
 Bi mehrere verfüegbare LanguagePropertiesSetPath wird mer ufgforderet, eimal e Datei aazgää, wo ihre LanguagePropertiesSetPath für alli neue Wärt bruucht wird.
-Vor em Speichere wird abgfrögt, ob Properties, wo i de Zieldateie scho vorhande, aber nöd im Tool glade sind, söled erhalte bliibe. Wänn mer die Abfrag schliesst, wird s Speichere abbroche.
+Vor em Speichere wird abgfrögt, ob Properties, wo i de Zieldateie scho vorhande, aber nöd im Tool glade sind, söled erhalte bliibe ("Ja", "Nei" oder "Abbräche"). "Abbräche" oder s Schliesse vo dere Abfrag bricht s Speichere ab.
+Ob die Frag chunnt oder immer gliich entschiede wird, leit de Konfigurationswärt "KeepExistingKeysOnSave" fescht (lueg 7.3).
 Wird s Speichere abbroche oder gaht's schief, gälted d Properties wiiterhin als nöd gspeicheret.
 Exischtiered Zielverzeichnis no nöd, wird aabote, sie aazlege.
 
@@ -360,7 +362,17 @@ En fählende füehrende Punkt wird automatisch ergänzt ("properties" wird als "
 7.2 Wiiteri Konfigurationswärt
 
 	"OpenDirExcludes": Mit ";" trennti Pfadteil (Standard "__;/src/test/;\src\test\;/bin/;\bin\"). Dateie, wo ihre Pfad eine vo dene Teil enthaltet, werdet bim Lade vomene Verzeichnis (3.2) und bim Speichere imene Verzeichnis (6.2) ignoriert.
-	"IgnoreComments": Wänn gsetzt, werdet Kommentär wäder glade no aazeigt, und d Kommentarspalte wird usbländet.
 	"DeepL_BaseUrl" und "DeepL_ApiKey": Adrässe und API Key für d Übersetzig mit DeepL (4.5).
 	"TranslationConstantsFile": Optionali CSV-Datei (UTF-8, Trennzeiche ";", "," oder Tabulator) mit Wärt, wo DeepL nöd darf veränderet, z.B. Produktnäme oder Chürzel.
 		Di erscht Ziile enthaltet d Sprachchennzeiche (z.B. "de;en;it"). E Ziile mit nume eim Wärt definiert en Wärt, wo i allne Sprache gliich isch, anderi Ziile enthalted de Wärt je Sprach.
+
+7.3 Konfigurationswärt mit Ja / Nei / Jedes Mal fröge
+
+Es paar Konfigurationswärt chönd im Konfigurationsdialog uf "Ja", "Nei" oder "Jedes Mal fröge" gstellt werde.
+Bi "Jedes Mal fröge" chunnt d Frag eimal pro Aktion (z.B. nume eimal für s Lade und s aschliessende Speichere vomene Import), bevor öppis veränderet wird. Zur Uswahl stönd "Ja", "Nei" und "Abbräche", wobi "Abbräche" di ganz Aktion abbricht.
+Bisherigi Iiträg "true" und "false" i de Konfigurationsdatei bliibed gültig und entspräched "Ja" und "Nei".
+	"IgnoreComments" (Standard "Nei"): Bi "Ja" werdet Kommentär wäder glade no aazeigt, und d Kommentarspalte wird usbländet.
+	"EscapeApostrophesByDoubling" (Standard "Nei"): Bi "Ja" werdet Apostroph i de Properties-Dateie verdopplet ("''"), wie s java.text.MessageFormat erwartet. Bim Lade wird "''" wider zumene einzelne Apostroph. Im Tool und i Excel- und CSV-Dateie stönd immer einfachi Apostroph, nume d Speicher-Text-Darstellig (lueg 4.1) zeigt sie verdopplet.
+	"StoreAsUtf8" (Standard "Nei"): Bi "Ja" werdet d Properties-Dateie als UTF-8 (ohni BOM) gspeicheret, Nöd-ASCII-Zeiche werdet debii nöd als "\uXXXX" maskiert (vo java.util.PropertyResourceBundle ab Java 9 unterstützt). Bi "Nei" werdet sie als ISO-8859-1 mit maskierte Nöd-ASCII-Zeiche gspeicheret.
+	"KeepExistingKeysOnSave" (Standard "Jedes Mal fröge"): Ob bim Speichere Keys erhalte bliibed, wo i de Zieldateie vorhande, aber nöd im Tool glade sind (lueg 6.1 und 3.7).
+Über d Kommandoziile setzt "Jedes Mal fröge" e interaktivi Konsole vorus, susch bricht d Aktion mit enere Fählermäldig ab.

@@ -94,20 +94,21 @@ Les nouvelles clés sont affectées à l'ensemble de propriétés chargé corres
 Si ce n'est pas possible, les nouvelles clés conservent le LanguagePropertiesSetPath de la source d'importation et y seraient écrites lors de l'enregistrement. Le rapport de résultats le signale expressément.
 Les nouveaux identifiants de langue sont créés pour toutes les propriétés.
 
-Traitement des conflits :
-Une question n'apparaît que si des valeurs importées diffèrent de valeurs existantes non vides.
-Elle indique le nombre de nouvelles clés, de clés déjà existantes, de clés ayant des valeurs différentes, de valeurs vides pouvant être remplies et d'entrées ignorées.
-Les options suivantes sont proposées :
-	"Ajouter uniquement les nouveautés" (les nouvelles clés sont ajoutées et les valeurs vides sont remplies ; les valeurs existantes restent inchangées)
-	"Écraser l'existant" (en plus, les valeurs existantes différentes sont remplacées par les valeurs importées)
-	"Remplir uniquement les valeurs vides" (aucune nouvelle clé n'est ajoutée ; seules les valeurs vides des clés existantes sont remplies)
-	"Annuler" (rien n'est modifié)
-S'il n'y a aucune valeur différente, les nouvelles clés sont ajoutées et les valeurs vides remplies sans question.
+Choix des effets :
+Avant toute modification, une boîte de dialogue s'affiche toujours pour présenter les effets de l'importation. Elle indique la source d'importation, le nombre d'entrées importées associées à une propriété existante et le nombre d'entrées ignorées.
+Chaque effet peut être activé ou désactivé individuellement à l'aide de sa propre case à cocher. Chaque case indique le nombre de propriétés ou de valeurs concernées, avec une courte explication en dessous :
+	"Ajouter les nouvelles propriétés" (les propriétés de la source d'importation qui n'existent pas encore sont ajoutées ; cochée par défaut)
+	"Remplir les valeurs vides" (les valeurs jusqu'ici vides des propriétés existantes sont remplies avec la valeur importée ; cochée par défaut)
+	"Écraser les valeurs différentes" (les valeurs existantes non vides qui diffèrent de la valeur importée sont remplacées par celle-ci ; non cochée par défaut, car les valeurs existantes sont perdues)
+Une case qui ne concerne aucune entrée est désactivée.
+Un résumé sous les cases à cocher indique immédiatement, à chaque modification, ce que fera l'importation avec la sélection actuelle. L'écrasement de valeurs existantes y est mis en évidence en rouge.
+Le bouton "Importer" n'est actif que si la sélection actuelle modifie réellement quelque chose. "Annuler" ou la touche Échap ferment la boîte de dialogue sans rien modifier.
+Par exemple, pour seulement combler les lacunes sans reprendre de nouvelles clés, il suffit de cocher uniquement "Remplir les valeurs vides".
 
 Après l'importation :
 Toutes les propriétés ajoutées et modifiées sont sélectionnées dans le tableau de données, de sorte qu'elles peuvent être vérifiées ou, par exemple, traduites directement (voir 4.5).
 Les propriétés sont considérées comme modifiées et doivent encore être enregistrées.
-Un rapport de résultats liste les clés ajoutées, les valeurs remplies, écrasées et les valeurs différentes conservées, les entrées non ajoutées et ignorées, ainsi que les nouveaux identifiants de langue.
+Un rapport de résultats liste les options choisies, les clés ajoutées, les valeurs remplies, écrasées et les valeurs différentes conservées, les valeurs vides non remplies, les entrées non ajoutées et ignorées, ainsi que les nouveaux identifiants de langue.
 Il contient en outre le résultat d'une vérification des erreurs (voir 4.9) des entrées importées, car la source d'importation peut par exemple utiliser un autre encodage.
 
 3.7 Comparaison avec un ensemble de base (suppression des valeurs identiques)
@@ -137,7 +138,7 @@ Si aucune valeur identique n'est trouvée, seul un message correspondant s'affic
 Après la comparaison :
 Les propriétés restantes modifiées sont sélectionnées dans le tableau de données. Les propriétés sont considérées comme modifiées et doivent encore être enregistrées.
 Un rapport de résultats liste les entrées supprimées, les valeurs identiques supprimées, les valeurs restantes différentes de l'ensemble de base ainsi que les entrées ignorées.
-Important : pour que les clés supprimées disparaissent aussi des fichiers, il faut répondre "Non" lors de l'enregistrement (voir 6.1) à la question de savoir si les propriétés déjà existantes doivent être conservées. Sinon, ces clés restent dans les fichiers.
+Important : pour que les clés supprimées disparaissent aussi des fichiers, les clés déjà existantes ne doivent pas être conservées lors de l'enregistrement (voir 6.1). Il faut donc répondre "Non" à la question correspondante, ou la valeur de configuration "KeepExistingKeysOnSave" doit être sur "Non" (voir 7.3). Sinon, ces clés restent dans les fichiers.
 
 
 4. Modification de valeurs de propriétés individuelles
@@ -297,7 +298,8 @@ Dès que des modifications ont été apportées aux valeurs d'une propriété de
 Si un LanguagePropertiesSetPath a déjà été attribué aux valeurs de l'ensemble de propriétés, les données y sont (ré)enregistrées exactement.
 Pour les valeurs nouvellement créées, si un seul LanguagePropertiesSetPath est chargé, celui-ci est utilisé comme chemin par défaut pour les nouvelles valeurs.
 Si plusieurs LanguagePropertiesSetPath sont disponibles, vous êtes invité à indiquer une seule fois un fichier dont le LanguagePropertiesSetPath est utilisé pour toutes les nouvelles valeurs.
-Avant l'enregistrement, il vous est demandé si les propriétés déjà présentes dans les fichiers cibles, mais non chargées dans l'outil, doivent être conservées. Fermer cette question annule l'enregistrement.
+Avant l'enregistrement, il vous est demandé si les propriétés déjà présentes dans les fichiers cibles, mais non chargées dans l'outil, doivent être conservées ("Oui", "Non" ou "Annuler"). "Annuler" ou fermer cette question annule l'enregistrement.
+La valeur de configuration "KeepExistingKeysOnSave" détermine si cette question s'affiche ou si la décision est toujours la même (voir 7.3).
 Si l'enregistrement est annulé ou échoue, les propriétés restent considérées comme non enregistrées.
 Si des répertoires cibles n'existent pas encore, il vous est proposé de les créer.
 
@@ -358,7 +360,17 @@ Un point initial manquant est ajouté automatiquement ("properties" est utilisé
 7.2 Autres valeurs de configuration
 
 	"OpenDirExcludes" : parties de chemin séparées par ";" (par défaut "__;/src/test/;\src\test\;/bin/;\bin\"). Les fichiers dont le chemin contient l'une de ces parties sont ignorés lors du chargement d'un répertoire (3.2) et de l'enregistrement dans un répertoire (6.2).
-	"IgnoreComments" : si cette option est activée, les commentaires ne sont ni chargés ni affichés, et la colonne des commentaires est masquée.
 	"DeepL_BaseUrl" et "DeepL_ApiKey" : adresse et clé API pour la traduction avec DeepL (4.5).
 	"TranslationConstantsFile" : fichier CSV facultatif (UTF-8, séparateur ";", "," ou tabulation) contenant des valeurs que DeepL ne doit pas modifier, par ex. des noms de produits ou des codes.
 		La première ligne contient les identifiants de langue (par ex. "de;en;it"). Une ligne avec une seule valeur définit une valeur identique dans toutes les langues ; les autres lignes contiennent la valeur par langue.
+
+7.3 Valeurs de configuration avec Oui / Non / Demander à chaque fois
+
+Certaines valeurs de configuration peuvent être réglées sur "Oui", "Non" ou "Demander à chaque fois" dans la boîte de dialogue de configuration.
+Avec "Demander à chaque fois", la question s'affiche une fois par action (par ex. une seule fois pour le chargement et l'enregistrement qui suit lors d'une importation), avant toute modification. Les réponses possibles sont "Oui", "Non" et "Annuler" ; "Annuler" interrompt toute l'action.
+Les entrées existantes "true" et "false" du fichier de configuration restent valables et correspondent à "Oui" et "Non".
+	"IgnoreComments" (par défaut "Non") : avec "Oui", les commentaires ne sont ni chargés ni affichés, et la colonne des commentaires est masquée.
+	"EscapeApostrophesByDoubling" (par défaut "Non") : avec "Oui", les apostrophes sont doublées ("''") dans les fichiers de propriétés, comme l'attend java.text.MessageFormat. Au chargement, "''" redevient une apostrophe simple. L'outil ainsi que les fichiers Excel et CSV contiennent toujours des apostrophes simples ; seul l'affichage du texte de stockage (voir 4.1) les montre doublées.
+	"StoreAsUtf8" (par défaut "Non") : avec "Oui", les fichiers de propriétés sont enregistrés en UTF-8 (sans BOM) et les caractères non ASCII ne sont pas échappés en "\uXXXX" (pris en charge par java.util.PropertyResourceBundle depuis Java 9). Avec "Non", ils sont enregistrés en ISO-8859-1 avec les caractères non ASCII échappés.
+	"KeepExistingKeysOnSave" (par défaut "Demander à chaque fois") : détermine si, lors de l'enregistrement, les clés présentes dans les fichiers cibles mais non chargées dans l'outil sont conservées (voir 6.1 et 3.7).
+En ligne de commande, "Demander à chaque fois" nécessite une console interactive ; sinon, l'action est interrompue avec un message d'erreur.
