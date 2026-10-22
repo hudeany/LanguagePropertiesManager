@@ -21,6 +21,7 @@ import de.soderer.swing.SwingDialogUtilities;
 import de.soderer.utilities.ConfigurationProperties;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.Result;
+import de.soderer.utilities.Utilities;
 
 /**
  * Reading of language properties from all supported sources (properties file,
@@ -31,6 +32,13 @@ import de.soderer.utilities.Result;
 final class ImportSourceChooser {
 	private final LanguagePropertiesManagerDialog owner;
 	private final ConfigurationProperties applicationConfiguration;
+
+	/**
+	 * Path of the properties file or directory chosen by the currently running import source, remembered
+	 * only after it was read successfully. Stays null for Excel and CSV sources, which use the import and
+	 * export directory of the main window instead. Only used on the event dispatch thread.
+	 */
+	private String chosenSourcePath;
 
 	ImportSourceChooser(final LanguagePropertiesManagerDialog owner, final ConfigurationProperties applicationConfiguration) {
 		this.owner = owner;
@@ -183,6 +191,7 @@ final class ImportSourceChooser {
 	/**
 	 * Source of an import (merge import or reduction by a base set). Returns null
 	 * if the user canceled, in which case the source has already informed the user.
+	 * The path of the chosen source is stored in {@link ImportSourceChooser#chosenSourcePath}.
 	 */
 	@FunctionalInterface
 	private interface ImportSource {
@@ -192,6 +201,13 @@ final class ImportSourceChooser {
 	/**
 	 * Shows the menu of import sources below the given button. The properties
 	 * read from the chosen source are handed to the given action.
+	 *
+	 * @param invoker
+	 *            button below which the menu is shown
+	 * @param titleKey
+	 *            language key of the title of the following dialogs
+	 * @param action
+	 *            action applied to the read properties
 	 */
 	void showImportSourceMenu(final JButton invoker, final String titleKey, final Consumer<LoadedLanguageProperties> action) {
 		try {
@@ -208,8 +224,31 @@ final class ImportSourceChooser {
 		}
 	}
 
+	/**
+	 * Directory to preselect in a chooser of a properties file or directory: the latest successfully read
+	 * import source (its directory, or its nearest existing parent directory), otherwise the given fallback.
+	 */
+	private String getInitialSourceDirectory(final String fallbackDirectory) {
+		final File directory = LanguagePropertiesManagerDialog.getNearestExistingDirectory(applicationConfiguration.get(LanguagePropertiesManager.CONFIG_LAST_IMPORT_SOURCE));
+		return directory != null ? directory.getAbsolutePath() : fallbackDirectory;
+	}
+
 	private LoadedLanguageProperties readImportSourceFromRecent(final String title) throws Exception {
-		final ComboSelectionDialog dialog = new ComboSelectionDialog(owner, owner.getTitle() + " " + title, LangResources.get("recent_directories_dialog_text"), owner.getRecentlyOpenedDirectories(), SwingDialogUtilities.getLastEntryIndex(owner.getRecentlyOpenedDirectories())).withSize(600, -1);
+		// Preselect the latest import source, if it is a recent entry, otherwise the latest used entry
+		int preselectedIndex = SwingDialogUtilities.getLastEntryIndex(owner.getRecentlyOpenedDirectories());
+		final String lastSourcePath = applicationConfiguration.get(LanguagePropertiesManager.CONFIG_LAST_IMPORT_SOURCE);
+		if (Utilities.isNotBlank(lastSourcePath)) {
+			int index = 0;
+			for (final String recentPath : owner.getRecentlyOpenedDirectories()) {
+				if (lastSourcePath.equals(recentPath)) {
+					preselectedIndex = index;
+					break;
+				}
+				index++;
+			}
+		}
+
+		final ComboSelectionDialog dialog = new ComboSelectionDialog(owner, owner.getTitle() + " " + title, LangResources.get("recent_directories_dialog_text"), owner.getRecentlyOpenedDirectories(), preselectedIndex).withSize(600, -1);
 		final String filePath = dialog.open();
 
 		// Take over a possible reordering (drag&drop) or deletion of the recent directories done in the dialog
@@ -224,18 +263,20 @@ final class ImportSourceChooser {
 			owner.showErrorMessage(title, LangResources.get("error.recentPathDoesNotExistAnymore", filePath));
 			return null;
 		} else if (new File(filePath).isDirectory()) {
+			chosenSourcePath = filePath;
 			return readAllLanguagePropertiesSets(filePath);
 		} else if (!hasLanguagePropertiesFileExtension(filePath)) {
 			owner.showErrorMessage(title, LangResources.get("missingMandatoryFileExtension", applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION)));
 			return null;
 		} else {
+			chosenSourcePath = filePath;
 			return readSingleLanguagePropertiesSet(filePath);
 		}
 	}
 
 	private LoadedLanguageProperties readImportSourceFromFile(final String title) throws Exception {
-		// Preselects the directory of the latest used properties, robust against files, deleted paths and an empty recent list
-		final File file = SwingDialogUtilities.chooseFileToOpen(owner, owner.getTitle() + " " + title, owner.getInitialPropertiesDirectory());
+		// Preselects the directory of the latest import source, otherwise the one of the latest used properties
+		final File file = SwingDialogUtilities.chooseFileToOpen(owner, owner.getTitle() + " " + title, getInitialSourceDirectory(owner.getInitialPropertiesDirectory()));
 		if (file == null) {
 			return null;
 		} else if (!file.isFile()) {
@@ -244,18 +285,20 @@ final class ImportSourceChooser {
 			owner.showErrorMessage(title, LangResources.get("missingMandatoryFileExtension", applicationConfiguration.get(LanguagePropertiesManager.CONFIG_PROPERTIES_FILE_EXTENSION)));
 			return null;
 		} else {
+			chosenSourcePath = file.getAbsolutePath();
 			return readSingleLanguagePropertiesSet(file.getAbsolutePath());
 		}
 	}
 
 	private LoadedLanguageProperties readImportSourceFromFolder(final String title) throws Exception {
-		// Preselects the directory of the latest used properties, robust against files, deleted paths and an empty recent list
-		final File directory = SwingDialogUtilities.chooseDirectory(owner, owner.getTitle() + " " + title, owner.getInitialPropertiesDirectory());
+		// Preselects the latest import source, otherwise the directory of the latest used properties
+		final File directory = SwingDialogUtilities.chooseDirectory(owner, owner.getTitle() + " " + title, getInitialSourceDirectory(owner.getInitialPropertiesDirectory()));
 		if (directory == null) {
 			return null;
 		} else if (!directory.isDirectory()) {
 			throw new Exception("Selected language properties directory is not an existing directory");
 		} else {
+			chosenSourcePath = directory.getAbsolutePath();
 			return readAllLanguagePropertiesSets(directory.getAbsolutePath());
 		}
 	}
@@ -269,7 +312,8 @@ final class ImportSourceChooser {
 	}
 
 	private LoadedLanguageProperties readImportSourceFromDataFile(final String title, final DataFileReader dataFileReader, final String... fileExtensions) throws Exception {
-		// Shares the remembered directory with the Excel and CSV import and export of the main window
+		// Excel and CSV files share the remembered directory with the Excel and CSV import and export of the main window.
+		// They are not remembered as latest import source, which only covers properties files and directories.
 		final File importFile = SwingDialogUtilities.chooseFileToOpen(owner, owner.getTitle() + " " + title, owner.getInitialImportExportDirectory(), fileExtensions);
 		if (importFile == null) {
 			return null;
@@ -282,7 +326,8 @@ final class ImportSourceChooser {
 	/**
 	 * Reads the properties of an import source and hands them to the given action
 	 * (merge import or reduction by a base set). Errors while reading leave the
-	 * loaded data unchanged.
+	 * loaded data unchanged. A properties file or directory is remembered as latest
+	 * import source (shared by both actions) only after it was read successfully.
 	 */
 	private void runWithImportSource(final String title, final ImportSource importSource, final Consumer<LoadedLanguageProperties> action) {
 		// Unapplied changes in the detail fields would get lost by the changed selection afterwards
@@ -290,9 +335,13 @@ final class ImportSourceChooser {
 			return;
 		}
 
+		chosenSourcePath = null;
 		try {
 			final LoadedLanguageProperties loadedLanguageProperties = importSource.read(title);
 			if (loadedLanguageProperties != null) {
+				if (chosenSourcePath != null) {
+					applicationConfiguration.set(LanguagePropertiesManager.CONFIG_LAST_IMPORT_SOURCE, chosenSourcePath);
+				}
 				action.accept(loadedLanguageProperties);
 			}
 		} catch (final ExecutionException e) {

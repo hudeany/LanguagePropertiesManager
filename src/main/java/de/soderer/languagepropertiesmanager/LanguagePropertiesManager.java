@@ -126,6 +126,9 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 	/** Storage of last recently used filepath for open and save files **/
 	public static final String CONFIG_LAST_IMPORT_EXPORT_DIRECTORY = "LastImportExportDirectory";
 
+//	/** Storage of last recently used filepath for merge import files **/
+	public static final String CONFIG_LAST_IMPORT_SOURCE = "LastImportSource";
+
 	private int previousTerminalWidth = 0;
 
 	private ActionDefinition actionDefinitionToExecute;

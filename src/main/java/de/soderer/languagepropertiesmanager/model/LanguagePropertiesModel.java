@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 
 import de.soderer.languagepropertiesmanager.merge.BaseSetReducer;
 import de.soderer.languagepropertiesmanager.merge.LanguagePropertiesMerger;
-import de.soderer.languagepropertiesmanager.merge.MergeMode;
+import de.soderer.languagepropertiesmanager.merge.MergeOptions;
 import de.soderer.languagepropertiesmanager.merge.MergePlan;
 import de.soderer.languagepropertiesmanager.merge.MergeResult;
 import de.soderer.languagepropertiesmanager.merge.ReducePlan;
@@ -618,11 +618,11 @@ public final class LanguagePropertiesModel {
 	 *            the imported data
 	 * @param mergePlan
 	 *            plan created by {@link LanguagePropertiesMerger#createMergePlan(List, List)}
-	 * @param mergeMode
-	 *            how conflicts between existing and imported values are resolved
+	 * @param mergeOptions
+	 *            which effects of the import are applied
 	 * @return the changes done, for the final report
 	 */
-	public MergeResult applyMerge(final LoadedLanguageProperties importSource, final MergePlan mergePlan, final MergeMode mergeMode) {
+	public MergeResult applyMerge(final LoadedLanguageProperties importSource, final MergePlan mergePlan, final MergeOptions mergeOptions) {
 		final boolean noDataLoadedYet = languageProperties == null;
 		if (noDataLoadedYet) {
 			languageProperties = new ArrayList<>();
@@ -630,7 +630,7 @@ public final class LanguagePropertiesModel {
 			setLanguagePropertiesSetName(importSource.getCombinedSetName());
 		}
 
-		final MergeResult mergeResult = LanguagePropertiesMerger.applyMergePlan(languageProperties, mergePlan, mergeMode);
+		final MergeResult mergeResult = LanguagePropertiesMerger.applyMergePlan(languageProperties, mergePlan, mergeOptions);
 
 		final List<String> newLanguageSigns = completeLanguageSigns();
 		if (!noDataLoadedYet) {

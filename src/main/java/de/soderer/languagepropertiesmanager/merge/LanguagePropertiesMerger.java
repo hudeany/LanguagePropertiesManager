@@ -17,7 +17,7 @@ import de.soderer.utilities.Utilities;
 /**
  * Merge import of language properties into the currently loaded data:
  * planning (createMergePlan), applying (applyMergePlan) and the final report.
- * No GUI dependencies, the merge mode is chosen by the caller.
+ * No GUI dependencies, the merge options are chosen by the caller.
  */
 public final class LanguagePropertiesMerger {
 	private LanguagePropertiesMerger() {
@@ -33,7 +33,7 @@ public final class LanguagePropertiesMerger {
 	 * @param importedProperties
 	 *            properties read from the import source
 	 * @return plan of the merge, to be applied by
-	 *         {@link #applyMergePlan(List, MergePlan, MergeMode)}
+	 *         {@link #applyMergePlan(List, MergePlan, MergeOptions)}
 	 */
 	public static MergePlan createMergePlan(final List<LanguageProperty> existingProperties, final List<LanguageProperty> importedProperties) {
 		final MergePlan mergePlan = new MergePlan();
@@ -179,11 +179,11 @@ public final class LanguagePropertiesMerger {
 	 *            currently loaded properties, new properties are appended to this list
 	 * @param mergePlan
 	 *            plan created by {@link #createMergePlan(List, List)}
-	 * @param mergeMode
-	 *            how conflicts between existing and imported values are resolved
+	 * @param mergeOptions
+	 *            which effects of the import are applied
 	 * @return the changes done, for the final report
 	 */
-	public static MergeResult applyMergePlan(final List<LanguageProperty> targetProperties, final MergePlan mergePlan, final MergeMode mergeMode) {
+	public static MergeResult applyMergePlan(final List<LanguageProperty> targetProperties, final MergePlan mergePlan, final MergeOptions mergeOptions) {
 		final MergeResult mergeResult = new MergeResult();
 		final Map<String, LanguageProperty> addedPropertiesByPathAndKey = new HashMap<>();
 		// The list size is not sufficient, because after removing properties a new index could collide with an existing one
@@ -192,15 +192,16 @@ public final class LanguagePropertiesMerger {
 		for (final MergePlanEntry entry : mergePlan.entries) {
 			final LanguageProperty importedProperty = entry.importedProperty;
 			if (entry.targetProperty != null) {
-				mergeValues(importedProperty, entry.targetProperty, mergeMode == MergeMode.OVERWRITE, mergeResult);
-			} else if (mergeMode == MergeMode.FILL_EMPTY_ONLY) {
+				mergeValues(importedProperty, entry.targetProperty, mergeOptions.isFillEmptyValues(), mergeOptions.isOverwriteDifferingValues(), mergeResult);
+			} else if (!mergeOptions.isAddNewProperties()) {
 				mergeResult.notAddedProperties.add(MergeUtilities.getPropertyDisplayName(importedProperty.getPath(), importedProperty.getKey()));
 			} else {
 				final String pathAndKey = entry.pathForNewProperty + "\u0000" + importedProperty.getKey();
 				final LanguageProperty alreadyAddedProperty = addedPropertiesByPathAndKey.get(pathAndKey);
 				if (alreadyAddedProperty != null) {
-					// Duplicate within the imported data: only take over values the first occurrence is still missing
-					mergeValues(importedProperty, alreadyAddedProperty, false, mergeResult);
+					// Duplicate within the imported data: only take over values the first occurrence is still missing.
+					// The added property is completely taken from the import, so its empty values are always filled.
+					mergeValues(importedProperty, alreadyAddedProperty, true, false, mergeResult);
 					// The newly added property is completely taken from the import, so it also takes over a comment it is still missing
 					if (Utilities.isEmpty(alreadyAddedProperty.getComment()) && Utilities.isNotEmpty(importedProperty.getComment())) {
 						alreadyAddedProperty.setComment(importedProperty.getComment());
@@ -226,10 +227,10 @@ public final class LanguagePropertiesMerger {
 
 	/**
 	 * Takes over the non-empty values of the source property into the target
-	 * property. Empty target values are always filled, differing non-empty target
+	 * property. Empty target values are only filled and differing non-empty target
 	 * values are only overwritten if requested. Comments are left untouched.
 	 */
-	private static void mergeValues(final LanguageProperty sourceProperty, final LanguageProperty targetProperty, final boolean overwriteDifferingValues, final MergeResult mergeResult) {
+	private static void mergeValues(final LanguageProperty sourceProperty, final LanguageProperty targetProperty, final boolean fillEmptyValues, final boolean overwriteDifferingValues, final MergeResult mergeResult) {
 		final String displayName = MergeUtilities.getPropertyDisplayName(targetProperty.getPath(), targetProperty.getKey());
 		boolean changed = false;
 
@@ -238,9 +239,12 @@ public final class LanguagePropertiesMerger {
 			if (Utilities.isNotEmpty(importedValue)) {
 				final String existingValue = targetProperty.getLanguageValue(languageSign);
 				if (Utilities.isEmpty(existingValue)) {
-					targetProperty.setLanguageValue(languageSign, importedValue);
-					mergeResult.filledValues.add(displayName + " [" + languageSign + "]");
-					changed = true;
+					// Values not filled are reported by their count from the merge plan
+					if (fillEmptyValues) {
+						targetProperty.setLanguageValue(languageSign, importedValue);
+						mergeResult.filledValues.add(displayName + " [" + languageSign + "]");
+						changed = true;
+					}
 				} else if (!existingValue.equals(importedValue)) {
 					if (overwriteDifferingValues) {
 						targetProperty.setLanguageValue(languageSign, importedValue);
@@ -265,8 +269,8 @@ public final class LanguagePropertiesMerger {
 	 *
 	 * @param sourceDescription
 	 *            file or directory of the import source, only for display
-	 * @param mergeMode
-	 *            the used merge mode
+	 * @param mergeOptions
+	 *            the used merge options
 	 * @param mergePlan
 	 *            the applied plan
 	 * @param mergeResult
@@ -275,11 +279,11 @@ public final class LanguagePropertiesMerger {
 	 *            result of the error check of the imported properties
 	 * @return report text
 	 */
-	public static String createMergeReport(final String sourceDescription, final MergeMode mergeMode, final MergePlan mergePlan, final MergeResult mergeResult, final ErrorReport errorReport) {
+	public static String createMergeReport(final String sourceDescription, final MergeOptions mergeOptions, final MergePlan mergePlan, final MergeResult mergeResult, final ErrorReport errorReport) {
 		final StringBuilder reportText = new StringBuilder();
 		reportText.append(LangResources.get("mergeImport_resultSummary",
 				sourceDescription,
-				LangResources.get("mergeImport_mode_" + getMergeModeResourceSuffix(mergeMode)),
+				getMergeOptionsDescription(mergeOptions),
 				mergeResult.addedProperties.size(),
 				mergeResult.filledValues.size(),
 				mergeResult.overwrittenValues.size(),
@@ -287,6 +291,10 @@ public final class LanguagePropertiesMerger {
 				mergeResult.notAddedProperties.size(),
 				mergePlan.skippedEntries.size(),
 				mergeResult.newLanguageSigns.isEmpty() ? "-" : Utilities.join(mergeResult.newLanguageSigns, ", ")));
+
+		if (!mergeOptions.isFillEmptyValues() && mergePlan.getFillableValueCount() > 0) {
+			reportText.append("\n").append(LangResources.get("mergeImport_notFilledValues", mergePlan.getFillableValueCount()));
+		}
 
 		if (!mergeResult.addedPropertiesWithForeignPath.isEmpty()) {
 			reportText.append("\n\n").append(LangResources.get("mergeImport_warningForeignPath", mergeResult.addedPropertiesWithForeignPath.size()));
@@ -310,15 +318,20 @@ public final class LanguagePropertiesMerger {
 		return reportText.toString();
 	}
 
-	private static String getMergeModeResourceSuffix(final MergeMode mergeMode) {
-		switch (mergeMode) {
-			case OVERWRITE:
-				return "overwrite";
-			case FILL_EMPTY_ONLY:
-				return "fillEmptyOnly";
-			case ADD_NEW:
-			default:
-				return "addNew";
+	/**
+	 * Short description of the chosen options for the report, e.g. "add new properties, fill empty values"
+	 */
+	private static String getMergeOptionsDescription(final MergeOptions mergeOptions) {
+		final List<String> parts = new ArrayList<>();
+		if (mergeOptions.isAddNewProperties()) {
+			parts.add(LangResources.get("mergeOptions_short_addNew"));
 		}
+		if (mergeOptions.isFillEmptyValues()) {
+			parts.add(LangResources.get("mergeOptions_short_fillEmpty"));
+		}
+		if (mergeOptions.isOverwriteDifferingValues()) {
+			parts.add(LangResources.get("mergeOptions_short_overwrite"));
+		}
+		return parts.isEmpty() ? "-" : Utilities.join(parts, ", ");
 	}
 }

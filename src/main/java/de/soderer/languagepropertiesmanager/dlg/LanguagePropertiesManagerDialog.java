@@ -40,7 +40,7 @@ import de.soderer.languagepropertiesmanager.check.LanguagePropertiesChecker;
 import de.soderer.languagepropertiesmanager.image.ImageManager;
 import de.soderer.languagepropertiesmanager.merge.BaseSetReducer;
 import de.soderer.languagepropertiesmanager.merge.LanguagePropertiesMerger;
-import de.soderer.languagepropertiesmanager.merge.MergeMode;
+import de.soderer.languagepropertiesmanager.merge.MergeOptions;
 import de.soderer.languagepropertiesmanager.merge.MergePlan;
 import de.soderer.languagepropertiesmanager.merge.MergeResult;
 import de.soderer.languagepropertiesmanager.merge.ReducePlan;
@@ -1423,28 +1423,14 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			return;
 		}
 
-		// Only ask, if there are real conflicts. Without conflicts, all modes except FILL_EMPTY_ONLY have the same result.
-		MergeMode mergeMode = MergeMode.ADD_NEW;
-		if (mergePlan.getDifferingValueCount() > 0) {
-			final Integer returncode = new QuestionDialog(this, LangResources.get("mergeImport_title"),
-					LangResources.get("mergeImport_question", loadedLanguageProperties.getSourceDescription(), mergePlan.getNewPropertyCount(), mergePlan.getMatchedPropertyCount(), mergePlan.getPropertiesWithDifferencesCount(), mergePlan.getDifferingValueCount(), mergePlan.getFillableValueCount(), mergePlan.getSkippedEntries().size()),
-					LangResources.get("mergeImport_mode_addNew"),
-					LangResources.get("mergeImport_mode_overwrite"),
-					LangResources.get("mergeImport_mode_fillEmptyOnly"),
-					LangResources.get("cancel")).open();
-			if (returncode != null && returncode == 0) {
-				mergeMode = MergeMode.ADD_NEW;
-			} else if (returncode != null && returncode == 1) {
-				mergeMode = MergeMode.OVERWRITE;
-			} else if (returncode != null && returncode == 2) {
-				mergeMode = MergeMode.FILL_EMPTY_ONLY;
-			} else {
-				return;
-			}
+		// Always ask, so the user sees the effects of the import before anything is changed
+		final MergeOptions mergeOptions = new MergeImportOptionsDialog(this, LangResources.get("mergeImport_title"), loadedLanguageProperties.getSourceDescription(), mergePlan).open();
+		if (mergeOptions == null) {
+			return;
 		}
 
 		// Every property knows every language sign afterwards and the added or changed properties are selected
-		final MergeResult mergeResult = model.applyMerge(loadedLanguageProperties, mergePlan, mergeMode);
+		final MergeResult mergeResult = model.applyMerge(loadedLanguageProperties, mergePlan, mergeOptions);
 		setupTable();
 		refreshDetailView();
 		checkButtonStatus();
@@ -1452,7 +1438,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		// The imported file may use another encoding, so check the imported part right away
 		final ErrorReport errorReport = LanguagePropertiesChecker.createErrorReport(importedProperties);
 
-		showData(LangResources.get("mergeImport_resultTitle"), LanguagePropertiesMerger.createMergeReport(loadedLanguageProperties.getSourceDescription(), mergeMode, mergePlan, mergeResult, errorReport));
+		showData(LangResources.get("mergeImport_resultTitle"), LanguagePropertiesMerger.createMergeReport(loadedLanguageProperties.getSourceDescription(), mergeOptions, mergePlan, mergeResult, errorReport));
 	}
 
 	/**
@@ -1686,7 +1672,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	 * The given path itself if it is a directory, otherwise its nearest existing parent directory.
 	 * Handles file paths as well as paths that do not exist anymore.
 	 */
-	private static File getNearestExistingDirectory(final String path) {
+	static File getNearestExistingDirectory(final String path) {
 		if (Utilities.isBlank(path)) {
 			return null;
 		}
