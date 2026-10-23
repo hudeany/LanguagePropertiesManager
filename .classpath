@@ -5,7 +5,7 @@
 	<classpathentry kind="src" path="src/test/java"/>
 	<classpathentry kind="lib" path="lib/commons-text-1.15.0.jar"/>
 	<classpathentry kind="lib" path="lib/mailapi-2.0.2.jar"/>
-	<classpathentry kind="lib" path="lib/json-26.2.15.jar"/>
+	<classpathentry kind="lib" path="lib/json-26.2.16.jar"/>
 	<classpathentry kind="lib" path="lib/poi-5.5.1.jar"/>
 	<classpathentry kind="lib" path="lib/poi-ooxml-5.5.1.jar"/>
 	<classpathentry kind="lib" path="lib/poi-ooxml-full-5.5.1.jar"/>
@@ -17,12 +17,12 @@
 	<classpathentry kind="lib" path="lib/log4j-core-2.26.1.jar"/>
 	<classpathentry kind="lib" path="lib/commons-compress-1.28.0.jar"/>
 	<classpathentry kind="lib" path="lib/proxyautoconfig-26.1.5.jar"/>
-	<classpathentry kind="lib" path="lib/csv-26.1.13.jar"/>
+	<classpathentry kind="lib" path="lib/csv-26.1.14.jar"/>
 	<classpathentry kind="lib" path="lib/network-26.0.39.jar"/>
-	<classpathentry kind="lib" path="lib/soderer-utilities-26.3.2.jar"/>
-	<classpathentry kind="lib" path="lib/soderer-console-26.0.13.jar"/>
-	<classpathentry kind="lib" path="lib/soderer-swing-26.0.27.jar"/>
-	<classpathentry kind="lib" path="lib/soderer-applicationbase-26.0.40.jar"/>
+	<classpathentry kind="lib" path="lib/soderer-utilities-26.3.4.jar"/>
+	<classpathentry kind="lib" path="lib/soderer-console-26.0.14.jar"/>
+	<classpathentry kind="lib" path="lib/soderer-swing-26.0.28.jar"/>
+	<classpathentry kind="lib" path="lib/soderer-applicationbase-26.0.41.jar"/>
 	<classpathentry kind="lib" path="lib/jna-5.19.1.jar"/>
 	<classpathentry kind="lib" path="lib/commons-lang3-3.21.0.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">
