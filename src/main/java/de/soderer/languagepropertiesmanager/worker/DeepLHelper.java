@@ -14,7 +14,7 @@ import de.soderer.network.HttpMethod;
 import de.soderer.network.HttpRequest;
 import de.soderer.network.HttpResponse;
 import de.soderer.network.HttpUtilities;
-import de.soderer.utilities.Utilities;
+import de.soderer.utilities.StringUtilities;
 
 /**
  * Client for the DeepL translation API (v2). Requests that fail because of rate limiting (HTTP 429) or temporary server
@@ -181,14 +181,14 @@ public class DeepLHelper {
 			request.addHeader("Content-Type", "application/json");
 
 			final JsonObject bodyJsonObject = new JsonObject();
-			if (Utilities.isNotBlank(sourceLanguage)) {
+			if (StringUtilities.isNotBlank(sourceLanguage)) {
 				final String sourceLanguageCode = sourceLanguage.toUpperCase(Locale.ROOT);
 				if (!getSupportedLanguages().contains(sourceLanguageCode)) {
 					throw new Exception("Unsupported source language: " + sourceLanguage);
 				}
 				bodyJsonObject.add("source_lang", sourceLanguageCode);
 			}
-			if (Utilities.isBlank(targetLanguage)) {
+			if (StringUtilities.isBlank(targetLanguage)) {
 				throw new Exception("Missing target language");
 			}
 			final String targetLanguageCode = targetLanguage.toUpperCase(Locale.ROOT);

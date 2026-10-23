@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.soderer.utilities.PropertiesWriter;
+import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.Utilities;
 
 /**
@@ -146,8 +147,8 @@ public class LanguagePropertiesFileSetWriter {
 
 			File propertiesDirectory;
 			String propertySetName;
-			final String languagePropertiesPath = Utilities.isBlank(nextLanguagePropertiesPath) ? "" : Utilities.replaceUsersHome(nextLanguagePropertiesPath);
-			if (Utilities.isNotBlank(languagePropertiesPath)) {
+			final String languagePropertiesPath = StringUtilities.isBlank(nextLanguagePropertiesPath) ? "" : Utilities.replaceUsersHome(nextLanguagePropertiesPath);
+			if (StringUtilities.isNotBlank(languagePropertiesPath)) {
 				try {
 					Paths.get(languagePropertiesPath);
 				} catch (@SuppressWarnings("unused") final InvalidPathException e) {
@@ -206,7 +207,7 @@ public class LanguagePropertiesFileSetWriter {
 							}
 							pendingEmptyLines = 0;
 
-							if (Utilities.isNotEmpty(languageProperty.getComment())) {
+							if (StringUtilities.isNotEmpty(languageProperty.getComment())) {
 								propertiesWriter.writeComment(languageProperty.getComment());
 							}
 							final String value = languageProperty.getLanguageValue(languageSign);

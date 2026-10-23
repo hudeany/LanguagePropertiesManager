@@ -10,7 +10,7 @@ import java.util.Set;
 
 import de.soderer.languagepropertiesmanager.storage.LanguageProperty;
 import de.soderer.utilities.LangResources;
-import de.soderer.utilities.Utilities;
+import de.soderer.utilities.StringUtilities;
 
 /**
  * Reduction of language properties by a base set: values identical to the base
@@ -47,7 +47,7 @@ public final class BaseSetReducer {
 
 		for (final LanguageProperty languageProperty : propertiesToCheck) {
 			final String key = languageProperty.getKey();
-			if (Utilities.isBlank(key)) {
+			if (StringUtilities.isBlank(key)) {
 				reducePlan.skippedEntries.add(LangResources.get("mergeImport_skippedEmptyKey", MergeUtilities.getEmptyForNull(languageProperty.getPath())));
 				continue;
 			}
@@ -62,7 +62,7 @@ public final class BaseSetReducer {
 			boolean hasRemainingValue = false;
 			for (final String languageSign : new ArrayList<>(languageProperty.getAvailableLanguageSigns())) {
 				final String value = languageProperty.getLanguageValue(languageSign);
-				if (Utilities.isNotEmpty(value)) {
+				if (StringUtilities.isNotEmpty(value)) {
 					boolean identicalValueFound = false;
 					boolean baseValueFound = false;
 					for (final LanguageProperty baseProperty : basePropertiesWithSameKey) {
@@ -70,7 +70,7 @@ public final class BaseSetReducer {
 						if (value.equals(baseValue)) {
 							identicalValueFound = true;
 							break;
-						} else if (Utilities.isNotEmpty(baseValue)) {
+						} else if (StringUtilities.isNotEmpty(baseValue)) {
 							baseValueFound = true;
 						}
 					}

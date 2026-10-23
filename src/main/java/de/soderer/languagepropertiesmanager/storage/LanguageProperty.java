@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.Utilities;
 
 /**
@@ -205,11 +206,11 @@ public class LanguageProperty {
 	 * @return true if the property is empty
 	 */
 	public boolean isEmpty() {
-		if (Utilities.isEmpty(key)) {
+		if (StringUtilities.isEmpty(key)) {
 			return true;
 		}
 		for (final String value : languageValues.values()) {
-			if (Utilities.isNotEmpty(value)) {
+			if (StringUtilities.isNotEmpty(value)) {
 				return false;
 			}
 		}
@@ -314,7 +315,7 @@ public class LanguageProperty {
 	 * @return the value to store
 	 */
 	public static String toStorageValue(final String languageSign, final String inputValue) {
-		if (Utilities.isNotEmpty(inputValue)) {
+		if (StringUtilities.isNotEmpty(inputValue)) {
 			return inputValue;
 		} else if (LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT.equals(languageSign)) {
 			return "";

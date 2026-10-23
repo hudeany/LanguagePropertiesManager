@@ -23,6 +23,7 @@ import de.soderer.languagepropertiesmanager.LanguagePropertiesException;
 import de.soderer.languagepropertiesmanager.storage.LanguagePropertiesFileSetReader;
 import de.soderer.languagepropertiesmanager.storage.LanguageProperty;
 import de.soderer.utilities.LangResources;
+import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.worker.WorkerParentSimple;
 import de.soderer.utilities.worker.WorkerSimple;
@@ -112,7 +113,7 @@ public class LoadLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 					for (final String excludePart : excludeParts) {
 						// An empty part (e.g. from an empty configuration or ";;") would exclude every file.
 						// Escaped backslashes are handled like when writing, so loading and writing exclude the same files.
-						if (Utilities.isNotEmpty(excludePart) && propertiesFile.getAbsolutePath().contains(excludePart.replace("\\\\", "\\"))) {
+						if (StringUtilities.isNotEmpty(excludePart) && propertiesFile.getAbsolutePath().contains(excludePart.replace("\\\\", "\\"))) {
 							excluded = true;
 							break;
 						}
@@ -168,7 +169,7 @@ public class LoadLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 
 		commentsFound = false;
 		for (final LanguageProperty languageProperty : languageProperties) {
-			if (Utilities.isNotEmpty(languageProperty.getComment())) {
+			if (StringUtilities.isNotEmpty(languageProperty.getComment())) {
 				commentsFound = true;
 				break;
 			}

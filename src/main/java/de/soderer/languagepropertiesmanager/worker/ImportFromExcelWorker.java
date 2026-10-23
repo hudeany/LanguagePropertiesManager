@@ -20,6 +20,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import de.soderer.languagepropertiesmanager.LanguagePropertiesException;
 import de.soderer.languagepropertiesmanager.storage.LanguagePropertiesFileSetReader;
 import de.soderer.languagepropertiesmanager.storage.LanguageProperty;
+import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.worker.WorkerParentSimple;
 import de.soderer.utilities.worker.WorkerSimple;
@@ -165,7 +166,7 @@ public class ImportFromExcelWorker extends WorkerSimple<Boolean> {
 						throw new LanguagePropertiesException("Excel file contains invalid key value in sheet '" + sheet.getSheetName() + "' at row " + (rowIndex + 1) + " and column " + (columnIndex_Keys + 1));
 					}
 
-					if (Utilities.isNotBlank(key)) {
+					if (StringUtilities.isNotBlank(key)) {
 						final LanguageProperty languageProperty = new LanguageProperty(path, key);
 
 						if (columnIndex_Index >= 0) {
@@ -267,7 +268,7 @@ public class ImportFromExcelWorker extends WorkerSimple<Boolean> {
 
 		commentsFound = false;
 		for (final LanguageProperty languageProperty : languageProperties) {
-			if (Utilities.isNotEmpty(languageProperty.getComment())) {
+			if (StringUtilities.isNotEmpty(languageProperty.getComment())) {
 				commentsFound = true;
 				break;
 			}

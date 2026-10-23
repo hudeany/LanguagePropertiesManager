@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import de.soderer.languagepropertiesmanager.LanguagePropertiesException;
 import de.soderer.languagepropertiesmanager.storage.LanguagePropertiesFileSetReader;
 import de.soderer.languagepropertiesmanager.storage.LanguageProperty;
+import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.csv.CsvFormat;
 import de.soderer.utilities.csv.CsvWriter;
@@ -67,7 +68,7 @@ public class ExportToCsvWorker extends WorkerSimple<Boolean> {
 
 		boolean commentsFound = false;
 		for (final LanguageProperty languageProperty : sortedLanguageProperties) {
-			if (Utilities.isNotEmpty(languageProperty.getComment())) {
+			if (StringUtilities.isNotEmpty(languageProperty.getComment())) {
 				commentsFound = true;
 				break;
 			}

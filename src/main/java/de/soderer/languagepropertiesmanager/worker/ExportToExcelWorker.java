@@ -18,6 +18,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import de.soderer.languagepropertiesmanager.LanguagePropertiesException;
 import de.soderer.languagepropertiesmanager.storage.LanguagePropertiesFileSetReader;
 import de.soderer.languagepropertiesmanager.storage.LanguageProperty;
+import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.worker.WorkerParentSimple;
 import de.soderer.utilities.worker.WorkerSimple;
@@ -72,7 +73,7 @@ public class ExportToExcelWorker extends WorkerSimple<Boolean> {
 
 		boolean commentsFound = false;
 		for (final LanguageProperty languageProperty : sortedLanguageProperties) {
-			if (Utilities.isNotEmpty(languageProperty.getComment())) {
+			if (StringUtilities.isNotEmpty(languageProperty.getComment())) {
 				commentsFound = true;
 				break;
 			}
@@ -87,7 +88,7 @@ public class ExportToExcelWorker extends WorkerSimple<Boolean> {
 			try (final XSSFWorkbook workbook = new XSSFWorkbook()) {
 				try (final FileOutputStream outputStream = new FileOutputStream(tempOutputFile)) {
 					// Excel sheet names are limited to 31 characters and must not contain some special characters (e.g. '/', '?', '*')
-					final String sheetName = languagePropertiesSetNames != null && languagePropertiesSetNames.size() == 1 && Utilities.isNotBlank(languagePropertiesSetNames.get(0)) ? languagePropertiesSetNames.get(0) : "Multiple";
+					final String sheetName = languagePropertiesSetNames != null && languagePropertiesSetNames.size() == 1 && StringUtilities.isNotBlank(languagePropertiesSetNames.get(0)) ? languagePropertiesSetNames.get(0) : "Multiple";
 					final XSSFSheet sheet = workbook.createSheet(WorkbookUtil.createSafeSheetName(sheetName));
 
 					final XSSFCellStyle cellStyle = workbook.createCellStyle();

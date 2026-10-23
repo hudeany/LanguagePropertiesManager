@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 import de.soderer.languagepropertiesmanager.storage.LanguagePropertiesFileSetReader;
 import de.soderer.languagepropertiesmanager.storage.LanguageProperty;
 import de.soderer.utilities.LangResources;
-import de.soderer.utilities.Utilities;
+import de.soderer.utilities.StringUtilities;
 
 /**
  * Read-only checks of language properties for encoding errors, invalid keys,
@@ -373,13 +373,13 @@ public final class LanguagePropertiesChecker {
 	private static Map<String, String> getNonBlankValuesReferenceFirst(final LanguageProperty languageProperty) {
 		final Map<String, String> values = new LinkedHashMap<>();
 		final String defaultValue = languageProperty.getLanguageValue(LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT);
-		if (Utilities.isNotBlank(defaultValue)) {
+		if (StringUtilities.isNotBlank(defaultValue)) {
 			values.put(LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT, defaultValue);
 		}
 		// Sorted, so the reference language and the order of the reported problems do not depend on the hash order
 		for (final String languageSign : new TreeSet<>(languageProperty.getAvailableLanguageSigns())) {
 			final String value = languageProperty.getLanguageValue(languageSign);
-			if (Utilities.isNotBlank(value)) {
+			if (StringUtilities.isNotBlank(value)) {
 				values.putIfAbsent(languageSign, value);
 			}
 		}
@@ -517,7 +517,7 @@ public final class LanguagePropertiesChecker {
 				final List<String> entryProblems = new ArrayList<>();
 
 				final String key = languageProperty.getKey();
-				if (Utilities.isBlank(key)) {
+				if (StringUtilities.isBlank(key)) {
 					entryProblems.add(LangResources.get("error_key_empty"));
 				} else {
 					for (final String textProblem : findTextErrors(key)) {

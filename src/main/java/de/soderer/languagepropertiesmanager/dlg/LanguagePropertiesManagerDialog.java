@@ -65,6 +65,7 @@ import de.soderer.utilities.DateUtilities;
 import de.soderer.utilities.IoUtilities;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.Result;
+import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.YesNoAsk;
 import de.soderer.utilities.collection.UniqueFifoQueuedList;
@@ -214,7 +215,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	}
 
 	private void runDailyUpdateCheck() {
-		if (Utilities.isNotBlank(LanguagePropertiesManager.VERSIONINFO_DOWNLOAD_URL) && dailyUpdateCheckIsPending()) {
+		if (StringUtilities.isNotBlank(LanguagePropertiesManager.VERSIONINFO_DOWNLOAD_URL) && dailyUpdateCheckIsPending()) {
 			setDailyUpdateCheckStatus(true);
 			try {
 				if (ApplicationUpdateUtilities.checkForNewVersionAvailable(LanguagePropertiesManager.VERSIONINFO_DOWNLOAD_URL, applicationConfiguration.getProxyConfiguration(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION) != null) {
@@ -609,7 +610,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private void addLanguage() {
 		try {
 			final String newLanguageSign = new SimpleInputDialog(this, getTitle(), LangResources.get("enterLanguageSign")).open();
-			if (Utilities.isNotBlank(newLanguageSign)) {
+			if (StringUtilities.isNotBlank(newLanguageSign)) {
 				model.addLanguage(newLanguageSign);
 				setupTable();
 			}
@@ -763,7 +764,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private void transfer() {
 		try {
 			final String languageSignTransferSource = new ComboSelectionDialog(this, getTitle(), LangResources.get("selectSourceLanguageSignToTransfer"), model.getAvailableLanguageSigns(), 0).open();
-			if (Utilities.isBlank(languageSignTransferSource)) {
+			if (StringUtilities.isBlank(languageSignTransferSource)) {
 				return;
 			}
 
@@ -774,7 +775,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				languageSignTransferTarget = availableOtherLanguageSigns.get(0);
 			} else {
 				languageSignTransferTarget = new ComboSelectionDialog(this, getTitle(), LangResources.get("selectTargetLanguageSignToTransfer"), availableOtherLanguageSigns).open();
-				if (Utilities.isBlank(languageSignTransferTarget)) {
+				if (StringUtilities.isBlank(languageSignTransferTarget)) {
 					return;
 				}
 			}
@@ -793,7 +794,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private void clearIdentical() {
 		try {
 			final String languageSignClearSource = new ComboSelectionDialog(this, getTitle(), LangResources.get("selectSourceLanguageSignToClearIdentical"), model.getAvailableLanguageSigns(), 0).open();
-			if (Utilities.isBlank(languageSignClearSource)) {
+			if (StringUtilities.isBlank(languageSignClearSource)) {
 				return;
 			}
 
@@ -804,7 +805,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				languageSignClearTarget = availableOtherLanguageSigns.get(0);
 			} else {
 				languageSignClearTarget = new ComboSelectionDialog(this, getTitle(), LangResources.get("selectTargetLanguageSignToClearIdentical"), availableOtherLanguageSigns).open();
-				if (Utilities.isBlank(languageSignClearTarget)) {
+				if (StringUtilities.isBlank(languageSignClearTarget)) {
 					return;
 				}
 			}
@@ -1101,7 +1102,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	 * Shows the name of the loaded properties set above the table (listener of the model)
 	 */
 	private void updatePropertiesLabel(final String newLanguagePropertySetName) {
-		if (Utilities.isNotEmpty(newLanguagePropertySetName)) {
+		if (StringUtilities.isNotEmpty(newLanguagePropertySetName)) {
 			propertiesLabel.setText(LangResources.get("table_title") + " \"" + newLanguagePropertySetName + "\"");
 		} else {
 			propertiesLabel.setText(LangResources.get("table_title"));
@@ -1200,7 +1201,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				// Assign the determined path to all properties that don't have one yet,
 				// so the worker can treat every property by its own (now always non-blank) path.
 				for (final LanguageProperty languageProperty : model.getLanguageProperties()) {
-					if (Utilities.isBlank(languageProperty.getPath())) {
+					if (StringUtilities.isBlank(languageProperty.getPath())) {
 						languageProperty.setPath(defaultLanguagePropertiesPath);
 					}
 				}
@@ -1242,7 +1243,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 			// A directory selection is only needed to place properties that don't have a path of their own yet.
 			// If every property already has a path, it can be saved directly to those paths without asking.
-			final boolean hasPropertiesWithoutPath = model.getLanguageProperties().stream().anyMatch(o -> Utilities.isBlank(o.getPath()));
+			final boolean hasPropertiesWithoutPath = model.getLanguageProperties().stream().anyMatch(o -> StringUtilities.isBlank(o.getPath()));
 
 			File directory = null;
 			String newPropertiesSetName = "Multiple";
@@ -1257,7 +1258,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				final SimpleInputDialog nameDialog = new SimpleInputDialog(this, getTitle(), LangResources.get("enterNewLanguagePropertiesName"));
 				nameDialog.setDefaultText(newPropertiesSetName);
 				final String enteredName = nameDialog.open();
-				if (Utilities.isBlank(enteredName)) {
+				if (StringUtilities.isBlank(enteredName)) {
 					return;
 				}
 				newPropertiesSetName = enteredName;
@@ -1306,7 +1307,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		}
 		if (languagePropertiesSetPaths != null) {
 			for (final String languagePropertiesSetPath : languagePropertiesSetPaths) {
-				if (!Utilities.isBlank(languagePropertiesSetPath)) {
+				if (!StringUtilities.isBlank(languagePropertiesSetPath)) {
 					final File parentDirectory = new File(Utilities.replaceUsersHome(languagePropertiesSetPath)).getAbsoluteFile().getParentFile();
 					if (parentDirectory != null && !parentDirectory.isDirectory()) {
 						missingDirectories.add(parentDirectory);
@@ -1531,7 +1532,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	 */
 	private void exportToFile(final String fileExtension, final FileAction exportAction) {
 		try {
-			final String exportBaseName = Utilities.isNotBlank(model.getLanguagePropertiesSetName()) ? model.getLanguagePropertiesSetName() : "LanguageProperties";
+			final String exportBaseName = StringUtilities.isNotBlank(model.getLanguagePropertiesSetName()) ? model.getLanguagePropertiesSetName() : "LanguageProperties";
 			final File exportFile = SwingDialogUtilities.chooseFileToSave(this, getTitle() + " " + LangResources.get("export_file"), getInitialImportExportDirectory(), exportBaseName + "_Export_" + DateUtilities.formatDate("yyyy-MM-dd_HH-mm", LocalDateTime.now()) + "." + fileExtension, fileExtension);
 			if (exportFile == null) {
 				return;
@@ -1673,7 +1674,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	 * Handles file paths as well as paths that do not exist anymore.
 	 */
 	static File getNearestExistingDirectory(final String path) {
-		if (Utilities.isBlank(path)) {
+		if (StringUtilities.isBlank(path)) {
 			return null;
 		}
 		File directory = new File(Utilities.replaceUsersHome(path)).getAbsoluteFile();

@@ -21,7 +21,7 @@ import de.soderer.swing.SwingDialogUtilities;
 import de.soderer.utilities.ConfigurationProperties;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.Result;
-import de.soderer.utilities.Utilities;
+import de.soderer.utilities.StringUtilities;
 
 /**
  * Reading of language properties from all supported sources (properties file,
@@ -237,7 +237,7 @@ final class ImportSourceChooser {
 		// Preselect the latest import source, if it is a recent entry, otherwise the latest used entry
 		int preselectedIndex = SwingDialogUtilities.getLastEntryIndex(owner.getRecentlyOpenedDirectories());
 		final String lastSourcePath = applicationConfiguration.get(LanguagePropertiesManager.CONFIG_LAST_IMPORT_SOURCE);
-		if (Utilities.isNotBlank(lastSourcePath)) {
+		if (StringUtilities.isNotBlank(lastSourcePath)) {
 			int index = 0;
 			for (final String recentPath : owner.getRecentlyOpenedDirectories()) {
 				if (lastSourcePath.equals(recentPath)) {

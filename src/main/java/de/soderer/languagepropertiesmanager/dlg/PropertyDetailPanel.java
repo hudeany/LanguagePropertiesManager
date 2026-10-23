@@ -35,7 +35,7 @@ import de.soderer.languagepropertiesmanager.storage.LanguageProperty;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.PropertiesReader;
 import de.soderer.utilities.PropertiesWriter;
-import de.soderer.utilities.Utilities;
+import de.soderer.utilities.StringUtilities;
 
 /**
  * Right part of the main window: path, key, comment and the language values of
@@ -352,7 +352,7 @@ public class PropertyDetailPanel extends JPanel {
 			if (property != null) {
 				pathTextfield.setText(property.getPath());
 				keyTextfield.setText(showStorageTexts ? PropertiesWriter.escapeKey(property.getKey()) : property.getKey());
-				commentTextfield.setText(Utilities.isNotEmpty(property.getComment()) ? property.getComment() : "");
+				commentTextfield.setText(StringUtilities.isNotEmpty(property.getComment()) ? property.getComment() : "");
 				for (final Map.Entry<String, JTextArea> languageTextField : languageTextFields.entrySet()) {
 					final String value = property.getLanguageValue(languageTextField.getKey());
 					if (value == null) {
@@ -405,7 +405,7 @@ public class PropertyDetailPanel extends JPanel {
 	private void applyChanges() {
 		try {
 			final String plainKey = getPlainKey(keyTextfield.getText());
-			if (Utilities.isBlank(plainKey)) {
+			if (StringUtilities.isBlank(plainKey)) {
 				// A property without key would be lost on saving
 				callback.showErrorMessage(LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("error_key_empty"));
 				return;
@@ -419,7 +419,7 @@ public class PropertyDetailPanel extends JPanel {
 				}
 
 				propertyToChange.setKey(plainKey);
-				propertyToChange.setComment(Utilities.isNotEmpty(commentTextfield.getText()) ? commentTextfield.getText() : null);
+				propertyToChange.setComment(StringUtilities.isNotEmpty(commentTextfield.getText()) ? commentTextfield.getText() : null);
 				for (final Map.Entry<String, JTextArea> languageTextField : languageTextFields.entrySet()) {
 					final String languageSign = languageTextField.getKey();
 					propertyToChange.setLanguageValue(languageSign, getDetailLanguageValue(languageSign, languageTextField.getValue()));
@@ -435,7 +435,7 @@ public class PropertyDetailPanel extends JPanel {
 					newValues.setLanguageValue(languageTextField.getKey(), getDetailLanguageValue(languageTextField.getKey(), languageTextField.getValue()));
 				}
 
-				if (Utilities.isNotEmpty(commentTextfield.getText())) {
+				if (StringUtilities.isNotEmpty(commentTextfield.getText())) {
 					newValues.setComment(commentTextfield.getText());
 				} else {
 					newValues.setComment(null);
@@ -443,7 +443,7 @@ public class PropertyDetailPanel extends JPanel {
 
 				if (!model.isLoaded()) {
 					final String newLanguagePropertiesSetName = callback.askForNewLanguagePropertiesSetName();
-					if (Utilities.isBlank(newLanguagePropertiesSetName)) {
+					if (StringUtilities.isBlank(newLanguagePropertiesSetName)) {
 						// Canceled, the entered data stays in the fields
 						return;
 					}
@@ -597,7 +597,7 @@ public class PropertyDetailPanel extends JPanel {
 			languageLabel.setText(labelText + ":");
 			languageLabel.setToolTipText(null);
 		} else if (explicitlyEmptyLanguageSigns.contains(languageSign)) {
-			if (Utilities.isBlank(LangResources.get("value_empty_sign"))) {
+			if (StringUtilities.isBlank(LangResources.get("value_empty_sign"))) {
 				languageLabel.setText(labelText + ":");
 			} else {
 				languageLabel.setText(labelText + " " + LangResources.get("value_empty_sign") + ":");

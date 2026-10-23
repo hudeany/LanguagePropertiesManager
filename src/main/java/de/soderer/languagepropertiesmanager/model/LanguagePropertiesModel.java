@@ -24,6 +24,7 @@ import de.soderer.languagepropertiesmanager.merge.ReduceResult;
 import de.soderer.languagepropertiesmanager.storage.LanguagePropertiesFileSetReader;
 import de.soderer.languagepropertiesmanager.storage.LanguageProperty;
 import de.soderer.languagepropertiesmanager.storage.LoadedLanguageProperties;
+import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.Utilities;
 
 /**
@@ -372,7 +373,7 @@ public final class LanguagePropertiesModel {
 	 * @return true if the language was deleted
 	 */
 	public boolean deleteLanguage(final String languageSign) {
-		if (Utilities.isBlank(languageSign) || availableLanguageSigns == null || availableLanguageSigns.size() <= 1) {
+		if (StringUtilities.isBlank(languageSign) || availableLanguageSigns == null || availableLanguageSigns.size() <= 1) {
 			return false;
 		}
 		for (final LanguageProperty languageProperty : languageProperties) {
@@ -406,7 +407,7 @@ public final class LanguagePropertiesModel {
 	 * @return number of comments
 	 */
 	public long countComments() {
-		return languageProperties.stream().filter(languageProperty -> Utilities.isNotEmpty(languageProperty.getComment())).count();
+		return languageProperties.stream().filter(languageProperty -> StringUtilities.isNotEmpty(languageProperty.getComment())).count();
 	}
 
 	/**
@@ -425,7 +426,7 @@ public final class LanguagePropertiesModel {
 	 * @return number of paths
 	 */
 	public long countPaths() {
-		return languageProperties.stream().filter(languageProperty -> Utilities.isNotEmpty(languageProperty.getPath())).count();
+		return languageProperties.stream().filter(languageProperty -> StringUtilities.isNotEmpty(languageProperty.getPath())).count();
 	}
 
 	/**
@@ -449,7 +450,7 @@ public final class LanguagePropertiesModel {
 	 * @return number of non-empty values
 	 */
 	public static long countNonEmptyValues(final Collection<LanguageProperty> properties, final String languageSign) {
-		return properties.stream().filter(languageProperty -> Utilities.isNotEmpty(languageProperty.getLanguageValue(languageSign))).count();
+		return properties.stream().filter(languageProperty -> StringUtilities.isNotEmpty(languageProperty.getLanguageValue(languageSign))).count();
 	}
 
 	/**
@@ -512,7 +513,7 @@ public final class LanguagePropertiesModel {
 		int countTransfers = 0;
 		for (final LanguageProperty languageProperty : properties) {
 			final String sourceValue = languageProperty.getLanguageValue(sourceLanguageSign);
-			if (Utilities.isNotBlank(sourceValue)) {
+			if (StringUtilities.isNotBlank(sourceValue)) {
 				languageProperty.setLanguageValue(targetLanguageSign, sourceValue);
 				countTransfers++;
 			}
@@ -540,7 +541,7 @@ public final class LanguagePropertiesModel {
 		for (final LanguageProperty languageProperty : properties) {
 			final String sourceValue = languageProperty.getLanguageValue(sourceLanguageSign);
 			final String targetValue = languageProperty.getLanguageValue(targetLanguageSign);
-			if (Utilities.isNotBlank(targetValue) && targetValue.equals(sourceValue)) {
+			if (StringUtilities.isNotBlank(targetValue) && targetValue.equals(sourceValue)) {
 				languageProperty.setLanguageValue(targetLanguageSign, LanguageProperty.toStorageValue(targetLanguageSign, null));
 				countCleared++;
 			}
@@ -594,11 +595,11 @@ public final class LanguagePropertiesModel {
 			for (final LanguageProperty duplicate : duplicates) {
 				for (final String languageSign : duplicate.getAvailableLanguageSigns()) {
 					final String duplicateValue = duplicate.getLanguageValue(languageSign);
-					if (Utilities.isNotEmpty(duplicateValue) && Utilities.isEmpty(keptProperty.getLanguageValue(languageSign))) {
+					if (StringUtilities.isNotEmpty(duplicateValue) && StringUtilities.isEmpty(keptProperty.getLanguageValue(languageSign))) {
 						keptProperty.setLanguageValue(languageSign, duplicateValue);
 					}
 				}
-				if (Utilities.isEmpty(keptProperty.getComment()) && Utilities.isNotEmpty(duplicate.getComment())) {
+				if (StringUtilities.isEmpty(keptProperty.getComment()) && StringUtilities.isNotEmpty(duplicate.getComment())) {
 					keptProperty.setComment(duplicate.getComment());
 				}
 			}

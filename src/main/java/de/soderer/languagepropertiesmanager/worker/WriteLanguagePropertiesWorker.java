@@ -19,6 +19,7 @@ import de.soderer.languagepropertiesmanager.LanguagePropertiesException;
 import de.soderer.languagepropertiesmanager.storage.LanguagePropertiesFileSetReader;
 import de.soderer.languagepropertiesmanager.storage.LanguagePropertiesFileSetWriter;
 import de.soderer.languagepropertiesmanager.storage.LanguageProperty;
+import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.worker.WorkerParentSimple;
 import de.soderer.utilities.worker.WorkerSimple;
@@ -94,7 +95,7 @@ public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 			final Set<String> languagePropertiesPaths = new HashSet<>();
 			boolean hasPropertiesWithoutPath = false;
 			for (final LanguageProperty languageProperty : languageProperties) {
-				if (Utilities.isNotBlank(languageProperty.getPath())) {
+				if (StringUtilities.isNotBlank(languageProperty.getPath())) {
 					languagePropertiesPaths.add(languageProperty.getPath());
 				} else {
 					hasPropertiesWithoutPath = true;
@@ -143,7 +144,7 @@ public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 						throw new LanguagePropertiesException("Found multiple storage paths for language properties set: " + propertySetName);
 					} else {
 						final List<LanguageProperty> languagePropertiesForStorage = isNewGroup
-								? languageProperties.stream().filter(o -> Utilities.isBlank(o.getPath())).sorted(compareByIndex).collect(Collectors.toList())
+								? languageProperties.stream().filter(o -> StringUtilities.isBlank(o.getPath())).sorted(compareByIndex).collect(Collectors.toList())
 								: languageProperties.stream().filter(o -> Objects.equals(languagePropertiesPath, o.getPath())).sorted(compareByIndex).collect(Collectors.toList());
 
 						if (foundAmount == 1) {
@@ -173,7 +174,7 @@ public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 		} else {
 			// Without output directory every property must have its own path
 			for (final LanguageProperty languageProperty : languageProperties) {
-				if (Utilities.isBlank(languageProperty.getPath())) {
+				if (StringUtilities.isBlank(languageProperty.getPath())) {
 					throw new LanguagePropertiesException("Property '" + languageProperty.getKey() + "' has no path and no outputDirectory was given");
 				}
 			}
@@ -222,7 +223,7 @@ public class WriteLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 			if (excludeParts != null) {
 				for (final String excludePart : excludeParts) {
 					// An empty part (e.g. from an empty configuration or ";;") would exclude every file
-					if (Utilities.isNotEmpty(excludePart) && propertiesFile.getAbsolutePath().contains(excludePart.replace("\\\\", "\\"))) {
+					if (StringUtilities.isNotEmpty(excludePart) && propertiesFile.getAbsolutePath().contains(excludePart.replace("\\\\", "\\"))) {
 						excluded = true;
 						break;
 					}

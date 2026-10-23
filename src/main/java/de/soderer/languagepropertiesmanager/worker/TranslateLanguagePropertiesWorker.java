@@ -5,7 +5,7 @@ import java.util.List;
 import de.soderer.languagepropertiesmanager.TranslationConstants;
 import de.soderer.languagepropertiesmanager.storage.LanguageProperty;
 import de.soderer.utilities.LangResources;
-import de.soderer.utilities.Utilities;
+import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.worker.WorkerParentSimple;
 import de.soderer.utilities.worker.WorkerSimple;
 
@@ -74,9 +74,9 @@ public class TranslateLanguagePropertiesWorker extends WorkerSimple<Boolean> {
 			}
 
 			final String sourceValue = languageProperty.getLanguageValue(languageSignSource);
-			if (Utilities.isNotBlank(sourceValue)) {
+			if (StringUtilities.isNotBlank(sourceValue)) {
 				String targetValue = languageProperty.getLanguageValue(languageSignTarget);
-				if (Utilities.isEmpty(targetValue)) {
+				if (StringUtilities.isEmpty(targetValue)) {
 					targetValue = getConstantTranslation(sourceValue);
 					if (targetValue == null) {
 						try {

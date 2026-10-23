@@ -51,7 +51,7 @@ import de.soderer.languagepropertiesmanager.model.LanguagePropertiesModel;
 import de.soderer.languagepropertiesmanager.storage.LanguagePropertiesFileSetReader;
 import de.soderer.languagepropertiesmanager.storage.LanguageProperty;
 import de.soderer.utilities.LangResources;
-import de.soderer.utilities.Utilities;
+import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.csv.CsvFormat;
 import de.soderer.utilities.csv.CsvWriter;
 
@@ -411,14 +411,14 @@ public class PropertiesTablePanel extends JPanel {
 
 			@Override
 			public void focusLost(final FocusEvent e) {
-				if (Utilities.isEmpty(searchTextField.getText())) {
+				if (StringUtilities.isEmpty(searchTextField.getText())) {
 					searchTextField.setText(LangResources.get("search"));
 				}
 			}
 		});
 		searchTextField.getDocument().addDocumentListener(new SimpleDocumentListener(() -> {
 			final String text = searchTextField.getText();
-			if (Utilities.isNotEmpty(text) && !text.equals(LangResources.get("search"))) {
+			if (StringUtilities.isNotEmpty(text) && !text.equals(LangResources.get("search"))) {
 				searchText = text;
 			} else {
 				// An empty search field must also remove the search filter
@@ -440,7 +440,7 @@ public class PropertiesTablePanel extends JPanel {
 		searchDownButton.setMargin(new Insets(1, 1, 1, 1));
 		searchDownButton.setPreferredSize(new Dimension(25, 25));
 		searchDownButton.addActionListener(e -> {
-			if (Utilities.isNotEmpty(searchText)) {
+			if (StringUtilities.isNotEmpty(searchText)) {
 				selectSearch(searchText, propertiesTable.getSelectedRow() + 1, true, searchCaseInsensitivePreference, searchInKeysPreference, searchInValuesPreference, searchInPathPreference);
 			}
 		});
@@ -453,7 +453,7 @@ public class PropertiesTablePanel extends JPanel {
 		searchUpButton.setMargin(new Insets(1, 1, 1, 1));
 		searchUpButton.setPreferredSize(new Dimension(25, 25));
 		searchUpButton.addActionListener(e -> {
-			if (Utilities.isNotEmpty(searchText)) {
+			if (StringUtilities.isNotEmpty(searchText)) {
 				selectSearch(searchText, propertiesTable.getSelectedRow() - 1, false, searchCaseInsensitivePreference, searchInKeysPreference, searchInValuesPreference, searchInPathPreference);
 			}
 		});
@@ -500,13 +500,13 @@ public class PropertiesTablePanel extends JPanel {
 			applySearchFilter();
 		}
 
-		if (Utilities.isNotEmpty(searchText)) {
+		if (StringUtilities.isNotEmpty(searchText)) {
 			searchFromCurrentSelection();
 		}
 	}
 
 	private boolean isSearchFilterActive() {
-		return searchFilterPreference && Utilities.isNotEmpty(searchText) && (searchInKeysPreference || searchInValuesPreference || searchInPathPreference);
+		return searchFilterPreference && StringUtilities.isNotEmpty(searchText) && (searchInKeysPreference || searchInValuesPreference || searchInPathPreference);
 	}
 
 	/**
@@ -970,7 +970,7 @@ public class PropertiesTablePanel extends JPanel {
 
 	private void selectSearch(final String text, int startIndex, final boolean searchUp, final boolean searchCaseInsensitive,
 			final boolean searchInKeys, final boolean searchInValues, final boolean searchInPath) {
-		if (Utilities.isNotEmpty(text) && model.isLoaded() && !displayedProperties.isEmpty() && (searchInKeys || searchInValues || searchInPath)) {
+		if (StringUtilities.isNotEmpty(text) && model.isLoaded() && !displayedProperties.isEmpty() && (searchInKeys || searchInValues || searchInPath)) {
 			if (startIndex < 0) {
 				startIndex = displayedProperties.size() - 1;
 			} else if (startIndex >= displayedProperties.size()) {
@@ -1133,7 +1133,7 @@ public class PropertiesTablePanel extends JPanel {
 				default:
 					if (isCommentColumn(column)) {
 						// Only show whether a comment exists, a missing comment is shown as an empty cell
-						return Utilities.isEmpty(languageProperty.getComment()) ? "" : LangResources.get("value_found_sign");
+						return StringUtilities.isEmpty(languageProperty.getComment()) ? "" : LangResources.get("value_found_sign");
 					}
 					final String value = languageProperty.getLanguageValue(model.getAvailableLanguageSigns().get(column - COLUMN_FIRST_LANGUAGE));
 					if (value == null) {
@@ -1141,7 +1141,7 @@ public class PropertiesTablePanel extends JPanel {
 						return LangResources.get("value_not_found_sign");
 					} else if (value.isEmpty()) {
 						// Key exists with an explicitly empty value ("key=")
-						if (Utilities.isBlank(LangResources.get("value_empty_sign"))) {
+						if (StringUtilities.isBlank(LangResources.get("value_empty_sign"))) {
 							return "";
 						} else {
 							return LangResources.get("value_empty_sign");

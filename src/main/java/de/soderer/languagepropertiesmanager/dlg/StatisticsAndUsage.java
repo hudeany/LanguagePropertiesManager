@@ -21,6 +21,7 @@ import de.soderer.swing.SwingDialogUtilities;
 import de.soderer.utilities.ConfigurationProperties;
 import de.soderer.utilities.FileUtilities;
 import de.soderer.utilities.LangResources;
+import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.collection.UniqueFifoQueuedList;
 import de.soderer.utilities.csv.CsvFormat;
@@ -97,7 +98,7 @@ final class StatisticsAndUsage {
 
 			int propertiesWithCommentCount = 0;
 			for (final LanguageProperty languageProperty : model.getLanguageProperties()) {
-				if (Utilities.isNotEmpty(languageProperty.getComment())) {
+				if (StringUtilities.isNotEmpty(languageProperty.getComment())) {
 					propertiesWithCommentCount++;
 				}
 			}
@@ -118,7 +119,7 @@ final class StatisticsAndUsage {
 			for (final LanguageProperty languageProperty : model.getLanguageProperties()) {
 				for (final String sign : model.getAvailableLanguageSigns()) {
 					final String value = languageProperty.getLanguageValue(sign);
-					if (Utilities.isNotEmpty(value)) {
+					if (StringUtilities.isNotEmpty(value)) {
 						filledCountByLanguage.merge(sign, 1, Integer::sum);
 						totalLengthByLanguage.merge(sign, (long) value.length(), Long::sum);
 						if (value.length() > longestValueLength) {
@@ -274,7 +275,7 @@ final class StatisticsAndUsage {
 
 		// The given properties are checked (before they were ignored and always all loaded properties were used)
 		for (final LanguageProperty languageProperty : storageToCheck) {
-			if (Utilities.isNotEmpty(languageProperty.getLanguageValue(LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT))) {
+			if (StringUtilities.isNotEmpty(languageProperty.getLanguageValue(LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT))) {
 				existingDefaultProperties.add(languageProperty.getKey());
 			}
 			existingOverallProperties.add(languageProperty.getKey());

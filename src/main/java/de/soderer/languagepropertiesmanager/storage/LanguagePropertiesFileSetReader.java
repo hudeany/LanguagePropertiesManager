@@ -19,6 +19,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import de.soderer.utilities.PropertiesReader;
+import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.Utilities;
 
 /**
@@ -185,8 +186,8 @@ public class LanguagePropertiesFileSetReader {
 							keyIndex.put(entry.getKey(), property);
 						}
 						if (readComments) {
-							if (Utilities.isNotEmpty(propertiesReader.getComments().get(entry.getKey()))
-									&& Utilities.isEmpty(property.getComment())) {
+							if (StringUtilities.isNotEmpty(propertiesReader.getComments().get(entry.getKey()))
+									&& StringUtilities.isEmpty(property.getComment())) {
 								property.setComment(propertiesReader.getComments().get(entry.getKey()));
 							}
 						}
@@ -333,7 +334,7 @@ public class LanguagePropertiesFileSetReader {
 		final Set<String> languagePropertiesSetPaths = new HashSet<>();
 		for (final LanguageProperty languageProperty : languageProperties) {
 			// Properties without path (e.g. imported without path column) have no set name
-			if (Utilities.isNotBlank(languageProperty.getPath())) {
+			if (StringUtilities.isNotBlank(languageProperty.getPath())) {
 				languagePropertiesSetPaths.add(languageProperty.getPath());
 			}
 		}

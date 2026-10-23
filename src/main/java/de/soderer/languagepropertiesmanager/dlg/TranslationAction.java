@@ -22,7 +22,7 @@ import de.soderer.swing.ProgressDialog;
 import de.soderer.swing.SimpleInputDialog;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.Result;
-import de.soderer.utilities.Utilities;
+import de.soderer.utilities.StringUtilities;
 
 /**
  * Translation of language values with DeepL into one or all other languages
@@ -57,21 +57,21 @@ final class TranslationAction {
 
 	private void translate(final boolean allTargetLanguages) {
 		try {
-			if (Utilities.isBlank(applicationConfiguration.get(LanguagePropertiesManager.CONFIG_DEEPL_APIKEY))) {
+			if (StringUtilities.isBlank(applicationConfiguration.get(LanguagePropertiesManager.CONFIG_DEEPL_APIKEY))) {
 				final String deeplApiKey = new SimpleInputDialog(owner, owner.getTitle(), LangResources.get("enterDeeplApiKey")).open();
 				if (deeplApiKey != null) {
 					applicationConfiguration.set(LanguagePropertiesManager.CONFIG_DEEPL_APIKEY, deeplApiKey);
 				}
 			}
 
-			if (Utilities.isBlank(applicationConfiguration.get(LanguagePropertiesManager.CONFIG_DEEPL_APIKEY))) {
+			if (StringUtilities.isBlank(applicationConfiguration.get(LanguagePropertiesManager.CONFIG_DEEPL_APIKEY))) {
 				owner.showErrorMessage(LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("missingDeeplApiKey"));
 				return;
 			}
 
 			TranslationConstants translationConstants = null;
 			final String translationConstantsFilePath = applicationConfiguration.get(LanguagePropertiesManager.CONFIG_TRANSLATION_CONSTANTS_FILE);
-			if (Utilities.isNotBlank(translationConstantsFilePath)) {
+			if (StringUtilities.isNotBlank(translationConstantsFilePath)) {
 				try {
 					translationConstants = TranslationConstants.read(new File(translationConstantsFilePath.trim()));
 				} catch (final Exception e) {
@@ -85,13 +85,13 @@ final class TranslationAction {
 
 			// The source language is always required, also when translating into all target languages
 			final String languageSignTranslateSource = new ComboSelectionDialog(owner, owner.getTitle(), LangResources.get("selectSourceLanguageSignToTranslate"), model.getAvailableLanguageSigns(), 0).open();
-			if (Utilities.isBlank(languageSignTranslateSource)) {
+			if (StringUtilities.isBlank(languageSignTranslateSource)) {
 				return;
 			}
 			String sourceLanguage = languageSignTranslateSource;
 			if ("Default".equalsIgnoreCase(sourceLanguage)) {
 				sourceLanguage = new ComboSelectionDialog(owner, owner.getTitle(), LangResources.get("selectDefaultLanguageToTranslate"), deepLHelper.getSupportedLanguages(), deepLHelper.getSupportedLanguages().indexOf("EN")).open();
-				if (Utilities.isBlank(sourceLanguage)) {
+				if (StringUtilities.isBlank(sourceLanguage)) {
 					return;
 				}
 			}
@@ -107,7 +107,7 @@ final class TranslationAction {
 				languageSignsTranslateTarget.addAll(availableOtherLanguageSigns);
 			} else {
 				final String languageSignTranslateTarget = new ComboSelectionDialog(owner, owner.getTitle(), LangResources.get("selectTargetLanguageSignToTranslate"), availableOtherLanguageSigns).open();
-				if (Utilities.isBlank(languageSignTranslateTarget)) {
+				if (StringUtilities.isBlank(languageSignTranslateTarget)) {
 					return;
 				}
 				languageSignsTranslateTarget.add(languageSignTranslateTarget);
@@ -123,7 +123,7 @@ final class TranslationAction {
 				String targetLanguage = languageSignTranslateTarget;
 				if ("Default".equalsIgnoreCase(targetLanguage)) {
 					targetLanguage = new ComboSelectionDialog(owner, owner.getTitle(), LangResources.get("selectDefaultLanguageToTranslate"), deepLHelper.getSupportedLanguages(), deepLHelper.getSupportedLanguages().indexOf("EN")).open();
-					if (Utilities.isBlank(targetLanguage)) {
+					if (StringUtilities.isBlank(targetLanguage)) {
 						return;
 					}
 				}
@@ -166,7 +166,7 @@ final class TranslationAction {
 						countTranslations += translateLanguagePropertiesWorker.getCountTranslations();
 					}
 
-					if (Utilities.isNotBlank(translateLanguagePropertiesWorker.getTranslateErrorMessage())) {
+					if (StringUtilities.isNotBlank(translateLanguagePropertiesWorker.getTranslateErrorMessage())) {
 						if (targetLanguages.size() > 1) {
 							translateErrorMessages.add(targetLanguageEntry.getKey() + ": " + translateLanguagePropertiesWorker.getTranslateErrorMessage());
 						} else {

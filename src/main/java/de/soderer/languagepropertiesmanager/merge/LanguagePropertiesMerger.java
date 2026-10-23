@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import de.soderer.languagepropertiesmanager.check.ErrorReport;
 import de.soderer.languagepropertiesmanager.storage.LanguageProperty;
 import de.soderer.utilities.LangResources;
+import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.Utilities;
 
 /**
@@ -48,7 +49,7 @@ public final class LanguagePropertiesMerger {
 		final Set<String> newPathsAndKeys = new HashSet<>();
 		for (final LanguageProperty importedProperty : importedProperties) {
 			final String key = importedProperty.getKey();
-			if (Utilities.isBlank(key)) {
+			if (StringUtilities.isBlank(key)) {
 				mergePlan.skippedEntries.add(LangResources.get("mergeImport_skippedEmptyKey", MergeUtilities.getEmptyForNull(importedProperty.getPath())));
 				continue;
 			}
@@ -64,9 +65,9 @@ public final class LanguagePropertiesMerger {
 				int differingValuesOfProperty = 0;
 				for (final String languageSign : importedProperty.getAvailableLanguageSigns()) {
 					final String importedValue = importedProperty.getLanguageValue(languageSign);
-					if (Utilities.isNotEmpty(importedValue)) {
+					if (StringUtilities.isNotEmpty(importedValue)) {
 						final String existingValue = targetProperty.getLanguageValue(languageSign);
-						if (Utilities.isEmpty(existingValue)) {
+						if (StringUtilities.isEmpty(existingValue)) {
 							mergePlan.fillableValueCount++;
 						} else if (!existingValue.equals(importedValue)) {
 							differingValuesOfProperty++;
@@ -164,7 +165,7 @@ public final class LanguagePropertiesMerger {
 	 * Name of a properties set, which is the last part of its path (the path has no language sign and no file extension)
 	 */
 	private static String getLanguagePropertiesSetNameOfPath(final String path) {
-		if (Utilities.isBlank(path)) {
+		if (StringUtilities.isBlank(path)) {
 			return "";
 		}
 		final String normalizedPath = path.replace('\\', '/');
@@ -203,7 +204,7 @@ public final class LanguagePropertiesMerger {
 					// The added property is completely taken from the import, so its empty values are always filled.
 					mergeValues(importedProperty, alreadyAddedProperty, true, false, mergeResult);
 					// The newly added property is completely taken from the import, so it also takes over a comment it is still missing
-					if (Utilities.isEmpty(alreadyAddedProperty.getComment()) && Utilities.isNotEmpty(importedProperty.getComment())) {
+					if (StringUtilities.isEmpty(alreadyAddedProperty.getComment()) && StringUtilities.isNotEmpty(importedProperty.getComment())) {
 						alreadyAddedProperty.setComment(importedProperty.getComment());
 					}
 				} else {
@@ -236,9 +237,9 @@ public final class LanguagePropertiesMerger {
 
 		for (final String languageSign : sourceProperty.getAvailableLanguageSigns()) {
 			final String importedValue = sourceProperty.getLanguageValue(languageSign);
-			if (Utilities.isNotEmpty(importedValue)) {
+			if (StringUtilities.isNotEmpty(importedValue)) {
 				final String existingValue = targetProperty.getLanguageValue(languageSign);
-				if (Utilities.isEmpty(existingValue)) {
+				if (StringUtilities.isEmpty(existingValue)) {
 					// Values not filled are reported by their count from the merge plan
 					if (fillEmptyValues) {
 						targetProperty.setLanguageValue(languageSign, importedValue);

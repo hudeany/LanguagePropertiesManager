@@ -19,7 +19,7 @@ import de.soderer.swing.ModalDialog;
 import de.soderer.swing.ShowDataDialog;
 import de.soderer.utilities.IoUtilities;
 import de.soderer.utilities.LangResources;
-import de.soderer.utilities.Utilities;
+import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.VersionInfo;
 
 /**
@@ -111,7 +111,7 @@ public class HelpDialog extends ModalDialog<Boolean> {
 	 */
 	private void widenToFitTitle() {
 		final String title = getTitle();
-		if (Utilities.isBlank(title)) {
+		if (StringUtilities.isBlank(title)) {
 			return;
 		}
 

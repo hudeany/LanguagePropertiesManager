@@ -32,6 +32,7 @@ import de.soderer.utilities.DateUtilities;
 import de.soderer.utilities.IoUtilities;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.ParameterException;
+import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.Version;
 import de.soderer.utilities.YesNoAsk;
@@ -288,7 +289,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 					i++;
 					if (i >= arguments.length) {
 						throw new ParameterException(arguments[i - 1], "Missing parameter for importFromExcel");
-					} else if (Utilities.isBlank(arguments[i])) {
+					} else if (StringUtilities.isBlank(arguments[i])) {
 						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Invalid parameter for importFromExcel");
 					} else if (actionDefinition.getImportFromExcel() != null) {
 						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Duplicate parameter importFromExcel");
@@ -302,7 +303,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 					i++;
 					if (i >= arguments.length) {
 						throw new ParameterException(arguments[i - 1], "Missing parameter for exportToExcel");
-					} else if (Utilities.isBlank(arguments[i])) {
+					} else if (StringUtilities.isBlank(arguments[i])) {
 						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Invalid parameter for exportToExcel");
 					} else if (actionDefinition.getExportToExcel() != null) {
 						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Duplicate parameter exportToExcel");
@@ -316,7 +317,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 					i++;
 					if (i >= arguments.length) {
 						throw new ParameterException(arguments[i - 1], "Missing parameter for excelFile");
-					} else if (Utilities.isBlank(arguments[i])) {
+					} else if (StringUtilities.isBlank(arguments[i])) {
 						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Invalid parameter for excelFile");
 					} else if (actionDefinition.getExcelFile() != null) {
 						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Duplicate parameter excelFile");
@@ -328,7 +329,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 					i++;
 					if (i >= arguments.length) {
 						throw new ParameterException(arguments[i - 1], "Missing parameter for importFromCsv");
-					} else if (Utilities.isBlank(arguments[i])) {
+					} else if (StringUtilities.isBlank(arguments[i])) {
 						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Invalid parameter for importFromCsv");
 					} else if (actionDefinition.getImportFromCsv() != null) {
 						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Duplicate parameter importFromCsv");
@@ -342,7 +343,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 					i++;
 					if (i >= arguments.length) {
 						throw new ParameterException(arguments[i - 1], "Missing parameter for exportToCsv");
-					} else if (Utilities.isBlank(arguments[i])) {
+					} else if (StringUtilities.isBlank(arguments[i])) {
 						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Invalid parameter for exportToCsv");
 					} else if (actionDefinition.getExportToCsv() != null) {
 						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Duplicate parameter exportToCsv");
@@ -356,7 +357,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 					i++;
 					if (i >= arguments.length) {
 						throw new ParameterException(arguments[i - 1], "Missing parameter for csvFile");
-					} else if (Utilities.isBlank(arguments[i])) {
+					} else if (StringUtilities.isBlank(arguments[i])) {
 						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Invalid parameter for csvFile");
 					} else if (actionDefinition.getCsvFile() != null) {
 						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Duplicate parameter csvFile");
@@ -368,7 +369,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 					i++;
 					if (i >= arguments.length) {
 						throw new ParameterException(arguments[i - 1], "Missing parameter for outputDirectory");
-					} else if (Utilities.isBlank(arguments[i])) {
+					} else if (StringUtilities.isBlank(arguments[i])) {
 						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Invalid parameter for outputDirectory");
 					} else if (actionDefinition.getOutputDirectory() != null) {
 						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Duplicate parameter outputDirectory");
@@ -387,7 +388,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 					i++;
 					if (i >= arguments.length) {
 						throw new ParameterException(arguments[i - 1], "Missing parameter for propertiesFileExtension");
-					} else if (Utilities.isBlank(arguments[i])) {
+					} else if (StringUtilities.isBlank(arguments[i])) {
 						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Invalid parameter for propertiesFileExtension");
 					} else if (actionDefinition.getPropertiesFileExtension() != null) {
 						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Duplicate parameter propertiesFileExtension");
@@ -817,7 +818,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 				currentTerminalWidth = 80;
 			}
 
-			if (Utilities.isNotBlank(resultText)) {
+			if (StringUtilities.isNotBlank(resultText)) {
 				System.out.println("Result: \n" + resultText);
 			}
 
@@ -874,7 +875,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 				ConsoleUtilities.saveCurrentCursorPosition();
 
 				if (currentTerminalWidth < previousTerminalWidth) {
-					System.out.print("\r" + Utilities.repeat(" ", currentTerminalWidth));
+					System.out.print("\r" + StringUtilities.repeat(" ", currentTerminalWidth));
 				}
 				previousTerminalWidth = currentTerminalWidth;
 
@@ -907,7 +908,7 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 				System.out.println("End (" + NumberFormat.getNumberInstance(Locale.ENGLISH).format(subItemsDone) + " data items done in " + DateUtilities.getHumanReadableTimespanEnglish(Duration.between(itemStart, itemEnd), true) + ")");
 			}
 
-			if (Utilities.isNotBlank(resultText)) {
+			if (StringUtilities.isNotBlank(resultText)) {
 				System.out.println("Result: \n" + resultText);
 			}
 
