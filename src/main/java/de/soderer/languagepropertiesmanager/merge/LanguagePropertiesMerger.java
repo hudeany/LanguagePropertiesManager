@@ -13,7 +13,6 @@ import de.soderer.languagepropertiesmanager.check.ErrorReport;
 import de.soderer.languagepropertiesmanager.storage.LanguageProperty;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.StringUtilities;
-import de.soderer.utilities.Utilities;
 
 /**
  * Merge import of language properties into the currently loaded data:
@@ -291,7 +290,7 @@ public final class LanguagePropertiesMerger {
 				mergeResult.keptDifferingValues.size(),
 				mergeResult.notAddedProperties.size(),
 				mergePlan.skippedEntries.size(),
-				mergeResult.newLanguageSigns.isEmpty() ? "-" : Utilities.join(mergeResult.newLanguageSigns, ", ")));
+				mergeResult.newLanguageSigns.isEmpty() ? "-" : StringUtilities.join(mergeResult.newLanguageSigns, ", ")));
 
 		if (!mergeOptions.isFillEmptyValues() && mergePlan.getFillableValueCount() > 0) {
 			reportText.append("\n").append(LangResources.get("mergeImport_notFilledValues", mergePlan.getFillableValueCount()));
@@ -333,6 +332,6 @@ public final class LanguagePropertiesMerger {
 		if (mergeOptions.isOverwriteDifferingValues()) {
 			parts.add(LangResources.get("mergeOptions_short_overwrite"));
 		}
-		return parts.isEmpty() ? "-" : Utilities.join(parts, ", ");
+		return parts.isEmpty() ? "-" : StringUtilities.join(parts, ", ");
 	}
 }

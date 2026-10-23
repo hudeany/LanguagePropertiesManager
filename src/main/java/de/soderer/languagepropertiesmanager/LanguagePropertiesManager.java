@@ -584,9 +584,9 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 				if (loadLanguagePropertiesWorker.get()) {
 					// Load success
 					System.out.println("Loaded language properties sets: " + loadLanguagePropertiesWorker.getLanguagePropertiesSetNames().size());
-					System.out.println("Loaded language properties set names: " + Utilities.join(loadLanguagePropertiesWorker.getLanguagePropertiesSetNames(), ", "));
+					System.out.println("Loaded language properties set names: " + StringUtilities.join(loadLanguagePropertiesWorker.getLanguagePropertiesSetNames(), ", "));
 					System.out.println("Loaded language properties keys overall: " + loadLanguagePropertiesWorker.getLanguageProperties().size());
-					System.out.println("Loaded language properties language signs: " + Utilities.join(loadLanguagePropertiesWorker.getAvailableLanguageSigns(), ", "));
+					System.out.println("Loaded language properties language signs: " + StringUtilities.join(loadLanguagePropertiesWorker.getAvailableLanguageSigns(), ", "));
 					System.out.println("Comments in language properties: " + (loadLanguagePropertiesWorker.isCommentsFound() ? "Yes" : "No"));
 				} else {
 					throw new LanguagePropertiesException("Cancelled by user");
@@ -629,9 +629,9 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 				if (importFromExcelWorker.get()) {
 					// Import success
 					System.out.println("Imported language properties sets: " + importFromExcelWorker.getLanguagePropertiesSetNames().size());
-					System.out.println("Imported language properties set names: " + Utilities.join(importFromExcelWorker.getLanguagePropertiesSetNames(), ", "));
+					System.out.println("Imported language properties set names: " + StringUtilities.join(importFromExcelWorker.getLanguagePropertiesSetNames(), ", "));
 					System.out.println("Imported language properties keys overall: " + importFromExcelWorker.getLanguageProperties().size());
-					System.out.println("Imported language properties language signs: " + Utilities.join(importFromExcelWorker.getAvailableLanguageSigns(), ", "));
+					System.out.println("Imported language properties language signs: " + StringUtilities.join(importFromExcelWorker.getAvailableLanguageSigns(), ", "));
 					System.out.println("Comments in language properties: " + (importFromExcelWorker.isCommentsFound() ? "Yes" : "No"));
 				} else {
 					throw new LanguagePropertiesException("Cancelled by user");
@@ -691,9 +691,9 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 				if (loadLanguagePropertiesWorker.get()) {
 					// Load success
 					System.out.println("Loaded language properties sets: " + loadLanguagePropertiesWorker.getLanguagePropertiesSetNames().size());
-					System.out.println("Loaded language properties set names: " + Utilities.join(loadLanguagePropertiesWorker.getLanguagePropertiesSetNames(), ", "));
+					System.out.println("Loaded language properties set names: " + StringUtilities.join(loadLanguagePropertiesWorker.getLanguagePropertiesSetNames(), ", "));
 					System.out.println("Loaded language properties keys overall: " + loadLanguagePropertiesWorker.getLanguageProperties().size());
-					System.out.println("Loaded language properties language signs: " + Utilities.join(loadLanguagePropertiesWorker.getAvailableLanguageSigns(), ", "));
+					System.out.println("Loaded language properties language signs: " + StringUtilities.join(loadLanguagePropertiesWorker.getAvailableLanguageSigns(), ", "));
 					System.out.println("Comments in language properties: " + (loadLanguagePropertiesWorker.isCommentsFound() ? "Yes" : "No"));
 				} else {
 					throw new LanguagePropertiesException("Cancelled by user");
@@ -736,9 +736,9 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 				if (importFromCsvWorker.get()) {
 					// Import success
 					System.out.println("Imported language properties sets: " + importFromCsvWorker.getLanguagePropertiesSetNames().size());
-					System.out.println("Imported language properties set names: " + Utilities.join(importFromCsvWorker.getLanguagePropertiesSetNames(), ", "));
+					System.out.println("Imported language properties set names: " + StringUtilities.join(importFromCsvWorker.getLanguagePropertiesSetNames(), ", "));
 					System.out.println("Imported language properties keys overall: " + importFromCsvWorker.getLanguageProperties().size());
-					System.out.println("Imported language properties language signs: " + Utilities.join(importFromCsvWorker.getAvailableLanguageSigns(), ", "));
+					System.out.println("Imported language properties language signs: " + StringUtilities.join(importFromCsvWorker.getAvailableLanguageSigns(), ", "));
 					System.out.println("Comments in language properties: " + (importFromCsvWorker.isCommentsFound() ? "Yes" : "No"));
 				} else {
 					throw new LanguagePropertiesException("Cancelled by user");

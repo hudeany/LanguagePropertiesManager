@@ -1052,7 +1052,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			return false;
 		} else {
 			takeOverLoadedLanguageProperties(loadedLanguageProperties);
-			showMessage(LangResources.get("directory_dialog_title"), LangResources.get("openFilesResult", filePath, model.getLanguageProperties().size(), Utilities.join(model.getAvailableLanguageSigns(), ", ")));
+			showMessage(LangResources.get("directory_dialog_title"), LangResources.get("openFilesResult", filePath, model.getLanguageProperties().size(), StringUtilities.join(model.getAvailableLanguageSigns(), ", ")));
 			return true;
 		}
 	}
@@ -1086,7 +1086,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			return false;
 		} else {
 			takeOverLoadedLanguageProperties(loadedLanguageProperties);
-			showMessage(LangResources.get("directory_dialog_title"), LangResources.get("openDirectoryResult", basicDirectoryPath, loadedLanguageProperties.getLanguagePropertiesSetNames().size(), model.getLanguageProperties().size(), Utilities.join(model.getAvailableLanguageSigns(), ", ")));
+			showMessage(LangResources.get("directory_dialog_title"), LangResources.get("openDirectoryResult", basicDirectoryPath, loadedLanguageProperties.getLanguagePropertiesSetNames().size(), model.getLanguageProperties().size(), StringUtilities.join(model.getAvailableLanguageSigns(), ", ")));
 			return true;
 		}
 	}
@@ -1282,7 +1282,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			// A canceled save may have written only a part of the files, so the data then still counts as unsaved
 			if (dialogResult != Result.CANCELED && Boolean.TRUE.equals(writeLanguagePropertiesWorker.get())) {
 				model.setUnsavedChanges(false);
-				showData(LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("saveDirectoryResult", Utilities.join(writeLanguagePropertiesWorker.getListOfStoredProperties(), "\n")));
+				showData(LanguagePropertiesManager.APPLICATION_NAME, LangResources.get("saveDirectoryResult", StringUtilities.join(writeLanguagePropertiesWorker.getListOfStoredProperties(), "\n")));
 			}
 
 			setupTable();
@@ -1418,7 +1418,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		if (mergePlan.hasNothingToDo()) {
 			String message = LangResources.get("mergeImport_nothingToImport", loadedLanguageProperties.getSourceDescription());
 			if (!mergePlan.getSkippedEntries().isEmpty()) {
-				message += "\n\n" + LangResources.get("mergeImport_section_skipped") + ":\n" + Utilities.join(mergePlan.getSkippedEntries(), "\n");
+				message += "\n\n" + LangResources.get("mergeImport_section_skipped") + ":\n" + StringUtilities.join(mergePlan.getSkippedEntries(), "\n");
 			}
 			showData(LangResources.get("mergeImport_title"), message);
 			return;
@@ -1464,7 +1464,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		if (reducePlan.hasNothingToReduce()) {
 			String message = LangResources.get("reduceByBaseSet_nothingIdentical", baseLanguageProperties.getSourceDescription(), propertiesToCheck.size());
 			if (!reducePlan.getSkippedEntries().isEmpty()) {
-				message += "\n\n" + LangResources.get("mergeImport_section_skipped") + ":\n" + Utilities.join(reducePlan.getSkippedEntries(), "\n");
+				message += "\n\n" + LangResources.get("mergeImport_section_skipped") + ":\n" + StringUtilities.join(reducePlan.getSkippedEntries(), "\n");
 			}
 			showData(title, message);
 			return;

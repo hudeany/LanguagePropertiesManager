@@ -22,7 +22,6 @@ import de.soderer.utilities.ConfigurationProperties;
 import de.soderer.utilities.FileUtilities;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.StringUtilities;
-import de.soderer.utilities.Utilities;
 import de.soderer.utilities.collection.UniqueFifoQueuedList;
 import de.soderer.utilities.csv.CsvFormat;
 import de.soderer.utilities.csv.CsvReader;
@@ -135,7 +134,7 @@ final class StatisticsAndUsage {
 			final StringBuilder reportText = new StringBuilder();
 			reportText.append(LangResources.get("statistics_totalProperties", totalProperties)).append("\n");
 			reportText.append(LangResources.get("statistics_totalPropertySets", countByPath.size())).append("\n");
-			reportText.append(LangResources.get("statistics_totalLanguages", model.getAvailableLanguageSigns().size(), Utilities.join(model.getAvailableLanguageSigns(), ", "))).append("\n");
+			reportText.append(LangResources.get("statistics_totalLanguages", model.getAvailableLanguageSigns().size(), StringUtilities.join(model.getAvailableLanguageSigns(), ", "))).append("\n");
 			reportText.append(LangResources.get("statistics_propertiesWithComment", propertiesWithCommentCount)).append("\n");
 			reportText.append(LangResources.get("statistics_duplicateGroups", duplicateGroupCount, duplicateEntryCount)).append("\n");
 
@@ -330,15 +329,15 @@ final class StatisticsAndUsage {
 		reportText += "Checked files: " + fileList.size() + "\n";
 		if (filesWithMissingValues.size() > 0) {
 			reportText += "\nFiles with missing properties missing in default languages:\n";
-			reportText += Utilities.join(filesWithMissingValues, "\n") + "\n";
+			reportText += StringUtilities.join(filesWithMissingValues, "\n") + "\n";
 		}
 		if (missingDefaultProperties.size() > 0) {
 			reportText += "\nProperties missing in default languages:\n";
-			reportText += Utilities.join(missingDefaultProperties, "\n") + "\n";
+			reportText += StringUtilities.join(missingDefaultProperties, "\n") + "\n";
 		}
 		if (unusedProperties.size() > 0) {
 			reportText += "\nProperties unused in all languages:\n";
-			reportText += Utilities.join(unusedProperties, "\n");
+			reportText += StringUtilities.join(unusedProperties, "\n");
 		}
 
 		owner.showData(LangResources.get("usagereport"), reportText);
