@@ -5,7 +5,7 @@
 	<classpathentry kind="src" path="src/test/java"/>
 	<classpathentry kind="lib" path="lib/commons-text-1.15.0.jar"/>
 	<classpathentry kind="lib" path="lib/mailapi-2.0.2.jar"/>
-	<classpathentry kind="lib" path="lib/json-26.2.14.jar"/>
+	<classpathentry kind="lib" path="lib/json-26.2.15.jar"/>
 	<classpathentry kind="lib" path="lib/poi-5.5.1.jar"/>
 	<classpathentry kind="lib" path="lib/poi-ooxml-5.5.1.jar"/>
 	<classpathentry kind="lib" path="lib/poi-ooxml-full-5.5.1.jar"/>
