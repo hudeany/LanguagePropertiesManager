@@ -19,7 +19,7 @@
 	<property name="poi.version" value="5.5.1" />
 	<property name="xmlbeans.version" value="5.4.1" />
 	<property name="commons-text.version" value="1.15.0" />
-	<property name="mailapi.version" value="2.0.1" />
+	<property name="mailapi.version" value="2.0.2" />
 	<property name="jna.version" value="5.19.1" />
 	<property name="csv.version" value="26.1.14" />
 	<property name="json.version" value="26.2.16" />
@@ -43,7 +43,7 @@
 	</resources>
 
 	<target name="download_dependencies" depends="register_antbuildhelp">
-		<getMavenDependency groupId="com.sun.mail" artifactId="mailapi" version="2.0.2" />
+		<getMavenDependency groupId="com.sun.mail" artifactId="mailapi" version="${mailapi.version}" />
 
 		<getDependency name="csv" version="${csv.version}" url="https://github.com/hudeany/csv/releases/download/{version}/csv-{version}.jar" />
 		<getDependency name="json" version="${json.version}" url="https://github.com/hudeany/json/releases/download/{version}/json-{version}.jar" />
