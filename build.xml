@@ -227,6 +227,7 @@
 				<attribute name="Rsrc-Main-Class" value="${rsrcMainClass}" />
 				<attribute name="Class-Path" value="." />
 				<attribute name="Enable-Native-Access" value="ALL-UNNAMED" />
+				<attribute name="Add-Opens" value="java.desktop/sun.awt.X11"/>
 			</manifest>
 
 			<fileset dir="${buildPath}/bin" />
