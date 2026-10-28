@@ -411,8 +411,6 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 			}
 
 			if (openGui) {
-				// Allows pinning the application to the Linux Gnome dock (needs "--add-opens=java.desktop/sun.awt.X11=ALL-UNNAMED")
-				de.soderer.swing.SwingUtilities.setAwtWmClass(APPLICATION_STARTUPCLASS_NAME);
 				de.soderer.swing.SwingUtilities.setSystemLookAndFeel();
 
 				final ApplicationConfigurationProperties guiApplicationConfiguration = applicationConfiguration;
