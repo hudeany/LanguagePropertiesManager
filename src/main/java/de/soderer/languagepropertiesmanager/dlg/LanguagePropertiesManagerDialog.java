@@ -1,10 +1,12 @@
 package de.soderer.languagepropertiesmanager.dlg;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
-import java.awt.Insets;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -55,6 +57,7 @@ import de.soderer.languagepropertiesmanager.worker.WriteLanguagePropertiesWorker
 import de.soderer.network.NetworkUtilities;
 import de.soderer.swing.ComboSelectionDialog;
 import de.soderer.swing.ErrorDialog;
+import de.soderer.swing.ModernUi;
 import de.soderer.swing.ProgressDialog;
 import de.soderer.swing.QuestionDialog;
 import de.soderer.swing.ShowDataDialog;
@@ -77,7 +80,7 @@ import de.soderer.utilities.collection.UniqueFifoQueuedList;
 public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private static final long serialVersionUID = 3371684406925137014L;
 
-	private static final int ICON_BUTTON_SIZE = 28;
+	private static final int ICON_BUTTON_SIZE = 30;
 
 	/** Prefix of the language keys of the questions for {@link YesNoAsk} configuration values set to "ask" */
 	private static final String CONFIGURATION_CHOICE_QUESTION_PREFIX = "question.config.";
@@ -107,6 +110,8 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private PropertyDetailPanel detailPanel;
 	/** Split pane between table (left) and detail view (right) */
 	private final JSplitPane mainSplitPane;
+	/** Card around the detail view, hidden together with it */
+	private ModernUi.Card detailCard;
 	/** Divider location before the detail view was hidden, to restore it when shown again */
 	private int dividerLocationBeforeHidingDetail = -1;
 
@@ -177,7 +182,18 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		mainSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, createLeftPart(), createRightPart());
 		mainSplitPane.setResizeWeight(0.5);
 		mainSplitPane.setContinuousLayout(true);
-		setContentPane(mainSplitPane);
+		ModernUi.styleSplitPane(mainSplitPane);
+
+		final JPanel mainPanel = new JPanel(new BorderLayout());
+		mainPanel.setBackground(ModernUi.BACKGROUND);
+		mainPanel.setBorder(BorderFactory.createEmptyBorder(8, 8, 6, 8));
+		mainPanel.add(mainSplitPane, BorderLayout.CENTER);
+
+		final JPanel contentPane = new JPanel(new BorderLayout());
+		contentPane.setBackground(ModernUi.BACKGROUND);
+		contentPane.add(createHeader(), BorderLayout.NORTH);
+		contentPane.add(mainPanel, BorderLayout.CENTER);
+		setContentPane(contentPane);
 
 		// The label above the table and the save button follow the model
 		model.addPropertyChangeListener(event -> {
@@ -188,8 +204,8 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 			}
 		});
 
-		setSize(1000, 450);
-		setMinimumSize(new Dimension(450, 300));
+		setSize(1150, 680);
+		setMinimumSize(new Dimension(640, 420));
 		setLocationRelativeTo(null);
 
 		/*
@@ -305,83 +321,150 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		checkButtonStatus();
 	}
 
-	private JPanel createLeftPart() throws Exception {
-		final JPanel leftPart = new JPanel(new BorderLayout(0, 3));
-		leftPart.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
+	/**
+	 * Gradient header with logo, application name, version and the configuration and help buttons.
+	 */
+	private JPanel createHeader() throws Exception {
+		final ModernUi.GradientHeader header = new ModernUi.GradientHeader();
+		header.add(ModernUi.createLogo(ImageManager.getImage("LanguagePropertiesManager.png")), BorderLayout.WEST);
 
+		final JLabel applicationLabel = new JLabel(LanguagePropertiesManager.APPLICATION_NAME);
+		applicationLabel.setForeground(Color.WHITE);
+		applicationLabel.setFont(ModernUi.baseFont().deriveFont(Font.BOLD, 21f));
+		final JLabel versionLabel = new JLabel("Version " + LanguagePropertiesManager.VERSION);
+		versionLabel.setForeground(new Color(255, 255, 255, 190));
+		final JPanel titlePanel = new JPanel(new GridLayout(2, 1, 0, 0));
+		titlePanel.setOpaque(false);
+		titlePanel.add(applicationLabel);
+		titlePanel.add(versionLabel);
+		header.add(titlePanel, BorderLayout.CENTER);
+
+		final JButton configButton = createHeaderButton(ModernUi.IconKind.GEAR, LangResources.get("configuration"));
+		configButton.addActionListener(e -> openConfiguration());
+		final JButton helpButton = createHeaderButton(ModernUi.IconKind.HELP, LangResources.get("help"));
+		helpButton.addActionListener(e -> new HelpDialog(this, LanguagePropertiesManager.APPLICATION_NAME + " (" + LanguagePropertiesManager.VERSION.toString() + ") " + LangResources.get("help"), applicationConfiguration).open());
+
+		final JPanel applicationButtonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 4, 0));
+		applicationButtonPanel.setOpaque(false);
+		applicationButtonPanel.add(configButton);
+		applicationButtonPanel.add(helpButton);
+		// GridBagLayout centers the buttons vertically in the header
+		final JPanel eastPanel = new JPanel(new GridBagLayout());
+		eastPanel.setOpaque(false);
+		eastPanel.add(applicationButtonPanel);
+		header.add(eastPanel, BorderLayout.EAST);
+		return header;
+	}
+
+	/**
+	 * Transparent icon button for the gradient header; the text is shown as tooltip.
+	 */
+	private static JButton createHeaderButton(final ModernUi.IconKind iconKind, final String text) {
+		final JButton button = new ModernUi.ModernButton(null, iconKind, ModernUi.ButtonStyle.HEADER);
+		button.setToolTipText(text);
+		button.getAccessibleContext().setAccessibleName(text);
+		return button;
+	}
+
+	/**
+	 * Card with the title of the loaded properties set, the toolbars and the properties table.
+	 */
+	private JPanel createLeftPart() throws Exception {
 		final JPanel topPart = new JPanel();
+		topPart.setOpaque(false);
 		topPart.setLayout(new BoxLayout(topPart, BoxLayout.PAGE_AXIS));
 
-		propertiesLabel = new JLabel(LangResources.get("table_title"));
-		propertiesLabel.setFont(propertiesLabel.getFont().deriveFont(Font.BOLD, propertiesLabel.getFont().getSize2D() + 4));
+		propertiesLabel = ModernUi.createTitleLabel(LangResources.get("table_title"), ModernUi.IconKind.GLOBE);
 		propertiesLabel.setAlignmentX(LEFT_ALIGNMENT);
-		propertiesLabel.setBorder(BorderFactory.createEmptyBorder(0, 2, 3, 0));
+		propertiesLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 6, 0));
 		topPart.add(propertiesLabel);
 
-		final JPanel buttonSection1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 1));
+		final JPanel buttonSection1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 1, 1));
+		buttonSection1.setOpaque(false);
 		buttonSection1.setAlignmentX(LEFT_ALIGNMENT);
 		topPart.add(buttonSection1);
 
-		final JPanel buttonSection2 = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 1));
+		final JPanel buttonSection2 = new JPanel(new FlowLayout(FlowLayout.LEFT, 1, 1));
+		buttonSection2.setOpaque(false);
 		buttonSection2.setAlignmentX(LEFT_ALIGNMENT);
+		buttonSection2.setBorder(BorderFactory.createEmptyBorder(0, 0, 6, 0));
 		topPart.add(buttonSection2);
 
+		// Loading and importing
 		loadRecentButton = createIconButton(buttonSection1, "clock.png", "tooltip_load_recent_files", e -> openRecent());
 		createIconButton(buttonSection1, "load.png", "tooltip_load_files", e -> openFiles());
 		createIconButton(buttonSection1, "folderLoad.png", "tooltip_load_folder", e -> openFolder());
 		createIconButton(buttonSection1, "excelLoad.png", "tooltip_importExcel", e -> importFromExcel());
 		createIconButton(buttonSection1, "csvLoad.png", "tooltip_importCsv", e -> importFromCsv());
+		buttonSection1.add(ModernUi.createToolbarSeparator());
 		final JButton mergeImportButton = createIconButton(buttonSection1, "merge.png", "tooltip_mergeImport", null);
 		mergeImportButton.addActionListener(e -> importSourceChooser.showImportSourceMenu(mergeImportButton, "mergeImport_title", this::mergeLoadedLanguageProperties));
 		reduceByBaseSetButton = createIconButton(buttonSection1, "reduce.png", "tooltip_reduceByBaseSet", null);
 		reduceByBaseSetButton.addActionListener(e -> importSourceChooser.showImportSourceMenu(reduceByBaseSetButton, "reduceByBaseSet_title", this::reduceByBaseSet));
+		// Saving and exporting
+		buttonSection1.add(ModernUi.createToolbarSeparator());
 		saveButton = createIconButton(buttonSection1, "save.png", "tooltip_save_files", e -> saveFiles());
 		folderSaveButton = createIconButton(buttonSection1, "folderSave.png", "tooltip_save_folder", e -> saveFolder());
 		exportToExcelButton = createIconButton(buttonSection1, "excelSave.png", "tooltip_exportExcel", e -> exportToExcel());
 		exportToCsvButton = createIconButton(buttonSection1, "csvSave.png", "tooltip_exportCsv", e -> exportToCsv());
-		createIconButton(buttonSection1, "wrench.png", "configuration", e -> openConfiguration());
-		createIconButton(buttonSection1, "question.png", "help", e -> new HelpDialog(this, LanguagePropertiesManager.APPLICATION_NAME + " (" + LanguagePropertiesManager.VERSION.toString() + ") " + LangResources.get("help"), applicationConfiguration).open());
 
+		// Editing properties
 		addButton = createIconButton(buttonSection2, "newProperty.png", "tooltip_create_new_property", e -> addNewProperty());
 		removeButton = createIconButton(buttonSection2, "trash.png", "tooltip_delete_properties", e -> removeSelectedProperties());
 		removeButton.setEnabled(false);
 		removeUnselectedButton = createIconButton(buttonSection2, "funnel.png", "tooltip_delete_unselected_properties", e -> removeUnselectedProperties());
 		removeUnselectedButton.setEnabled(false);
+		// Usage check
+		buttonSection2.add(ModernUi.createToolbarSeparator());
 		checkUsageButton = createIconButton(buttonSection2, "puzzle.png", "checkusage", e -> statisticsAndUsage.checkUsageNew());
 		checkUsageButton.setEnabled(false);
 		checkUsageButtonPrevious = createIconButton(buttonSection2, "puzzleClock.png", "checkusageprevious", e -> statisticsAndUsage.checkUsagePrevious());
 		checkUsageButtonPrevious.setEnabled(false);
+		// Languages
+		buttonSection2.add(ModernUi.createToolbarSeparator());
 		addLanguageButton = createIconButton(buttonSection2, "plus.png", "tooltip_AddLanguage", e -> addLanguage());
 		deleteLanguageButton = createIconButton(buttonSection2, "minus.png", "tooltip_DeleteLanguage", e -> deleteLanguage(null));
 		translateButton = createIconButton(buttonSection2, "translate.png", "tooltip_Translate", null);
 		translateButton.addActionListener(e -> translationAction.showTranslateMenu(translateButton));
 		transferButton = createIconButton(buttonSection2, "transfer.png", "tooltip_Transfer", e -> transfer());
 		clearIdenticalButton = createIconButton(buttonSection2, "clearIdentical.png", "tooltip_ClearIdentical", e -> clearIdentical());
+		// Checks and cleanup
+		buttonSection2.add(ModernUi.createToolbarSeparator());
 		removeDuplicatesButton = createIconButton(buttonSection2, "clean.png", "tooltip_removeDuplicates", e -> removeDuplicates());
 		checkErrorsButton = createIconButton(buttonSection2, "lightning.png", "tooltip_checkErrors", e -> checkErrors());
 		showStatisticsButton = createIconButton(buttonSection2, "info.png", "tooltip_showStatistics", e -> statisticsAndUsage.showStatistics());
 
-		leftPart.add(topPart, BorderLayout.NORTH);
-
 		tablePanel = new PropertiesTablePanel(model, new TableCallback());
-		leftPart.add(tablePanel, BorderLayout.CENTER);
+		ModernUi.blendIntoCard(tablePanel);
 
-		return leftPart;
+		final JPanel cardContent = new JPanel(new BorderLayout(0, 0));
+		cardContent.setOpaque(false);
+		cardContent.add(topPart, BorderLayout.NORTH);
+		cardContent.add(tablePanel, BorderLayout.CENTER);
+
+		final ModernUi.Card tableCard = new ModernUi.Card(null, null, 8);
+		tableCard.setContent(cardContent);
+		return tableCard;
 	}
 
 	private static JButton createIconButton(final JPanel parent, final String imageName, final String toolTipKey, final ActionListener actionListener) throws Exception {
-		final JButton button = new JButton(ImageManager.getImage(imageName));
-		button.setToolTipText(LangResources.get(toolTipKey));
-		button.setMargin(new Insets(2, 2, 2, 2));
-		button.setPreferredSize(new Dimension(ICON_BUTTON_SIZE, ICON_BUTTON_SIZE));
-		button.addActionListener(actionListener);
+		final JButton button = ModernUi.createToolbarButton(ImageManager.getImage(imageName), LangResources.get(toolTipKey), ICON_BUTTON_SIZE);
+		if (actionListener != null) {
+			button.addActionListener(actionListener);
+		}
 		parent.add(button);
 		return button;
 	}
 
-	private PropertyDetailPanel createRightPart() {
+	/**
+	 * Card with the detail view of the selected property.
+	 */
+	private ModernUi.Card createRightPart() {
 		detailPanel = new PropertyDetailPanel(model, new DetailCallback());
-		return detailPanel;
+		ModernUi.blendIntoCard(detailPanel);
+		detailCard = new ModernUi.Card(null, null, 8);
+		detailCard.setContent(detailPanel);
+		return detailCard;
 	}
 
 	/**
@@ -423,12 +506,13 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	 */
 	private void updateDetailViewVisibility() {
 		final boolean showDetailView = model.getCurrentSelection().size() <= 1;
-		if (detailPanel.isVisible() == showDetailView) {
+		// The card is hidden together with the detail view, otherwise an empty card would remain
+		if (detailCard.isVisible() == showDetailView) {
 			return;
 		}
 
 		if (showDetailView) {
-			detailPanel.setVisible(true);
+			detailCard.setVisible(true);
 			if (dividerLocationBeforeHidingDetail > 0) {
 				mainSplitPane.setDividerLocation(dividerLocationBeforeHidingDetail);
 			} else {
@@ -437,7 +521,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		} else {
 			// Remember the user's divider position, because hiding the right component moves the divider to the edge
 			dividerLocationBeforeHidingDetail = mainSplitPane.getDividerLocation();
-			detailPanel.setVisible(false);
+			detailCard.setVisible(false);
 		}
 		mainSplitPane.revalidate();
 		mainSplitPane.repaint();

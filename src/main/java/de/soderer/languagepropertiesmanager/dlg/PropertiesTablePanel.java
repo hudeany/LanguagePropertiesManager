@@ -3,7 +3,6 @@ package de.soderer.languagepropertiesmanager.dlg;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -22,7 +21,6 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import javax.swing.AbstractAction;
-import javax.swing.BorderFactory;
 import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -36,6 +34,7 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 import javax.swing.event.DocumentEvent;
@@ -50,6 +49,7 @@ import de.soderer.languagepropertiesmanager.image.ImageManager;
 import de.soderer.languagepropertiesmanager.model.LanguagePropertiesModel;
 import de.soderer.languagepropertiesmanager.storage.LanguagePropertiesFileSetReader;
 import de.soderer.languagepropertiesmanager.storage.LanguageProperty;
+import de.soderer.swing.ModernUi;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.csv.CsvFormat;
@@ -203,19 +203,31 @@ public class PropertiesTablePanel extends JPanel {
 	 *             if an icon cannot be loaded
 	 */
 	public PropertiesTablePanel(final LanguagePropertiesModel model, final Callback callback) throws Exception {
-		super(new BorderLayout(0, 3));
+		super(new BorderLayout(0, 6));
 		this.model = model;
 		this.callback = callback;
 
 		add(createSearchBox(), BorderLayout.NORTH);
 
 		propertiesTableModel = new LanguagePropertiesTableModel();
-		propertiesTable = new JTable(propertiesTableModel);
+		propertiesTable = new JTable(propertiesTableModel) {
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public Component prepareRenderer(final TableCellRenderer renderer, final int row, final int column) {
+				final Component component = super.prepareRenderer(renderer, row, column);
+				// Striped rows for better readability of wide tables; selected rows keep the selection color
+				if (!isRowSelected(row)) {
+					component.setBackground(ModernUi.getStripedRowBackground(row));
+				}
+				return component;
+			}
+		};
 		propertiesTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		propertiesTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 		propertiesTable.setShowGrid(true);
-		propertiesTable.setGridColor(new Color(220, 220, 220));
-		propertiesTable.setBackground(Color.WHITE);
+		// Row height, grid and selection colors and the flat header; before installSortableHeader(), which wraps the header renderer
+		ModernUi.styleTable(propertiesTable);
 		propertiesTable.setFillsViewportHeight(true);
 		propertiesTable.getTableHeader().setReorderingAllowed(true);
 		propertiesTable.getSelectionModel().addListSelectionListener(event -> {
@@ -260,7 +272,11 @@ public class PropertiesTablePanel extends JPanel {
 
 		final JScrollPane propertiesTableScrollPane = new JScrollPane(propertiesTable);
 		// Area right of the last column (AUTO_RESIZE_OFF) shows the viewport background
-		propertiesTableScrollPane.getViewport().setBackground(Color.WHITE);
+		ModernUi.styleScrollPane(propertiesTableScrollPane, Color.WHITE);
+		// Corner above the vertical scroll bar in the header's color
+		final JPanel headerCorner = new JPanel();
+		headerCorner.setBackground(ModernUi.TABLE_HEADER_BACKGROUND);
+		propertiesTableScrollPane.setCorner(ScrollPaneConstants.UPPER_RIGHT_CORNER, headerCorner);
 		add(propertiesTableScrollPane, BorderLayout.CENTER);
 
 		// Shows which properties the bulk actions affect (selection / search filter)
@@ -392,13 +408,13 @@ public class PropertiesTablePanel extends JPanel {
 
 	private JPanel createSearchBox() throws Exception {
 		final JPanel searchBox = new JPanel(new GridBagLayout());
-		searchBox.setBorder(BorderFactory.createEtchedBorder());
 
 		final GridBagConstraints constraints = new GridBagConstraints();
-		constraints.insets = new Insets(1, 2, 1, 2);
+		constraints.insets = new Insets(0, 0, 0, 3);
 		constraints.gridy = 0;
 
 		final JTextField searchTextField = new JTextField(LangResources.get("search"), 12);
+		ModernUi.styleTextField(searchTextField, false);
 		// GridBagLayout shrinks components to their minimum size when space gets tight, keep the field usable
 		searchTextField.setMinimumSize(searchTextField.getPreferredSize());
 		searchTextField.addFocusListener(new FocusAdapter() {
@@ -435,10 +451,7 @@ public class PropertiesTablePanel extends JPanel {
 		constraints.weightx = 0;
 		constraints.fill = GridBagConstraints.NONE;
 
-		final JButton searchDownButton = new JButton(ImageManager.getImage("down.png"));
-		searchDownButton.setToolTipText(LangResources.get("search_down"));
-		searchDownButton.setMargin(new Insets(1, 1, 1, 1));
-		searchDownButton.setPreferredSize(new Dimension(25, 25));
+		final JButton searchDownButton = ModernUi.createToolbarButton(ImageManager.getImage("down.png"), LangResources.get("search_down"), 28);
 		searchDownButton.addActionListener(e -> {
 			if (StringUtilities.isNotEmpty(searchText)) {
 				selectSearch(searchText, propertiesTable.getSelectedRow() + 1, true, searchCaseInsensitivePreference, searchInKeysPreference, searchInValuesPreference, searchInPathPreference);
@@ -448,10 +461,7 @@ public class PropertiesTablePanel extends JPanel {
 		searchBox.add(searchDownButton, constraints);
 		searchComponents.add(searchDownButton);
 
-		final JButton searchUpButton = new JButton(ImageManager.getImage("up.png"));
-		searchUpButton.setToolTipText(LangResources.get("search_up"));
-		searchUpButton.setMargin(new Insets(1, 1, 1, 1));
-		searchUpButton.setPreferredSize(new Dimension(25, 25));
+		final JButton searchUpButton = ModernUi.createToolbarButton(ImageManager.getImage("up.png"), LangResources.get("search_up"), 28);
 		searchUpButton.addActionListener(e -> {
 			if (StringUtilities.isNotEmpty(searchText)) {
 				selectSearch(searchText, propertiesTable.getSelectedRow() - 1, false, searchCaseInsensitivePreference, searchInKeysPreference, searchInValuesPreference, searchInPathPreference);

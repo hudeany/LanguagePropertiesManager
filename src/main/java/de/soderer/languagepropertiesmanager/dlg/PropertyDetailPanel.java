@@ -32,6 +32,7 @@ import de.soderer.languagepropertiesmanager.model.LanguagePropertiesModel;
 import de.soderer.languagepropertiesmanager.storage.LanguagePropertiesFileSetReader;
 import de.soderer.languagepropertiesmanager.storage.LanguagePropertiesFileSetWriter;
 import de.soderer.languagepropertiesmanager.storage.LanguageProperty;
+import de.soderer.swing.ModernUi;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.PropertiesReader;
 import de.soderer.utilities.PropertiesWriter;
@@ -146,10 +147,9 @@ public class PropertyDetailPanel extends JPanel {
 	 *            actions of the main window
 	 */
 	public PropertyDetailPanel(final LanguagePropertiesModel model, final Callback callback) {
-		super(new BorderLayout(0, 3));
+		super(new BorderLayout(0, 6));
 		this.model = model;
 		this.callback = callback;
-		setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
 
 		final JPanel keyBereich = new JPanel(new GridBagLayout());
 
@@ -166,16 +166,18 @@ public class PropertyDetailPanel extends JPanel {
 
 		labelConstraints.gridy = 0;
 		fieldConstraints.gridy = 0;
-		keyBereich.add(new JLabel(LangResources.get("columnheader_path") + ":"), labelConstraints);
+		keyBereich.add(ModernUi.createMutedLabel(LangResources.get("columnheader_path") + ":"), labelConstraints);
 		pathTextfield = new JTextField();
 		pathTextfield.setEditable(false);
+		ModernUi.styleTextField(pathTextfield, true);
 		pathTextfield.getDocument().addDocumentListener(new DetailModifyListener());
 		keyBereich.add(pathTextfield, fieldConstraints);
 
 		labelConstraints.gridy = 1;
 		fieldConstraints.gridy = 1;
-		keyBereich.add(new JLabel(LangResources.get("columnheader_key") + ":"), labelConstraints);
+		keyBereich.add(ModernUi.createMutedLabel(LangResources.get("columnheader_key") + ":"), labelConstraints);
 		keyTextfield = new JTextField();
+		ModernUi.styleTextField(keyTextfield, false);
 		keyTextfield.getDocument().addDocumentListener(new DetailModifyListener());
 		keyBereich.add(keyTextfield, fieldConstraints);
 
@@ -183,8 +185,8 @@ public class PropertyDetailPanel extends JPanel {
 		fieldConstraints.gridy = 2;
 		// Align the label with the first line, because a multi-line comment makes the field higher
 		labelConstraints.anchor = GridBagConstraints.NORTHWEST;
-		labelConstraints.insets = new Insets(4, 2, 2, 4);
-		keyBereich.add(new JLabel(LangResources.get("comment") + ":"), labelConstraints);
+		labelConstraints.insets = new Insets(7, 2, 2, 4);
+		keyBereich.add(ModernUi.createMutedLabel(LangResources.get("comment") + ":"), labelConstraints);
 		labelConstraints.anchor = GridBagConstraints.WEST;
 		labelConstraints.insets = new Insets(2, 2, 2, 4);
 		// Text area instead of text field, so multi-line comments are shown with all their lines
@@ -197,16 +199,18 @@ public class PropertyDetailPanel extends JPanel {
 		separatorConstraints.gridy = 3;
 		separatorConstraints.gridwidth = 2;
 		separatorConstraints.fill = GridBagConstraints.HORIZONTAL;
-		separatorConstraints.insets = new Insets(4, 0, 0, 0);
-		keyBereich.add(new JSeparator(SwingConstants.HORIZONTAL), separatorConstraints);
+		separatorConstraints.insets = new Insets(6, 0, 0, 0);
+		keyBereich.add(createSeparator(), separatorConstraints);
 
 		add(keyBereich, BorderLayout.NORTH);
 
 		detailFieldsPart = new JPanel(new GridBagLayout());
+		detailFieldsPart.setBackground(ModernUi.CARD);
 		final JScrollPane scrolledPart = new JScrollPane(detailFieldsPart);
 		scrolledPart.setBorder(BorderFactory.createEmptyBorder());
 		scrolledPart.setMinimumSize(new Dimension(200, 100));
-		scrolledPart.getVerticalScrollBar().setUnitIncrement(16);
+		scrolledPart.getViewport().setBackground(ModernUi.CARD);
+		ModernUi.styleScrollBars(scrolledPart, ModernUi.CARD);
 		add(scrolledPart, BorderLayout.CENTER);
 
 		final JPanel buttonBereich = new JPanel(new GridBagLayout());
@@ -214,14 +218,14 @@ public class PropertyDetailPanel extends JPanel {
 		final GridBagConstraints buttonConstraints = new GridBagConstraints();
 		buttonConstraints.fill = GridBagConstraints.HORIZONTAL;
 		buttonConstraints.weightx = 1;
-		buttonConstraints.insets = new Insets(2, 2, 2, 2);
+		buttonConstraints.insets = new Insets(3, 2, 3, 2);
 
 		buttonConstraints.gridx = 0;
 		buttonConstraints.gridy = 0;
 		buttonConstraints.gridwidth = 2;
-		buttonBereich.add(new JSeparator(SwingConstants.HORIZONTAL), buttonConstraints);
+		buttonBereich.add(createSeparator(), buttonConstraints);
 
-		textConversionButton = new JButton(showStorageTexts ? LangResources.get("change_to_show_visble_texts") : LangResources.get("change_to_show_storage_texts"));
+		textConversionButton = new ModernUi.ModernButton(showStorageTexts ? LangResources.get("change_to_show_visble_texts") : LangResources.get("change_to_show_storage_texts"), ModernUi.IconKind.REFRESH, ModernUi.ButtonStyle.SECONDARY);
 		textConversionButton.addActionListener(e -> {
 			// Only switch the mode, if all field contents could be converted
 			if (changeDisplayMode(!showStorageTexts)) {
@@ -232,13 +236,13 @@ public class PropertyDetailPanel extends JPanel {
 		buttonConstraints.gridy = 1;
 		buttonBereich.add(textConversionButton, buttonConstraints);
 
-		okButton = new JButton(LangResources.get("button_text_add"));
+		okButton = new ModernUi.ModernButton(LangResources.get("button_text_add"), null, ModernUi.ButtonStyle.PRIMARY);
 		okButton.addActionListener(e -> applyChanges());
 		buttonConstraints.gridy = 2;
 		buttonConstraints.gridwidth = 1;
 		buttonBereich.add(okButton, buttonConstraints);
 
-		cancelButton = new JButton(LangResources.get("button_text_discard"));
+		cancelButton = new ModernUi.ModernButton(LangResources.get("button_text_discard"), ModernUi.IconKind.CLOSE, ModernUi.ButtonStyle.SECONDARY);
 		cancelButton.addActionListener(e -> refresh());
 		buttonConstraints.gridx = 1;
 		buttonBereich.add(cancelButton, buttonConstraints);
@@ -296,7 +300,7 @@ public class PropertyDetailPanel extends JPanel {
 				fieldConstraints.gridy = row;
 
 				final String labelText = LanguagePropertiesFileSetReader.LANGUAGE_SIGN_DEFAULT.equals(sign) ? LangResources.get("columnheader_default") : sign;
-				final JLabel languageLabel = new JLabel(labelText + ":");
+				final JLabel languageLabel = ModernUi.createMutedLabel(labelText + ":");
 				detailFieldsPart.add(languageLabel, labelConstraints);
 				languageLabels.put(sign, languageLabel);
 
@@ -331,7 +335,9 @@ public class PropertyDetailPanel extends JPanel {
 			final GridBagConstraints fillerConstraints = new GridBagConstraints();
 			fillerConstraints.gridy = row;
 			fillerConstraints.weighty = 1;
-			detailFieldsPart.add(new JPanel(), fillerConstraints);
+			final JPanel filler = new JPanel();
+			filler.setOpaque(false);
+			detailFieldsPart.add(filler, fillerConstraints);
 		}
 
 		detailFieldsPart.revalidate();
@@ -625,16 +631,22 @@ public class PropertyDetailPanel extends JPanel {
 		if (textFieldFont != null) {
 			textArea.setFont(textFieldFont);
 		}
-		final javax.swing.border.Border textFieldBorder = UIManager.getBorder("TextField.border");
-		if (textFieldBorder != null) {
-			textArea.setBorder(textFieldBorder);
-		} else {
-			textArea.setBorder(BorderFactory.createEtchedBorder());
-		}
+		// Same rounded border with focus outline as the text fields
+		ModernUi.styleTextAreaAsField(textArea);
 		// Let Tab / Shift+Tab move the focus instead of inserting a tab character
 		textArea.setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, null);
 		textArea.setFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, null);
 		return textArea;
+	}
+
+	/**
+	 * Thin light separator line between the sections of the detail view.
+	 */
+	private static JSeparator createSeparator() {
+		final JSeparator separator = new JSeparator(SwingConstants.HORIZONTAL);
+		separator.setForeground(ModernUi.INNER_BORDER);
+		separator.setBackground(ModernUi.CARD);
+		return separator;
 	}
 
 	/**
