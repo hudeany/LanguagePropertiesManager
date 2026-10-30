@@ -31,10 +31,10 @@ import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.WindowConstants;
 
-import de.soderer.applicationbase.ApplicationConfigurationDialog;
 import de.soderer.applicationbase.ApplicationConfigurationProperties;
 import de.soderer.applicationbase.ApplicationUpdateUtilities;
-import de.soderer.applicationbase.UpdateableGuiApplication;
+import de.soderer.applicationbase.modern.ApplicationConfigurationDialog;
+import de.soderer.applicationbase.modern.UpdateableGuiApplication;
 import de.soderer.languagepropertiesmanager.LanguagePropertiesException;
 import de.soderer.languagepropertiesmanager.LanguagePropertiesManager;
 import de.soderer.languagepropertiesmanager.check.ErrorReport;
@@ -362,7 +362,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	 * Transparent icon button for the gradient header; the text is shown as tooltip.
 	 */
 	private static JButton createHeaderButton(final IconKind iconKind, final String text) {
-		final JButton button = new ModernUi.ModernButton(null, iconKind, ButtonStyle.HEADER);
+		final JButton button = new ModernUi.Button(null, iconKind, ButtonStyle.HEADER);
 		button.setToolTipText(text);
 		button.getAccessibleContext().setAccessibleName(text);
 		return button;
