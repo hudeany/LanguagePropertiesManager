@@ -324,7 +324,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	}
 
 	/**
-	 * Gradient header with logo, application name, version and the configuration and help buttons.
+	 * Gradient header with logo, application name, version and the help and configuration buttons.
 	 */
 	private JPanel createHeader() throws Exception {
 		final ModernUi.GradientHeader header = new ModernUi.GradientHeader();
@@ -348,8 +348,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 
 		final JPanel applicationButtonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 4, 0));
 		applicationButtonPanel.setOpaque(false);
-		applicationButtonPanel.add(configButton);
 		applicationButtonPanel.add(helpButton);
+		// The configuration button is the rightmost one, like in the other applications
+		applicationButtonPanel.add(configButton);
 		// GridBagLayout centers the buttons vertically in the header
 		final JPanel eastPanel = new JPanel(new GridBagLayout());
 		eastPanel.setOpaque(false);
