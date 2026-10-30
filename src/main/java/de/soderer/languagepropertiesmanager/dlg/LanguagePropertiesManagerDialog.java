@@ -464,6 +464,13 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	 */
 	private ModernUi.Card createRightPart() {
 		detailPanel = new PropertyDetailPanel(model, new DetailCallback());
+
+		// Close button at the right end of the button group of the detail view, closes like the window decoration
+		// (asking for unsaved changes)
+		final JButton closeButton = new ModernUi.Button(LangResources.get("close"), null, ButtonStyle.SECONDARY);
+		closeButton.addActionListener(e -> closeApplication());
+		detailPanel.addButton(closeButton);
+
 		ModernUi.blendIntoCard(detailPanel);
 		detailCard = new ModernUi.Card(null, null, 8);
 		detailCard.setContent(detailPanel);

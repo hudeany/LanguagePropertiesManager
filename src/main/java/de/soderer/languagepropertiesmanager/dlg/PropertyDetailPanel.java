@@ -139,6 +139,10 @@ public class PropertyDetailPanel extends JPanel {
 	private final JButton cancelButton;
 	/** Switches between plain texts and storage representation */
 	private final JButton textConversionButton;
+	/** Area of the buttons below the language fields */
+	private final JPanel buttonBereich;
+	/** Column for the next button added to the row of the cancel button */
+	private int nextButtonColumn = 1;
 
 	/**
 	 * Creates the detail view. The language fields are created by {@link #rebuildLanguageFields()}.
@@ -215,7 +219,7 @@ public class PropertyDetailPanel extends JPanel {
 		ModernUi.styleScrollBars(scrolledPart, ModernUi.CARD);
 		add(scrolledPart, BorderLayout.CENTER);
 
-		final JPanel buttonBereich = new JPanel(new GridBagLayout());
+		buttonBereich = new JPanel(new GridBagLayout());
 
 		final GridBagConstraints buttonConstraints = new GridBagConstraints();
 		buttonConstraints.fill = GridBagConstraints.HORIZONTAL;
@@ -224,7 +228,8 @@ public class PropertyDetailPanel extends JPanel {
 
 		buttonConstraints.gridx = 0;
 		buttonConstraints.gridy = 0;
-		buttonConstraints.gridwidth = 2;
+		// Spans all columns, also the ones of buttons added later by addButton()
+		buttonConstraints.gridwidth = GridBagConstraints.REMAINDER;
 		buttonBereich.add(createSeparator(), buttonConstraints);
 
 		textConversionButton = new ModernUi.Button(showStorageTexts ? LangResources.get("change_to_show_visble_texts") : LangResources.get("change_to_show_storage_texts"), IconKind.REFRESH, ButtonStyle.SECONDARY);
@@ -238,20 +243,39 @@ public class PropertyDetailPanel extends JPanel {
 		buttonConstraints.gridy = 1;
 		buttonBereich.add(textConversionButton, buttonConstraints);
 
+		// The OK button has a row of its own, below it the cancel button and the buttons added by addButton()
 		okButton = new ModernUi.Button(LangResources.get("button_text_add"), null, ButtonStyle.PRIMARY);
 		okButton.addActionListener(e -> applyChanges());
 		buttonConstraints.gridy = 2;
-		buttonConstraints.gridwidth = 1;
 		buttonBereich.add(okButton, buttonConstraints);
 
 		cancelButton = new ModernUi.Button(LangResources.get("button_text_discard"), IconKind.CLOSE, ButtonStyle.SECONDARY);
 		cancelButton.addActionListener(e -> refresh());
-		buttonConstraints.gridx = 1;
+		buttonConstraints.gridy = 3;
+		buttonConstraints.gridwidth = 1;
 		buttonBereich.add(cancelButton, buttonConstraints);
 
 		add(buttonBereich, BorderLayout.SOUTH);
 
 		updateButtonStatus();
+	}
+
+	/**
+	 * Adds a further button at the right end of the row of the cancel button, e.g. the close button of the main
+	 * window. The buttons of the row share its width.
+	 *
+	 * @param button
+	 *            button to add
+	 */
+	public void addButton(final JButton button) {
+		final GridBagConstraints buttonConstraints = new GridBagConstraints();
+		buttonConstraints.fill = GridBagConstraints.HORIZONTAL;
+		buttonConstraints.weightx = 1;
+		buttonConstraints.insets = new Insets(3, 2, 3, 2);
+		buttonConstraints.gridx = nextButtonColumn++;
+		buttonConstraints.gridy = 3;
+		buttonBereich.add(button, buttonConstraints);
+		buttonBereich.revalidate();
 	}
 
 	/**
