@@ -31,7 +31,7 @@ import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.WindowConstants;
 
-import de.soderer.applicationbase.ApplicationConfigurationDialogModern;
+import de.soderer.applicationbase.ApplicationConfigurationDialog;
 import de.soderer.applicationbase.ApplicationConfigurationProperties;
 import de.soderer.applicationbase.ApplicationUpdateUtilities;
 import de.soderer.applicationbase.UpdateableGuiApplication;
@@ -959,7 +959,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				}
 			}
 
-			final ApplicationConfigurationDialogModern dialog = new ApplicationConfigurationDialogModern(this, LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.APPLICATION_STARTUPCLASS_NAME, LanguagePropertiesManager.VERSION, LanguagePropertiesManager.VERSION_BUILDTIME, applicationConfiguration, iconData, ImageManager.getImage("LanguagePropertiesManager.png").getImage(), LanguagePropertiesManager.VERSIONINFO_DOWNLOAD_URL, LanguagePropertiesManager.TRUSTED_UPDATE_CA_CERTIFICATES, null);
+			final ApplicationConfigurationDialog dialog = new ApplicationConfigurationDialog(this, LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.APPLICATION_STARTUPCLASS_NAME, LanguagePropertiesManager.VERSION, LanguagePropertiesManager.VERSION_BUILDTIME, applicationConfiguration, iconData, ImageManager.getImage("LanguagePropertiesManager.png").getImage(), LanguagePropertiesManager.VERSIONINFO_DOWNLOAD_URL, LanguagePropertiesManager.TRUSTED_UPDATE_CA_CERTIFICATES, null);
 			if (dialog.open() == Result.OK) {
 				applicationConfiguration.save();
 

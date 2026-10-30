@@ -21,7 +21,7 @@ import javax.swing.UIManager;
 
 import de.soderer.languagepropertiesmanager.merge.MergeOptions;
 import de.soderer.languagepropertiesmanager.merge.MergePlan;
-import de.soderer.swing.modern.ModalDialogModern;
+import de.soderer.swing.modern.ModalDialog;
 import de.soderer.utilities.LangResources;
 
 /**
@@ -33,7 +33,7 @@ import de.soderer.utilities.LangResources;
  * {@link #open()} returns the chosen options, or null if the user cancelled.
  * </p>
  */
-public class MergeImportOptionsDialog extends ModalDialogModern<MergeOptions> {
+public class MergeImportOptionsDialog extends ModalDialog<MergeOptions> {
 	private static final long serialVersionUID = 6214790534127745312L;
 
 	/** Text color of summary lines, whose effect loses existing data */

@@ -15,7 +15,7 @@ import javax.swing.JPanel;
 import de.soderer.applicationbase.ApplicationConfigurationProperties;
 import de.soderer.applicationbase.ApplicationUpdateUtilities;
 import de.soderer.languagepropertiesmanager.LanguagePropertiesManager;
-import de.soderer.swing.modern.ModalDialogModern;
+import de.soderer.swing.modern.ModalDialog;
 import de.soderer.swing.modern.ShowDataDialog;
 import de.soderer.utilities.IoUtilities;
 import de.soderer.utilities.LangResources;
@@ -25,7 +25,7 @@ import de.soderer.utilities.VersionInfo;
 /**
  * Help dialog with buttons for the version info, the manual and the update check
  */
-public class HelpDialog extends ModalDialogModern<Boolean> {
+public class HelpDialog extends ModalDialog<Boolean> {
 	private static final long serialVersionUID = -2514371208541305317L;
 
 	/**
