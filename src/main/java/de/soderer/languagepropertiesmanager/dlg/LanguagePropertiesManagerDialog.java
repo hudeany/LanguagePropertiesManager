@@ -55,15 +55,17 @@ import de.soderer.languagepropertiesmanager.worker.ExportToCsvWorker;
 import de.soderer.languagepropertiesmanager.worker.ExportToExcelWorker;
 import de.soderer.languagepropertiesmanager.worker.WriteLanguagePropertiesWorker;
 import de.soderer.network.NetworkUtilities;
-import de.soderer.swing.ComboSelectionDialog;
-import de.soderer.swing.ErrorDialog;
-import de.soderer.swing.ModernUi;
-import de.soderer.swing.ProgressDialog;
-import de.soderer.swing.QuestionDialog;
-import de.soderer.swing.ShowDataDialog;
-import de.soderer.swing.SimpleInputDialog;
 import de.soderer.swing.SwingColor;
 import de.soderer.swing.SwingDialogUtilities;
+import de.soderer.swing.modern.ButtonStyle;
+import de.soderer.swing.modern.ComboSelectionDialog;
+import de.soderer.swing.modern.ErrorDialog;
+import de.soderer.swing.modern.IconKind;
+import de.soderer.swing.modern.ModernUi;
+import de.soderer.swing.modern.ProgressDialog;
+import de.soderer.swing.modern.QuestionDialog;
+import de.soderer.swing.modern.ShowDataDialog;
+import de.soderer.swing.modern.SimpleInputDialog;
 import de.soderer.utilities.DateUtilities;
 import de.soderer.utilities.IoUtilities;
 import de.soderer.utilities.LangResources;
@@ -339,9 +341,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		titlePanel.add(versionLabel);
 		header.add(titlePanel, BorderLayout.CENTER);
 
-		final JButton configButton = createHeaderButton(ModernUi.IconKind.GEAR, LangResources.get("configuration"));
+		final JButton configButton = createHeaderButton(IconKind.GEAR, LangResources.get("configuration"));
 		configButton.addActionListener(e -> openConfiguration());
-		final JButton helpButton = createHeaderButton(ModernUi.IconKind.HELP, LangResources.get("help"));
+		final JButton helpButton = createHeaderButton(IconKind.HELP, LangResources.get("help"));
 		helpButton.addActionListener(e -> new HelpDialog(this, LanguagePropertiesManager.APPLICATION_NAME + " (" + LanguagePropertiesManager.VERSION.toString() + ") " + LangResources.get("help"), applicationConfiguration).open());
 
 		final JPanel applicationButtonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 4, 0));
@@ -359,8 +361,8 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	/**
 	 * Transparent icon button for the gradient header; the text is shown as tooltip.
 	 */
-	private static JButton createHeaderButton(final ModernUi.IconKind iconKind, final String text) {
-		final JButton button = new ModernUi.ModernButton(null, iconKind, ModernUi.ButtonStyle.HEADER);
+	private static JButton createHeaderButton(final IconKind iconKind, final String text) {
+		final JButton button = new ModernUi.ModernButton(null, iconKind, ButtonStyle.HEADER);
 		button.setToolTipText(text);
 		button.getAccessibleContext().setAccessibleName(text);
 		return button;
@@ -374,7 +376,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		topPart.setOpaque(false);
 		topPart.setLayout(new BoxLayout(topPart, BoxLayout.PAGE_AXIS));
 
-		propertiesLabel = ModernUi.createTitleLabel(LangResources.get("table_title"), ModernUi.IconKind.GLOBE);
+		propertiesLabel = ModernUi.createTitleLabel(LangResources.get("table_title"), IconKind.GLOBE);
 		propertiesLabel.setAlignmentX(LEFT_ALIGNMENT);
 		propertiesLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 6, 0));
 		topPart.add(propertiesLabel);

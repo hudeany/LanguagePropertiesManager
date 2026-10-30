@@ -26,7 +26,7 @@ import de.soderer.languagepropertiesmanager.worker.ImportFromCsvWorker;
 import de.soderer.languagepropertiesmanager.worker.ImportFromExcelWorker;
 import de.soderer.languagepropertiesmanager.worker.LoadLanguagePropertiesWorker;
 import de.soderer.languagepropertiesmanager.worker.WriteLanguagePropertiesWorker;
-import de.soderer.swing.ErrorDialog;
+import de.soderer.swing.modern.ErrorDialog;
 import de.soderer.utilities.ConfigurationProperties;
 import de.soderer.utilities.DateUtilities;
 import de.soderer.utilities.IoUtilities;

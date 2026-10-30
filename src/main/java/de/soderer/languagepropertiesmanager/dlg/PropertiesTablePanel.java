@@ -49,7 +49,7 @@ import de.soderer.languagepropertiesmanager.image.ImageManager;
 import de.soderer.languagepropertiesmanager.model.LanguagePropertiesModel;
 import de.soderer.languagepropertiesmanager.storage.LanguagePropertiesFileSetReader;
 import de.soderer.languagepropertiesmanager.storage.LanguageProperty;
-import de.soderer.swing.ModernUi;
+import de.soderer.swing.modern.ModernUi;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.csv.CsvFormat;

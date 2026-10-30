@@ -32,7 +32,9 @@ import de.soderer.languagepropertiesmanager.model.LanguagePropertiesModel;
 import de.soderer.languagepropertiesmanager.storage.LanguagePropertiesFileSetReader;
 import de.soderer.languagepropertiesmanager.storage.LanguagePropertiesFileSetWriter;
 import de.soderer.languagepropertiesmanager.storage.LanguageProperty;
-import de.soderer.swing.ModernUi;
+import de.soderer.swing.modern.ButtonStyle;
+import de.soderer.swing.modern.IconKind;
+import de.soderer.swing.modern.ModernUi;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.PropertiesReader;
 import de.soderer.utilities.PropertiesWriter;
@@ -225,7 +227,7 @@ public class PropertyDetailPanel extends JPanel {
 		buttonConstraints.gridwidth = 2;
 		buttonBereich.add(createSeparator(), buttonConstraints);
 
-		textConversionButton = new ModernUi.ModernButton(showStorageTexts ? LangResources.get("change_to_show_visble_texts") : LangResources.get("change_to_show_storage_texts"), ModernUi.IconKind.REFRESH, ModernUi.ButtonStyle.SECONDARY);
+		textConversionButton = new ModernUi.ModernButton(showStorageTexts ? LangResources.get("change_to_show_visble_texts") : LangResources.get("change_to_show_storage_texts"), IconKind.REFRESH, ButtonStyle.SECONDARY);
 		textConversionButton.addActionListener(e -> {
 			// Only switch the mode, if all field contents could be converted
 			if (changeDisplayMode(!showStorageTexts)) {
@@ -236,13 +238,13 @@ public class PropertyDetailPanel extends JPanel {
 		buttonConstraints.gridy = 1;
 		buttonBereich.add(textConversionButton, buttonConstraints);
 
-		okButton = new ModernUi.ModernButton(LangResources.get("button_text_add"), null, ModernUi.ButtonStyle.PRIMARY);
+		okButton = new ModernUi.ModernButton(LangResources.get("button_text_add"), null, ButtonStyle.PRIMARY);
 		okButton.addActionListener(e -> applyChanges());
 		buttonConstraints.gridy = 2;
 		buttonConstraints.gridwidth = 1;
 		buttonBereich.add(okButton, buttonConstraints);
 
-		cancelButton = new ModernUi.ModernButton(LangResources.get("button_text_discard"), ModernUi.IconKind.CLOSE, ModernUi.ButtonStyle.SECONDARY);
+		cancelButton = new ModernUi.ModernButton(LangResources.get("button_text_discard"), IconKind.CLOSE, ButtonStyle.SECONDARY);
 		cancelButton.addActionListener(e -> refresh());
 		buttonConstraints.gridx = 1;
 		buttonBereich.add(cancelButton, buttonConstraints);
