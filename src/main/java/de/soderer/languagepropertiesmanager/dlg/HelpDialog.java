@@ -9,12 +9,14 @@ import java.util.List;
 import java.util.Locale;
 
 import javax.swing.BorderFactory;
-import javax.swing.JButton;
 import javax.swing.JPanel;
 
 import de.soderer.applicationbase.ApplicationConfigurationProperties;
 import de.soderer.applicationbase.ApplicationUpdateUtilities;
 import de.soderer.languagepropertiesmanager.LanguagePropertiesManager;
+import de.soderer.swing.modern.Button;
+import de.soderer.swing.modern.ButtonStyle;
+import de.soderer.swing.modern.IconKind;
 import de.soderer.swing.modern.ModalDialog;
 import de.soderer.swing.modern.ShowDataDialog;
 import de.soderer.utilities.IoUtilities;
@@ -65,15 +67,15 @@ public class HelpDialog extends ModalDialog<Boolean> {
 		final JPanel buttonSection = new JPanel(new GridLayout(0, 1, margin, margin));
 		buttonSection.setBorder(BorderFactory.createEmptyBorder(margin, margin, margin, margin));
 
-		final JButton versionInfoButton = new JButton(LangResources.get("versionInfo"));
+		final Button versionInfoButton = new Button(LangResources.get("versionInfo"), IconKind.INFO, ButtonStyle.SECONDARY);
 		versionInfoButton.addActionListener(e -> new ShowDataDialog(this, LanguagePropertiesManager.APPLICATION_NAME + " (" + LanguagePropertiesManager.VERSION + ") " + LangResources.get("versionInfo"), VersionInfo.getVersionInfoText()).withResizable(true).open());
 		buttonSection.add(versionInfoButton);
 
-		final JButton manualButton = new JButton(LangResources.get("manual"));
+		final Button manualButton = new Button(LangResources.get("manual"), IconKind.FILE, ButtonStyle.SECONDARY);
 		manualButton.addActionListener(e -> new ShowDataDialog(this, LanguagePropertiesManager.APPLICATION_NAME + " (" + LanguagePropertiesManager.VERSION + ") " + LangResources.get("manual"), readManualText()).withResizable(true).withSize(800, 400).open());
 		buttonSection.add(manualButton);
 
-		final JButton checkUpdateButton = new JButton(LangResources.get("checkUpdate"));
+		final Button checkUpdateButton = new Button(LangResources.get("checkUpdate"), IconKind.REFRESH, ButtonStyle.SECONDARY);
 		checkUpdateButton.addActionListener(e -> {
 			try {
 				ApplicationUpdateUtilities.executeUpdate(applicationDialog, LanguagePropertiesManager.VERSIONINFO_DOWNLOAD_URL, applicationConfiguration.getProxyConfiguration(), LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.VERSION, LanguagePropertiesManager.TRUSTED_UPDATE_CA_CERTIFICATES, null, null, null, true, false);
@@ -83,7 +85,7 @@ public class HelpDialog extends ModalDialog<Boolean> {
 		});
 		buttonSection.add(checkUpdateButton);
 
-		final JButton closeButton = new JButton(LangResources.get("close"));
+		final Button closeButton = new Button(LangResources.get("close"), null, ButtonStyle.SECONDARY);
 		closeButton.addActionListener(e -> {
 			returnValue = true;
 			dispose();

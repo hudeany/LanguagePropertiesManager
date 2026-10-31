@@ -10,7 +10,6 @@ import java.awt.event.KeyEvent;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -21,6 +20,8 @@ import javax.swing.UIManager;
 
 import de.soderer.languagepropertiesmanager.merge.MergeOptions;
 import de.soderer.languagepropertiesmanager.merge.MergePlan;
+import de.soderer.swing.modern.Button;
+import de.soderer.swing.modern.ButtonStyle;
 import de.soderer.swing.modern.ModalDialog;
 import de.soderer.utilities.LangResources;
 
@@ -47,7 +48,7 @@ public class MergeImportOptionsDialog extends ModalDialog<MergeOptions> {
 
 	/** Shows the effect of the current choice, rebuilt on every change of a checkbox */
 	private final JPanel summaryPanel;
-	private final JButton importButton;
+	private final Button importButton;
 
 	/**
 	 * Creates the dialog. Defaults: add new properties and fill empty values, keep differing values.
@@ -97,13 +98,13 @@ public class MergeImportOptionsDialog extends ModalDialog<MergeOptions> {
 		addLeftAligned(contentPanel, summaryPanel);
 
 		final JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-		importButton = new JButton(LangResources.get("mergeOptions_import"));
+		importButton = new Button(LangResources.get("mergeOptions_import"), null, ButtonStyle.SECONDARY);
 		importButton.addActionListener(event -> {
 			returnValue = getSelectedOptions();
 			dispose();
 		});
 		buttonPanel.add(importButton);
-		final JButton cancelButton = new JButton(LangResources.get("cancel"));
+		final Button cancelButton = new Button(LangResources.get("cancel"), null, ButtonStyle.SECONDARY);
 		cancelButton.addActionListener(event -> dispose());
 		buttonPanel.add(cancelButton);
 		addLeftAligned(contentPanel, buttonPanel);

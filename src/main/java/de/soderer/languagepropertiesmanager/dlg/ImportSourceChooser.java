@@ -6,7 +6,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
-import javax.swing.JButton;
+import de.soderer.swing.modern.Button;
 import javax.swing.JPopupMenu;
 
 import de.soderer.languagepropertiesmanager.LanguagePropertiesException;
@@ -209,7 +209,7 @@ final class ImportSourceChooser {
 	 * @param action
 	 *            action applied to the read properties
 	 */
-	void showImportSourceMenu(final JButton invoker, final String titleKey, final Consumer<LoadedLanguageProperties> action) {
+	void showImportSourceMenu(final Button invoker, final String titleKey, final Consumer<LoadedLanguageProperties> action) {
 		try {
 			final String title = LangResources.get(titleKey);
 			final JPopupMenu importSourceMenu = new JPopupMenu();

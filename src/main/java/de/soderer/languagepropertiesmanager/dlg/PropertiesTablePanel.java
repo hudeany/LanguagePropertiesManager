@@ -22,7 +22,7 @@ import java.util.function.Consumer;
 
 import javax.swing.AbstractAction;
 import javax.swing.Icon;
-import javax.swing.JButton;
+import de.soderer.swing.modern.Button;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -451,7 +451,7 @@ public class PropertiesTablePanel extends JPanel {
 		constraints.weightx = 0;
 		constraints.fill = GridBagConstraints.NONE;
 
-		final JButton searchDownButton = ModernUi.createToolbarButton(ImageManager.getImage("down.png"), LangResources.get("search_down"), 28);
+		final Button searchDownButton = ModernUi.createToolbarButton(ImageManager.getImage("down.png"), LangResources.get("search_down"), 28);
 		searchDownButton.addActionListener(e -> {
 			if (StringUtilities.isNotEmpty(searchText)) {
 				selectSearch(searchText, propertiesTable.getSelectedRow() + 1, true, searchCaseInsensitivePreference, searchInKeysPreference, searchInValuesPreference, searchInPathPreference);
@@ -461,7 +461,7 @@ public class PropertiesTablePanel extends JPanel {
 		searchBox.add(searchDownButton, constraints);
 		searchComponents.add(searchDownButton);
 
-		final JButton searchUpButton = ModernUi.createToolbarButton(ImageManager.getImage("up.png"), LangResources.get("search_up"), 28);
+		final Button searchUpButton = ModernUi.createToolbarButton(ImageManager.getImage("up.png"), LangResources.get("search_up"), 28);
 		searchUpButton.addActionListener(e -> {
 			if (StringUtilities.isNotEmpty(searchText)) {
 				selectSearch(searchText, propertiesTable.getSelectedRow() - 1, false, searchCaseInsensitivePreference, searchInKeysPreference, searchInValuesPreference, searchInPathPreference);

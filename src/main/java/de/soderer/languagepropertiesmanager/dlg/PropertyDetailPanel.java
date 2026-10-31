@@ -13,7 +13,6 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.swing.BorderFactory;
-import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
@@ -32,6 +31,7 @@ import de.soderer.languagepropertiesmanager.model.LanguagePropertiesModel;
 import de.soderer.languagepropertiesmanager.storage.LanguagePropertiesFileSetReader;
 import de.soderer.languagepropertiesmanager.storage.LanguagePropertiesFileSetWriter;
 import de.soderer.languagepropertiesmanager.storage.LanguageProperty;
+import de.soderer.swing.modern.Button;
 import de.soderer.swing.modern.ButtonStyle;
 import de.soderer.swing.modern.IconKind;
 import de.soderer.swing.modern.ModernUi;
@@ -134,11 +134,11 @@ public class PropertyDetailPanel extends JPanel {
 	private final Set<String> explicitlyEmptyLanguageSigns = new HashSet<>();
 
 	/** Applies the changes (change or add the property) */
-	private final JButton okButton;
+	private final Button okButton;
 	/** Discards the changes */
-	private final JButton cancelButton;
+	private final Button cancelButton;
 	/** Switches between plain texts and storage representation */
-	private final JButton textConversionButton;
+	private final Button textConversionButton;
 	/** Area of the buttons below the language fields */
 	private final JPanel buttonBereich;
 	/** Column for the next button added to the row of the cancel button */
@@ -232,7 +232,7 @@ public class PropertyDetailPanel extends JPanel {
 		buttonConstraints.gridwidth = GridBagConstraints.REMAINDER;
 		buttonBereich.add(createSeparator(), buttonConstraints);
 
-		textConversionButton = new ModernUi.Button(showStorageTexts ? LangResources.get("change_to_show_visble_texts") : LangResources.get("change_to_show_storage_texts"), IconKind.REFRESH, ButtonStyle.SECONDARY);
+		textConversionButton = new Button(showStorageTexts ? LangResources.get("change_to_show_visble_texts") : LangResources.get("change_to_show_storage_texts"), IconKind.REFRESH, ButtonStyle.SECONDARY);
 		textConversionButton.addActionListener(e -> {
 			// Only switch the mode, if all field contents could be converted
 			if (changeDisplayMode(!showStorageTexts)) {
@@ -244,12 +244,12 @@ public class PropertyDetailPanel extends JPanel {
 		buttonBereich.add(textConversionButton, buttonConstraints);
 
 		// The OK button has a row of its own, below it the cancel button and the buttons added by addButton()
-		okButton = new ModernUi.Button(LangResources.get("button_text_add"), null, ButtonStyle.PRIMARY);
+		okButton = new Button(LangResources.get("button_text_add"), null, ButtonStyle.PRIMARY);
 		okButton.addActionListener(e -> applyChanges());
 		buttonConstraints.gridy = 2;
 		buttonBereich.add(okButton, buttonConstraints);
 
-		cancelButton = new ModernUi.Button(LangResources.get("button_text_discard"), IconKind.CLOSE, ButtonStyle.SECONDARY);
+		cancelButton = new Button(LangResources.get("button_text_discard"), IconKind.CLOSE, ButtonStyle.SECONDARY);
 		cancelButton.addActionListener(e -> refresh());
 		buttonConstraints.gridy = 3;
 		buttonConstraints.gridwidth = 1;
@@ -267,7 +267,7 @@ public class PropertyDetailPanel extends JPanel {
 	 * @param button
 	 *            button to add
 	 */
-	public void addButton(final JButton button) {
+	public void addButton(final Button button) {
 		final GridBagConstraints buttonConstraints = new GridBagConstraints();
 		buttonConstraints.fill = GridBagConstraints.HORIZONTAL;
 		buttonConstraints.weightx = 1;

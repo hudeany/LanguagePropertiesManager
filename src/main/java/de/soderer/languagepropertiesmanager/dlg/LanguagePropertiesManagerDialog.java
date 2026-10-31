@@ -25,7 +25,6 @@ import java.util.stream.Collectors;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
-import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
@@ -57,9 +56,12 @@ import de.soderer.languagepropertiesmanager.worker.WriteLanguagePropertiesWorker
 import de.soderer.network.NetworkUtilities;
 import de.soderer.swing.SwingColor;
 import de.soderer.swing.SwingDialogUtilities;
+import de.soderer.swing.modern.Button;
 import de.soderer.swing.modern.ButtonStyle;
+import de.soderer.swing.modern.Card;
 import de.soderer.swing.modern.ComboSelectionDialog;
 import de.soderer.swing.modern.ErrorDialog;
+import de.soderer.swing.modern.GradientHeader;
 import de.soderer.swing.modern.IconKind;
 import de.soderer.swing.modern.ModernUi;
 import de.soderer.swing.modern.ProgressDialog;
@@ -90,19 +92,19 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	/** Title above the table, shows the name of the loaded properties set */
 	private JLabel propertiesLabel;
 	/** Deletes the selected properties */
-	private JButton removeButton;
+	private Button removeButton;
 	/** Deletes the displayed properties that are not selected, so only the selected ones remain */
-	private JButton removeUnselectedButton;
+	private Button removeUnselectedButton;
 	/** Saves the properties into their own paths */
-	private JButton saveButton;
+	private Button saveButton;
 	/** Saves the properties into a directory */
-	private JButton folderSaveButton;
+	private Button folderSaveButton;
 	/** Exports the properties into an Excel file */
-	private JButton exportToExcelButton;
+	private Button exportToExcelButton;
 	/** Exports the properties into a CSV file */
-	private JButton exportToCsvButton;
+	private Button exportToCsvButton;
 	/** Clears the selection, so the detail view can be used to add a new property */
-	private JButton addButton;
+	private Button addButton;
 	/** Loaded data and the state shared by table and detail view (selection, unsaved changes, set name) */
 	private final LanguagePropertiesModel model = new LanguagePropertiesModel();
 
@@ -113,35 +115,35 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	/** Split pane between table (left) and detail view (right) */
 	private final JSplitPane mainSplitPane;
 	/** Card around the detail view, hidden together with it */
-	private ModernUi.Card detailCard;
+	private Card detailCard;
 	/** Divider location before the detail view was hidden, to restore it when shown again */
 	private int dividerLocationBeforeHidingDetail = -1;
 
 	/** Checks the usage of the properties in source files with new settings */
-	private JButton checkUsageButton;
+	private Button checkUsageButton;
 	/** Checks the usage of the properties in source files with recent settings */
-	private JButton checkUsageButtonPrevious;
+	private Button checkUsageButtonPrevious;
 	/** Adds a language */
-	private JButton addLanguageButton;
+	private Button addLanguageButton;
 	/** Deletes a language */
-	private JButton deleteLanguageButton;
+	private Button deleteLanguageButton;
 	/** Translates values with DeepL */
-	private JButton translateButton;
+	private Button translateButton;
 	/** Copies values from one language into another */
-	private JButton transferButton;
+	private Button transferButton;
 	/** Clears values identical to another language */
-	private JButton clearIdenticalButton;
+	private Button clearIdenticalButton;
 	/** Removes properties with the same path and key */
-	private JButton removeDuplicatesButton;
+	private Button removeDuplicatesButton;
 	/** Checks the properties for errors */
-	private JButton checkErrorsButton;
+	private Button checkErrorsButton;
 	/** Shows statistics of the loaded properties */
-	private JButton showStatisticsButton;
+	private Button showStatisticsButton;
 
 	/** Loads a recently opened file or directory */
-	private JButton loadRecentButton;
+	private Button loadRecentButton;
 	/** Removes values identical to a base set */
-	private JButton reduceByBaseSetButton;
+	private Button reduceByBaseSetButton;
 
 	/** Recently opened files and directories, the latest used is the last entry */
 	private UniqueFifoQueuedList<String> recentlyOpenedDirectories;
@@ -327,7 +329,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	 * Gradient header with logo, application name, version and the help and configuration buttons.
 	 */
 	private JPanel createHeader() throws Exception {
-		final ModernUi.GradientHeader header = new ModernUi.GradientHeader();
+		final GradientHeader header = new GradientHeader();
 		header.add(ModernUi.createLogo(ImageManager.getImage("LanguagePropertiesManager.png")), BorderLayout.WEST);
 
 		final JLabel applicationLabel = new JLabel(LanguagePropertiesManager.APPLICATION_NAME);
@@ -341,9 +343,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		titlePanel.add(versionLabel);
 		header.add(titlePanel, BorderLayout.CENTER);
 
-		final JButton configButton = createHeaderButton(IconKind.GEAR, LangResources.get("configuration"));
+		final Button configButton = createHeaderButton(IconKind.GEAR, LangResources.get("configuration"));
 		configButton.addActionListener(e -> openConfiguration());
-		final JButton helpButton = createHeaderButton(IconKind.HELP, LangResources.get("help"));
+		final Button helpButton = createHeaderButton(IconKind.HELP, LangResources.get("help"));
 		helpButton.addActionListener(e -> new HelpDialog(this, LanguagePropertiesManager.APPLICATION_NAME + " (" + LanguagePropertiesManager.VERSION.toString() + ") " + LangResources.get("help"), applicationConfiguration).open());
 
 		final JPanel applicationButtonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 4, 0));
@@ -362,8 +364,8 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	/**
 	 * Transparent icon button for the gradient header; the text is shown as tooltip.
 	 */
-	private static JButton createHeaderButton(final IconKind iconKind, final String text) {
-		final JButton button = new ModernUi.Button(null, iconKind, ButtonStyle.HEADER);
+	private static Button createHeaderButton(final IconKind iconKind, final String text) {
+		final Button button = new Button(null, iconKind, ButtonStyle.HEADER);
 		button.setToolTipText(text);
 		button.getAccessibleContext().setAccessibleName(text);
 		return button;
@@ -400,7 +402,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		createIconButton(buttonSection1, "excelLoad.png", "tooltip_importExcel", e -> importFromExcel());
 		createIconButton(buttonSection1, "csvLoad.png", "tooltip_importCsv", e -> importFromCsv());
 		buttonSection1.add(ModernUi.createToolbarSeparator());
-		final JButton mergeImportButton = createIconButton(buttonSection1, "merge.png", "tooltip_mergeImport", null);
+		final Button mergeImportButton = createIconButton(buttonSection1, "merge.png", "tooltip_mergeImport", null);
 		mergeImportButton.addActionListener(e -> importSourceChooser.showImportSourceMenu(mergeImportButton, "mergeImport_title", this::mergeLoadedLanguageProperties));
 		reduceByBaseSetButton = createIconButton(buttonSection1, "reduce.png", "tooltip_reduceByBaseSet", null);
 		reduceByBaseSetButton.addActionListener(e -> importSourceChooser.showImportSourceMenu(reduceByBaseSetButton, "reduceByBaseSet_title", this::reduceByBaseSet));
@@ -445,13 +447,13 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		cardContent.add(topPart, BorderLayout.NORTH);
 		cardContent.add(tablePanel, BorderLayout.CENTER);
 
-		final ModernUi.Card tableCard = new ModernUi.Card(null, null, 8);
+		final Card tableCard = new Card(null, null, 8);
 		tableCard.setContent(cardContent);
 		return tableCard;
 	}
 
-	private static JButton createIconButton(final JPanel parent, final String imageName, final String toolTipKey, final ActionListener actionListener) throws Exception {
-		final JButton button = ModernUi.createToolbarButton(ImageManager.getImage(imageName), LangResources.get(toolTipKey), ICON_BUTTON_SIZE);
+	private static Button createIconButton(final JPanel parent, final String imageName, final String toolTipKey, final ActionListener actionListener) throws Exception {
+		final Button button = ModernUi.createToolbarButton(ImageManager.getImage(imageName), LangResources.get(toolTipKey), ICON_BUTTON_SIZE);
 		if (actionListener != null) {
 			button.addActionListener(actionListener);
 		}
@@ -462,17 +464,17 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	/**
 	 * Card with the detail view of the selected property.
 	 */
-	private ModernUi.Card createRightPart() {
+	private Card createRightPart() {
 		detailPanel = new PropertyDetailPanel(model, new DetailCallback());
 
 		// Close button at the right end of the button group of the detail view, closes like the window decoration
 		// (asking for unsaved changes)
-		final JButton closeButton = new ModernUi.Button(LangResources.get("close"), null, ButtonStyle.SECONDARY);
+		final Button closeButton = new Button(LangResources.get("close"), null, ButtonStyle.SECONDARY);
 		closeButton.addActionListener(e -> closeApplication());
 		detailPanel.addButton(closeButton);
 
 		ModernUi.blendIntoCard(detailPanel);
-		detailCard = new ModernUi.Card(null, null, 8);
+		detailCard = new Card(null, null, 8);
 		detailCard.setContent(detailPanel);
 		return detailCard;
 	}

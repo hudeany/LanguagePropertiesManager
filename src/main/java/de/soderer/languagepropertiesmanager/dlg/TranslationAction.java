@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import javax.swing.JButton;
+import de.soderer.swing.modern.Button;
 import javax.swing.JPopupMenu;
 
 import de.soderer.applicationbase.ApplicationConfigurationProperties;
@@ -44,7 +44,7 @@ final class TranslationAction {
 	 * Shows the menu below the translate button to choose between translating
 	 * into one selected target language or into all other available languages.
 	 */
-	void showTranslateMenu(final JButton invoker) {
+	void showTranslateMenu(final Button invoker) {
 		try {
 			final JPopupMenu translateMenu = new JPopupMenu();
 			DialogUtilities.addMenuItem(translateMenu, "translate.png", "translate_toOneTargetLanguage", true, () -> translate(false));
