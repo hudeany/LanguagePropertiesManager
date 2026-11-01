@@ -89,6 +89,12 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 	/** Configuration key: recently opened properties files and directories */
 	public static final String CONFIG_RECENT_PROPERTIES = "Recent";
 
+	/** Configuration key: maximum number of recently opened properties files and directories */
+	public static final String CONFIG_RECENT_PROPERTIES_MAX_SIZE = "RecentMaxSize";
+
+	/** Default maximum number of recently opened properties files and directories */
+	public static final int RECENT_PROPERTIES_MAX_SIZE_DEFAULT = 5;
+
 	/** Configuration key: path parts (separated by ';') of files to ignore when loading or saving a directory */
 	public static final String CONFIG_OPEN_DIR_EXCLUDES = "OpenDirExcludes";
 
@@ -146,6 +152,9 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 
 		if (!applicationConfiguration.containsKey(LanguagePropertiesManager.CONFIG_CLEANUP_REPAIRPUNCTUATION)) {
 			applicationConfiguration.set(LanguagePropertiesManager.CONFIG_CLEANUP_REPAIRPUNCTUATION, true);
+		}
+		if (!applicationConfiguration.containsKey(LanguagePropertiesManager.CONFIG_RECENT_PROPERTIES_MAX_SIZE)) {
+			applicationConfiguration.set(LanguagePropertiesManager.CONFIG_RECENT_PROPERTIES_MAX_SIZE, Integer.toString(LanguagePropertiesManager.RECENT_PROPERTIES_MAX_SIZE_DEFAULT));
 		}
 		if (!applicationConfiguration.containsKey(LanguagePropertiesManager.CONFIG_OPEN_DIR_EXCLUDES)) {
 			applicationConfiguration.set(LanguagePropertiesManager.CONFIG_OPEN_DIR_EXCLUDES, "__;/src/test/;\\src\\test\\;/bin/;\\bin\\");

@@ -317,12 +317,27 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	}
 
 	private void loadConfiguration() {
-		recentlyOpenedDirectories = new UniqueFifoQueuedList<>(5);
+		recentlyOpenedDirectories = new UniqueFifoQueuedList<>(getRecentlyOpenedDirectoriesMaxSize());
 		recentlyOpenedDirectories.addAll(applicationConfiguration.getList(LanguagePropertiesManager.CONFIG_RECENT_PROPERTIES));
 
 		statisticsAndUsage.loadRecentCheckUsages();
 
 		checkButtonStatus();
+	}
+
+	/**
+	 * Configured maximum number of recently opened files and directories. Invalid or missing values fall back to the
+	 * default, so a broken configuration entry cannot prevent the application from starting.
+	 *
+	 * @return the maximum number of entries (at least 1)
+	 */
+	private int getRecentlyOpenedDirectoriesMaxSize() {
+		try {
+			final int maxSize = Integer.parseInt(applicationConfiguration.get(LanguagePropertiesManager.CONFIG_RECENT_PROPERTIES_MAX_SIZE).trim());
+			return Math.max(1, maxSize);
+		} catch (@SuppressWarnings("unused") final Exception e) {
+			return LanguagePropertiesManager.RECENT_PROPERTIES_MAX_SIZE_DEFAULT;
+		}
 	}
 
 	/**
