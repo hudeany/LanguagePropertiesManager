@@ -141,6 +141,36 @@ A result report lists deleted entries, removed identical values, the remaining v
 Important: To remove deleted keys from the files as well, already existing keys must not be kept when saving (see 6.1). So the corresponding question must be answered with "No", or the configuration value "KeepExistingKeysOnSave" must be set to "No" (see 7.3). Otherwise these keys remain in the files.
 
 
+3.8 Comparison with Another Source (e.g. a Translation Returned by a Translator)
+
+The "Compare with Excel, CSV or properties files" button compares the currently loaded properties with another source and shows all differences. Nothing is changed by the comparison itself.
+This is helpful, for example, to check a translation: export the loaded properties sets into an Excel file (see 6.3), hand it to a translator, and compare the returned file with the loaded properties.
+The button is only available if properties are loaded. It opens the same source selection menu as in 3.6. The selected source is only read for the comparison and is not taken over into the tool.
+If an error occurs while reading the source or the process is canceled, the currently loaded properties remain unchanged.
+All loaded properties are always compared, independent of a selection in the data table.
+
+Matching and comparison:
+Properties are matched by LanguagePropertiesSetPath and key. If one of both sides has no paths at all (e.g. a file without path column), they are matched by key only. A key occurring in several properties sets then aborts the comparison with an error message.
+Comparison is done per key and language. Empty and missing values count as equal, because Excel and CSV files cannot distinguish them. Different line breaks and different path separators ("/" and "\") are ignored.
+Comments are only compared if they are not ignored in the configuration (see 7.3).
+The following differences are reported:
+	"KEY_ADDED" (the key exists in the other source only)
+	"KEY_REMOVED" (the key exists in the loaded properties only)
+	"VALUE_ADDED" (the value was empty or missing and is filled in the other source, e.g. a new translation)
+	"VALUE_CHANGED" (the value differs)
+	"VALUE_REMOVED" (the value is empty or missing in the other source)
+	"COMMENT_CHANGED" (the comment differs)
+
+After the comparison:
+A report shows a summary per language followed by all differences. The loaded properties with differences are selected in the data table, so they can be reviewed directly.
+If new values (VALUE_ADDED) were found for existing keys, a prompt asks whether they should be taken over into the loaded properties.
+Only values that are still empty or missing in the loaded properties are set. Changed and removed values as well as new keys are never taken over (for new keys use the additional import, see 3.6). New language tags are added for all properties.
+After taking over values, the properties are marked as changed and still need to be saved.
+If no differences are found, only a corresponding notice is shown.
+
+The comparison with an Excel file is also available on the command line ("-compareWithExcel", see help).
+
+
 4. Editing Individual Property Values
 
 4.1 Creating and Changing Existing Property Values

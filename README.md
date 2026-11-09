@@ -18,6 +18,7 @@ Language Properties Manager is a desktop tool (with an additional command line i
 | 🤖 **Automatic translation** | Fill in missing values via the [DeepL API](https://www.deepl.com/pro-api/) – into one or all other languages, with an optional list of constants that must not be translated |
 | 🔁 **Transfer & clean up** | Copy values between languages, clear values identical to their source, remove duplicates |
 | 🧩 **Merge import** | Add properties from another file, directory, Excel or CSV file to the loaded data, with a choice how conflicts are resolved |
+| 🔎 **Compare with translator results** | Compare the loaded properties with an Excel, CSV or properties file (e.g. a spreadsheet returned by a translator), see every added, changed and removed key or value, and take over only the new translations |
 | ✂️ **Reduce by base set** | Remove all values identical to a base set, so only the deviations (e.g. customer-specific texts) remain |
 | 🩺 **Error check** | Detect encoding problems (mojibake, replacement characters, unresolved Unicode escapes, control characters …), invalid keys, inconsistent placeholders (`{0}`, `%s`) and formal deviations between languages |
 | 📈 **Statistics & usage check** | Completeness per language, and which keys are used or missing in your source code |
@@ -25,7 +26,7 @@ Language Properties Manager is a desktop tool (with an additional command line i
 | 📊 **Excel & CSV import/export** | Hand all texts to translators in one spreadsheet and import them back |
 | 🔤 **Unicode-safe** | Switch between displayed text and the stored Java-escaped form |
 | 🕑 **Recently used paths** | Quick access to previously opened files and directories |
-| ⌨️ **Command line interface** | Automate Excel/CSV export and import in build scripts |
+| ⌨️ **Command line interface** | Automate Excel/CSV export, import and comparison in build scripts |
 | 🔄 **Built-in updater** | Checks for and installs new versions |
 
 ---
@@ -102,6 +103,15 @@ Changed and added properties are selected afterwards, and a report including an 
 
 #### Reduce by base set
 **Compare with base set** removes all values of the selected (or all displayed) properties that are identical to the same key and language in a base set. Properties without any remaining value can optionally be deleted completely. A report lists cleared, deleted and still differing values.
+
+#### Compare with another source (e.g. a translation returned by a translator)
+**Compare with Excel, CSV or properties files** compares all loaded properties with another source and reports every difference – nothing is changed by the comparison itself. Typical round trip: export to Excel, hand the file to a translator, compare the returned file.
+
+- Properties are matched by LanguagePropertiesSetPath and key (by key only, if one side has no paths at all).
+- Empty and missing values count as equal, differing line breaks and path separators are ignored. Comments are compared unless they are ignored by configuration.
+- Reported differences: added and removed keys, added (e.g. new translations), changed and removed values, changed comments.
+- A report shows a summary per language and all differences; the loaded properties with differences are selected in the table.
+- New values for existing keys can be **taken over** afterwards: only values that are still empty or missing are filled, changed or removed values and new keys are never taken over (use *Merge import* for new keys).
 
 </details>
 
@@ -198,6 +208,9 @@ java -jar LanguagePropertiesManager.jar -exportToCsv   <properties file or direc
 # Import properties from Excel / CSV
 java -jar LanguagePropertiesManager.jar -importFromExcel <input.xlsx> [-outputDirectory <directory>] [options]
 java -jar LanguagePropertiesManager.jar -importFromCsv   <input.csv>  [-outputDirectory <directory>] [options]
+
+# Compare properties with an Excel file (e.g. returned by a translator), nothing is written
+java -jar LanguagePropertiesManager.jar -compareWithExcel <properties file or directory> -excelFile <input.xlsx> [options]
 ```
 
 ### Parameters
@@ -205,17 +218,18 @@ java -jar LanguagePropertiesManager.jar -importFromCsv   <input.csv>  [-outputDi
 | Parameter | Used with | Description |
 |---|---|---|
 | `-exportToExcel <path>` | Excel export | Properties file or directory to export (**mandatory**) |
-| `-excelFile <path>` | Excel export | Output Excel file (**mandatory**) |
+| `-excelFile <path>` | Excel export, comparison | Output Excel file, or Excel file to compare with (**mandatory**) |
+| `-compareWithExcel <path>` | Comparison | Properties file or directory to compare with the Excel file given by `-excelFile` (**mandatory**). All differences and a summary per language are printed, nothing is written |
 | `-exportToCsv <path>` | CSV export | Properties file or directory to export (**mandatory**) |
 | `-csvFile <path>` | CSV export | Output CSV file (**mandatory**) |
 | `-importFromExcel <path>` | Excel import | Input Excel file (**mandatory**) |
 | `-importFromCsv <path>` | CSV import | Input CSV file (**mandatory**) |
 | `-outputDirectory <path>` | Import | Without this option, sets are written to the original paths stored in the file. With it, existing sets in that directory are matched by set name; unmatched sets are created in the directory itself |
-| `-overwrite` | Export | Replace an existing output file |
+| `-overwrite` | Export | Replace an existing output file (not allowed for the comparison) |
 | `-propertiesFileExtension <ext>` | all | Use a custom file extension instead of `.properties`, e.g. `_mytext.properties` (a missing leading dot is added) |
 | `-v` | all | Verbose output with progress bar |
 
-Exactly one of `-exportToExcel`, `-exportToCsv`, `-importFromExcel` and `-importFromCsv` must be given. When importing, keys that exist in the target files but not in the imported data are kept.
+Exactly one of `-exportToExcel`, `-exportToCsv`, `-importFromExcel`, `-importFromCsv` and `-compareWithExcel` must be given. When importing, keys that exist in the target files but not in the imported data are kept.
 
 ### Standalone commands
 

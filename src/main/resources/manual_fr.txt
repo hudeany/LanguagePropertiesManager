@@ -141,6 +141,36 @@ Un rapport de résultats liste les entrées supprimées, les valeurs identiques 
 Important : pour que les clés supprimées disparaissent aussi des fichiers, les clés déjà existantes ne doivent pas être conservées lors de l'enregistrement (voir 6.1). Il faut donc répondre "Non" à la question correspondante, ou la valeur de configuration "KeepExistingKeysOnSave" doit être sur "Non" (voir 7.3). Sinon, ces clés restent dans les fichiers.
 
 
+3.8 Comparaison avec une autre source (p. ex. retour d'un traducteur)
+
+Le bouton « Comparer avec des fichiers Excel, CSV ou de propriétés » compare les propriétés actuellement chargées avec une autre source et affiche toutes les différences. La comparaison elle-même ne modifie rien.
+C'est utile, par exemple, pour vérifier une traduction : exporter les ensembles de propriétés chargés dans un fichier Excel (voir 6.3), le remettre à un traducteur, puis comparer le fichier retourné avec les propriétés chargées.
+Le bouton n'est disponible que si des propriétés sont chargées. Il ouvre le même menu de sélection de la source qu'en 3.6. La source choisie est seulement lue pour la comparaison et n'est pas reprise dans l'outil.
+Si une erreur se produit lors de la lecture de la source ou si l'opération est annulée, les propriétés chargées restent inchangées.
+Toutes les propriétés chargées sont toujours comparées, indépendamment d'une sélection dans le tableau.
+
+Correspondance et comparaison :
+Les propriétés sont associées par LanguagePropertiesSetPath et clé. Si l'un des deux côtés ne contient aucun chemin (p. ex. un fichier sans colonne de chemin), elles sont associées uniquement par la clé. Une clé présente dans plusieurs ensembles de propriétés interrompt alors la comparaison avec un message d'erreur.
+La comparaison se fait par clé et par langue. Les valeurs vides et manquantes sont considérées comme identiques, car les fichiers Excel et CSV ne peuvent pas les distinguer. Les différences de sauts de ligne et de séparateurs de chemin (« / » et « \ ») sont ignorées.
+Les commentaires ne sont comparés que s'ils ne sont pas ignorés dans la configuration (voir 7.3).
+Les différences suivantes sont signalées :
+	« KEY_ADDED » (la clé n'existe que dans l'autre source)
+	« KEY_REMOVED » (la clé n'existe que dans les propriétés chargées)
+	« VALUE_ADDED » (la valeur était vide ou manquante et est renseignée dans l'autre source, p. ex. une nouvelle traduction)
+	« VALUE_CHANGED » (la valeur diffère)
+	« VALUE_REMOVED » (la valeur est vide ou manquante dans l'autre source)
+	« COMMENT_CHANGED » (le commentaire diffère)
+
+Après la comparaison :
+Un rapport affiche un résumé par langue suivi de toutes les différences. Les propriétés chargées présentant des différences sont sélectionnées dans le tableau, afin de pouvoir les vérifier directement.
+Si de nouvelles valeurs (VALUE_ADDED) ont été trouvées pour des clés existantes, une question demande s'il faut les reprendre dans les propriétés chargées.
+Seules les valeurs encore vides ou manquantes dans les propriétés chargées sont renseignées. Les valeurs modifiées ou supprimées ainsi que les nouvelles clés ne sont jamais reprises (pour les nouvelles clés, utiliser l'importation supplémentaire, voir 3.6). Les nouveaux codes de langue sont ajoutés pour toutes les propriétés.
+Après la reprise, les propriétés sont considérées comme modifiées et doivent encore être enregistrées.
+Si aucune différence n'est trouvée, seule une notification correspondante s'affiche.
+
+La comparaison avec un fichier Excel est également disponible en ligne de commande (« -compareWithExcel », voir l'aide).
+
+
 4. Modification de valeurs de propriétés individuelles
 
 4.1 Création et modification de valeurs de propriétés

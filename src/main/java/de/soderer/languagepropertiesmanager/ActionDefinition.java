@@ -1,11 +1,12 @@
 package de.soderer.languagepropertiesmanager;
 
 /**
- * Parameters of a command line call (import from or export to Excel or CSV)
+ * Parameters of a command line call (import from or export to Excel or CSV, comparison with an Excel file)
  */
 public class ActionDefinition {
 	private String importFromExcel = null;
 	private String exportToExcel = null;
+	private String compareWithExcel = null;
 	private String importFromCsv = null;
 	private String exportToCsv = null;
 	private String excelFile = null;
@@ -86,6 +87,37 @@ public class ActionDefinition {
 	}
 
 	/**
+	 * Properties file or directory to compare with an Excel file ("-compareWithExcel").
+	 *
+	 * @return the properties file or directory, or null if this action is not requested
+	 */
+	public String getCompareWithExcel() {
+		return compareWithExcel;
+	}
+
+	/**
+	 * Sets the properties file or directory to compare with an Excel file ("-compareWithExcel").
+	 *
+	 * @param compareWithExcel
+	 *            path of a properties file or directory
+	 */
+	public void setCompareWithExcel(final String compareWithExcel) {
+		this.compareWithExcel = compareWithExcel;
+	}
+
+	/**
+	 * Sets the properties file or directory to compare with an Excel file ("-compareWithExcel") (fluent variant of {@link #setCompareWithExcel(String)}).
+	 *
+	 * @param newCompareWithExcel
+	 *            path of a properties file or directory
+	 * @return this action definition for chaining
+	 */
+	public ActionDefinition withCompareWithExcel(final String newCompareWithExcel) {
+		setCompareWithExcel(newCompareWithExcel);
+		return this;
+	}
+
+	/**
 	 * CSV file to import ("-importFromCsv").
 	 *
 	 * @return the CSV file to import, or null if this action is not requested
@@ -148,29 +180,29 @@ public class ActionDefinition {
 	}
 
 	/**
-	 * Excel file to create by "-exportToExcel" ("-excelFile").
+	 * Excel file to create by "-exportToExcel" or to compare with by "-compareWithExcel" ("-excelFile").
 	 *
-	 * @return the Excel output file or null
+	 * @return the Excel file or null
 	 */
 	public String getExcelFile() {
 		return excelFile;
 	}
 
 	/**
-	 * Sets the Excel file to create by "-exportToExcel" ("-excelFile").
+	 * Sets the Excel file to create by "-exportToExcel" or to compare with by "-compareWithExcel" ("-excelFile").
 	 *
 	 * @param excelFile
-	 *            path of the Excel output file
+	 *            path of the Excel file
 	 */
 	public void setExcelFile(final String excelFile) {
 		this.excelFile = excelFile;
 	}
 
 	/**
-	 * Sets the Excel file to create by "-exportToExcel" ("-excelFile") (fluent variant of {@link #setExcelFile(String)}).
+	 * Sets the Excel file to create by "-exportToExcel" or to compare with by "-compareWithExcel" ("-excelFile") (fluent variant of {@link #setExcelFile(String)}).
 	 *
 	 * @param newExcelFile
-	 *            path of the Excel output file
+	 *            path of the Excel file
 	 * @return this action definition for chaining
 	 */
 	public ActionDefinition withExcelFile(final String newExcelFile) {
@@ -379,6 +411,9 @@ public class ActionDefinition {
 		if (exportToExcel != null) {
 			actionModesCount++;
 		}
+		if (compareWithExcel != null) {
+			actionModesCount++;
+		}
 		if (importFromCsv != null) {
 			actionModesCount++;
 		}
@@ -387,14 +422,18 @@ public class ActionDefinition {
 		}
 		if (actionModesCount == 0) {
 			throw new LanguagePropertiesException(
-					"One of parameters importFromExcel, exportToExcel, importFromCsv, exportToCsv must be used");
+					"One of parameters importFromExcel, exportToExcel, compareWithExcel, importFromCsv, exportToCsv must be used");
 		} else if (actionModesCount > 1) {
 			throw new LanguagePropertiesException(
-					"Only one of parameters importFromExcel, exportToExcel, importFromCsv, exportToCsv may be used at a time");
-		} else if (exportToExcel == null && excelFile != null) {
-			throw new LanguagePropertiesException("Parameter excelFile is allowed for exportToExcel only");
+					"Only one of parameters importFromExcel, exportToExcel, compareWithExcel, importFromCsv, exportToCsv may be used at a time");
+		} else if (exportToExcel == null && compareWithExcel == null && excelFile != null) {
+			throw new LanguagePropertiesException("Parameter excelFile is allowed for exportToExcel or compareWithExcel only");
 		} else if (exportToExcel != null && excelFile == null) {
 			throw new LanguagePropertiesException("Parameter excelFile is mandatory for exportToExcel");
+		} else if (compareWithExcel != null && excelFile == null) {
+			throw new LanguagePropertiesException("Parameter excelFile is mandatory for compareWithExcel");
+		} else if (compareWithExcel != null && overwrite) {
+			throw new LanguagePropertiesException("Parameter overwrite is not allowed for compareWithExcel, which writes no file");
 		} else if (exportToCsv == null && csvFile != null) {
 			throw new LanguagePropertiesException("Parameter csvFile is allowed for exportToCsv only");
 		} else if (exportToCsv != null && csvFile == null) {

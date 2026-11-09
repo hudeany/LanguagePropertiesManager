@@ -142,6 +142,36 @@ Ein Ergebnisbericht listet gelöschte Einträge, entfernte identische Werte und 
 Wichtig: Damit gelöschte Keys auch aus den Dateien entfernt werden, dürfen beim Speichern (siehe 6.1) bereits vorhandene Keys nicht erhalten bleiben. Die entsprechende Frage muss also mit "Nein" beantwortet werden, bzw. der Konfigurationswert "KeepExistingKeysOnSave" muss auf "Nein" stehen (siehe 7.3). Andernfalls bleiben diese Keys in den Dateien bestehen.
 
 
+3.8 Vergleich mit einer anderen Quelle (z.B. Rücklauf vom Übersetzer)
+
+Der Button "Mit Excel-, CSV- oder Properties-Dateien vergleichen" vergleicht die aktuell geladenen Properties mit einer anderen Quelle und zeigt alle Unterschiede an. Der Vergleich selbst verändert nichts.
+Dies ist z.B. hilfreich, um eine Übersetzung zu prüfen: Die geladenen Properties Sets werden in eine Excel Datei exportiert (siehe 6.3), an einen Übersetzer gegeben und die zurückerhaltene Datei mit den geladenen Properties verglichen.
+Der Button ist nur verfügbar, wenn Properties geladen sind. Er öffnet dasselbe Menü zur Auswahl der Quelle wie in 3.6. Die gewählte Quelle wird nur für den Vergleich gelesen und nicht in das Tool übernommen.
+Tritt beim Lesen der Quelle ein Fehler auf oder wird der Vorgang abgebrochen, bleiben die aktuell geladenen Properties unverändert.
+Verglichen werden immer alle geladenen Properties, unabhängig von einer Auswahl in der Datentabelle.
+
+Zuordnung und Vergleich:
+Properties werden über LanguagePropertiesSetPath und Key zugeordnet. Hat eine der beiden Seiten gar keine Pfade (z.B. eine Datei ohne Pfad-Spalte), wird nur über den Key zugeordnet. Ein Key, der dann in mehreren Properties Sets vorkommt, bricht den Vergleich mit einer Fehlermeldung ab.
+Verglichen wird jeweils pro Key und Sprache. Leere und fehlende Werte gelten als gleich, da Excel und CSV Dateien diese nicht unterscheiden können. Unterschiedliche Zeilenumbrüche und Pfadtrenner ("/" und "\") werden ignoriert.
+Kommentare werden nur verglichen, wenn sie in der Konfiguration nicht ignoriert werden (siehe 7.3).
+Folgende Unterschiede werden gemeldet:
+	"KEY_ADDED" (Key gibt es nur in der anderen Quelle)
+	"KEY_REMOVED" (Key gibt es nur in den geladenen Properties)
+	"VALUE_ADDED" (Wert war leer oder fehlte und ist in der anderen Quelle gefüllt, z.B. eine neue Übersetzung)
+	"VALUE_CHANGED" (Wert weicht ab)
+	"VALUE_REMOVED" (Wert ist in der anderen Quelle leer oder fehlt)
+	"COMMENT_CHANGED" (Kommentar weicht ab)
+
+Nach dem Vergleich:
+Ein Bericht zeigt eine Zusammenfassung je Sprache und danach alle Unterschiede. Die geladenen Properties mit Unterschieden werden in der Datentabelle ausgewählt, so dass sie direkt geprüft werden können.
+Wurden neue Werte (VALUE_ADDED) für vorhandene Keys gefunden, wird abgefragt, ob diese in die geladenen Properties übernommen werden sollen.
+Es werden nur Werte gesetzt, die in den geladenen Properties noch leer sind oder fehlen. Geänderte und entfernte Werte sowie neue Keys werden nie übernommen (für neue Keys den zusätzlichen Import verwenden, siehe 3.6). Neue Sprachenkennzeichen werden für alle Properties angelegt.
+Nach der Übernahme gelten die Properties als geändert und müssen noch gespeichert werden.
+Werden keine Unterschiede gefunden, erfolgt lediglich ein entsprechender Hinweis.
+
+Der Vergleich mit einer Excel Datei ist auch über die Kommandozeile möglich ("-compareWithExcel", siehe Hilfe).
+
+
 4. Bearbeiten von einzelnen Property Werten
 
 4.1 Neuanlage und Veränderung bestehender Property Werten

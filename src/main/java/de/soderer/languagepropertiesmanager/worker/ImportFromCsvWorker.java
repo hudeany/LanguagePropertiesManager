@@ -40,6 +40,16 @@ public class ImportFromCsvWorker extends WorkerSimple<Boolean> {
 	private boolean commentsFound;
 
 	/**
+	 * True if the file has a comment column, which was ignored because of {@link #setIgnoreComments(boolean)}.
+	 */
+	private boolean commentColumnIgnored = false;
+
+	/**
+	 * Summary of the finished import, null as long as the worker has not finished.
+	 */
+	private volatile String resultText = null;
+
+	/**
 	 * Creates the import worker.
 	 *
 	 * @param parent
@@ -94,9 +104,13 @@ public class ImportFromCsvWorker extends WorkerSimple<Boolean> {
 						|| "idx".equalsIgnoreCase(cellValue)
 						|| "org.idx".equalsIgnoreCase(cellValue)) {
 					columnIndex_Index = headerColumnIndex;
-				} else if (("comment".equalsIgnoreCase(cellValue)
-						|| "kommentar".equalsIgnoreCase(cellValue)) && !ignoreComments) {
-					columnIndex_Comment = headerColumnIndex;
+				} else if ("comment".equalsIgnoreCase(cellValue)
+						|| "kommentar".equalsIgnoreCase(cellValue)) {
+					if (ignoreComments) {
+						commentColumnIgnored = true;
+					} else {
+						columnIndex_Comment = headerColumnIndex;
+					}
 				} else if ("default".equalsIgnoreCase(cellValue)) {
 					languageColumnHeaders.put(headerColumnIndex, cellValue.toLowerCase());
 				} else if (LANGUAGEANDCOUNTRYPATTERN.matcher(cellValue).matches()
@@ -181,6 +195,7 @@ public class ImportFromCsvWorker extends WorkerSimple<Boolean> {
 		}
 
 		if (cancel) {
+			resultText = "CSV import cancelled after " + itemsDone + " rows. No properties were imported from '" + importCsvFile.getAbsolutePath() + "'";
 			return false;
 		}
 
@@ -202,6 +217,8 @@ public class ImportFromCsvWorker extends WorkerSimple<Boolean> {
 			}
 		}
 
+		resultText = createResultText();
+
 		return !cancel;
 	}
 
@@ -217,9 +234,35 @@ public class ImportFromCsvWorker extends WorkerSimple<Boolean> {
 		return value == null ? defaultValue : value;
 	}
 
+	/**
+	 * Returns a summary of the import: number of imported properties, languages, property sets and the source file,
+	 * or a notice that the import was cancelled and nothing was imported.
+	 *
+	 * @return summary text, or null if the worker has not finished (yet) or failed with an exception
+	 */
 	@Override
 	public String getResultText() {
-		return null;
+		return resultText;
+	}
+
+	private String createResultText() {
+		final StringBuilder text = new StringBuilder();
+		text.append("Imported ").append(languageProperties.size()).append(" properties");
+		text.append(" with ").append(availableLanguageSigns.size()).append(" languages");
+		if (!availableLanguageSigns.isEmpty()) {
+			text.append(" (").append(String.join(", ", availableLanguageSigns)).append(")");
+		}
+		if (commentsFound) {
+			text.append(" and comments");
+		}
+		if (languagePropertiesSetNames != null && languagePropertiesSetNames.size() > 1) {
+			text.append(" in ").append(languagePropertiesSetNames.size()).append(" property sets");
+		}
+		text.append(" from '").append(importCsvFile.getAbsolutePath()).append("'");
+		if (commentColumnIgnored) {
+			text.append(". The comment column was ignored");
+		}
+		return text.toString();
 	}
 
 	/**

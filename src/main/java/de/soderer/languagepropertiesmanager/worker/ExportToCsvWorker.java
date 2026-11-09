@@ -30,6 +30,11 @@ public class ExportToCsvWorker extends WorkerSimple<Boolean> {
 	private final boolean overwrite;
 
 	/**
+	 * Summary of the finished export, null as long as the worker has not finished.
+	 */
+	private volatile String resultText = null;
+
+	/**
 	 * Creates the export worker.
 	 *
 	 * @param parent
@@ -143,10 +148,13 @@ public class ExportToCsvWorker extends WorkerSimple<Boolean> {
 			}
 
 			if (cancel) {
+				resultText = "CSV export cancelled after " + itemsDone + " of " + itemsToDo + " properties. The file '" + csvOutputFile.getAbsolutePath() + "' was not written.";
 				return false;
 			}
 
 			Files.move(tempOutputFile.toPath(), csvOutputFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+			resultText = "Exported " + sortedLanguageProperties.size() + " properties with " + languageSignsInOutputOrder.size() + " languages (" + String.join(", ", languageSignsInOutputOrder) + ")"
+					+ (commentsFound ? " and comments" : "") + " to '" + csvOutputFile.getAbsolutePath() + "'";
 		} finally {
 			// Clean up the temp file if it is still around, e.g. because of a
 			// thrown exception, a cancel, or the move above having failed.
@@ -156,9 +164,14 @@ public class ExportToCsvWorker extends WorkerSimple<Boolean> {
 		return !cancel;
 	}
 
+	/**
+	 * Returns a summary of the export: number of exported properties, languages and the output file,
+	 * or a notice that the export was cancelled and no file was written.
+	 *
+	 * @return summary text, or null if the worker has not finished (yet) or failed with an exception
+	 */
 	@Override
 	public String getResultText() {
-		// TODO
-		return null;
+		return resultText;
 	}
 }

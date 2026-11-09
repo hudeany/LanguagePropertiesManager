@@ -18,6 +18,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
@@ -48,7 +49,9 @@ import de.soderer.languagepropertiesmanager.merge.ReducePlan;
 import de.soderer.languagepropertiesmanager.merge.ReduceResult;
 import de.soderer.languagepropertiesmanager.model.DuplicatesPlan;
 import de.soderer.languagepropertiesmanager.model.LanguagePropertiesModel;
+import de.soderer.languagepropertiesmanager.storage.LanguagePropertiesComparator;
 import de.soderer.languagepropertiesmanager.storage.LanguageProperty;
+import de.soderer.languagepropertiesmanager.storage.LanguagePropertyDifference;
 import de.soderer.languagepropertiesmanager.storage.LoadedLanguageProperties;
 import de.soderer.languagepropertiesmanager.worker.ExportToCsvWorker;
 import de.soderer.languagepropertiesmanager.worker.ExportToExcelWorker;
@@ -144,6 +147,8 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 	private Button loadRecentButton;
 	/** Removes values identical to a base set */
 	private Button reduceByBaseSetButton;
+	/** Compares the loaded properties with another source, e.g. an Excel file returned by a translator */
+	private Button compareButton;
 
 	/** Recently opened files and directories, the latest used is the last entry */
 	private UniqueFifoQueuedList<String> recentlyOpenedDirectories;
@@ -421,6 +426,8 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		mergeImportButton.addActionListener(e -> importSourceChooser.showImportSourceMenu(mergeImportButton, "mergeImport_title", this::mergeLoadedLanguageProperties));
 		reduceByBaseSetButton = createIconButton(buttonSection1, "reduce.png", "tooltip_reduceByBaseSet", null);
 		reduceByBaseSetButton.addActionListener(e -> importSourceChooser.showImportSourceMenu(reduceByBaseSetButton, "reduceByBaseSet_title", this::reduceByBaseSet));
+		compareButton = createIconButton(buttonSection1, "compare.png", "tooltip_compare", null);
+		compareButton.addActionListener(e -> importSourceChooser.showImportSourceMenu(compareButton, "compare_title", this::compareWithLoadedProperties));
 		// Saving and exporting
 		buttonSection1.add(ModernUi.createToolbarSeparator());
 		saveButton = createIconButton(buttonSection1, "save.png", "tooltip_save_files", e -> saveFiles());
@@ -1074,6 +1081,9 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		if (reduceByBaseSetButton != null) {
 			reduceByBaseSetButton.setEnabled(hasProperties);
 		}
+		if (compareButton != null) {
+			compareButton.setEnabled(hasProperties);
+		}
 	}
 
 	/**
@@ -1602,6 +1612,88 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 		checkButtonStatus();
 
 		showData(LangResources.get("reduceByBaseSet_resultTitle"), BaseSetReducer.createReduceReport(baseLanguageProperties.getSourceDescription(), propertiesToCheck.size(), reducePlan, reduceResult));
+	}
+
+	/**
+	 * Compares all loaded properties with another source, e.g. an exported Excel file returned by a translator.
+	 * The report shows all differences and the loaded properties with differences are selected for review.
+	 * New values (empty or missing in the loaded properties) can be taken over afterwards, changed and removed
+	 * values are never taken over automatically.
+	 */
+	private void compareWithLoadedProperties(final LoadedLanguageProperties otherLanguageProperties) {
+		if (!model.hasProperties()) {
+			return;
+		}
+
+		final String title = LangResources.get("compare_title");
+		try {
+			// Comments are only compared, if they were read (for "ask": by the latest decision of the user)
+			final boolean compareComments = !getEffectiveConfigurationChoice(LanguagePropertiesManager.CONFIG_IGNORE_COMMENTS);
+			// Always all loaded properties: with only the selected ones all others would be reported as added keys
+			final List<LanguagePropertyDifference> differences = LanguagePropertiesComparator.compare(model.getLanguageProperties(), otherLanguageProperties.getLanguageProperties(), compareComments);
+			if (differences.isEmpty()) {
+				showMessage(title, LangResources.get("compare_noDifferences", otherLanguageProperties.getSourceDescription()));
+				return;
+			}
+
+			// Select the loaded properties with differences, so they can be reviewed directly in the table.
+			// Refreshing the detail view would drop its unapplied changes, so the user is asked first.
+			final List<LanguageProperty> propertiesWithDifferences = differences.stream()
+					.map(LanguagePropertyDifference::getExistingProperty)
+					.filter(Objects::nonNull)
+					.distinct()
+					.collect(Collectors.toList());
+			final boolean detailViewMayBeRefreshed = confirmDiscardDetailChanges();
+			if (detailViewMayBeRefreshed && !propertiesWithDifferences.isEmpty()) {
+				model.setCurrentSelection(propertiesWithDifferences);
+				refreshTable();
+				refreshDetailView();
+			}
+
+			showData(LangResources.get("compare_resultTitle"), LangResources.get("compare_resultHeader", otherLanguageProperties.getSourceDescription()) + "\n\n" + LanguagePropertiesComparator.createReport(differences));
+
+			final List<LanguagePropertyDifference> addedValues = LanguagePropertiesComparator.getAddedValuesOfExistingProperties(differences);
+			if (!addedValues.isEmpty() && detailViewMayBeRefreshed) {
+				takeOverAddedValues(title, addedValues);
+			}
+		} catch (final Exception e) {
+			showError(e);
+		}
+		checkButtonStatus();
+	}
+
+	/**
+	 * Asks whether the new values found by a comparison are taken over into the loaded properties and does it.
+	 * Only values, which are empty or missing in the loaded properties, are set.
+	 */
+	private void takeOverAddedValues(final String title, final List<LanguagePropertyDifference> addedValues) throws Exception {
+		final Set<String> addedValueLanguageSigns = addedValues.stream().map(LanguagePropertyDifference::getLanguageSign).collect(Collectors.toCollection(TreeSet::new));
+		final Integer returncode = new QuestionDialog(this, title,
+				LangResources.get("compare_takeOverQuestion", addedValues.size(), StringUtilities.join(addedValueLanguageSigns, ", ")),
+				LangResources.get("compare_takeOver"),
+				LangResources.get("cancel")).open();
+		if (returncode == null || returncode != 0) {
+			return;
+		}
+
+		// New languages of the other source must be known to all loaded properties, so they are shown as columns
+		boolean languagesAdded = false;
+		for (final String languageSign : addedValueLanguageSigns) {
+			if (!model.getAvailableLanguageSigns().contains(languageSign)) {
+				model.addLanguage(languageSign);
+				languagesAdded = true;
+			}
+		}
+
+		final int appliedCount = LanguagePropertiesComparator.applyAddedValues(addedValues);
+		if (appliedCount > 0 || languagesAdded) {
+			model.setUnsavedChanges(true);
+		}
+		setupTable();
+		refreshDetailView();
+		checkButtonStatus();
+
+		showMessage(title, LangResources.get("compare_takeOverResult", appliedCount));
 	}
 
 	private void exportToExcel() {

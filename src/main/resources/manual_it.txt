@@ -141,6 +141,36 @@ Un rapporto dei risultati elenca le voci eliminate, i valori identici rimossi, i
 Importante: affinché le chiavi eliminate vengano rimosse anche dai file, al salvataggio (vedere 6.1) le chiavi già esistenti non devono essere mantenute. Occorre quindi rispondere "No" alla domanda corrispondente, oppure il valore di configurazione "KeepExistingKeysOnSave" deve essere impostato su "No" (vedere 7.3). In caso contrario, queste chiavi restano nei file.
 
 
+3.8 Confronto con un'altra fonte (ad es. il file restituito da un traduttore)
+
+Il pulsante "Confronta con file Excel, CSV o di proprietà" confronta le proprietà attualmente caricate con un'altra fonte e mostra tutte le differenze. Il confronto in sé non modifica nulla.
+È utile, ad esempio, per verificare una traduzione: esportare i set di proprietà caricati in un file Excel (vedi 6.3), consegnarlo a un traduttore e confrontare il file restituito con le proprietà caricate.
+Il pulsante è disponibile solo se sono caricate delle proprietà. Apre lo stesso menu di selezione della fonte descritto in 3.6. La fonte selezionata viene solo letta per il confronto e non viene ripresa nello strumento.
+Se si verifica un errore durante la lettura della fonte o l'operazione viene annullata, le proprietà caricate restano invariate.
+Vengono sempre confrontate tutte le proprietà caricate, indipendentemente da una selezione nella tabella dei dati.
+
+Associazione e confronto:
+Le proprietà vengono associate tramite LanguagePropertiesSetPath e chiave. Se uno dei due lati non ha alcun percorso (ad es. un file senza colonna del percorso), vengono associate solo tramite la chiave. Una chiave presente in più set di proprietà interrompe allora il confronto con un messaggio di errore.
+Il confronto avviene per chiave e lingua. I valori vuoti e quelli mancanti sono considerati uguali, poiché i file Excel e CSV non possono distinguerli. Le differenze nelle interruzioni di riga e nei separatori di percorso ("/" e "\") vengono ignorate.
+I commenti vengono confrontati solo se non sono ignorati nella configurazione (vedi 7.3).
+Vengono segnalate le seguenti differenze:
+	"KEY_ADDED" (la chiave esiste solo nell'altra fonte)
+	"KEY_REMOVED" (la chiave esiste solo nelle proprietà caricate)
+	"VALUE_ADDED" (il valore era vuoto o mancante ed è compilato nell'altra fonte, ad es. una nuova traduzione)
+	"VALUE_CHANGED" (il valore è diverso)
+	"VALUE_REMOVED" (il valore è vuoto o manca nell'altra fonte)
+	"COMMENT_CHANGED" (il commento è diverso)
+
+Dopo il confronto:
+Un rapporto mostra un riepilogo per lingua seguito da tutte le differenze. Le proprietà caricate con differenze vengono selezionate nella tabella dei dati, in modo da poterle verificare direttamente.
+Se sono stati trovati nuovi valori (VALUE_ADDED) per chiavi esistenti, viene chiesto se riprenderli nelle proprietà caricate.
+Vengono impostati solo i valori ancora vuoti o mancanti nelle proprietà caricate. I valori modificati o rimossi e le nuove chiavi non vengono mai ripresi (per le nuove chiavi utilizzare l'importazione aggiuntiva, vedi 3.6). I nuovi codici lingua vengono aggiunti per tutte le proprietà.
+Dopo la ripresa, le proprietà risultano modificate e devono ancora essere salvate.
+Se non vengono trovate differenze, viene mostrato solo un avviso corrispondente.
+
+Il confronto con un file Excel è disponibile anche dalla riga di comando ("-compareWithExcel", vedi la guida).
+
+
 4. Modifica dei singoli valori delle proprietà
 
 4.1 Creazione e modifica dei valori delle proprietà

@@ -18,7 +18,9 @@ import de.soderer.applicationbase.UpdateableConsoleApplication;
 import de.soderer.console.ConsoleType;
 import de.soderer.console.ConsoleUtilities;
 import de.soderer.languagepropertiesmanager.dlg.LanguagePropertiesManagerDialog;
+import de.soderer.languagepropertiesmanager.storage.LanguagePropertiesComparator;
 import de.soderer.languagepropertiesmanager.storage.LanguagePropertiesFileSetReader;
+import de.soderer.languagepropertiesmanager.storage.LanguagePropertyDifference;
 import de.soderer.languagepropertiesmanager.worker.DeepLHelper;
 import de.soderer.languagepropertiesmanager.worker.ExportToCsvWorker;
 import de.soderer.languagepropertiesmanager.worker.ExportToExcelWorker;
@@ -38,11 +40,10 @@ import de.soderer.utilities.Version;
 import de.soderer.utilities.YesNoAsk;
 import de.soderer.utilities.worker.WorkerParentDual;
 
-// TODO: Excel file Diff
-
 /**
  * Main class of the LanguagePropertiesManager: starts the GUI or executes the
- * command line actions (import from or export to Excel or CSV) and prints
+ * command line actions (import from or export to Excel or CSV, comparison of
+ * the properties files with an Excel file) and prints
  * their progress on the console.
  */
 public class LanguagePropertiesManager extends UpdateableConsoleApplication implements WorkerParentDual {
@@ -302,8 +303,8 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Invalid parameter for importFromExcel");
 					} else if (actionDefinition.getImportFromExcel() != null) {
 						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Duplicate parameter importFromExcel");
-					} else if (actionDefinition.getExportToExcel() != null) {
-						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Only one of parameters importFromExcel and exportToExcel is allowed");
+					} else if (actionDefinition.getExportToExcel() != null || actionDefinition.getCompareWithExcel() != null) {
+						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Only one of parameters importFromExcel, exportToExcel and compareWithExcel is allowed");
 					} else {
 						actionDefinition.setImportFromExcel(arguments[i]);
 					}
@@ -316,10 +317,24 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Invalid parameter for exportToExcel");
 					} else if (actionDefinition.getExportToExcel() != null) {
 						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Duplicate parameter exportToExcel");
-					} else if (actionDefinition.getImportFromExcel() != null) {
-						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Only one of parameters importFromExcel and exportToExcel is allowed");
+					} else if (actionDefinition.getImportFromExcel() != null || actionDefinition.getCompareWithExcel() != null) {
+						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Only one of parameters importFromExcel, exportToExcel and compareWithExcel is allowed");
 					} else {
 						actionDefinition.setExportToExcel(arguments[i]);
+					}
+					wasAllowedParam = true;
+				} else if ("-compareWithExcel".equalsIgnoreCase(arguments[i])) {
+					i++;
+					if (i >= arguments.length) {
+						throw new ParameterException(arguments[i - 1], "Missing parameter for compareWithExcel");
+					} else if (StringUtilities.isBlank(arguments[i])) {
+						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Invalid parameter for compareWithExcel");
+					} else if (actionDefinition.getCompareWithExcel() != null) {
+						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Duplicate parameter compareWithExcel");
+					} else if (actionDefinition.getImportFromExcel() != null || actionDefinition.getExportToExcel() != null) {
+						throw new ParameterException(arguments[i - 1] + " " + arguments[i], "Only one of parameters importFromExcel, exportToExcel and compareWithExcel is allowed");
+					} else {
+						actionDefinition.setCompareWithExcel(arguments[i]);
 					}
 					wasAllowedParam = true;
 				} else if ("-excelFile".equalsIgnoreCase(arguments[i])) {
@@ -567,7 +582,9 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 
 			final String[] configuredExcludeParts = applicationConfiguration.get(LanguagePropertiesManager.CONFIG_OPEN_DIR_EXCLUDES).split(";");
 
-			if (actionDefinition.getExportToExcel() != null) {
+			if (actionDefinition.getCompareWithExcel() != null) {
+				compareWithExcel(actionDefinition, applicationConfiguration, configuredExcludeParts);
+			} else if (actionDefinition.getExportToExcel() != null) {
 				final File propertiesFile = new File(actionDefinition.getExportToExcel());
 
 				final File excelFile = new File(actionDefinition.getExcelFile());
@@ -791,6 +808,55 @@ public class LanguagePropertiesManager extends UpdateableConsoleApplication impl
 		} catch (final Exception e) {
 			throw e;
 		}
+	}
+
+	/**
+	 * Compares the existing properties files with an Excel file, e.g. an exported Excel file returned by a translator.
+	 * Nothing is written, the differences are only printed.
+	 */
+	private void compareWithExcel(final ActionDefinition actionDefinition, final ConfigurationProperties applicationConfiguration, final String[] configuredExcludeParts) throws Exception {
+		final File propertiesFile = new File(actionDefinition.getCompareWithExcel());
+
+		final File excelFile = new File(actionDefinition.getExcelFile());
+		if (!excelFile.exists() || !excelFile.isFile()) {
+			throw new LanguagePropertiesException("Compare Excel file '" + excelFile.getAbsolutePath() + "' does not exist.");
+		}
+
+		// Resolved once for the whole action, both sides must be read with the same settings to be comparable
+		final boolean ignoreComments = resolveConfigurationChoice(applicationConfiguration, CONFIG_IGNORE_COMMENTS, "Ignore comments?");
+		final boolean escapeApostrophesByDoubling = resolveConfigurationChoice(applicationConfiguration, CONFIG_ESCAPE_APOSTROPHES_BY_DOUBLING, "Are apostrophes escaped by doubling in the properties files?");
+
+		final LoadLanguagePropertiesWorker loadLanguagePropertiesWorker = new LoadLanguagePropertiesWorker(this, propertiesFile, configuredExcludeParts, actionDefinition.getPropertiesFileExtension());
+		loadLanguagePropertiesWorker.setReadComments(!ignoreComments);
+		// Doubled apostrophes are only used in the properties files, the Excel file has single apostrophes
+		loadLanguagePropertiesWorker.setEscapeApostrophesByDoubling(escapeApostrophesByDoubling);
+		loadLanguagePropertiesWorker.setProgressDisplayDelayMilliseconds(2000);
+		loadLanguagePropertiesWorker.run();
+		if (!loadLanguagePropertiesWorker.get()) {
+			throw new LanguagePropertiesException("Cancelled by user");
+		}
+
+		final ImportFromExcelWorker importFromExcelWorker = new ImportFromExcelWorker(this, excelFile);
+		importFromExcelWorker.setIgnoreComments(ignoreComments);
+		importFromExcelWorker.setProgressDisplayDelayMilliseconds(2000);
+		importFromExcelWorker.run();
+		if (!importFromExcelWorker.get()) {
+			throw new LanguagePropertiesException("Cancelled by user");
+		}
+
+		final List<LanguagePropertyDifference> differences = LanguagePropertiesComparator.compare(loadLanguagePropertiesWorker.getLanguageProperties(), importFromExcelWorker.getLanguageProperties(), !ignoreComments);
+
+		System.out.println("Compared properties: \"" + propertiesFile.getAbsolutePath() + "\"");
+		System.out.println("With Excel file: \"" + excelFile.getAbsolutePath() + "\"");
+		System.out.println();
+		for (final LanguagePropertyDifference difference : differences) {
+			System.out.println(difference);
+		}
+		if (!differences.isEmpty()) {
+			System.out.println();
+		}
+		System.out.println(LanguagePropertiesComparator.createSummary(differences));
+		System.out.println();
 	}
 
 	/* (non-Javadoc)

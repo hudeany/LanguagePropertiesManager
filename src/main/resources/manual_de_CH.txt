@@ -142,6 +142,36 @@ En Ergebnisbricht listet glöschti Iiträg, entfernti identischi Wärt und di ve
 Wichtig: Damit glöschti Keys au us de Dateie entfernt werdet, dörfed bim Speichere (lueg 6.1) scho vorhandeni Keys nöd erhalte bliibe. D entsprächend Frag muess also mit "Nei" beantwortet werde, bzw. de Konfigurationswärt "KeepExistingKeysOnSave" muess uf "Nei" staa (lueg 7.3). Susch bliibed die Keys i de Dateie bestah.
 
 
+3.8 Vergliich mit enere andere Quälle (z.B. Rücklauf vom Übersetzer)
+
+De Chnopf "Mit Excel-, CSV- oder Properties-Dateie vergliiche" vergliicht di aktuell glade Properties mit enere andere Quälle und zeigt alli Unterschiid aa. De Vergliich sälber veränderet nüt.
+Das isch z.B. hilfriich, zum e Übersetzig z prüefe: Di glade Properties Sets werdet ineren Excel-Datei exportiert (lueg 6.3), emne Übersetzer gää und di zrugggchoo Datei mit de glade Properties verglichen.
+De Chnopf isch nume verfüegbar, wänn Properties glade sind. Er öffnet s gliiche Menü zur Uswahl vo de Quälle wie i 3.6. Di gwählt Quälle wird nume für de Vergliich gläse und nöd is Tool übernoh.
+Gits bim Läse vo de Quälle en Fähler oder wird de Vorgang abbroche, bliibed di aktuell glade Properties unveränderet.
+Verglichen werdet immer alli glade Properties, unabhängig vonere Uswahl i de Datetabälle.
+
+Zuordnig und Vergliich:
+Properties werdet über LanguagePropertiesSetPath und Key zuegordnet. Hät eini vo de beide Siite gar kei Pfäd (z.B. e Datei ohni Pfad-Spalte), wird nume über de Key zuegordnet. En Key, wo dänn i mehrere Properties Sets vorchunnt, bricht de Vergliich mit enere Fählermäldig ab.
+Verglichen wird jewiils pro Key und Sprach. Leeri und fählendi Wärt gälted als gliich, will Excel- und CSV-Dateie die nöd chönd unterscheide. Unterschiidlichi Ziileumbrüch und Pfadtrenner ("/" und "\") werdet ignoriert.
+Kommentär werdet nume verglichen, wänn sie i de Konfiguration nöd ignoriert werdet (lueg 7.3).
+Die Unterschiid werdet gmäldet:
+	"KEY_ADDED" (de Key gits nume i de andere Quälle)
+	"KEY_REMOVED" (de Key gits nume i de glade Properties)
+	"VALUE_ADDED" (de Wärt isch leer gsii oder hät gfählt und isch i de andere Quälle gfüllt, z.B. e neui Übersetzig)
+	"VALUE_CHANGED" (de Wärt wiicht ab)
+	"VALUE_REMOVED" (de Wärt isch i de andere Quälle leer oder fählt)
+	"COMMENT_CHANGED" (de Kommentar wiicht ab)
+
+Nach em Vergliich:
+En Bricht zeigt e Zämmefassig pro Sprach und dänn alli Unterschiid. Di glade Properties mit Unterschiid werdet i de Datetabälle usgwählt, so dass mer sie grad cha prüefe.
+Sind neui Wärt (VALUE_ADDED) für vorhandeni Keys gfunde worde, wird gfrögt, ob die i di glade Properties söled übernoh werde.
+Es werdet nume Wärt gsetzt, wo i de glade Properties no leer sind oder fähled. Veränderti und entfernti Wärt sowie neui Keys werdet nie übernoh (für neui Keys de zuesätzlich Import bruuche, lueg 3.6). Neui Sprachchennzeiche werdet für alli Properties aagleit.
+Nach de Übernahm gälted d Properties als veränderet und mönd no gspeicheret werde.
+Werdet kei Unterschiid gfunde, chunnt nume en entsprächende Hiiwiis.
+
+De Vergliich mit enere Excel-Datei gaht au über d Kommandoziile ("-compareWithExcel", lueg Hilf).
+
+
 4. Bearbeite vo einzelne Property-Wärt
 
 4.1 Neuaalag und Veränderig vo bestehende Property-Wärt

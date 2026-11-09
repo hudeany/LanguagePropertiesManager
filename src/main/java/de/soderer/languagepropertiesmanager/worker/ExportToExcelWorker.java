@@ -35,6 +35,11 @@ public class ExportToExcelWorker extends WorkerSimple<Boolean> {
 	private final boolean overwrite;
 
 	/**
+	 * Summary of the finished export, null as long as the worker has not finished.
+	 */
+	private volatile String resultText = null;
+
+	/**
 	 * Creates the export worker.
 	 *
 	 * @param parent
@@ -177,10 +182,13 @@ public class ExportToExcelWorker extends WorkerSimple<Boolean> {
 			}
 
 			if (cancel) {
+				resultText = "Excel export cancelled after " + itemsDone + " of " + itemsToDo + " properties. The file '" + excelOutputFile.getAbsolutePath() + "' was not written.";
 				return false;
 			}
 
 			Files.move(tempOutputFile.toPath(), excelOutputFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+			resultText = "Exported " + sortedLanguageProperties.size() + " properties with " + availableLanguageSigns.size() + " languages (" + String.join(", ", availableLanguageSigns) + ")"
+					+ (commentsFound ? " and comments" : "") + " to '" + excelOutputFile.getAbsolutePath() + "'";
 		} finally {
 			// Clean up the temp file if it is still around, e.g. because of a
 			// thrown exception, a cancel, or the move above having failed.
@@ -190,9 +198,14 @@ public class ExportToExcelWorker extends WorkerSimple<Boolean> {
 		return !cancel;
 	}
 
+	/**
+	 * Returns a summary of the export: number of exported properties, languages and the output file,
+	 * or a notice that the export was cancelled and no file was written.
+	 *
+	 * @return summary text, or null if the worker has not finished (yet) or failed with an exception
+	 */
 	@Override
 	public String getResultText() {
-		// TODO
-		return null;
+		return resultText;
 	}
 }

@@ -6,6 +6,8 @@ Usage:
 	java -jar LanguagePropertiesManager.jar -importFromExcel <input Excel file path> [-outputDirectory <language properties output directory>] [-propertiesFileExtension <extension>] [-v]
 	or
 	java -jar LanguagePropertiesManager.jar -importFromCsv <input CSV file path> [-outputDirectory <language properties output directory>] [-propertiesFileExtension <extension>] [-v]
+	or
+	java -jar LanguagePropertiesManager.jar -compareWithExcel <language properties file or directory path> -excelFile <Excel file path> [-propertiesFileExtension <extension>] [-v]
 
 Mandatory parameters for Excel file export
 	-exportToExcel <language properties file or directory path>
@@ -62,6 +64,20 @@ Optional parameters for CSV file import
 	-v: verbose output with progress bar
 
 Keys existing in the language properties files, but not in the imported CSV file, are kept.
+
+Mandatory parameters for comparison with an Excel file
+	-compareWithExcel <language properties file or directory path>
+	-excelFile <Excel file path>:
+		Excel file to compare with, e.g. an exported Excel file returned by a translator
+
+Optional parameters for comparison with an Excel file
+	-propertiesFileExtension <extension>:
+		Do not use the default language file extension ".properties", but a differently defined customized extension like "_mytext.properties"
+	-v: verbose output with progress bar
+
+Properties are matched by path and key (by key only, if one of both sides has no paths).
+Empty and missing values count as equal. All differences are printed (added and removed keys, added, changed and removed values, changed comments), followed by a summary per language.
+Nothing is written.
 
 Global standalone parameters
 	help: Show this help manual

@@ -142,6 +142,36 @@ A Ergebnisbericht listet glöschte Einträg, rausgschmissne gleiche Werte, de ü
 Wichtig, jetzt aufpassn: Damit glöschte Keys aa aus de Datein verschwindn, dürfa beim Speichern (schau in 6.1) de scho vorhandna Keys ned bleibn. De Frog muass ma also mit "Na" beantwortn, oder da Konfigurationswert "KeepExistingKeysOnSave" muass auf "Na" steh (schau in 7.3). Sonst bleibn de Keys in de Datein drin, wia da Rausch vom Vortag.
 
 
+3.8 Vergleichn mit ana andern Quelle (z.B. wos vom Übersetzer zruckkimmt)
+
+Da Knopf "Mit Excel-, CSV- oder Properties-Dateien vergleichn" vergleicht de grad gladna Properties mit ana andern Quelle und zoagt olle Unterschiede o. Beim Vergleichn selba werd nix verändert.
+Des is z.B. praktisch, wennst a Übersetzung prüfn mogst: De gladna Properties Sets in a Excel-Datei exportiern (schau 6.3), an Übersetzer gebn und de Datei, de zruckkimmt, mit de gladna Properties vergleichn.
+Da Knopf geht bloß, wenn Properties glodn san. Er macht des gleiche Menü zum Aussuacha vo da Quelle auf wia in 3.6. De Quelle werd bloß zum Vergleichn glesn und ned ins Tool übernumma.
+Wenn beim Lesn vo da Quelle wos schiefgeht oder abbrocha werd, bleibn de gladna Properties, wia's san.
+Vergliche wern oiwei olle gladna Properties, egal wos in da Datentabelle ausgwählt is.
+
+Zuordnung und Vergleich:
+De Properties wern über LanguagePropertiesSetPath und Key zuagordnet. Hod oane vo de zwoa Seitn gar koane Pfade (z.B. a Datei ohne Pfad-Spaltn), werd bloß über an Key zuagordnet. A Key, der dann in mehrane Properties Sets vorkimmt, bricht den Vergleich mit ana Fehlameldung ab.
+Vergliche werd jeweils pro Key und Sprach. Laare und fehlende Werte gelten ois gleich, weil Excel- und CSV-Dateien de ned ausanandahoitn kenna. Andane Zeilnumbrüch und Pfadtrenner ("/" und "\") wern ignoriert.
+Anmerkunga wern bloß vergliche, wenn's in de Eistellunga ned links liegn bleibn (schau 7.3).
+De Unterschiede wern gmeldet:
+	"KEY_ADDED" (an Key gibt's bloß in da andern Quelle)
+	"KEY_REMOVED" (an Key gibt's bloß in de gladna Properties)
+	"VALUE_ADDED" (da Wert war laar oder hod gfehlt und is in da andern Quelle gfuit, z.B. a neie Übersetzung)
+	"VALUE_CHANGED" (da Wert is anders)
+	"VALUE_REMOVED" (da Wert is in da andern Quelle laar oder fehlt)
+	"COMMENT_CHANGED" (de Anmerkung is anders)
+
+Nachm Vergleichn:
+A Bericht zoagt a Zammafassung pro Sprach und danach olle Unterschiede. De gladna Properties mit Unterschiede wern in da Datentabelle ausgwählt, damit'st as glei durchschaugn konnst.
+San neie Werte (VALUE_ADDED) für Keys gfundn worn, de's scho gibt, werd gfragt, ob de in de gladna Properties übernumma wern soin.
+Es wern bloß Werte gsetzt, de in de gladna Properties no laar san oder fehln. Gänderte und rausgschmissne Werte und neie Keys wern nia übernumma (für neie Keys an zusätzlichn Import hernehma, schau 3.6). Neie Sprachkennzeichen wern für olle Properties oglegt.
+Nach da Übernahme gelten de Properties ois gändert und miassn no gspeichert wern.
+Gibt's koane Unterschiede, kimmt bloß a Hinweis.
+
+Des Vergleichn mit ana Excel-Datei geht aa über d'Kommandozeiln ("-compareWithExcel", schau Huif).
+
+
 4. Einzelne Property-Werte bearbeitn
 
 4.1 Neie Property-Werte olegn und bestehende ändern
