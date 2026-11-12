@@ -991,7 +991,7 @@ public class LanguagePropertiesManagerDialog extends UpdateableGuiApplication {
 				}
 			}
 
-			final ApplicationConfigurationDialog dialog = new ApplicationConfigurationDialog(this, LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.APPLICATION_STARTUPCLASS_NAME, LanguagePropertiesManager.VERSION, LanguagePropertiesManager.VERSION_BUILDTIME, applicationConfiguration, iconData, ImageManager.getImage("LanguagePropertiesManager.png").getImage(), LanguagePropertiesManager.VERSIONINFO_DOWNLOAD_URL, LanguagePropertiesManager.TRUSTED_UPDATE_CA_CERTIFICATES, null);
+			final ApplicationConfigurationDialog dialog = new ApplicationConfigurationDialog(this, LanguagePropertiesManager.APPLICATION_NAME, LanguagePropertiesManager.APPLICATION_STARTUPCLASS_NAME, LanguagePropertiesManager.VERSION, LanguagePropertiesManager.VERSION_BUILDTIME, applicationConfiguration, iconData, ImageManager.getImage("LanguagePropertiesManager.png").getImage(), LanguagePropertiesManager.VERSIONINFO_DOWNLOAD_URL, LanguagePropertiesManager.TRUSTED_UPDATE_CA_CERTIFICATES, null, false);
 			if (dialog.open() == Result.OK) {
 				applicationConfiguration.save();
 
